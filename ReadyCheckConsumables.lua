@@ -718,8 +718,7 @@ local i_hs = 6
 local i_of_oil = 7
 local i_class = 8
 
-local FONT = "Interface\\AddOns\\ReadyCheckConsumeables\\media\\fonts\\PTSansNarrow-Bold.ttf"
--- Spelling Fail! ReadyCheckConsumables NOT ReadyCheckConsumeables
+local FONT = "Interface\\AddOns\\ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-Bold.ttf"
 
 for i = 1, 8 do
     local button = CreateFrame("Frame", nil, RCC.consumables)

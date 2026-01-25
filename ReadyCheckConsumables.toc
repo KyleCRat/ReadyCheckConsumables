@@ -6,4 +6,4 @@
 ## Category: Raid
 
 Functions.lua
-ReadyCheckConsumeables.lua
+ReadyCheckConsumables.lua
