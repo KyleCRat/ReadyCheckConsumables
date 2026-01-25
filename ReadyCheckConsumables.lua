@@ -569,9 +569,6 @@ local MIDNIGHT       = 12
 
 local CURRENT_XPAC = THE_WAR_WITHIN
 
-print("The Current expansion is version: " .. CURRENT_XPAC .. ",  which is: " .. THE_WAR_WITHIN)
-print(CURRENT_XPAC == THE_WAR_WITHIN)
-
 -- Allow icon overrides per expansion. Goes from oldest to newest expansion
 -- overriding older xpac items and icons with newer ones.
 RCC.settings = {
@@ -660,8 +657,6 @@ for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
             flask_icon_id = xs.flask.icon_id
         end
     end
-
-    print("Rune Item id: " .. rune_item_id)
 end
 
 -------------------------------------------------------------------------------
@@ -671,7 +666,7 @@ end
 -- Size of the icons in the frame
 local consumables_size = 48
 
-RCC.consumables = CreateFrame("Frame", "MRTConsumables" ,ReadyCheckListenerFrame)
+RCC.consumables = CreateFrame("Frame", "RCConsumables", ReadyCheckListenerFrame)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
 RCC.consumables:SetSize(consumables_size * 5, consumables_size)
 RCC.consumables:Hide()
@@ -800,10 +795,6 @@ for i = 1, 8 do
         button:Hide()
     end
 end
-
-RCC.consumables:RegisterEvent("READY_CHECK")
-RCC.consumables:RegisterEvent("READY_CHECK_FINISHED")
-RCC.consumables:Show()
 
 -------------------------------------------------------------------------------
 --- Update Function
@@ -1332,17 +1323,19 @@ function RCC.consumables:OnHide()
     end
 end
 
-RCC.consumables:SetScript("OnEvent",function(self,event,arg1,arg2)
+RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
     if event == "READY_CHECK" then
         self:Update()
+
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+
 
         if self.cancelDelay then
             self.cancelDelay:Cancel()
         end
 
-        self.cancelDelay = C_Timer.NewTimer(arg2 or 40,function()
+        self.cancelDelay = C_Timer.NewTimer(time_to_hide or 40, function()
             self:UnregisterEvent("UNIT_AURA")
             self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
 
@@ -1351,9 +1344,9 @@ RCC.consumables:SetScript("OnEvent",function(self,event,arg1,arg2)
             end
         end)
 
-        if arg1 and UnitIsUnit(arg1,"player") then
+        if unit and UnitIsUnit(unit, "player") then
             self:Repos(true)
-            else
+        else
             self:Repos()
         end
     elseif event == "READY_CHECK_FINISHED" then
@@ -1363,19 +1356,19 @@ RCC.consumables:SetScript("OnEvent",function(self,event,arg1,arg2)
             self.rlpointer:Hide()
         end
     elseif event == "UNIT_AURA" then
-        if arg1 == "player" then
+        if unit == "player" then
             self:Update()
         end
     elseif event == "UNIT_INVENTORY_CHANGED" then
-        if arg1 == "player" then
-            C_Timer.After(.2,function()
+        if unit == "player" then
+            C_Timer.After(.2, function()
                 self:Update()
             end)
         end
     end
 end)
 
-RCC.consumables:SetScript("OnHide",function(self)
+RCC.consumables:SetScript("OnHide", function(self)
     RCC.consumables:OnHide()
 end)
 
@@ -1383,7 +1376,16 @@ RCC.consumables.Test = function(isRL)
     RCC.consumables:SetParent(UIParent)
     RCC.consumables:ClearAllPoints()
     RCC.consumables:SetPoint("CENTER")
-    RCC.consumables:GetScript("OnEvent")(RCC.consumables,"READY_CHECK",isRL and UnitName'player' or "")
+    RCC.consumables:GetScript("OnEvent")( RCC.consumables, "READY_CHECK", isRL and UnitName 'player' or "" )
 end
 
+RCC.consumables.TestHide = function(isRL)
+    RCC.consumables:GetScript("OnEvent")( RCC.consumables, "READY_CHECK_FINISHED", isRL and UnitName 'player' or "" )
+end
+
+RCC.consumables:RegisterEvent("READY_CHECK")
+RCC.consumables:RegisterEvent("READY_CHECK_FINISHED")
+RCC.consumables:Show()
+
 -- /run RCC.consumables.Test(true)
+-- /run RCC.consumables.TestHide(true)
