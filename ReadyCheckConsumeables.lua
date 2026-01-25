@@ -21,8 +21,8 @@ local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEnco
 --- Not needed, as we just check for the food icon. 136000
 -------------------------------------------------------------------------------
 
--- RCC.db.tableFood_headers = { 0, 5, 10, 14 }
--- RCC.db.tableFood = {
+-- RCC.db.foodBuffIDs_headers = { 0, 5, 10, 14 }
+-- RCC.db.foodBuffIDs = {
 --     -- Well Fed buff ID's
 --     -- [ID]=BUFF_AMOUNT
 
@@ -82,8 +82,8 @@ local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEnco
 --     [297040]=true, -- Stamina:  19
 -- }
 
--- RCC.db.tableFood_headers = {0,70,90}
--- RCC.db.tableFood = {
+-- RCC.db.foodBuffIDs_headers = {0,70,90}
+-- RCC.db.foodBuffIDs = {
 -- -- 10.0.0 Dragonflight
 -- --Haste		    Mastery	    	Crit	    	Versa	    	Int	        	Str 	    	Agi	        	Stam	    	Stam		    Special
 -- [308488]=30,	[308506]=30,	[308434]=30,	[308514]=30,	[327708]=20,	[327706]=20,	[327709]=20,	[308525]=30,	[327707]=30,	[308637]=30,
@@ -97,7 +97,7 @@ local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEnco
 -- 						                        [382234]=90,	[382235]=90,	[382236]=90,
 -- }
 
--- RCC.db.tableFoodIsBest = {
+-- RCC.db.foodBuffIDsIsBest = {
 -- --Haste	    	Mastery	    	Crit	    	Versa	    	Int	        	Str 	    	Agi	        	Stam    		Stam	    	Special
 -- [382145]=70,	[382150]=70,	[382146]=70,	[382149]=70,	[396092]=90,					[382246]=70,    [382247]=90,
 -- --HasteCrit	    HasteVers   	VersMastery	    StamStr	    	StamAgi	    	StamInt	    	HasteMastery	CritVers    	CritMastery
@@ -105,15 +105,15 @@ local IsEncounterInProgress = C_InstanceEncounter and C_InstanceEncounter.IsEnco
 -- 						                        [382234]=90,    [382235]=90,	[382236]=90,
 -- }
 
-RCC.db.tableFood_headers = {}
-RCC.db.tableFood = {}
+RCC.db.foodBuffIDs_headers = {}
+RCC.db.foodBuffIDs = {}
 
 -------------------------------------------------------------------------------
 --- Flasks
 -------------------------------------------------------------------------------
 
-RCC.db.tableFlask_headers = { 0, 15, 22, 26, 70 }
-RCC.db.tableFlask = {
+RCC.db.flaskBuffIDs_headers = { 0, 15, 22, 26, 70 }
+RCC.db.flaskBuffIDs = {
     -- Stamina
     [251838]=15, -- 8.0.1: Flask of the Vast Horizon
     [298839]=22, -- 8.2.0: Greater Flask of the Vast Horizon
@@ -151,23 +151,23 @@ RCC.db.tableFlask = {
 }
 
 -- Item IDS for TWW Flasks
--- Spell IDS from tableFlask
+-- Spell IDS from flaskBuffIDs
 --  [432021]=70, [432473]=70, [431971]=70, [431972]=70, [431974]=70, [431973]=70,
 -- TODO: REFACTOR TO WORK WITH MIDNIGHT
-RCC.db.tableQualityFlasks = {
--- local tww_flask_item_ids = {
-    -212741,-212740,-212739, -- Fleeting Flask of Alchemical Chaos
-    -212747,-212746,-212745, -- Fleeting Flask of Saving Graces
-    -212728,-212727,-212725, -- Fleeting Flask of Tempered Aggression
-    -212731,-212730,-212729, -- Fleeting Flask of Tempered Swiftness
-    -212738,-212736,-212735, -- Fleeting Flask of Tempered Mastery
-    -212734,-212733,-212732, -- Fleeting Flask of Tempered Versatility
-     212283, 212282, 212281, -- Flask of Alchemical Chaos
-     212301, 212300, 212299, -- Flask of Saving Graces
-     212271, 212270, 212269, -- Flask of Tempered Aggression
-     212274, 212273, 212272, -- Flask of Tempered Swiftness
-     212280, 212279, 212278, -- Flask of Tempered Mastery
-     212277, 212276, 212275, -- Flask of Tempered Versatility
+-- Indicate Fleeting by making it negative (-xyz) NEVERMIND OUT OF DATE
+RCC.db.flaskItemIDs = {
+    212741, 212740, 212739, -- 11.0.0: Fleeting Flask of Alchemical Chaos
+    212747, 212746, 212745, -- 11.0.0: Fleeting Flask of Saving Graces
+    212728, 212727, 212725, -- 11.0.0: Fleeting Flask of Tempered Aggression
+    212731, 212730, 212729, -- 11.0.0: Fleeting Flask of Tempered Swiftness
+    212738, 212736, 212735, -- 11.0.0: Fleeting Flask of Tempered Mastery
+    212734, 212733, 212732, -- 11.0.0: Fleeting Flask of Tempered Versatility
+    212283, 212282, 212281, -- 11.0.0: Flask of Alchemical Chaos
+    212301, 212300, 212299, -- 11.0.0: Flask of Saving Graces
+    212271, 212270, 212269, -- 11.0.0: Flask of Tempered Aggression
+    212274, 212273, 212272, -- 11.0.0: Flask of Tempered Swiftness
+    212280, 212279, 212278, -- 11.0.0: Flask of Tempered Mastery
+    212277, 212276, 212275, -- 11.0.0: Flask of Tempered Versatility
 }
 
 -------------------------------------------------------------------------------
@@ -669,7 +669,7 @@ end
 -------------------------------------------------------------------------------
 
 -- Size of the icons in the frame
-local consumables_size = 44
+local consumables_size = 48
 
 RCC.consumables = CreateFrame("Frame", "MRTConsumables" ,ReadyCheckListenerFrame)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
@@ -718,6 +718,9 @@ local i_hs = 6
 local i_of_oil = 7
 local i_class = 8
 
+local FONT = "Interface\\AddOns\\ReadyCheckConsumeables\\media\\fonts\\PTSansNarrow-Bold.ttf"
+-- Spelling Fail! ReadyCheckConsumables NOT ReadyCheckConsumeables
+
 for i = 1, 8 do
     local button = CreateFrame("Frame", nil, RCC.consumables)
     RCC.consumables.buttons[i] = button
@@ -738,11 +741,11 @@ for i = 1, 8 do
 
     button.timeleft = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     button.timeleft:SetPoint("BOTTOM", button, "TOP", 0, 1)
-    button.timeleft:SetFont(button.timeleft:GetFont(), 8, "OUTLINE")
+    button.timeleft:SetFont(FONT, 12, "OUTLINE")
 
     button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-    button.count:SetFont(button.timeleft:GetFont(), 10, "OUTLINE")
+    button.count:SetFont(FONT, 14, "OUTLINE")
 
     if i == i_flask or i == i_kit or i == i_mh_oil or i == i_rune or i == i_of_oil or i == i_class then
         button.click = CreateFrame("Button", nil, button, "SecureActionButtonTemplate")
@@ -881,17 +884,12 @@ function RCC.consumables:Update()
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
         if not auraData then
             break
-        elseif RCC.db.tableFood[auraData.spellId] or auraData.icon == food_icon_id then
+        elseif RCC.db.foodBuffIDs[auraData.spellId] or auraData.icon == food_icon_id then
             self.buttons.food.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
             self.buttons.food.texture:SetDesaturated(false)
             self.buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES, ceil((auraData.expirationTime-now)/60))
             isFood = true
-        -- elseif auraData.icon == food_icon_id and not isFood then
-        --     -- This will never be reached? Above checks for auradata.icon
-        --     self.buttons.food.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        --     self.buttons.food.texture:SetDesaturated(false)
-        --     self.buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES, ceil((auraData.expirationTime-now)/60))
-        elseif RCC.db.tableFlask[auraData.spellId] then
+        elseif RCC.db.flaskBuffIDs[auraData.spellId] then
             self.buttons.flask.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
             self.buttons.flask.texture:SetDesaturated(false)
             self.buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES, ceil((auraData.expirationTime-now)/60))
@@ -915,6 +913,8 @@ function RCC.consumables:Update()
         end
     end
 
+    ---------------------------------------------------------------------------
+    --- Start Health Stone Handling
     local hsCount = GetItemCount(healthstone_item_id, false, true) -- Healthstone
     local hsLockCount = GetItemCount(224464, false, true) -- Demonic Healthstone
 
@@ -939,51 +939,29 @@ function RCC.consumables:Update()
     else
         self.buttons.hs.count:SetText("0")
     end
+    --- END Health Stone Handling
 
-
-
+    ---------------------------------------------------------------------------
+    --- Start Flask Handling
     local flask_count = 0
-    local fleeting_flask_count = 0
-    local flaskItemID
+    local flask_item_id
 
-    print("The Current expansion is version: " .. CURRENT_XPAC .. ",  which is: " .. THE_WAR_WITHIN)
-    print(CURRENT_XPAC == THE_WAR_WITHIN)
-    if (CURRENT_XPAC == THE_WAR_WITHIN) then
-        print("We are inside the war within!")
-        for flask_i = 1, #RCC.db.tableQualityFlasks do
-            local flask_item_id = RCC.db.tableQualityFlasks[flask_i]
-            local is_fleeting = flask_item_id < 0
+    for flask_index = 1, #RCC.db.flaskItemIDs do
+        local fid = RCC.db.flaskItemIDs[flask_index]
 
-            if is_fleeting then
-                flask_item_id = -flask_item_id
-            end
+        local count = GetItemCount(fid, false, false)
 
-            local flc = GetItemCount(flask_item_id, false, false)
+        if count and count > 0 then
+            flask_item_id = fid
+            flask_count = count
 
-            print("flask_id: " .. flask_item_id .. ", flask_quantity: " .. flc)
-
-            if flc and flc > 0 then
-                flaskItemID = flask_item_id
-
-                if is_fleeting then
-                    fleeting_flask_count = flc
-                else
-                    flask_count = flc
-                end
-
-                break
-            end
+            break
         end
-    elseif (CURRENT_XPAC == SHADOWLANDS) then
-        print(" We are in shadowlands!")
-        flask_count = GetItemCount(171276, false, false) -- Spectral Flask of Power
-        fleeting_flask_count = GetItemCount(171280, false, false) -- Eternal Flask
-        flaskItemID = ((fleeting_flask_count and fleeting_flask_count > 0) and 171280 or 171276)
     end
 
-    if not isFlask and ((flask_count and flask_count > 0) or (fleeting_flask_count and fleeting_flask_count > 0)) then
+    if not isFlask and (flask_count and flask_count > 0) then
         if not InCombatLockdown() then
-            local itemID = flaskItemID
+            local itemID = flask_item_id
             local itemName = GetItemInfo(itemID)
 
             if itemName then
@@ -995,7 +973,7 @@ function RCC.consumables:Update()
                 if texture then
                     self.buttons.flask.texture:SetTexture(texture)
                 end
-                else
+            else
                 self.buttons.flask.click:Hide()
                 self.buttons.flask.click.IsON = false
             end
@@ -1007,17 +985,20 @@ function RCC.consumables:Update()
         end
     end
 
-    self.buttons.flask.count:SetFormattedText("%s%s", flask_count > 0 and flask_count or "", fleeting_flask_count > 0 and "+|cff00ff00"..fleeting_flask_count or "")
+    -- Show stacks on flask
+    self.buttons.flask.count:SetFormattedText("%s", flask_count > 0 and flask_count or "")
 
     if LCG then
-        if not isFlask and ((flask_count and flask_count > 0) or (fleeting_flask_count and fleeting_flask_count > 0)) then
+        if not isFlask and (flask_count and flask_count > 0) then
             LCG.PixelGlow_Start(self.buttons.flask)
         else
             LCG.PixelGlow_Stop(self.buttons.flask)
         end
     end
+    --- End Flask Handling
 
-    -- Armor Kits
+    ---------------------------------------------------------------------------
+    --- Start Armor Kits Handling
     -- Only existed in shadowlands so far so only work if we are in shadowlands
     --
     -- KitCheck not implemented, if kits exist in the future need to re-work
@@ -1064,7 +1045,10 @@ function RCC.consumables:Update()
     --         end
     --     end
     -- end
+    --- END Armor Kit Handling
 
+    ---------------------------------------------------------------------------
+    --- Start Weapon Enchant Handling
     lastWeaponEnchantItem = lastWeaponEnchantItem
 
     local offhandCanBeEnchanted
@@ -1199,9 +1183,10 @@ function RCC.consumables:Update()
             LCG.PixelGlow_Stop(self.buttons.oiloh)
         end
     end
+    -- END Weapon Enchant Handling
 
-
-    -- Handle Runes
+    ---------------------------------------------------------------------------
+    --- Start Rune Handling
     rune_item_count = GetItemCount(rune_item_id, false, true)
     unlimited_rune_item_count = GetItemCount(unlimited_rune_item_id, false, true)
 
@@ -1253,6 +1238,7 @@ function RCC.consumables:Update()
             LCG.PixelGlow_Stop(self.buttons.rune)
         end
     end
+    --- End Rune Handling
 
 
     -- Check if player is an enhancement shaman
