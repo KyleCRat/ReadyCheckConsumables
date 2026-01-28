@@ -665,6 +665,7 @@ end
 
 -- Size of the icons in the frame
 local consumables_size = 48
+local FONT = "Interface\\AddOns\\ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-Bold.ttf"
 
 RCC.consumables = CreateFrame("Frame", "RCConsumables", ReadyCheckListenerFrame)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
@@ -676,6 +677,52 @@ RCC.consumables.rlpointer = CreateFrame("Frame", nil, UIParent)
 RCC.consumables.rlpointer:SetSize(1, 1)
 RCC.consumables.rlpointer:SetPoint("CENTER")
 RCC.consumables.rlpointer:Hide()
+
+RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables, "SecureHandlerClickTemplate")
+RCC.consumables.close:SetSize(0, 20)
+RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 0, -2)
+RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", 0, -2)
+RCC.consumables.close:Hide()
+
+-- Dark background
+RCC.consumables.close.bg = RCC.consumables.close:CreateTexture(nil, "BACKGROUND")
+RCC.consumables.close.bg:SetAllPoints()
+RCC.consumables.close.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+
+-- Border
+RCC.consumables.close.border = RCC.consumables.close:CreateTexture(nil, "BORDER")
+RCC.consumables.close.border:SetPoint("TOPLEFT", -1, 1)
+RCC.consumables.close.border:SetPoint("BOTTOMRIGHT", 1, -1)
+RCC.consumables.close.border:SetColorTexture(0, 0, 0, 1)
+
+-- Highlight
+RCC.consumables.close.highlight = RCC.consumables.close:CreateTexture(nil, "ARTWORK")
+RCC.consumables.close.highlight:SetAllPoints(RCC.consumables.close.bg)
+RCC.consumables.close.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
+RCC.consumables.close.highlight:SetBlendMode("ADD")
+RCC.consumables.close.highlight:Hide() -- Hide by default
+
+-- White text with custom font
+RCC.consumables.close.text = RCC.consumables.close:CreateFontString(nil, "OVERLAY")
+RCC.consumables.close.text:SetPoint("CENTER")
+RCC.consumables.close.text:SetFont(FONT, 12, "OUTLINE")
+RCC.consumables.close.text:SetText(CLOSE or 'x')
+RCC.consumables.close.text:SetTextColor(1, 1, 1)
+
+-- Add hover functionality
+RCC.consumables.close:SetScript("OnEnter", function(self)
+    self.highlight:Show()
+end)
+RCC.consumables.close:SetScript("OnLeave", function(self)
+    self.highlight:Hide()
+end)
+
+-- Secure click handler for combat
+RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
+RCC.consumables.close:SetFrameRef("rlpointer", RCC.consumables.rlpointer)
+RCC.consumables.close:SetAttribute("_onclick", [[
+    self:GetFrameRef("rlpointer"):Hide()
+]])
 
 local function ButtonOnEnter(self)
     self:GetParent():SetAlpha(.7)
@@ -712,8 +759,6 @@ local i_rune = 5
 local i_hs = 6
 local i_of_oil = 7
 local i_class = 8
-
-local FONT = "Interface\\AddOns\\ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-Bold.ttf"
 
 for i = 1, 8 do
     local button = CreateFrame("Frame", nil, RCC.consumables)
@@ -1293,7 +1338,7 @@ function RCC.consumables:Repos(isRL)
         self:SetPoint("CENTER",self.rlpointer,"CENTER",0,0)
 
         self.rlpointer:Show()
-        -- self.close:Show()
+        self.close:Show()
 
         self.isRLpos = true
     elseif self.isRLpos then
@@ -1335,7 +1380,7 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
             self.cancelDelay:Cancel()
         end
 
-        self.cancelDelay = C_Timer.NewTimer(time_to_hide or 40, function()
+        self.cancelDelay = C_Timer.NewTimer(time_to_hide or 12, function()
             self:UnregisterEvent("UNIT_AURA")
             self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
 
@@ -1349,7 +1394,7 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         else
             self:Repos()
         end
-    elseif event == "READY_CHECK_FINISHED" then
+    elseif event == "READY_CHECK_FINISHED" or event == "PLAYER_REGEN_DISABLED" then
         RCC.consumables:OnHide()
 
         if self.isRLpos and not InCombatLockdown() then
@@ -1370,12 +1415,16 @@ end)
 
 RCC.consumables:SetScript("OnHide", function(self)
     RCC.consumables:OnHide()
+
+    if not InCombatLockdown() and self.close:IsShown() then
+        self.close:Hide()
+    end
 end)
 
 RCC.consumables.Test = function(isRL)
-    RCC.consumables:SetParent(UIParent)
-    RCC.consumables:ClearAllPoints()
-    RCC.consumables:SetPoint("CENTER")
+    -- RCC.consumables:SetParent(UIParent)
+    -- RCC.consumables:ClearAllPoints()
+    -- RCC.consumables:SetPoint("CENTER")
     RCC.consumables:GetScript("OnEvent")( RCC.consumables, "READY_CHECK", isRL and UnitName 'player' or "" )
 end
 
@@ -1385,6 +1434,7 @@ end
 
 RCC.consumables:RegisterEvent("READY_CHECK")
 RCC.consumables:RegisterEvent("READY_CHECK_FINISHED")
+RCC.consumables:RegisterEvent("PLAYER_REGEN_DISABLED")
 RCC.consumables:Show()
 
 -- /run RCC.consumables.Test(true)
