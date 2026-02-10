@@ -14,5 +14,6 @@ data/RaidBuffs.lua
 data/HealingItems.lua
 data/WeaponEnchants.lua
 data/Settings.lua
+ConsumablesFrame.lua
 ReadyCheckConsumables.lua
 ChatReport.lua

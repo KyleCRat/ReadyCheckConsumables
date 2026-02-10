@@ -50,37 +50,36 @@ RCC.db.weapon_enchant_icon_id  = 463543
 RCC.db.food_icon_id            = 136000
 RCC.db.flask_icon_id           = 3528447
 RCC.db.armor_kit_icon_id       = 3566840
-RCC.db.class_icon_id           = 136051
 RCC.db.healthstone_item_id     = 5512
 RCC.db.healthstone_icon_id     = 538745
 
 for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
-    local xs = RCC.settings[xpac_id]
-    if xs then
-        if xs.rune then
-            RCC.db.rune_item_id = xs.rune.item_id
-            RCC.db.rune_icon_id = xs.rune.icon_id
+    local xpac = RCC.settings[xpac_id]
+    if xpac then
+        if xpac.rune then
+            RCC.db.rune_item_id = xpac.rune.item_id
+            RCC.db.rune_icon_id = xpac.rune.icon_id
         end
 
-        if xs.unlimited_rune then
-            RCC.db.unlimited_rune_item_id = xs.unlimited_rune.item_id
-            RCC.db.unlimited_rune_icon_id = xs.unlimited_rune.icon_id
+        if xpac.unlimited_rune then
+            RCC.db.unlimited_rune_item_id = xpac.unlimited_rune.item_id
+            RCC.db.unlimited_rune_icon_id = xpac.unlimited_rune.icon_id
         end
 
-        if xs.food and xs.food.icon_id then
-            RCC.db.food_icon_id = xs.food.icon_id
+        if xpac.food and xpac.food.icon_id then
+            RCC.db.food_icon_id = xpac.food.icon_id
         end
 
-        if xs.weapon_enchants and xs.weapon_enchants.icon_id then
-            RCC.db.weapon_enchant_icon_id = xs.weapon_enchants.icon_id
+        if xpac.weapon_enchants and xpac.weapon_enchants.icon_id then
+            RCC.db.weapon_enchant_icon_id = xpac.weapon_enchants.icon_id
         end
 
-        if xs.armor_kit and xs.armor_kit.icon_id then
-            RCC.db.armor_kit_icon_id = xs.armor_kit.icon_id
+        if xpac.armor_kit and xpac.armor_kit.icon_id then
+            RCC.db.armor_kit_icon_id = xpac.armor_kit.icon_id
         end
 
-        if xs.flask and xs.flask.icon_id then
-            RCC.db.flask_icon_id = xs.flask.icon_id
+        if xpac.flask and xpac.flask.icon_id then
+            RCC.db.flask_icon_id = xpac.flask.icon_id
         end
     end
 end
