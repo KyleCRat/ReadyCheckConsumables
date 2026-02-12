@@ -40,37 +40,28 @@ RCC.consumables.rlpointer:SetPoint("CENTER")
 RCC.consumables.rlpointer:Hide()
 
 --- Close button
-RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables,
-                                    "SecureHandlerClickTemplate")
+RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables, "SecureHandlerClickTemplate")
 RCC.consumables.close:SetSize(0, 20)
-RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables,
-                               "BOTTOMLEFT", 0, -2)
-RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables,
-                               "BOTTOMRIGHT", 0, -2)
+RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 0, -2)
+RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", 0, -2)
 RCC.consumables.close:Hide()
 
-RCC.consumables.close.bg =
-    RCC.consumables.close:CreateTexture(nil, "BACKGROUND")
+RCC.consumables.close.bg = RCC.consumables.close:CreateTexture(nil, "BACKGROUND")
 RCC.consumables.close.bg:SetAllPoints()
 RCC.consumables.close.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
 
-RCC.consumables.close.border =
-    RCC.consumables.close:CreateTexture(nil, "BORDER")
+RCC.consumables.close.border = RCC.consumables.close:CreateTexture(nil, "BORDER")
 RCC.consumables.close.border:SetPoint("TOPLEFT", -1, 1)
 RCC.consumables.close.border:SetPoint("BOTTOMRIGHT", 1, -1)
 RCC.consumables.close.border:SetColorTexture(0, 0, 0, 1)
 
-RCC.consumables.close.highlight =
-    RCC.consumables.close:CreateTexture(nil, "ARTWORK")
-RCC.consumables.close.highlight:SetAllPoints(
-    RCC.consumables.close.bg
-)
+RCC.consumables.close.highlight = RCC.consumables.close:CreateTexture(nil, "ARTWORK")
+RCC.consumables.close.highlight:SetAllPoints(RCC.consumables.close.bg)
 RCC.consumables.close.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
 RCC.consumables.close.highlight:SetBlendMode("ADD")
 RCC.consumables.close.highlight:Hide()
 
-RCC.consumables.close.text =
-    RCC.consumables.close:CreateFontString(nil, "OVERLAY")
+RCC.consumables.close.text = RCC.consumables.close:CreateFontString(nil, "OVERLAY")
 RCC.consumables.close.text:SetPoint("CENTER")
 RCC.consumables.close.text:SetFont(FONT, 12, "OUTLINE")
 RCC.consumables.close.text:SetText(CLOSE or "x")
@@ -107,8 +98,8 @@ RCC.consumables.state = CreateFrame(
     "Frame", nil, nil, "SecureHandlerStateTemplate"
 )
 RCC.consumables.state:SetAttribute("_onstate-combat", [=[
-    for i = 2, 6 do
-        if i ~= 5 then
+    for i = 2, 9 do
+        if i ~= 5 and i ~= 7 and i ~= 8 then
             if self:GetFrameRef("Button"..i) then
                 if newstate == "hide" then
                     self:GetFrameRef("Button"..i):Hide()
@@ -128,25 +119,30 @@ RegisterStateDriver(
 )
 
 -------------------------------------------------------------------------------
---- Button creation (6 buttons)
+--- Button creation (9 buttons)
 --- 1=food  2=flask  3=mh_oil  4=rune  5=hs  6=oh_oil
+--- 7=dmg_pot  8=heal_pot  9=vantus
 -------------------------------------------------------------------------------
 
-local i_food   = 1
-local i_flask  = 2
-local i_mh_oil = 3
-local i_rune   = 4
-local i_hs     = 5
-local i_oh_oil = 6
+local i_food     = 1
+local i_flask    = 2
+local i_mh_oil   = 3
+local i_rune     = 4
+local i_hs       = 5
+local i_oh_oil   = 6
+local i_dmg_pot  = 7
+local i_heal_pot = 8
+local i_vantus   = 9
 
 local CLICKABLE_BUTTONS = {
     [i_flask]  = true,
     [i_mh_oil] = true,
     [i_rune]   = true,
     [i_oh_oil] = true,
+    [i_vantus] = true,
 }
 
-for i = 1, 6 do
+for i = 1, 9 do
     local button = CreateFrame("Frame", nil, RCC.consumables)
     RCC.consumables.buttons[i] = button
     button:SetSize(consumables_size, consumables_size)
@@ -229,6 +225,16 @@ for i = 1, 6 do
         button.texture:SetTexture(RCC.db.weapon_enchant_icon_id)
         RCC.consumables.buttons.oiloh = button
         button:Hide()
+    elseif i == i_dmg_pot then
+        button.texture:SetTexture(RCC.db.potion_icon_id)
+        RCC.consumables.buttons.dmgpot = button
+    elseif i == i_heal_pot then
+        button.texture:SetTexture(RCC.db.healing_potion_icon_id)
+        RCC.consumables.buttons.healpot = button
+    elseif i == i_vantus then
+        button.texture:SetTexture(RCC.db.vantus_icon_id)
+        RCC.consumables.buttons.vantus = button
+        button:Hide()
     end
 end
 
@@ -257,7 +263,7 @@ local function updateElvUIParent(self)
 end
 
 local function scanPlayerAuras(buttons, now)
-    local isFlask, isRune
+    local isFlask, isRune, isVantus
 
     for i = 1, 60 do
         local auraData = C_UnitAuras.GetAuraDataByIndex(
@@ -303,10 +309,13 @@ local function scanPlayerAuras(buttons, now)
                 ceil((expiry - now) / 60)
             )
             isRune = true
+        elseif RCC.db.vantusBuffIDs[sid] then
+            local name = auraData.name or ""
+            isVantus = name:gsub("^Vantus Rune: ", "")
         end
     end
 
-    return isFlask, isRune
+    return isFlask, isRune, isVantus
 end
 
 local function updateHealthstones(buttons)
@@ -412,8 +421,7 @@ local function updateWeaponEnchants(buttons, LCG)
     local offhandItemID = GetInventoryItemID("player", 17)
 
     if offhandItemID then
-        local _, _, _, _, _, itemClassID =
-            GetItemInfoInstant(offhandItemID)
+        local itemClassID = select(6, GetItemInfoInstant(offhandItemID))
 
         if itemClassID == 2 then
             offhandCanBeEnchanted = true
@@ -424,19 +432,13 @@ local function updateWeaponEnchants(buttons, LCG)
         if offhandCanBeEnchanted then
             buttons.oiloh:Show()
             buttons.oiloh:ClearAllPoints()
-            buttons.oiloh:SetPoint(
-                "LEFT", buttons.oil, "RIGHT", 0, 0
-            )
+            buttons.oiloh:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
             buttons.rune:ClearAllPoints()
-            buttons.rune:SetPoint(
-                "LEFT", buttons.oiloh, "RIGHT", 0, 0
-            )
+            buttons.rune:SetPoint("LEFT", buttons.oiloh, "RIGHT", 0, 0)
         else
             buttons.oiloh:Hide()
             buttons.rune:ClearAllPoints()
-            buttons.rune:SetPoint(
-                "LEFT", buttons.oil, "RIGHT", 0, 0
-            )
+            buttons.rune:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
         end
     end
 
@@ -457,8 +459,7 @@ local function updateWeaponEnchants(buttons, LCG)
         )
 
         if RCC.db.wenchants[mainHandEnchantID or 0] then
-            lastWeaponEnchantItem =
-                RCC.db.wenchants[mainHandEnchantID].item
+            lastWeaponEnchantItem = RCC.db.wenchants[mainHandEnchantID].item
         end
     end
 
@@ -483,6 +484,30 @@ local function updateWeaponEnchants(buttons, LCG)
     end
 
     local oilItemID = lastWeaponEnchantItem
+
+    if not oilItemID then
+        local foundItem
+        for itemID, data in pairs(RCC.db.wenchants_items) do
+            -- Negative itemIDs are spells, not items
+            if itemID > 0 and GetItemCount(itemID, false, true) > 0 then
+                if foundItem then
+                    foundItem = nil
+
+                    break
+                end
+
+                foundItem = itemID
+            end
+        end
+
+        if foundItem then
+            oilItemID = foundItem
+            local wenchData = RCC.db.wenchants_items[foundItem]
+
+            buttons.oil.texture:SetTexture(wenchData.icon)
+            buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
+        end
+    end
 
     if not oilItemID then
         if LCG then
@@ -682,6 +707,159 @@ local function updateRunes(buttons, isRune, LCG)
     end
 end
 
+local function updateDamagePotions(buttons)
+    local totalCount = 0
+
+    for i = 1, #RCC.db.potionItemIDs do
+        local count = GetItemCount(
+            RCC.db.potionItemIDs[i], false, true
+        )
+
+        if count and count > 0 then
+            totalCount = totalCount + count
+        end
+    end
+
+    if totalCount > 0 then
+        buttons.dmgpot.count:SetFormattedText(
+            "%d", totalCount
+        )
+        buttons.dmgpot.statustexture:SetTexture(
+            "Interface\\RaidFrame\\ReadyCheck-Ready"
+        )
+        buttons.dmgpot.texture:SetDesaturated(false)
+    else
+        buttons.dmgpot.count:SetText("0")
+    end
+end
+
+local function updateHealingPotions(buttons)
+    local totalCount = 0
+
+    for i = 1, #RCC.db.healingPotionItemIDs do
+        local count = GetItemCount(
+            RCC.db.healingPotionItemIDs[i], false, true
+        )
+
+        if count and count > 0 then
+            totalCount = totalCount + count
+        end
+    end
+
+    if totalCount > 0 then
+        buttons.healpot.count:SetFormattedText(
+            "%d", totalCount
+        )
+        buttons.healpot.statustexture:SetTexture(
+            "Interface\\RaidFrame\\ReadyCheck-Ready"
+        )
+        buttons.healpot.texture:SetDesaturated(false)
+    else
+        buttons.healpot.count:SetText("0")
+    end
+end
+
+local GetInstanceInfo = GetInstanceInfo
+
+local function getVantusForCurrentRaid()
+    local instanceID = select(8, GetInstanceInfo())
+    print("RCC: InstanceID: " .. instanceID)
+    local vantusRuneIDs = RCC.db.vantusItemsByRaid[instanceID]
+
+    -- db.vantusItemsByRaid does not have instance ID, return nils
+    if not vantusRuneIDs then
+        return nil, nil, 0
+    end
+
+    -- Return the first rune we have in our inventory and the count
+    for i = 1, #vantusRuneIDs do
+        local count = GetItemCount(vantusRuneIDs[i], false, true)
+
+        if count and count > 0 then
+            return vantusRuneIDs, vantusRuneIDs[i], count
+        end
+    end
+
+    -- Return the first rune in the list so we can use the icon
+    return vantusRuneIDs, vantusRuneIDs[1], 0
+end
+
+local function updateVantusRune(buttons, isVantus)
+    local vantusRuneIDs, itemID, count = getVantusForCurrentRaid()
+    local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+
+    -- db.vantusItemsByRaid does not have a entry for instance ID, hide
+    if not vantusRuneIDs then
+        if not InCombatLockdown() then
+            buttons.vantus:Hide()
+            buttons.vantus.click:Hide()
+            buttons.vantus.click.IsON = false
+        end
+
+        return
+    end
+
+    if itemID then
+        local icon_texture_id = select(10, C_Item.GetItemInfo(itemID))
+        buttons.vantus.texture:SetTexture(icon_texture_id)
+    end
+
+    if not InCombatLockdown() then
+        buttons.vantus:Show()
+    end
+
+    if isVantus then
+        buttons.vantus.timeleft:SetText(isVantus)
+        buttons.vantus.statustexture:SetTexture(READY)
+        buttons.vantus.texture:SetDesaturated(false)
+
+        if count > 0 then
+            buttons.vantus.count:SetFormattedText(
+                "%d", count
+            )
+        end
+
+        if not InCombatLockdown() then
+            buttons.vantus.click:Hide()
+            buttons.vantus.click.IsON = false
+        end
+
+        return
+    end
+
+    if itemID and count > 0 then
+        buttons.vantus.count:SetFormattedText("%d", count)
+
+        if not InCombatLockdown() then
+            local itemName = GetItemInfo(itemID)
+
+            if itemName then
+                buttons.vantus.click:SetAttribute(
+                    "macrotext1",
+                    format(
+                        "/stopmacro [combat]\n/use %s",
+                        itemName
+                    )
+                )
+                buttons.vantus.click:Show()
+                buttons.vantus.click.IsON = true
+            else
+                buttons.vantus.click:Hide()
+                buttons.vantus.click.IsON = false
+            end
+        end
+
+        return
+    end
+
+    buttons.vantus.count:SetText("0")
+
+    if not InCombatLockdown() then
+        buttons.vantus.click:Hide()
+        buttons.vantus.click.IsON = false
+    end
+end
+
 local function countVisibleButtons(buttons)
     local count = 0
 
@@ -801,13 +979,46 @@ function RCC.consumables:Update()
     local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
-    local isFlask, isRune = scanPlayerAuras(buttons, now)
+    local isFlask, isRune, isVantus =
+        scanPlayerAuras(buttons, now)
     updateHealthstones(buttons)
     updateFlasks(buttons, isFlask, LCG)
     updateWeaponEnchants(buttons, LCG)
     updateRunes(buttons, isRune, LCG)
+    updateDamagePotions(buttons)
+    updateHealingPotions(buttons)
+    updateVantusRune(buttons, isVantus)
 
     if not InCombatLockdown() then
+        -- Chain potion buttons after the last dynamic button.
+        -- Rune is always the last in the oil/oiloh/rune chain.
+        local anchor = buttons.rune
+
+        if isWarlockInRaid then
+            buttons.hs:ClearAllPoints()
+            buttons.hs:SetPoint(
+                "LEFT", anchor, "RIGHT", 0, 0
+            )
+            anchor = buttons.hs
+        end
+
+        buttons.dmgpot:ClearAllPoints()
+        buttons.dmgpot:SetPoint(
+            "LEFT", anchor, "RIGHT", 0, 0
+        )
+
+        buttons.healpot:ClearAllPoints()
+        buttons.healpot:SetPoint(
+            "LEFT", buttons.dmgpot, "RIGHT", 0, 0
+        )
+
+        if buttons.vantus:IsShown() then
+            buttons.vantus:ClearAllPoints()
+            buttons.vantus:SetPoint(
+                "LEFT", buttons.healpot, "RIGHT", 0, 0
+            )
+        end
+
         self:SetWidth(
             consumables_size * countVisibleButtons(buttons)
         )
