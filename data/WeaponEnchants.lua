@@ -8,14 +8,68 @@ RCC.db = RCC.db or {}
 -------------------------------------------------------------------------------
 
 RCC.db.wenchants = {
-    -- 9.0.1 - Shadowlands
-    [6190] = { ench=6190, item=171286, icon=463544  }, -- Embalmer's Oil
-    [6188] = { ench=6188, item=171285, icon=463543  }, -- Shadowcore Oil
-    [6200] = { ench=6200, item=171437, icon=3528422 }, -- Shaded Sharpening Stone
-    [6198] = { ench=6198, item=171436, icon=3528424 }, -- Porous Sharpening Stone
-    [6201] = { ench=6201, item=171439, icon=3528423 }, -- Shaded Weightstone
-    [6199] = { ench=6199, item=171438, icon=3528425 }, -- Porous Weightstone
+    -- Shaman Enchants (negative item = spell-based, not item-based)
+    [5401] = { ench=5401, item=-33757,  icon=462329, iconoh=135814 }, -- Windfury Weapon
+    [5400] = { ench=5400, item=-318038, icon=135814 },                -- Flametongue Weapon
 
+    ----------------------------------------------------------------------------
+    -- 12.0.0 - Midnight: Weightstone
+    [7908] = { ench=7908, item=237369, icon=7548939 }, -- Refulgent Weightstone
+
+    -- 12.0.0 - Midnight: Whetstone
+    [7905] = { ench=7905, item=237371, icon=7548942 }, -- Refulgent Whetstone
+
+    -- 12.0.0 - Midnight: Oils
+    [8052] = { ench=8052, item=243734, icon=7548987 }, -- Thalassian Phoenix Oil
+    [8054] = { ench=8054, item=243736, icon=7548985 }, -- Oil of Dawn
+    [8056] = { ench=8056, item=243738, icon=7548986 }, -- Smuggler's Enchanted Edge
+
+    ----------------------------------------------------------------------------
+    -- 11.0.0 - The War Within: Spellthreads
+    [7537] = { ench=7537, item=222890, icon=4549251, q=3 }, -- Weavercloth Spellthread
+    [7536] = { ench=7536, item=222889, icon=4549251, q=2 }, -- Weavercloth Spellthread
+    [7535] = { ench=7535, item=222888, icon=4549251, q=1 }, -- Weavercloth Spellthread
+    [7534] = { ench=7534, item=222893, icon=4549251, q=3 }, -- Sunset Spellthread
+    [7533] = { ench=7533, item=222892, icon=4549251, q=2 }, -- Sunset Spellthread
+    [7532] = { ench=7532, item=222891, icon=4549251, q=1 }, -- Sunset Spellthread
+    [7531] = { ench=7531, item=222896, icon=4549251, q=3 }, -- Daybreak Spellthread
+    [7530] = { ench=7530, item=222895, icon=4549251, q=2 }, -- Daybreak Spellthread
+    [7529] = { ench=7529, item=222894, icon=4549251, q=1 }, -- Daybreak Spellthread
+
+    -- 11.0.0 - The War Within: Whetstones & Weightstones
+    [7545] = { ench=7545, item=222504, icon=3622195, q=3 }, -- Ironclaw Whetstone
+    [7544] = { ench=7544, item=222503, icon=3622195, q=2 }, -- Ironclaw Whetstone
+    [7543] = { ench=7543, item=222502, icon=3622195, q=1 }, -- Ironclaw Whetstone
+    [7551] = { ench=7551, item=222510, icon=3622199, q=3 }, -- Ironclaw Weightstone
+    [7550] = { ench=7550, item=222509, icon=3622199, q=2 }, -- Ironclaw Weightstone
+    [7549] = { ench=7549, item=222508, icon=3622199, q=1 }, -- Ironclaw Weightstone
+
+    -- 11.0.0 - The War Within: Oils
+    [7498] = { ench=7498, item=224113, icon=609897, q=3 }, -- Oil of Deep Toxins
+    [7497] = { ench=7497, item=224112, icon=609897, q=2 }, -- Oil of Deep Toxins
+    [7496] = { ench=7496, item=224111, icon=609897, q=1 }, -- Oil of Deep Toxins
+    [7495] = { ench=7495, item=224107, icon=609892, q=3 }, -- Algari Mana Oil
+    [7494] = { ench=7494, item=224106, icon=609892, q=2 }, -- Algari Mana Oil
+    [7493] = { ench=7493, item=224105, icon=609892, q=1 }, -- Algari Mana Oil
+    [7502] = { ench=7502, item=224110, icon=609896, q=3 }, -- Oil of Beledar's Grace
+    [7501] = { ench=7501, item=224109, icon=609896, q=2 }, -- Oil of Beledar's Grace
+    [7500] = { ench=7500, item=224108, icon=609896, q=1 }, -- Oil of Beledar's Grace
+
+    -- 11.0.0 - The War Within: Armor Kits
+    [7601] = { ench=7601, item=219911, icon=5975854, q=3 }, -- Stormbound Armor Kit
+    [7600] = { ench=7600, item=219910, icon=5975854, q=2 }, -- Stormbound Armor Kit
+    [7599] = { ench=7599, item=219909, icon=5975854, q=1 }, -- Stormbound Armor Kit
+    [7598] = { ench=7598, item=219914, icon=5975933, q=3 }, -- Dual Layered Armor Kit
+    [7597] = { ench=7597, item=219913, icon=5975933, q=2 }, -- Dual Layered Armor Kit
+    [7596] = { ench=7596, item=219912, icon=5975933, q=1 }, -- Dual Layered Armor Kit
+    [7595] = { ench=7595, item=219908, icon=5975753, q=3 }, -- Defender's Armor Kit
+    [7594] = { ench=7594, item=219907, icon=5975753, q=2 }, -- Defender's Armor Kit
+    [7593] = { ench=7593, item=219906, icon=5975753, q=1 }, -- Defender's Armor Kit
+    [6830] = { ench=6830, item=204702, icon=5088845, q=3 }, -- Lambent Armor Kit
+    [6829] = { ench=6829, item=204701, icon=5088845, q=2 }, -- Lambent Armor Kit
+    [6828] = { ench=6828, item=204700, icon=5088845, q=1 }, -- Lambent Armor Kit
+
+    ----------------------------------------------------------------------------
     -- 10.0.0 - Dragonflight: Whetstones & Weightstones
     [6381] = { ench=6381, item=191940, icon=4622275, q=3 }, -- Primal Whetstone
     [6380] = { ench=6380, item=191939, icon=4622275, q=2 }, -- Primal Whetstone
@@ -90,53 +144,14 @@ RCC.db.wenchants = {
     -- 10.2.0 - Dragonflight
     [7052] = { ench=7052, item=210494, icon=1045108 }, -- Incandescent Essence
 
-    -- 11.0.0 - The War Within: Spellthreads
-    [7537] = { ench=7537, item=222890, icon=4549251, q=3 }, -- Weavercloth Spellthread
-    [7536] = { ench=7536, item=222889, icon=4549251, q=2 }, -- Weavercloth Spellthread
-    [7535] = { ench=7535, item=222888, icon=4549251, q=1 }, -- Weavercloth Spellthread
-    [7534] = { ench=7534, item=222893, icon=4549251, q=3 }, -- Sunset Spellthread
-    [7533] = { ench=7533, item=222892, icon=4549251, q=2 }, -- Sunset Spellthread
-    [7532] = { ench=7532, item=222891, icon=4549251, q=1 }, -- Sunset Spellthread
-    [7531] = { ench=7531, item=222896, icon=4549251, q=3 }, -- Daybreak Spellthread
-    [7530] = { ench=7530, item=222895, icon=4549251, q=2 }, -- Daybreak Spellthread
-    [7529] = { ench=7529, item=222894, icon=4549251, q=1 }, -- Daybreak Spellthread
-
-    -- 11.0.0 - The War Within: Whetstones & Weightstones
-    [7545] = { ench=7545, item=222504, icon=3622195, q=3 }, -- Ironclaw Whetstone
-    [7544] = { ench=7544, item=222503, icon=3622195, q=2 }, -- Ironclaw Whetstone
-    [7543] = { ench=7543, item=222502, icon=3622195, q=1 }, -- Ironclaw Whetstone
-    [7551] = { ench=7551, item=222510, icon=3622199, q=3 }, -- Ironclaw Weightstone
-    [7550] = { ench=7550, item=222509, icon=3622199, q=2 }, -- Ironclaw Weightstone
-    [7549] = { ench=7549, item=222508, icon=3622199, q=1 }, -- Ironclaw Weightstone
-
-    -- 11.0.0 - The War Within: Oils
-    [7498] = { ench=7498, item=224113, icon=609897, q=3 }, -- Oil of Deep Toxins
-    [7497] = { ench=7497, item=224112, icon=609897, q=2 }, -- Oil of Deep Toxins
-    [7496] = { ench=7496, item=224111, icon=609897, q=1 }, -- Oil of Deep Toxins
-    [7495] = { ench=7495, item=224107, icon=609892, q=3 }, -- Algari Mana Oil
-    [7494] = { ench=7494, item=224106, icon=609892, q=2 }, -- Algari Mana Oil
-    [7493] = { ench=7493, item=224105, icon=609892, q=1 }, -- Algari Mana Oil
-    [7502] = { ench=7502, item=224110, icon=609896, q=3 }, -- Oil of Beledar's Grace
-    [7501] = { ench=7501, item=224109, icon=609896, q=2 }, -- Oil of Beledar's Grace
-    [7500] = { ench=7500, item=224108, icon=609896, q=1 }, -- Oil of Beledar's Grace
-
-    -- 11.0.0 - The War Within: Armor Kits
-    [7601] = { ench=7601, item=219911, icon=5975854, q=3 }, -- Stormbound Armor Kit
-    [7600] = { ench=7600, item=219910, icon=5975854, q=2 }, -- Stormbound Armor Kit
-    [7599] = { ench=7599, item=219909, icon=5975854, q=1 }, -- Stormbound Armor Kit
-    [7598] = { ench=7598, item=219914, icon=5975933, q=3 }, -- Dual Layered Armor Kit
-    [7597] = { ench=7597, item=219913, icon=5975933, q=2 }, -- Dual Layered Armor Kit
-    [7596] = { ench=7596, item=219912, icon=5975933, q=1 }, -- Dual Layered Armor Kit
-    [7595] = { ench=7595, item=219908, icon=5975753, q=3 }, -- Defender's Armor Kit
-    [7594] = { ench=7594, item=219907, icon=5975753, q=2 }, -- Defender's Armor Kit
-    [7593] = { ench=7593, item=219906, icon=5975753, q=1 }, -- Defender's Armor Kit
-    [6830] = { ench=6830, item=204702, icon=5088845, q=3 }, -- Lambent Armor Kit
-    [6829] = { ench=6829, item=204701, icon=5088845, q=2 }, -- Lambent Armor Kit
-    [6828] = { ench=6828, item=204700, icon=5088845, q=1 }, -- Lambent Armor Kit
-
-    -- Shaman Enchants (negative item = spell-based, not item-based)
-    [5401] = { ench=5401, item=-33757,  icon=462329, iconoh=135814 }, -- Windfury Weapon
-    [5400] = { ench=5400, item=-318038, icon=135814 },                -- Flametongue Weapon
+    ----------------------------------------------------------------------------
+    -- 9.0.1 - Shadowlands
+    [6190] = { ench=6190, item=171286, icon=463544  }, -- Embalmer's Oil
+    [6188] = { ench=6188, item=171285, icon=463543  }, -- Shadowcore Oil
+    [6200] = { ench=6200, item=171437, icon=3528422 }, -- Shaded Sharpening Stone
+    [6198] = { ench=6198, item=171436, icon=3528424 }, -- Porous Sharpening Stone
+    [6201] = { ench=6201, item=171439, icon=3528423 }, -- Shaded Weightstone
+    [6199] = { ench=6199, item=171438, icon=3528425 }, -- Porous Weightstone
 }
 
 -------------------------------------------------------------------------------

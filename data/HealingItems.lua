@@ -18,4 +18,34 @@ RCC.db.hsSpells = {
     [431419]  = true, -- 11.0.0: Cavedweller's Delight
     [431416]  = true, -- 11.0.0: Algari Healing Potion
     [1238009] = true, -- 11.2.0: Invigorating Healing Potion
+    [1234768] = true, -- 12.0.0: Silvermoon Health Potion
+    [1263074] = true, -- 12.0.0: Amani Extract
+    [1236590] = true, -- 12.0.0: Refreshing Serum
+}
+
+-------------------------------------------------------------------------------
+--- Healing Potion Item IDs
+--- Used to check player inventory for healing potions.
+--- All items are summed for total count.
+-------------------------------------------------------------------------------
+
+RCC.db.healingPotionItemIDs = {
+    -- 12.0.0 - Full duration
+    241304, 241305, -- Silvermoon Health Potion
+    241298, 241299, -- Amani Extract
+    241306, 241307, -- Refreshing Serum
+
+    -- 11.2.0 - Fleeting
+    244849,                 -- Fleeting Invigorating Healing Potion
+
+    -- 11.2.0 - Full duration
+    244835, 244838, 244839, -- Invigorating Healing Potion
+
+    -- 11.0.0 - Fleeting
+    212948, 212949, 212950, -- Fleeting Cavedweller's Delight
+    212942, 212943, 212944, -- Fleeting Algari Healing Potion
+
+    -- 11.0.0 - Full duration
+    212242, 212243, 212244, -- Cavedweller's Delight
+    211878, 211879, 211880, -- Algari Healing Potion
 }

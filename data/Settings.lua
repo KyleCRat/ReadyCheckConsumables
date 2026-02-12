@@ -27,9 +27,15 @@ RCC.settings = {
         rune           = { item_id = 224572, icon_id = 4549102 },
         unlimited_rune = { item_id = 243191, icon_id = 3566863 },
         flask          = { icon_id = 3566840 },
+        vantus_rune    = { icon_id = 4638737 },
     },
     [MIDNIGHT] = {
-        flask = { icon_id = 7548902 },
+        rune           = { item_id = 259085, icon_id = 4549099 },
+        flask          = { icon_id = 7548902 },
+        vantus_rune    = { icon_id = 5976918 },
+        potion         = { icon_id = 7548911 },
+        healing_potion = { icon_id = 7548909 },
+        weapon_enchant = { icon_id = 7548985 },
     },
 }
 
@@ -52,9 +58,24 @@ RCC.db.flask_icon_id           = 3528447
 RCC.db.armor_kit_icon_id       = 3566840
 RCC.db.healthstone_item_id     = 5512
 RCC.db.healthstone_icon_id     = 538745
+RCC.db.potion_icon_id          = 650640   -- trade_alchemy_potiona4
+RCC.db.healing_potion_icon_id  = 5931169  -- inv_flask_red
+RCC.db.vantus_icon_id          = 4638737  -- inv_10_inscription_glyphs_color5
+
+local icon_keys = {
+    { setting = "food",           db_key = "food_icon_id" },
+    { setting = "flask",          db_key = "flask_icon_id" },
+    { setting = "potion",         db_key = "potion_icon_id" },
+    { setting = "healing_potion", db_key = "healing_potion_icon_id" },
+    { setting = "weapon_enchant", db_key = "weapon_enchant_icon_id" },
+    { setting = "armor_kit",      db_key = "armor_kit_icon_id" },
+    { setting = "healthstone",    db_key = "healthstone_icon_id" },
+    { setting = "vantus_rune",    db_key = "vantus_icon_id" },
+}
 
 for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
     local xpac = RCC.settings[xpac_id]
+
     if xpac then
         if xpac.rune then
             RCC.db.rune_item_id = xpac.rune.item_id
@@ -66,20 +87,12 @@ for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
             RCC.db.unlimited_rune_icon_id = xpac.unlimited_rune.icon_id
         end
 
-        if xpac.food and xpac.food.icon_id then
-            RCC.db.food_icon_id = xpac.food.icon_id
-        end
+        for _, key in ipairs(icon_keys) do
+            local entry = xpac[key.setting]
 
-        if xpac.weapon_enchants and xpac.weapon_enchants.icon_id then
-            RCC.db.weapon_enchant_icon_id = xpac.weapon_enchants.icon_id
-        end
-
-        if xpac.armor_kit and xpac.armor_kit.icon_id then
-            RCC.db.armor_kit_icon_id = xpac.armor_kit.icon_id
-        end
-
-        if xpac.flask and xpac.flask.icon_id then
-            RCC.db.flask_icon_id = xpac.flask.icon_id
+            if entry and entry.icon_id then
+                RCC.db[key.db_key] = entry.icon_id
+            end
         end
     end
 end
