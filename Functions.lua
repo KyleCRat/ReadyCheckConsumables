@@ -3,45 +3,45 @@ RCC.F = RCC.F or {}
 F = RCC.F
 
 -- Fallback max group when difficulty is not in the lookup table
-local MAX_RAID_GROUP = 5
+local DEFAULT_RAID_GROUP_COUNT = 5
 
 -- Maps WoW difficulty IDs to the highest raid group number that
 -- should be included when iterating the roster. Players in groups
 -- beyond this number are considered bench/overflow and skipped.
 -- Value = number of groups (each group holds 5 players).
-local DIFF_TO_MAX_GROUP = {
+local GROUP_COUNT_BY_CONTENT_TYPE = {
     -- Parties (1 group = 5 players)
-    [1]   = 1,  -- Party Normal
-    [2]   = 1,  -- Party Heroic
-    [8]   = 1,  -- Party Mythic
+    [1]   = 1, -- Party Normal
+    [2]   = 1, -- Party Heroic
+    [8]   = 1, -- Party Mythic
 
     -- Raids
-    [16]  = 4,  -- Raid Mythic (20-player, 4 groups)
-    [14]  = 6,  -- Raid Normal (up to 30-player, 6 groups)
-    [15]  = 6,  -- Raid Heroic (up to 30-player, 6 groups)
-    [9]   = 8,  -- Raid 40-player
-    [18]  = 8,  -- Event 40-player
+    [16]  = 4, -- Raid Mythic (20-player, 4 groups)
+    [14]  = 6, -- Raid Normal (up to 30-player, 6 groups)
+    [15]  = 6, -- Raid Heroic (up to 30-player, 6 groups)
+    [9]   = 8, -- Raid 40-player
+    [18]  = 8, -- Event 40-player
 
     -- LFR
-    [7]   = 5,  -- LFR (legacy)
-    [17]  = 6,  -- LFR
-    [151] = 6,  -- LFR
+    [7]   = 5, -- LFR (legacy)
+    [17]  = 6, -- LFR
+    [151] = 6, -- LFR
 
     -- Timewalking
-    [33]  = 6,  -- Timewalking Raid
+    [33]  = 6, -- Timewalking Raid
 
     -- Legacy 10/25-player
-    [3]   = 2,  -- 10-player Normal
-    [5]   = 2,  -- 10-player Heroic
-    [193] = 2,  -- 10-player Heroic (alternate)
-    [176] = 5,  -- 25-player Normal
-    [194] = 5,  -- 25-player Heroic
+    [3]   = 2, -- 10-player Normal
+    [5]   = 2, -- 10-player Heroic
+    [193] = 2, -- 10-player Heroic (alternate)
+    [176] = 5, -- 25-player Normal
+    [194] = 5, -- 25-player Heroic
 
     -- Classic
-    [175] = 2,  -- Classic 10-player
-    [148] = 4,  -- Classic 20-player
-    [185] = 4,  -- Classic 20-player (alternate)
-    [186] = 8,  -- Classic 40-player
+    [175] = 2, -- Classic 10-player
+    [148] = 4, -- Classic 20-player
+    [185] = 4, -- Classic 20-player (alternate)
+    [186] = 8, -- Classic 40-player
 }
 
 local function iterateRaid(maxGroup, index)
@@ -98,15 +98,19 @@ end
 function F.GetRaidDiffMaxGroup()
     local _, instance_type, difficulty = GetInstanceInfo()
 
-    if (instance_type == "party" or instance_type == "scenario")
-       and not IsInRaid() then
-        return 1
+    if not IsInRaid() and (instance_type == "party" or
+                           instance_type == "scenario") then
+       return 1
+
     elseif instance_type ~= "raid" then
         return 8
-    elseif difficulty and DIFF_TO_MAX_GROUP[difficulty] then
-        return DIFF_TO_MAX_GROUP[difficulty]
+
+    elseif difficulty and GROUP_COUNT_BY_CONTENT_TYPE[difficulty] then
+    return GROUP_COUNT_BY_CONTENT_TYPE[difficulty]
+
     else
-        return MAX_RAID_GROUP
+        return DEFAULT_RAID_GROUP_COUNT
+
     end
 end
 
