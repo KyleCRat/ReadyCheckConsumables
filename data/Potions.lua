@@ -103,20 +103,20 @@ RCC.db.tablePotion = {
 
 RCC.db.potionItemIDs = {
     -- 12.0.0 - Fleeting
+    245916, 245917, -- Fleeting Lightfused Mana Potion
     245897, 245898, -- Fleeting Light's Potential
     245910, 245911, -- Fleeting Draught of Rampant Abandon
     245902, 245903, -- Fleeting Potion of Recklessness
     245900, 245901, -- Fleeting Potion of Zealotry
-    245916, 245917, -- Fleeting Lightfused Mana Potion
     245904, 245905, -- Fleeting Potion of Devoured Dreams
 
     -- 12.0.0 - Full duration
+    241300, 241301, -- Lightfused Mana Potion
     241308, 241309, -- Light's Potential
     241292, 241293, -- Draught of Rampant Abandon
     241288, 241289, -- Potion of Recklessness
     241296, 241297, -- Potion of Zealotry
     241286, 241287, -- Light's Preservation
-    241300, 241301, -- Lightfused Mana Potion
     241294, 241295, -- Potion of Devoured Dreams
 
     -- 11.0.0 - Fleeting

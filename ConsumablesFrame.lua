@@ -9,6 +9,7 @@ local       GetSpellInfo = C_Spell.GetSpellInfo
 local        GetItemInfo = C_Item.GetItemInfo
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 local       GetItemCount = C_Item.GetItemCount
+local        GetItemIcon = C_Item.GetItemIconByID
 
 -------------------------------------------------------------------------------
 --- Constants
@@ -620,20 +621,28 @@ local function updateRunes(buttons, isRune, LCG)
     end
 end
 
+-- TODO: Update logic to only show most powerful found pot?
+-- This will get weird if a healer has dmg pots and mana pots
 local function updateDamagePotions(buttons)
-    local totalCount = 0
+    local inventoryItem,
+          inventoryItemCount
 
     for i = 1, #RCC.db.potionItemIDs do
-        local count = GetItemCount(RCC.db.potionItemIDs[i], false, true)
+        local item  = RCC.db.potionItemIDs[i]
+        local count = GetItemCount(item, false, true)
 
         if count and count > 0 then
-            totalCount = totalCount + count
+            inventoryItem      = item
+            inventoryItemCount = count
+
+            break
         end
     end
 
-    if totalCount > 0 then
-        buttons.dmgpot.count:SetFormattedText("%d", totalCount)
+    if inventoryItem and inventoryItemCount > 0 then
+        buttons.dmgpot.count:SetFormattedText("%d", inventoryItemCount)
         buttons.dmgpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+        buttons.dmgpot.texture:SetTexture(GetItemIcon(inventoryItem))
         buttons.dmgpot.texture:SetDesaturated(false)
     else
         buttons.dmgpot.count:SetText("0")
@@ -641,19 +650,25 @@ local function updateDamagePotions(buttons)
 end
 
 local function updateHealingPotions(buttons)
-    local totalCount = 0
+    local inventoryItem,
+          inventoryItemCount
 
     for i = 1, #RCC.db.healingPotionItemIDs do
-        local count = GetItemCount(RCC.db.healingPotionItemIDs[i], false, true)
+        local item  = RCC.db.healingPotionItemIDs[i]
+        local count = GetItemCount(item, false, true)
 
         if count and count > 0 then
-            totalCount = totalCount + count
+            inventoryItem      = item
+            inventoryItemCount = count
+
+            break
         end
     end
 
-    if totalCount > 0 then
-        buttons.healpot.count:SetFormattedText("%d", totalCount)
+    if inventoryItem and inventoryItemCount > 0 then
+        buttons.healpot.count:SetFormattedText("%d", inventoryItemCount)
         buttons.healpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+        buttons.healpot.texture:SetTexture(GetItemIcon(inventoryItem))
         buttons.healpot.texture:SetDesaturated(false)
     else
         buttons.healpot.count:SetText("0")
@@ -664,7 +679,6 @@ local GetInstanceInfo = GetInstanceInfo
 
 local function getVantusForCurrentRaid()
     local instanceID = select(8, GetInstanceInfo())
-    print("RCC: InstanceID: " .. instanceID)
     local vantusRuneIDs = RCC.db.vantusItemsByRaid[instanceID]
 
     -- db.vantusItemsByRaid does not have instance ID, return nils
