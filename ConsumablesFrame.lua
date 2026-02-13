@@ -3,14 +3,12 @@ local ADDON_NAME, RCC = ...
 local F = RCC.F
 
 local GetTime = GetTime
-local IsAddOnLoaded =
-    C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
-local GetSpellInfo = C_Spell.GetSpellInfo
-local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
-local GetItemInfoInstant =
-    C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
-local GetItemCount =
-    C_Item and C_Item.GetItemCount or GetItemCount
+
+local      IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+local       GetSpellInfo = C_Spell.GetSpellInfo
+local        GetItemInfo = C_Item.GetItemInfo
+local GetItemInfoInstant = C_Item.GetItemInfoInstant
+local       GetItemCount = C_Item.GetItemCount
 
 -------------------------------------------------------------------------------
 --- Constants
@@ -24,12 +22,8 @@ local FONT = "Interface\\AddOns\\"
 --- Construct the button frame
 -------------------------------------------------------------------------------
 
-RCC.consumables = CreateFrame(
-    "Frame", "RCConsumables", ReadyCheckListenerFrame
-)
-RCC.consumables:SetPoint(
-    "BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5
-)
+RCC.consumables = CreateFrame("Frame", "RCConsumables", ReadyCheckListenerFrame)
+RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
 RCC.consumables:SetSize(consumables_size * 5, consumables_size)
 RCC.consumables:Hide()
 RCC.consumables.buttons = {}
@@ -40,7 +34,8 @@ RCC.consumables.rlpointer:SetPoint("CENTER")
 RCC.consumables.rlpointer:Hide()
 
 --- Close button
-RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables, "SecureHandlerClickTemplate")
+RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables,
+                                    "SecureHandlerClickTemplate")
 RCC.consumables.close:SetSize(0, 20)
 RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 0, -2)
 RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", 0, -2)
@@ -70,14 +65,13 @@ RCC.consumables.close.text:SetTextColor(1, 1, 1)
 RCC.consumables.close:SetScript("OnEnter", function(self)
     self.highlight:Show()
 end)
+
 RCC.consumables.close:SetScript("OnLeave", function(self)
     self.highlight:Hide()
 end)
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
-RCC.consumables.close:SetFrameRef(
-    "rlpointer", RCC.consumables.rlpointer
-)
+RCC.consumables.close:SetFrameRef("rlpointer", RCC.consumables.rlpointer)
 RCC.consumables.close:SetAttribute("_onclick", [[
     self:GetFrameRef("rlpointer"):Hide()
 ]])
@@ -94,9 +88,9 @@ local function ButtonOnLeave(self)
     self:GetParent():SetAlpha(1)
 end
 
-RCC.consumables.state = CreateFrame(
-    "Frame", nil, nil, "SecureHandlerStateTemplate"
-)
+RCC.consumables.state = CreateFrame("Frame", nil, nil,
+                                    "SecureHandlerStateTemplate")
+
 RCC.consumables.state:SetAttribute("_onstate-combat", [=[
     for i = 2, 9 do
         if i ~= 5 and i ~= 7 and i ~= 8 then
@@ -113,10 +107,8 @@ RCC.consumables.state:SetAttribute("_onstate-combat", [=[
     end
 ]=])
 
-RegisterStateDriver(
-    RCC.consumables.state, "combat",
-    "[combat] hide; [nocombat] show"
-)
+RegisterStateDriver(RCC.consumables.state, "combat",
+                    "[combat] hide; [nocombat] show")
 
 -------------------------------------------------------------------------------
 --- Button creation (9 buttons)
@@ -124,15 +116,15 @@ RegisterStateDriver(
 --- 7=dmg_pot  8=heal_pot  9=vantus
 -------------------------------------------------------------------------------
 
-local i_food     = 1
-local i_flask    = 2
-local i_mh_oil   = 3
-local i_rune     = 4
-local i_hs       = 5
-local i_oh_oil   = 6
-local i_dmg_pot  = 7
+local     i_food = 1
+local    i_flask = 2
+local   i_mh_oil = 3
+local     i_rune = 4
+local       i_hs = 5
+local   i_oh_oil = 6
+local  i_dmg_pot = 7
 local i_heal_pot = 8
-local i_vantus   = 9
+local   i_vantus = 9
 
 local CLICKABLE_BUTTONS = {
     [i_flask]  = true,
@@ -150,10 +142,7 @@ for i = 1, 9 do
     if i == 1 then
         button:SetPoint("LEFT", 0, 0)
     else
-        button:SetPoint(
-            "LEFT", RCC.consumables.buttons[i - 1],
-            "RIGHT", 0, 0
-        )
+        button:SetPoint("LEFT", RCC.consumables.buttons[i - 1], "RIGHT", 0, 0)
     end
 
     button.texture = button:CreateTexture()
@@ -161,39 +150,27 @@ for i = 1, 9 do
 
     button.statustexture = button:CreateTexture(nil, "OVERLAY")
     button.statustexture:SetPoint("CENTER")
-    button.statustexture:SetSize(
-        consumables_size / 2, consumables_size / 2
-    )
+    button.statustexture:SetSize(consumables_size / 2, consumables_size / 2)
 
-    button.timeleft = button:CreateFontString(
-        nil, "ARTWORK", "GameFontWhite"
-    )
+    button.timeleft = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     button.timeleft:SetPoint("BOTTOM", button, "TOP", 0, 1)
     button.timeleft:SetFont(FONT, 12, "OUTLINE")
 
-    button.count = button:CreateFontString(
-        nil, "ARTWORK", "GameFontWhite"
-    )
-    button.count:SetPoint(
-        "BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1
-    )
+    button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
+    button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
     button.count:SetFont(FONT, 14, "OUTLINE")
 
     if CLICKABLE_BUTTONS[i] then
-        button.click = CreateFrame(
-            "Button", nil, button,
-            "SecureActionButtonTemplate"
-        )
+        button.click = CreateFrame("Button", nil, button,
+                                   "SecureActionButtonTemplate")
         button.click:SetAllPoints()
         button.click:Hide()
         button.click:RegisterForClicks("AnyUp", "AnyDown")
 
         if i == i_mh_oil or i == i_oh_oil then
             button.click:SetAttribute("type", "item")
-            button.click:SetAttribute(
-                "target-slot",
-                i == i_mh_oil and "16" or "17"
-            )
+            button.click:SetAttribute("target-slot",
+                                      i == i_mh_oil and "16" or "17")
         else
             button.click:SetAttribute("type", "macro")
         end
@@ -201,36 +178,42 @@ for i = 1, 9 do
         button.click:SetScript("OnEnter", ButtonOnEnter)
         button.click:SetScript("OnLeave", ButtonOnLeave)
 
-        RCC.consumables.state:SetFrameRef(
-            "Button" .. i, button.click
-        )
+        RCC.consumables.state:SetFrameRef("Button" .. i, button.click)
     end
 
     if i == i_food then
         button.texture:SetTexture(RCC.db.food_icon_id)
         RCC.consumables.buttons.food = button
+
     elseif i == i_flask then
         button.texture:SetTexture(RCC.db.flask_icon_id)
         RCC.consumables.buttons.flask = button
+
     elseif i == i_mh_oil then
         button.texture:SetTexture(RCC.db.weapon_enchant_icon_id)
         RCC.consumables.buttons.oil = button
+
     elseif i == i_rune then
         button.texture:SetTexture(RCC.db.rune_icon_id)
         RCC.consumables.buttons.rune = button
+
     elseif i == i_hs then
         button.texture:SetTexture(RCC.db.healthstone_icon_id)
         RCC.consumables.buttons.hs = button
+
     elseif i == i_oh_oil then
         button.texture:SetTexture(RCC.db.weapon_enchant_icon_id)
         RCC.consumables.buttons.oiloh = button
         button:Hide()
+
     elseif i == i_dmg_pot then
         button.texture:SetTexture(RCC.db.potion_icon_id)
         RCC.consumables.buttons.dmgpot = button
+
     elseif i == i_heal_pot then
         button.texture:SetTexture(RCC.db.healing_potion_icon_id)
         RCC.consumables.buttons.healpot = button
+
     elseif i == i_vantus then
         button.texture:SetTexture(RCC.db.vantus_icon_id)
         RCC.consumables.buttons.vantus = button
@@ -245,20 +228,17 @@ end
 local isElvUIFix
 
 local function updateElvUIParent(self)
-    if isElvUIFix then
-        return
-    end
+    if isElvUIFix then return end
 
-    local needsFix = IsAddOnLoaded("ElvUI")
-        or IsAddOnLoaded("ShestakUI")
+    local needsFix = IsAddOnLoaded("ElvUI") or
+                     IsAddOnLoaded("ShestakUI")
 
-    if not needsFix then
-        return
-    end
+    if not needsFix then return end
 
     self:SetParent(ReadyCheckFrame)
     self:ClearAllPoints()
     self:SetPoint("BOTTOM", ReadyCheckFrame, "TOP", 0, 5)
+
     isElvUIFix = true
 end
 
@@ -266,49 +246,39 @@ local function scanPlayerAuras(buttons, now)
     local isFlask, isRune, isVantus
 
     for i = 1, 60 do
-        local auraData = C_UnitAuras.GetAuraDataByIndex(
-            "player", i, "HELPFUL"
-        )
+        local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
 
-        if not auraData then
-            break
-        end
+        if not auraData then break end
 
         local sid = auraData.spellId
         local expiry = auraData.expirationTime
-        local READY =
-            "Interface\\RaidFrame\\ReadyCheck-Ready"
+        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
-        if RCC.db.foodBuffIDs[sid]
-            or auraData.icon == RCC.db.food_icon_id
-        then
+        if RCC.db.foodBuffIDs[sid] or auraData.icon == RCC.db.food_icon_id then
             buttons.food.statustexture:SetTexture(READY)
             buttons.food.texture:SetDesaturated(false)
-            buttons.food.timeleft:SetFormattedText(
-                GARRISON_DURATION_MINUTES,
-                ceil((expiry - now) / 60)
-            )
+            buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+                                                   ceil((expiry - now) / 60))
+
         elseif RCC.db.flaskBuffIDs[sid] then
             buttons.flask.statustexture:SetTexture(READY)
             buttons.flask.texture:SetDesaturated(false)
-            buttons.flask.timeleft:SetFormattedText(
-                GARRISON_DURATION_MINUTES,
-                ceil((expiry - now) / 60)
-            )
+            buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+                                                    ceil((expiry - now) / 60))
             buttons.flask.texture:SetTexture(auraData.icon)
             isFlask = true
 
             if expiry - now <= 600 then
                 isFlask = false
             end
+
         elseif RCC.db.tableRunes[sid] then
             buttons.rune.statustexture:SetTexture(READY)
             buttons.rune.texture:SetDesaturated(false)
-            buttons.rune.timeleft:SetFormattedText(
-                GARRISON_DURATION_MINUTES,
-                ceil((expiry - now) / 60)
-            )
+            buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+                                                   ceil((expiry - now) / 60))
             isRune = true
+
         elseif RCC.db.vantusBuffIDs[sid] then
             local name = auraData.name or ""
             isVantus = name:gsub("^Vantus Rune: ", "")
@@ -319,8 +289,7 @@ local function scanPlayerAuras(buttons, now)
 end
 
 local function updateHealthstones(buttons)
-    local hsCount =
-        GetItemCount(RCC.db.healthstone_item_id, false, true)
+    local hsCount = GetItemCount(RCC.db.healthstone_item_id, false, true)
     local hsLockCount = GetItemCount(224464, false, true)
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
@@ -330,11 +299,10 @@ local function updateHealthstones(buttons)
         buttons.hs.texture:SetDesaturated(false)
 
         if buttons.hs.texture.isRed then
-            buttons.hs.texture:SetTexture(
-                RCC.db.healthstone_icon_id
-            )
+            buttons.hs.texture:SetTexture(RCC.db.healthstone_icon_id)
             buttons.hs.texture.isRed = false
         end
+
     elseif hsLockCount and hsLockCount > 0 then
         buttons.hs.count:SetFormattedText("%d", hsLockCount)
         buttons.hs.statustexture:SetTexture(READY)
@@ -370,19 +338,13 @@ local function updateFlasks(buttons, isFlask, LCG)
             local itemName = GetItemInfo(flask_item_id)
 
             if itemName then
-                buttons.flask.click:SetAttribute(
-                    "macrotext1",
-                    format(
-                        "/stopmacro [combat]\n/use %s",
-                        itemName
-                    )
-                )
+                buttons.flask.click:SetAttribute("macrotext1",
+                    format("/stopmacro [combat]\n/use %s", itemName))
+
                 buttons.flask.click:Show()
                 buttons.flask.click.IsON = true
 
-                local texture = select(
-                    5, C_Item.GetItemInfoInstant(flask_item_id)
-                )
+                local texture = select(5, GetItemInfoInstant(flask_item_id))
 
                 if texture then
                     buttons.flask.texture:SetTexture(texture)
@@ -400,12 +362,9 @@ local function updateFlasks(buttons, isFlask, LCG)
     end
 
     buttons.flask.count:SetFormattedText(
-        "%s", flask_count > 0 and flask_count or ""
-    )
+        "%s", flask_count > 0 and flask_count or "")
 
-    if not LCG then
-        return
-    end
+    if not LCG then return end
 
     if not isFlask and flask_count > 0 then
         LCG.PixelGlow_Start(buttons.flask)
@@ -435,6 +394,7 @@ local function updateWeaponEnchants(buttons, LCG)
             buttons.oiloh:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
             buttons.rune:ClearAllPoints()
             buttons.rune:SetPoint("LEFT", buttons.oiloh, "RIGHT", 0, 0)
+
         else
             buttons.oiloh:Hide()
             buttons.rune:ClearAllPoints()
@@ -443,20 +403,17 @@ local function updateWeaponEnchants(buttons, LCG)
     end
 
     local hasMainHandEnchant, mainHandExpiration,
-        mainHandCharges, mainHandEnchantID,
-        hasOffHandEnchant, offHandExpiration,
-        offHandCharges, offHandEnchantID =
-        GetWeaponEnchantInfo()
+          mainHandCharges, mainHandEnchantID,
+          hasOffHandEnchant, offHandExpiration,
+          offHandCharges, offHandEnchantID = GetWeaponEnchantInfo()
 
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
     if hasMainHandEnchant then
         buttons.oil.statustexture:SetTexture(READY)
         buttons.oil.texture:SetDesaturated(false)
-        buttons.oil.timeleft:SetFormattedText(
-            GARRISON_DURATION_MINUTES,
-            ceil((mainHandExpiration or 0) / 1000 / 60)
-        )
+        buttons.oil.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+            ceil((mainHandExpiration or 0) / 1000 / 60))
 
         if RCC.db.wenchants[mainHandEnchantID or 0] then
             lastWeaponEnchantItem = RCC.db.wenchants[mainHandEnchantID].item
@@ -466,30 +423,28 @@ local function updateWeaponEnchants(buttons, LCG)
     if offhandCanBeEnchanted and hasOffHandEnchant then
         buttons.oiloh.statustexture:SetTexture(READY)
         buttons.oiloh.texture:SetDesaturated(false)
-        buttons.oiloh.timeleft:SetFormattedText(
-            GARRISON_DURATION_MINUTES,
-            ceil((offHandExpiration or 0) / 1000 / 60)
-        )
+        buttons.oiloh.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+            ceil((offHandExpiration or 0) / 1000 / 60))
     end
 
     if lastWeaponEnchantItem
         and RCC.db.wenchants_items[lastWeaponEnchantItem]
     then
-        local wenchData =
-            RCC.db.wenchants_items[lastWeaponEnchantItem]
+        local wenchData = RCC.db.wenchants_items[lastWeaponEnchantItem]
         buttons.oil.texture:SetTexture(wenchData.icon)
-        buttons.oiloh.texture:SetTexture(
-            wenchData.iconoh or wenchData.icon
-        )
+        buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
     end
 
     local oilItemID = lastWeaponEnchantItem
 
     if not oilItemID then
         local foundItem
+
         for itemID, data in pairs(RCC.db.wenchants_items) do
             -- Negative itemIDs are spells, not items
             if itemID > 0 and GetItemCount(itemID, false, true) > 0 then
+                -- If we find 1 item, we want to store it. If we find a 2nd item
+                --
                 if foundItem then
                     foundItem = nil
 
@@ -526,21 +481,14 @@ local function updateWeaponEnchants(buttons, LCG)
         if not InCombatLockdown() then
             local spellInfo = GetSpellInfo(-oilItemID)
             local spellName = spellInfo and spellInfo.name
-            buttons.oil.click:SetAttribute(
-                "spell", spellName
-            )
+            buttons.oil.click:SetAttribute("spell", spellName)
             buttons.oil.click:Show()
             buttons.oil.click.IsON = true
             buttons.oil.click:SetAttribute("type", "spell")
 
-            local ohSpellInfo = GetSpellInfo(
-                oilItemID == -33757 and 318038 or -oilItemID
-            )
-            local ohSpellName =
-                ohSpellInfo and ohSpellInfo.name
-            buttons.oiloh.click:SetAttribute(
-                "spell", ohSpellName
-            )
+            local ohSpellInfo = GetSpellInfo(-oilItemID)
+            local ohSpellName = ohSpellInfo and ohSpellInfo.name
+            buttons.oiloh.click:SetAttribute("spell", ohSpellName)
             buttons.oiloh.click:Show()
             buttons.oiloh.click.IsON = true
             buttons.oiloh.click:SetAttribute("type", "spell")
@@ -553,30 +501,21 @@ local function updateWeaponEnchants(buttons, LCG)
             local itemName = GetItemInfo(oilItemID)
 
             if itemName then
-                buttons.oil.click:SetAttribute(
-                    "item", itemName
-                )
+                buttons.oil.click:SetAttribute("item", itemName)
                 buttons.oil.click:Show()
                 buttons.oil.click.IsON = true
 
                 if mainHandExpiration
-                    and (oilItemID == 171285
-                        or oilItemID == 171286)
+                    and (oilItemID == 171285 or oilItemID == 171286)
                     and offhandItemID
-                    and not offhandCanBeEnchanted
-                then
-                    buttons.oil.click:SetAttribute(
-                        "type", "cancelaura"
-                    )
+                    and not offhandCanBeEnchanted then
+
+                    buttons.oil.click:SetAttribute("type", "cancelaura")
                 else
-                    buttons.oil.click:SetAttribute(
-                        "type", "item"
-                    )
+                    buttons.oil.click:SetAttribute("type", "item")
                 end
 
-                buttons.oiloh.click:SetAttribute(
-                    "item", itemName
-                )
+                buttons.oiloh.click:SetAttribute("item", itemName)
                 buttons.oiloh.click:Show()
                 buttons.oiloh.click.IsON = true
             else
@@ -595,14 +534,10 @@ local function updateWeaponEnchants(buttons, LCG)
         end
     end
 
-    if not LCG then
-        return
-    end
+    if not LCG then return end
 
-    local needsMH = oilCount and oilCount > 0
-        and (not hasMainHandEnchant
-            or (mainHandExpiration
-                and mainHandExpiration <= 300000))
+    local needsMH = oilCount and oilCount > 0 and (not hasMainHandEnchant or
+                    (mainHandExpiration and mainHandExpiration <= 300000))
 
     if needsMH then
         LCG.PixelGlow_Start(buttons.oil)
@@ -610,10 +545,8 @@ local function updateWeaponEnchants(buttons, LCG)
         LCG.PixelGlow_Stop(buttons.oil)
     end
 
-    local needsOH = oilCount and oilCount > 0
-        and (not hasOffHandEnchant
-            or (offHandExpiration
-                and offHandExpiration <= 300000))
+    local needsOH = oilCount and oilCount > 0 and (not hasOffHandEnchant
+                    or (offHandExpiration and offHandExpiration <= 300000))
 
     if needsOH then
         LCG.PixelGlow_Start(buttons.oiloh)
@@ -625,9 +558,8 @@ end
 local function updateRunes(buttons, isRune, LCG)
     local rune_item_count =
         GetItemCount(RCC.db.rune_item_id, false, true)
-    local unlimited_rune_item_count = GetItemCount(
-        RCC.db.unlimited_rune_item_id, false, true
-    )
+    local unlimited_rune_item_count =
+        GetItemCount(RCC.db.unlimited_rune_item_id, false, true)
 
     if unlimited_rune_item_count
         and unlimited_rune_item_count > 0
@@ -635,20 +567,12 @@ local function updateRunes(buttons, isRune, LCG)
         buttons.rune.count:SetText("")
 
         if not InCombatLockdown() then
-            buttons.rune.texture:SetTexture(
-                RCC.db.unlimited_rune_icon_id
-            )
-            local itemName =
-                GetItemInfo(RCC.db.unlimited_rune_item_id)
+            buttons.rune.texture:SetTexture(RCC.db.unlimited_rune_icon_id)
+            local itemName = GetItemInfo(RCC.db.unlimited_rune_item_id)
 
             if itemName then
-                buttons.rune.click:SetAttribute(
-                    "macrotext1",
-                    format(
-                        "/stopmacro [combat]\n/use %s",
-                        itemName
-                    )
-                )
+                buttons.rune.click:SetAttribute("macrotext1",
+                    format("/stopmacro [combat]\n/use %s", itemName))
                 buttons.rune.click:Show()
                 buttons.rune.click.IsON = true
             else
@@ -657,24 +581,15 @@ local function updateRunes(buttons, isRune, LCG)
             end
         end
     elseif rune_item_count and rune_item_count > 0 then
-        buttons.rune.count:SetFormattedText(
-            "%d", rune_item_count
-        )
+        buttons.rune.count:SetFormattedText("%d", rune_item_count)
 
         if not InCombatLockdown() then
-            buttons.rune.texture:SetTexture(
-                RCC.db.rune_icon_id
-            )
+            buttons.rune.texture:SetTexture(RCC.db.rune_icon_id)
             local itemName = GetItemInfo(RCC.db.rune_item_id)
 
             if itemName then
-                buttons.rune.click:SetAttribute(
-                    "macrotext1",
-                    format(
-                        "/stopmacro [combat]\n/use %s",
-                        itemName
-                    )
-                )
+                buttons.rune.click:SetAttribute("macrotext1",
+                    format("/stopmacro [combat]\n/use %s", itemName))
                 buttons.rune.click:Show()
                 buttons.rune.click.IsON = true
             else
@@ -695,10 +610,8 @@ local function updateRunes(buttons, isRune, LCG)
         return
     end
 
-    local hasRunes = (rune_item_count
-            and rune_item_count > 0)
-        or (unlimited_rune_item_count
-            and unlimited_rune_item_count > 0)
+    local hasRunes = (rune_item_count and rune_item_count > 0) or
+        (unlimited_rune_item_count and unlimited_rune_item_count > 0)
 
     if hasRunes and not isRune then
         LCG.PixelGlow_Start(buttons.rune)
@@ -711,9 +624,7 @@ local function updateDamagePotions(buttons)
     local totalCount = 0
 
     for i = 1, #RCC.db.potionItemIDs do
-        local count = GetItemCount(
-            RCC.db.potionItemIDs[i], false, true
-        )
+        local count = GetItemCount(RCC.db.potionItemIDs[i], false, true)
 
         if count and count > 0 then
             totalCount = totalCount + count
@@ -721,12 +632,8 @@ local function updateDamagePotions(buttons)
     end
 
     if totalCount > 0 then
-        buttons.dmgpot.count:SetFormattedText(
-            "%d", totalCount
-        )
-        buttons.dmgpot.statustexture:SetTexture(
-            "Interface\\RaidFrame\\ReadyCheck-Ready"
-        )
+        buttons.dmgpot.count:SetFormattedText("%d", totalCount)
+        buttons.dmgpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
         buttons.dmgpot.texture:SetDesaturated(false)
     else
         buttons.dmgpot.count:SetText("0")
@@ -737,9 +644,7 @@ local function updateHealingPotions(buttons)
     local totalCount = 0
 
     for i = 1, #RCC.db.healingPotionItemIDs do
-        local count = GetItemCount(
-            RCC.db.healingPotionItemIDs[i], false, true
-        )
+        local count = GetItemCount(RCC.db.healingPotionItemIDs[i], false, true)
 
         if count and count > 0 then
             totalCount = totalCount + count
@@ -747,12 +652,8 @@ local function updateHealingPotions(buttons)
     end
 
     if totalCount > 0 then
-        buttons.healpot.count:SetFormattedText(
-            "%d", totalCount
-        )
-        buttons.healpot.statustexture:SetTexture(
-            "Interface\\RaidFrame\\ReadyCheck-Ready"
-        )
+        buttons.healpot.count:SetFormattedText("%d", totalCount)
+        buttons.healpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
         buttons.healpot.texture:SetDesaturated(false)
     else
         buttons.healpot.count:SetText("0")
@@ -814,9 +715,7 @@ local function updateVantusRune(buttons, isVantus)
         buttons.vantus.texture:SetDesaturated(false)
 
         if count > 0 then
-            buttons.vantus.count:SetFormattedText(
-                "%d", count
-            )
+            buttons.vantus.count:SetFormattedText("%d", count)
         end
 
         if not InCombatLockdown() then
@@ -834,13 +733,8 @@ local function updateVantusRune(buttons, isVantus)
             local itemName = GetItemInfo(itemID)
 
             if itemName then
-                buttons.vantus.click:SetAttribute(
-                    "macrotext1",
-                    format(
-                        "/stopmacro [combat]\n/use %s",
-                        itemName
-                    )
-                )
+                buttons.vantus.click:SetAttribute("macrotext1",
+                    format("/stopmacro [combat]\n/use %s", itemName))
                 buttons.vantus.click:Show()
                 buttons.vantus.click.IsON = true
             else
@@ -898,14 +792,8 @@ local function updateArmorKits(buttons, LCG)
             local itemName = GetItemInfo(172347)
 
             if itemName then
-                buttons.kit.click:SetAttribute(
-                    "macrotext1",
-                    format(
-                        "/stopmacro [combat]\n"
-                            .. "/use %s\n/use 5",
-                        itemName
-                    )
-                )
+                buttons.kit.click:SetAttribute("macrotext1",
+                    format("/stopmacro [combat]\n" .. "/use %s\n/use 5", itemName))
                 buttons.kit.click:Show()
                 buttons.kit.click.IsON = true
             else
@@ -922,9 +810,7 @@ local function updateArmorKits(buttons, LCG)
 
     buttons.kit.count:SetFormattedText("%d", kitCount)
 
-    if not LCG then
-        return
-    end
+    if not LCG then return end
 
     if kitCount and kitCount > 0 and kitNow == 0 then
         LCG.PixelGlow_Start(buttons.kit)
@@ -961,13 +847,10 @@ function RCC.consumables:Update()
         end
 
         buttons.oil:ClearAllPoints()
-        buttons.oil:SetPoint(
-            "LEFT", buttons.flask, "RIGHT", 0, 0
-        )
+        buttons.oil:SetPoint("LEFT", buttons.flask, "RIGHT", 0, 0)
     end
 
-    local NOT_READY =
-        "Interface\\RaidFrame\\ReadyCheck-NotReady"
+    local NOT_READY = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
     for i = 1, #buttons do
         buttons[i].statustexture:SetTexture(NOT_READY)
@@ -979,8 +862,8 @@ function RCC.consumables:Update()
     local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
-    local isFlask, isRune, isVantus =
-        scanPlayerAuras(buttons, now)
+    local isFlask, isRune, isVantus = scanPlayerAuras(buttons, now)
+
     updateHealthstones(buttons)
     updateFlasks(buttons, isFlask, LCG)
     updateWeaponEnchants(buttons, LCG)
@@ -996,32 +879,22 @@ function RCC.consumables:Update()
 
         if isWarlockInRaid then
             buttons.hs:ClearAllPoints()
-            buttons.hs:SetPoint(
-                "LEFT", anchor, "RIGHT", 0, 0
-            )
+            buttons.hs:SetPoint("LEFT", anchor, "RIGHT", 0, 0)
             anchor = buttons.hs
         end
 
         buttons.dmgpot:ClearAllPoints()
-        buttons.dmgpot:SetPoint(
-            "LEFT", anchor, "RIGHT", 0, 0
-        )
+        buttons.dmgpot:SetPoint("LEFT", anchor, "RIGHT", 0, 0)
 
         buttons.healpot:ClearAllPoints()
-        buttons.healpot:SetPoint(
-            "LEFT", buttons.dmgpot, "RIGHT", 0, 0
-        )
+        buttons.healpot:SetPoint("LEFT", buttons.dmgpot, "RIGHT", 0, 0)
 
         if buttons.vantus:IsShown() then
             buttons.vantus:ClearAllPoints()
-            buttons.vantus:SetPoint(
-                "LEFT", buttons.healpot, "RIGHT", 0, 0
-            )
+            buttons.vantus:SetPoint("LEFT", buttons.healpot, "RIGHT", 0, 0)
         end
 
-        self:SetWidth(
-            consumables_size * countVisibleButtons(buttons)
-        )
+        self:SetWidth(consumables_size * countVisibleButtons(buttons))
     end
 end
 
@@ -1037,9 +910,7 @@ function RCC.consumables:Repos(isRL)
     if isRL then
         self:SetParent(self.rlpointer)
         self:ClearAllPoints()
-        self:SetPoint(
-            "CENTER", self.rlpointer, "CENTER", 0, 0
-        )
+        self:SetPoint("CENTER", self.rlpointer, "CENTER", 0, 0)
 
         self.rlpointer:Show()
         self.close:Show()
