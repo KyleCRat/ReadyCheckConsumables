@@ -6,59 +6,53 @@ RCC.db = RCC.db or {}
 --- Event handler
 -------------------------------------------------------------------------------
 
-RCC.consumables:SetScript("OnEvent",
-    function(self, event, unit, time_to_hide)
-        if event == "READY_CHECK" then
-            self:Update()
-            self:RegisterEvent("UNIT_AURA")
-            self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
+    if event == "READY_CHECK" then
+        self:Update()
+        self:RegisterEvent("UNIT_AURA")
+        self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
-            if self.cancelDelay then
-                self.cancelDelay:Cancel()
-            end
+        if self.cancelDelay then
+            self.cancelDelay:Cancel()
+        end
 
-            self.cancelDelay = C_Timer.NewTimer(
-                time_to_hide or 12,
-                function()
-                    self:UnregisterEvent("UNIT_AURA")
-                    self:UnregisterEvent(
-                        "UNIT_INVENTORY_CHANGED"
-                    )
+        self.cancelDelay = C_Timer.NewTimer(time_to_hide or 12, function()
+            self:UnregisterEvent("UNIT_AURA")
+            self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
 
-                    if self.isRLpos then
-                        self.rlpointer:Hide()
-                    end
-                end
-            )
-
-            if unit and UnitIsUnit(unit, "player") then
-                self:Repos(true)
-            else
-                self:Repos()
-            end
-        elseif event == "READY_CHECK_FINISHED"
-            or event == "PLAYER_REGEN_DISABLED"
-        then
-            RCC.consumables:OnHide()
-
-            if self.isRLpos
-                and not InCombatLockdown()
-            then
+            if self.isRLpos then
                 self.rlpointer:Hide()
             end
-        elseif event == "UNIT_AURA" then
-            if unit == "player" then
-                self:Update()
-            end
-        elseif event == "UNIT_INVENTORY_CHANGED" then
-            if unit == "player" then
-                C_Timer.After(0.2, function()
-                    self:Update()
-                end)
-            end
+        end)
+
+        if unit and UnitIsUnit(unit, "player") then
+            self:Repos(true)
+        else
+            self:Repos()
+        end
+
+    elseif event == "READY_CHECK_FINISHED"
+        or event == "PLAYER_REGEN_DISABLED" then
+
+        RCC.consumables:OnHide()
+
+        if self.isRLpos
+            and not InCombatLockdown()
+        then
+            self.rlpointer:Hide()
+        end
+
+    elseif event == "UNIT_AURA" then
+        if unit == "player" then
+            self:Update()
+        end
+
+    elseif event == "UNIT_INVENTORY_CHANGED" then
+        if unit == "player" then
+            C_Timer.After(0.2, function() self:Update() end)
         end
     end
-)
+end)
 
 RCC.consumables:SetScript("OnHide", function(self)
     RCC.consumables:OnHide()
@@ -85,17 +79,21 @@ SlashCmdList["RCC"] = function(msg)
 
     if msg == "show" then
         local name = UnitName("player")
-        RCC.consumables:GetScript("OnEvent")(
-            RCC.consumables, "READY_CHECK", name
-        )
+        RCC.consumables:GetScript("OnEvent")(RCC.consumables,
+                                             "READY_CHECK",
+                                             name)
+
     elseif msg == "hide" then
-        RCC.consumables:GetScript("OnEvent")(
-            RCC.consumables, "READY_CHECK_FINISHED", ""
-        )
+        RCC.consumables:GetScript("OnEvent")(RCC.consumables,
+                                             "READY_CHECK_FINISHED",
+                                             "")
+
     elseif msg == "report" then
         RCC.chatReport.Test(false)
+
     elseif msg == "reportchat" then
         RCC.chatReport.Test(true)
+
     else
         print("|cff00ccffReadyCheckConsumables|r commands:")
         print("  /rcc show - Show the consumable icon frame")
