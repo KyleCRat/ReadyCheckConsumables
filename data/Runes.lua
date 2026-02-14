@@ -49,14 +49,14 @@ RCC.db.vantusBuffIDs = {
     --- The War Within
 
     -- 11.2.0 - Manaforge Omega
-    [1236900] = true, -- Plexus Sentinel
-    [1236901] = true, -- Loom'ithar
-    [1236902] = true, -- Soulbinder Naazindhri
-    [1236903] = true, -- Forgeweaver Araz
-    [1236904] = true, -- The Soul Hunters
-    [1236905] = true, -- Fractillus
-    [1236906] = true, -- Nexus-King Salhadaar
-    [1236907] = true, -- Dimensius
+    [1236892] = true, [1236900] = true, -- Plexus Sentinel
+    [1236893] = true, [1236901] = true, -- Loom'ithar
+    [1236894] = true, [1236902] = true, -- Soulbinder Naazindhri
+    [1236895] = true, [1236903] = true, -- Forgeweaver Araz
+    [1236896] = true, [1236904] = true, -- The Soul Hunters
+    [1236897] = true, [1236905] = true, -- Fractillus
+    [1236898] = true, [1236906] = true, -- Nexus-King Salhadaar
+    [1236899] = true, [1236907] = true, -- Dimensius
 
     -- 11.1.0 - Liberation of Undermine
     [472541] = true, [472604] = true, -- Vexie and the Geargrinders
