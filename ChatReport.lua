@@ -2,16 +2,16 @@ local _, RCC = ...
 local F = RCC.F
 local db = RCC.db
 
-local SendChatMessage = C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
-local GetTime = GetTime
-local format = format
-local floor = floor
-local ceil = ceil
+local SendChatMessage = SendChatMessage
+local GetTime         = GetTime
+local format          = format
+local floor           = floor
+local ceil            = ceil
 
 local FOOD_ICONS = {
-    [136000] = true,
-    [132805] = true,
-    [133950] = true,
+    [136000] = true, -- Spell_misc_food,  Food Buff
+    [132805] = true, -- Inv_drink_18,     Drinking
+    [133950] = true, -- Inv_misc_food_08, Eating
 }
 
 local CURRENT_RUNE_TIER = 6
