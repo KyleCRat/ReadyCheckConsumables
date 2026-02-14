@@ -94,7 +94,7 @@ RCC.db.vantusBuffIDs = {
     [425914] = 1, [425915] = 2, [425916] = 3, -- Amirdrassil, the Dream's Hope
 
     -- 10.1.0 - Aberrus, the Shadowed Crucible
-    [411469] = 1                             -- Kazzara, the Hellforged
+    [411469] = 1,                             -- Kazzara, the Hellforged
     [409619] = 1, [411507] = 2, [411513] = 3, -- Kazzara, the Hellforged
     [409622] = 1, [411514] = 2, [411515] = 3, -- Shadowflame Elemental
     [409624] = 1, [411516] = 2, [411517] = 3, -- The Forgotten Experiments
