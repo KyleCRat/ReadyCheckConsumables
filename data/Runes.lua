@@ -20,6 +20,8 @@ RCC.db.tableRunes = {
     [224001]  = 3, -- 7.0.3:  Defiled Augmentation
 }
 
+-- Rune Item Ids? 259085 12.0.0: Void-Touched Augment Rune
+
 -------------------------------------------------------------------------------
 --- Vantus Rune Buff Spell IDs (TWW + Midnight)
 --- Set-style lookup for detecting active vantus rune auras.
