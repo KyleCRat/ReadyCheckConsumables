@@ -4,6 +4,7 @@
 ## Author: Yvairel
 ## Version: 12.0.1-1
 ## Category: Raid
+## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
 ## SavedVariables: ReadyCheckConsumablesDB
 
 Functions.lua
