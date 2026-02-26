@@ -3,115 +3,41 @@ RCC.F = RCC.F or {}
 local F = RCC.F
 
 -- Fallback max group when difficulty is not in the lookup table
-local DEFAULT_RAID_GROUP_COUNT = 5
+local DEFAULT_RAID_GROUP_COUNT = 6
 
 -- Maps WoW difficulty IDs to the highest raid group number that
 -- should be included when iterating the roster. Players in groups
 -- beyond this number are considered bench/overflow and skipped.
 -- Value = number of groups (each group holds 5 players).
 local GROUP_COUNT_BY_CONTENT_TYPE = {
-    -- Parties (1 group = 5 players)
     [1]   = 1, -- Party Normal
     [2]   = 1, -- Party Heroic
     [8]   = 1, -- Party Mythic
-
-    -- Raids
-    [16]  = 4, -- Raid Mythic (20-player, 4 groups)
-    [14]  = 6, -- Raid Normal (up to 30-player, 6 groups)
-    [15]  = 6, -- Raid Heroic (up to 30-player, 6 groups)
-    [9]   = 8, -- Raid 40-player
-    [18]  = 8, -- Event 40-player
-
-    -- LFR
-    [7]   = 5, -- LFR (legacy)
+    [16]  = 4, -- Raid Mythic (20-player)
+    [14]  = 6, -- Raid Normal (up to 30-player)
+    [15]  = 6, -- Raid Heroic (up to 30-player)
     [17]  = 6, -- LFR
     [151] = 6, -- LFR
-
-    -- Timewalking
     [33]  = 6, -- Timewalking Raid
-
-    -- Legacy 10/25-player
-    [3]   = 2, -- 10-player Normal
-    [5]   = 2, -- 10-player Heroic
-    [193] = 2, -- 10-player Heroic (alternate)
-    [176] = 5, -- 25-player Normal
-    [194] = 5, -- 25-player Heroic
-
-    -- Classic
-    [175] = 2, -- Classic 10-player
-    [148] = 4, -- Classic 20-player
-    [185] = 4, -- Classic 20-player (alternate)
-    [186] = 8, -- Classic 40-player
 }
-
-local function iterateRaid(maxGroup, index)
-    if index > GetNumGroupMembers() then
-        return
-    end
-
-    local name, rank, subgroup, _, _, fileName,
-        _, online, isDead, _, _, combatRole = GetRaidRosterInfo(index)
-
-    if subgroup > maxGroup then
-        return F.IterateRoster(maxGroup, index)
-    end
-
-    local unit = "raid" .. index
-    local guid = UnitGUID(name or unit)
-    name = name or ""
-
-    return index, name, subgroup, fileName, guid,
-        rank, nil, online, isDead, combatRole, unit
-end
-
-local function iterateParty(index)
-    local unit = index == 1 and "player" or "party" .. (index - 1)
-    local guid = UnitGUID(unit)
-
-    if not guid then
-        return
-    end
-
-    local name = GetUnitName(unit, true) or ""
-    local _, fileName = UnitClass(unit)
-    local rank = UnitIsGroupLeader(unit) and 2 or 1
-    local level = UnitLevel(unit)
-    local online = UnitIsConnected(unit) or nil
-    local isDead = UnitIsDeadOrGhost(unit) or nil
-    local combatRole = UnitGroupRolesAssigned(unit)
-
-    return index, name, 1, fileName, guid,
-        rank, level, online, isDead, combatRole, unit
-end
-
-function F.IterateRoster(maxGroup, index)
-    index = (index or 0) + 1
-    maxGroup = maxGroup or 8
-
-    if IsInRaid() then
-        return iterateRaid(maxGroup, index)
-    end
-
-    return iterateParty(index)
-end
 
 function F.GetRaidDiffMaxGroup()
     local _, instance_type, difficulty = GetInstanceInfo()
 
     if not IsInRaid() and (instance_type == "party" or
                            instance_type == "scenario") then
-       return 1
-
-    elseif instance_type ~= "raid" then
-        return 8
-
-    elseif difficulty and GROUP_COUNT_BY_CONTENT_TYPE[difficulty] then
-    return GROUP_COUNT_BY_CONTENT_TYPE[difficulty]
-
-    else
-        return DEFAULT_RAID_GROUP_COUNT
-
+        return 1
     end
+
+    if instance_type ~= "raid" then
+        return 8
+    end
+
+    if difficulty and GROUP_COUNT_BY_CONTENT_TYPE[difficulty] then
+        return GROUP_COUNT_BY_CONTENT_TYPE[difficulty]
+    end
+
+    return DEFAULT_RAID_GROUP_COUNT
 end
 
 function F.chatType()
@@ -131,15 +57,14 @@ function F.chatType()
 end
 
 function F.shortName(fullName)
-    local name = strsplit("-", fullName)
-
-    return name
+    return (strsplit("-", fullName))
 end
 
 -------------------------------------------------------------------------------
 --- GetRosterInfo(index)
 --- Returns name, unit, subgroup, class for a single roster slot.
 --- Works in both raid and party. Returns nil when no player at index.
+--- Party order: 1=player, 2=party1, 3=party2, 4=party3, 5=party4.
 -------------------------------------------------------------------------------
 
 function F.GetRosterInfo(index)
@@ -157,7 +82,7 @@ function F.GetRosterInfo(index)
         return nil
     end
 
-    local unit = index == 5 and "player" or "party" .. index
+    local unit = index == 1 and "player" or "party" .. (index - 1)
 
     if not UnitExists(unit) then
         return nil
@@ -172,4 +97,25 @@ function F.GetRosterInfo(index)
     local _, fileName = UnitClass(unit)
 
     return name, unit, 1, fileName
+end
+
+-------------------------------------------------------------------------------
+--- hasClassInRoster(className)
+--- Returns true if any roster member within active groups is the given class.
+-------------------------------------------------------------------------------
+
+function F.hasClassInRoster(className)
+    for j = 1, 40 do
+        local name, _, _, class = F.GetRosterInfo(j)
+
+        if not name then
+            if not IsInRaid() then
+                return false
+            end
+        elseif class == className then
+            return true
+        end
+    end
+
+    return false
 end

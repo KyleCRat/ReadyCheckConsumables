@@ -843,17 +843,7 @@ function RCC.consumables:Update()
     updateElvUIParent(self)
     local buttons = self.buttons
 
-    local isWarlockInRaid
-
-    for _, _, _, class in
-        F.IterateRoster, F.GetRaidDiffMaxGroup()
-    do
-        if class == "WARLOCK" then
-            isWarlockInRaid = true
-
-            break
-        end
-    end
+    local isWarlockInRaid = F.hasClassInRoster("WARLOCK")
 
     if not InCombatLockdown() then
         if isWarlockInRaid then
