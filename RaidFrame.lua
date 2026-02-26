@@ -472,8 +472,8 @@ local function scanMemberAuras(unit, now)
     local result = {
         hasFood  = false, foodTime  = 0, foodAuraID  = nil, foodIconID  = nil,
         hasFlask = false, flaskTime = 0, flaskAuraID = nil, flaskIconID = nil,
-        hasRune  = false, runeAuraID  = nil,
-        hasVantus = false, vantusAuraID = nil,
+        hasRune  = false, runeAuraID  = nil, runeIconID  = nil,
+        hasVantus = false, vantusAuraID = nil, vantusIconID = nil,
         raidBuff = {},
     }
 
@@ -511,11 +511,13 @@ local function scanMemberAuras(unit, now)
         if not result.hasRune and db.runeBuffIDs[sid] then
             result.hasRune    = true
             result.runeAuraID = aura.auraInstanceID
+            result.runeIconID = aura.icon
         end
 
         if not result.hasVantus and db.vantusBuffIDs[sid] then
             result.hasVantus    = true
             result.vantusAuraID = aura.auraInstanceID
+            result.vantusIconID = aura.icon
         end
 
         for k = 1, #buffsList do
@@ -687,12 +689,14 @@ local function applyRowData(row, member)
     row.flaskOverlay.auraID = auras.flaskAuraID
 
     -- Augment Rune
+    row.runeIcon:SetTexture(auras.runeIconID or db.rune_icon_id)
     row.runeIcon:SetDesaturated(not auras.hasRune)
     row.runeIcon:SetVertexColor(1, 1, 1, auras.hasRune and 1 or MISSING_ALPHA)
     row.runeOverlay.unit   = unit
     row.runeOverlay.auraID = auras.runeAuraID
 
     -- Vantus Rune
+    row.vantusIcon:SetTexture(auras.vantusIconID or db.vantus_icon_id)
     row.vantusIcon:SetDesaturated(not auras.hasVantus)
     row.vantusIcon:SetVertexColor(1, 1, 1, auras.hasVantus and 1 or MISSING_ALPHA)
     row.vantusOverlay.unit   = unit

@@ -276,6 +276,7 @@ local function scanPlayerAuras(buttons, now)
         elseif RCC.db.runeBuffIDs[sid] then
             buttons.rune.statustexture:SetTexture(READY)
             buttons.rune.texture:SetDesaturated(false)
+            buttons.rune.texture:SetTexture(auraData.icon)
             buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                    ceil((expiry - now) / 60))
             isRune = true
@@ -326,7 +327,15 @@ local function updateFlasks(buttons, isFlask, LCG)
         end
     end
 
-    if not isFlask and flask_count > 0 then
+    if flask_count > 0 then
+        if not isFlask then
+            local texture = select(5, GetItemInfoInstant(flask_item_id))
+
+            if texture then
+                buttons.flask.texture:SetTexture(texture)
+            end
+        end
+
         if not InCombatLockdown() then
             local itemName = GetItemInfo(flask_item_id)
 
@@ -336,12 +345,6 @@ local function updateFlasks(buttons, isFlask, LCG)
 
                 buttons.flask.click:Show()
                 buttons.flask.click.IsON = true
-
-                local texture = select(5, GetItemInfoInstant(flask_item_id))
-
-                if texture then
-                    buttons.flask.texture:SetTexture(texture)
-                end
             else
                 buttons.flask.click:Hide()
                 buttons.flask.click.IsON = false
@@ -559,8 +562,11 @@ local function updateRunes(buttons, isRune, LCG)
     then
         buttons.rune.count:SetText("")
 
-        if not InCombatLockdown() then
+        if not isRune then
             buttons.rune.texture:SetTexture(RCC.db.unlimited_rune_icon_id)
+        end
+
+        if not InCombatLockdown() then
             local itemName = GetItemInfo(RCC.db.unlimited_rune_item_id)
 
             if itemName then
@@ -576,8 +582,11 @@ local function updateRunes(buttons, isRune, LCG)
     elseif rune_item_count and rune_item_count > 0 then
         buttons.rune.count:SetFormattedText("%d", rune_item_count)
 
-        if not InCombatLockdown() then
+        if not isRune then
             buttons.rune.texture:SetTexture(RCC.db.rune_icon_id)
+        end
+
+        if not InCombatLockdown() then
             local itemName = GetItemInfo(RCC.db.rune_item_id)
 
             if itemName then
