@@ -47,6 +47,13 @@ local RC_TEXTURES = {
     [RC_NOT]     = "Interface\\RaidFrame\\ReadyCheck-NotReady",
 }
 
+local RC_TEXTURE_OFFLINE = "Interface\\CharacterFrame\\Disconnect-Icon"
+local RC_ATLAS_DEAD      = "Navigation-Tombstone-Icon"
+
+local COLOR_SUMMARY_NOT_READY = { r = 1,   g = 0.2, b = 0.2 }
+local COLOR_SUMMARY_AFK       = { r = 1,   g = 0.82, b = 0  }
+local COLOR_SUMMARY_READY     = { r = 0.2, g = 1,   b = 0.2 }
+
 local FRAME_WIDTH = FRAME_PAD
     + RC_ICON_WIDTH + H_PAD
     + NAME_WIDTH + H_PAD
@@ -602,7 +609,22 @@ local function applyRowData(row, member)
 
     -- Ready check icon
     local status = rcStatus[unit] or RC_PENDING
-    row.rcIcon:SetTexture(RC_TEXTURES[status])
+
+    if status == RC_NOT and not member.online then
+        row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
+        row.rcIcon:SetPoint("LEFT", row, "LEFT", 0, 0)
+        row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
+    elseif status == RC_PENDING and member.isDead then
+        -- Atlas is 26x33; fit to height and center horizontally
+        local w = RC_ICON_WIDTH * 26 / 33
+        row.rcIcon:SetSize(w, RC_ICON_WIDTH)
+        row.rcIcon:SetPoint("LEFT", row, "LEFT", (RC_ICON_WIDTH - w) / 2, 0)
+        row.rcIcon:SetAtlas(RC_ATLAS_DEAD)
+    else
+        row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
+        row.rcIcon:SetPoint("LEFT", row, "LEFT", 0, 0)
+        row.rcIcon:SetTexture(RC_TEXTURES[status])
+    end
 
     -- Row background (class color)
     local color = RAID_CLASS_COLORS[member.class]
@@ -758,7 +780,42 @@ local function updateTitleCount()
         end
     end
 
+    titleBar.countText:SetTextColor(1, 1, 1)
     titleBar.countText:SetText(readyCount .. "/" .. activeCount)
+end
+
+local function showFinishedSummary()
+    local notReadyCount = 0
+    local afkCount      = 0
+
+    for i = 1, activeCount do
+        local member = memberData[i]
+        local status = rcStatus[member.unit]
+
+        if status == RC_NOT then
+            if UnitIsAFK(member.unit) then
+                afkCount = afkCount + 1
+            else
+                notReadyCount = notReadyCount + 1
+            end
+        end
+    end
+
+    if notReadyCount > 0 then
+        local c = COLOR_SUMMARY_NOT_READY
+        titleBar.countText:SetTextColor(c.r, c.g, c.b)
+        local s = notReadyCount == 1 and "Player" or "Players"
+        titleBar.countText:SetText(notReadyCount .. " " .. s .. " not Ready")
+    elseif afkCount > 0 then
+        local c = COLOR_SUMMARY_AFK
+        titleBar.countText:SetTextColor(c.r, c.g, c.b)
+        local verb = afkCount == 1 and "Player is" or "Players are"
+        titleBar.countText:SetText(afkCount .. " " .. verb .. " AFK")
+    else
+        local c = COLOR_SUMMARY_READY
+        titleBar.countText:SetTextColor(c.r, c.g, c.b)
+        titleBar.countText:SetText("Everyone is Ready!")
+    end
 end
 
 local function refreshRow(index)
@@ -880,25 +937,30 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
         titleBar.timerText:SetText("")
     end
 
-    titleBar.countText:SetText("0/" .. activeCount)
-
     restorePosition()
     self:Show()
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
-    rcStatus[unit] = ready and RC_READY or RC_NOT
-
     local index = unitToIndex[unit]
 
     if not index then
         return
     end
 
+    rcStatus[unit] = ready and RC_READY or RC_NOT
+
     local row = self.rows[index]
 
     if row then
-        row.rcIcon:SetTexture(RC_TEXTURES[rcStatus[unit]])
+        local member = memberData[index]
+        local newStatus = rcStatus[unit]
+
+        if newStatus == RC_NOT and member and not member.online then
+            row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
+        else
+            row.rcIcon:SetTexture(RC_TEXTURES[newStatus])
+        end
     end
 
     updateTitleCount()
@@ -906,6 +968,7 @@ end
 
 function frame:OnReadyCheckFinished()
     stopProgressBar()
+    showFinishedSummary()
 
     if self.manualShow then
         return
