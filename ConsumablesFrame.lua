@@ -38,8 +38,8 @@ RCC.consumables.rlpointer:Hide()
 RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables,
                                     "SecureHandlerClickTemplate")
 RCC.consumables.close:SetSize(0, 20)
-RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 0, -2)
-RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", 0, -2)
+RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 1, -3)
+RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", -1, -3)
 RCC.consumables.close:Hide()
 
 RCC.consumables.close.bg = RCC.consumables.close:CreateTexture(nil, "BACKGROUND")
@@ -255,7 +255,7 @@ local function scanPlayerAuras(buttons, now)
         local expiry = auraData.expirationTime
         local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
-        if RCC.db.foodBuffIDs[sid] or auraData.icon == RCC.db.food_icon_id then
+        if RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
             buttons.food.statustexture:SetTexture(READY)
             buttons.food.texture:SetDesaturated(false)
             buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
@@ -273,7 +273,7 @@ local function scanPlayerAuras(buttons, now)
                 isFlask = false
             end
 
-        elseif RCC.db.tableRunes[sid] then
+        elseif RCC.db.runeBuffIDs[sid] then
             buttons.rune.statustexture:SetTexture(READY)
             buttons.rune.texture:SetDesaturated(false)
             buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
@@ -290,29 +290,21 @@ local function scanPlayerAuras(buttons, now)
 end
 
 local function updateHealthstones(buttons)
-    local hsCount = GetItemCount(RCC.db.healthstone_item_id, false, true)
-    local hsLockCount = GetItemCount(224464, false, true)
-    local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+    local totalCount = 0
 
-    if hsCount and hsCount > 0 then
-        buttons.hs.count:SetFormattedText("%d", hsCount)
+    for itemID in pairs(RCC.db.healthstoneItemIDs) do
+        local count = GetItemCount(itemID, false, true)
+
+        if count and count > 0 then
+            totalCount = totalCount + count
+        end
+    end
+
+    if totalCount > 0 then
+        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+        buttons.hs.count:SetFormattedText("%d", totalCount)
         buttons.hs.statustexture:SetTexture(READY)
         buttons.hs.texture:SetDesaturated(false)
-
-        if buttons.hs.texture.isRed then
-            buttons.hs.texture:SetTexture(RCC.db.healthstone_icon_id)
-            buttons.hs.texture.isRed = false
-        end
-
-    elseif hsLockCount and hsLockCount > 0 then
-        buttons.hs.count:SetFormattedText("%d", hsLockCount)
-        buttons.hs.statustexture:SetTexture(READY)
-        buttons.hs.texture:SetDesaturated(false)
-
-        if not buttons.hs.texture.isRed then
-            buttons.hs.texture:SetTexture(538744)
-            buttons.hs.texture.isRed = true
-        end
     else
         buttons.hs.count:SetText("0")
     end
@@ -416,8 +408,8 @@ local function updateWeaponEnchants(buttons, LCG)
         buttons.oil.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
             ceil((mainHandExpiration or 0) / 1000 / 60))
 
-        if RCC.db.wenchants[mainHandEnchantID or 0] then
-            lastWeaponEnchantItem = RCC.db.wenchants[mainHandEnchantID].item
+        if RCC.db.weaponEnchants[mainHandEnchantID or 0] then
+            lastWeaponEnchantItem = RCC.db.weaponEnchants[mainHandEnchantID].item
         end
     end
 
@@ -429,9 +421,9 @@ local function updateWeaponEnchants(buttons, LCG)
     end
 
     if lastWeaponEnchantItem
-        and RCC.db.wenchants_items[lastWeaponEnchantItem]
+        and RCC.db.weaponEnchantItems[lastWeaponEnchantItem]
     then
-        local wenchData = RCC.db.wenchants_items[lastWeaponEnchantItem]
+        local wenchData = RCC.db.weaponEnchantItems[lastWeaponEnchantItem]
         buttons.oil.texture:SetTexture(wenchData.icon)
         buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
     end
@@ -441,7 +433,7 @@ local function updateWeaponEnchants(buttons, LCG)
     if not oilItemID then
         local foundItem
 
-        for itemID, data in pairs(RCC.db.wenchants_items) do
+        for itemID, data in pairs(RCC.db.weaponEnchantItems) do
             -- Negative itemIDs are spells, not items
             if itemID > 0 and GetItemCount(itemID, false, true) > 0 then
                 -- If we find 1 item, we want to store it. If we find a 2nd item
@@ -458,7 +450,7 @@ local function updateWeaponEnchants(buttons, LCG)
 
         if foundItem then
             oilItemID = foundItem
-            local wenchData = RCC.db.wenchants_items[foundItem]
+            local wenchData = RCC.db.weaponEnchantItems[foundItem]
 
             buttons.oil.texture:SetTexture(wenchData.icon)
             buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
@@ -674,8 +666,6 @@ local function updateHealingPotions(buttons)
         buttons.healpot.count:SetText("0")
     end
 end
-
-local GetInstanceInfo = GetInstanceInfo
 
 local function getVantusForCurrentRaid()
     local instanceID = select(8, GetInstanceInfo())

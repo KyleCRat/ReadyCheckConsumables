@@ -7,7 +7,7 @@ RCC.db = RCC.db or {}
 --- Item IDs only — enchant IDs not yet collected.
 -------------------------------------------------------------------------------
 
-RCC.db.enchants = {
+RCC.db.enchantIDs = {
     -- 12.0.0 - Midnight
     boots = {
         244009, -- Farstrider's Hunt

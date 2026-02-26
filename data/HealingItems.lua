@@ -5,18 +5,19 @@ RCC.db = RCC.db or {}
 --- Healthstone
 -------------------------------------------------------------------------------
 
-RCC.db.healthstoneIDs = {
+RCC.db.healthstoneItemIDs = {
     [5512]   = true, -- Healthstone
     [224464] = true, -- Demonic Healthstone
 }
 
-RCC.db.hsSpells = {
-    [6262] = true, -- Healthstone
+RCC.db.healthstoneSpellIDs = {
+    [6262] = true, -- Create Healthstone
 }
 
 -------------------------------------------------------------------------------
---- Healing Item Spell IDs
---- Maps spell ID -> true for detecting healthstone / healing potion usage.
+--- Healing Potion Spell IDs
+--- Maps spell ID -> true for detecting healing potion aura buffs.
+--- Stored for future use. Not currently used by the addon.
 -------------------------------------------------------------------------------
 
 RCC.db.healingPotionSpellIDs = {

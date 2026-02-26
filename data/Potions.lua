@@ -4,9 +4,10 @@ RCC.db = RCC.db or {}
 -------------------------------------------------------------------------------
 --- Potion Spell IDs
 --- Maps spell ID -> true for detecting potion usage via aura scanning.
+--- Stored for future use. Not currently used by the addon.
 -------------------------------------------------------------------------------
 
-RCC.db.tablePotion = {
+RCC.db.potionBuffIDs = {
     -- 12.0.0 - Midnight
     [1236616] = true, -- Light's Potential
     [1236998] = true, -- Draught of Rampant Abandon

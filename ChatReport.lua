@@ -6,7 +6,6 @@ local SendChatMessage = SendChatMessage
 local GetTime         = GetTime
 local format          = format
 local floor           = floor
-local ceil            = ceil
 
 local CURRENT_RUNE_TIER = 6
 
@@ -68,7 +67,6 @@ end
 
 -------------------------------------------------------------------------------
 --- Food Report
---- Uses icon-based detection (matching existing RCC approach).
 --- Reports players with no food buff.
 -------------------------------------------------------------------------------
 
@@ -86,14 +84,14 @@ local function reportFood(toChat)
         elseif subgroup <= maxGroup then
             local hasFood = false
 
-            for i = 1, 40 do
+            for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then
                     break
                 end
 
-                if db.foodIconIDs[aura.icon] then
+                if db.foodBuffIDs[aura.spellId] or db.foodIconIDs[aura.icon] then
                     hasFood = true
                     break
                 end
@@ -152,7 +150,7 @@ local function reportFlasks(toChat)
             local hasFlask = false
             local colored = colorName(F.shortName(name), class)
 
-            for i = 1, 40 do
+            for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then
@@ -221,7 +219,7 @@ end
 
 -------------------------------------------------------------------------------
 --- Augment Rune Report
---- Uses RCC.db.tableRunes (spellId -> tier mapping).
+--- Uses RCC.db.runeBuffIDs (spellId -> tier mapping).
 --- Reports missing runes and runes below CURRENT_RUNE_TIER.
 -------------------------------------------------------------------------------
 
@@ -248,7 +246,7 @@ local function reportRunes(toChat)
                     break
                 end
 
-                local tier = db.tableRunes[aura.spellId]
+                local tier = db.runeBuffIDs[aura.spellId]
 
                 if tier then
                     hasRune = true
@@ -309,13 +307,13 @@ end
 
 -------------------------------------------------------------------------------
 --- Raid Buff Report
---- Uses RCC.db.raidBuffs. Only reports missing buffs when the
+--- Uses RCC.db.raidBuffDefs. Only reports missing buffs when the
 --- providing class IS present in the raid.
 --- Output: "Buffs AP (2), Int (1)" or nothing if all present.
 -------------------------------------------------------------------------------
 
 local function reportBuffs(toChat)
-    local buffsList = db.raidBuffs
+    local buffsList = db.raidBuffDefs
     local buffsCount = #buffsList
     local classPresent = {}
     local missingCount = {}
@@ -341,7 +339,7 @@ local function reportBuffs(toChat)
 
             local hasBuff = {}
 
-            for i = 1, 40 do
+            for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then

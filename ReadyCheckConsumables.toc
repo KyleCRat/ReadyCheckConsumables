@@ -14,8 +14,6 @@ data/Runes.lua
 data/RaidBuffs.lua
 data/HealingItems.lua
 data/WeaponEnchants.lua
-data/Enchants.lua
-data/Gems.lua
 data/Settings.lua
 ConsumablesFrame.lua
 RaidFrame.lua

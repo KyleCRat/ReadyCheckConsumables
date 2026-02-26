@@ -7,7 +7,7 @@ RCC.db = RCC.db or {}
 --- Higher tier = more current expansion.
 -------------------------------------------------------------------------------
 
-RCC.db.tableRunes = {
+RCC.db.runeBuffIDs = {
     [1264426] = 7, -- 12.0.0: Void-Touched Augment Rune
     [1242347] = 6, -- 11.2.0: Soulgorged Augmentation
     [1234969] = 6, -- 11.2.0: Ethereal Augmentation

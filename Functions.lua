@@ -1,6 +1,6 @@
 local _, RCC = ...
 RCC.F = RCC.F or {}
-F = RCC.F
+local F = RCC.F
 
 -- Fallback max group when difficulty is not in the lookup table
 local DEFAULT_RAID_GROUP_COUNT = 5

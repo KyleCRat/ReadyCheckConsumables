@@ -75,8 +75,8 @@ local RAID_BUFF_ICONS = {}
 local FALLBACK_SPELL_ICON = 134400  -- INV_Misc_QuestionMark
 
 local function resolveRaidBuffIcons()
-    for k = 1, #db.raidBuffs do
-        local spellID = db.raidBuffs[k][3]
+    for k = 1, #db.raidBuffDefs do
+        local spellID = db.raidBuffDefs[k][3]
         local info = C_Spell.GetSpellInfo(spellID)
 
         RAID_BUFF_ICONS[k] = info and info.iconID or FALLBACK_SPELL_ICON
@@ -88,6 +88,7 @@ resolveRaidBuffIcons()
 -------------------------------------------------------------------------------
 --- Frame creation
 -------------------------------------------------------------------------------
+---
 
 local frame = CreateFrame("Frame", "RCRaidFrame", UIParent, "BackdropTemplate")
 RCC.raidFrame = frame
@@ -111,6 +112,49 @@ frame:SetBackdropBorderColor(0, 0, 0, 1)
 frame:SetScript("OnDragStart", function(self)
     self:StartMoving()
 end)
+
+--- Close button
+-- TODO: Extract into function and reduce duplication with the ConsumablesFrame.lua:37
+frame.close = CreateFrame("Button", nil, frame,
+                                    "SecureHandlerClickTemplate")
+frame.close:SetSize(0, 20)
+frame.close:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 1, -3)
+frame.close:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -1, -3)
+
+frame.close.bg = frame.close:CreateTexture(nil, "BACKGROUND")
+frame.close.bg:SetAllPoints()
+frame.close.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+
+frame.close.border = frame.close:CreateTexture(nil, "BORDER")
+frame.close.border:SetPoint("TOPLEFT", -1, 1)
+frame.close.border:SetPoint("BOTTOMRIGHT", 1, -1)
+frame.close.border:SetColorTexture(0, 0, 0, 1)
+
+frame.close.highlight = frame.close:CreateTexture(nil, "ARTWORK")
+frame.close.highlight:SetAllPoints(frame.close.bg)
+frame.close.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
+frame.close.highlight:SetBlendMode("ADD")
+frame.close.highlight:Hide()
+
+frame.close.text = frame.close:CreateFontString(nil, "OVERLAY")
+frame.close.text:SetPoint("CENTER")
+frame.close.text:SetFont(FONT, 12, "OUTLINE")
+frame.close.text:SetText(CLOSE or "x")
+frame.close.text:SetTextColor(1, 1, 1)
+
+frame.close:SetScript("OnEnter", function(self)
+    self.highlight:Show()
+end)
+
+frame.close:SetScript("OnLeave", function(self)
+    self.highlight:Hide()
+end)
+
+frame.close:SetFrameRef("CLLRaidFrame", frame)
+frame.close:SetAttribute("_onclick", [[
+    self:GetFrameRef("CLLRaidFrame"):Hide()
+]])
+
 
 local function savePosition(self)
     self:StopMovingOrSizing()
@@ -190,7 +234,7 @@ titleBar.countText:SetText("")
 -- Countdown timer label (e.g. "15s")
 titleBar.timerText = titleBar:CreateFontString(nil, "ARTWORK")
 titleBar.timerText:SetPoint("LEFT", titleBar.countText, "RIGHT", 6, 0)
-titleBar.timerText:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
+titleBar.timerText:SetFont(FONT, FONT_SIZE_NAME, "OUTLINE")
 titleBar.timerText:SetTextColor(1, 1, 1)
 titleBar.timerText:SetText("")
 
@@ -376,7 +420,7 @@ local function createRow(index)
     row.raidBuffIcons    = {}
     row.raidBuffOverlays = {}
 
-    for k = 1, #db.raidBuffs do
+    for k = 1, #db.raidBuffDefs do
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetPoint("LEFT", row, "LEFT", x, 0)
         icon:SetSize(ICON_SIZE, ICON_SIZE)
@@ -385,7 +429,7 @@ local function createRow(index)
         row.raidBuffIcons[k] = icon
 
         local overlay = createOverlay(row, icon)
-        overlay.spellID = db.raidBuffs[k][3]
+        overlay.spellID = db.raidBuffDefs[k][3]
         row.raidBuffOverlays[k] = overlay
         x = x + ICON_SIZE + H_PAD
     end
@@ -426,7 +470,7 @@ local function scanMemberAuras(unit, now)
         raidBuff = {},
     }
 
-    local buffsList = db.raidBuffs
+    local buffsList = db.raidBuffDefs
 
     for k = 1, #buffsList do
         result.raidBuff[k] = false
@@ -457,7 +501,7 @@ local function scanMemberAuras(unit, now)
             result.flaskIconID = aura.icon
         end
 
-        if not result.hasRune and db.tableRunes[sid] then
+        if not result.hasRune and db.runeBuffIDs[sid] then
             result.hasRune    = true
             result.runeAuraID = aura.auraInstanceID
         end
@@ -639,7 +683,7 @@ local function applyRowData(row, member)
     row.vantusOverlay.auraID = auras.vantusAuraID
 
     -- Raid buffs
-    for k = 1, #db.raidBuffs do
+    for k = 1, #db.raidBuffDefs do
         local auraID = auras.raidBuff[k]
         local has = auraID and auraID ~= false
 
