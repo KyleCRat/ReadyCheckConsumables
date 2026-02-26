@@ -349,7 +349,7 @@ local function createRow(index)
 
     -- Ready check icon
     row.rcIcon = row:CreateTexture(nil, "ARTWORK")
-    row.rcIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.rcIcon:SetPoint("CENTER", row, "LEFT", x + RC_ICON_WIDTH / 2, 0)
     row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
     row.rcIcon:SetTexture(RC_TEXTURES[RC_PENDING])
     x = x + RC_ICON_WIDTH + H_PAD
@@ -558,7 +558,6 @@ local function scanAllMembers()
             count = count + 1
             local online = UnitIsConnected(unit)
             local isDead = UnitIsDeadOrGhost(unit)
-
             memberData[count] = {
                 name   = name,
                 unit   = unit,
@@ -612,17 +611,12 @@ local function applyRowData(row, member)
 
     if status == RC_NOT and not member.online then
         row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
-        row.rcIcon:SetPoint("LEFT", row, "LEFT", 0, 0)
         row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
     elseif status == RC_PENDING and member.isDead then
-        -- Atlas is 26x33; fit to height and center horizontally
-        local w = RC_ICON_WIDTH * 26 / 33
-        row.rcIcon:SetSize(w, RC_ICON_WIDTH)
-        row.rcIcon:SetPoint("LEFT", row, "LEFT", (RC_ICON_WIDTH - w) / 2, 0)
+        row.rcIcon:SetSize(RC_ICON_WIDTH * 26 / 33, RC_ICON_WIDTH)
         row.rcIcon:SetAtlas(RC_ATLAS_DEAD)
     else
         row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
-        row.rcIcon:SetPoint("LEFT", row, "LEFT", 0, 0)
         row.rcIcon:SetTexture(RC_TEXTURES[status])
     end
 
@@ -792,12 +786,10 @@ local function showFinishedSummary()
         local member = memberData[i]
         local status = rcStatus[member.unit]
 
-        if status == RC_NOT then
-            if UnitIsAFK(member.unit) then
-                afkCount = afkCount + 1
-            else
-                notReadyCount = notReadyCount + 1
-            end
+        if status == RC_PENDING then
+            afkCount = afkCount + 1
+        elseif status == RC_NOT then
+            notReadyCount = notReadyCount + 1
         end
     end
 
@@ -918,9 +910,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 
     -- The initiator never receives READY_CHECK_CONFIRM for themselves;
     -- auto-mark them as ready so their row shows a check immediately.
-    if initiatorUnit and UnitIsUnit(initiatorUnit, "player") then
+    if initiatorUnit then
         for unit in pairs(unitToIndex) do
-            if UnitIsUnit(unit, "player") then
+            if UnitIsUnit(unit, initiatorUnit) then
                 rcStatus[unit] = RC_READY
                 break
             end
@@ -955,6 +947,8 @@ function frame:OnReadyCheckConfirm(unit, ready)
     if row then
         local member = memberData[index]
         local newStatus = rcStatus[unit]
+
+        row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
 
         if newStatus == RC_NOT and member and not member.online then
             row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
