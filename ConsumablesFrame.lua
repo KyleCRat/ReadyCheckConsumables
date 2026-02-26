@@ -81,12 +81,40 @@ RCC.consumables.close:SetAttribute("_onclick", [[
 --- Combat state driver
 -------------------------------------------------------------------------------
 
-local function ButtonOnEnter(self)
-    self:GetParent():SetAlpha(0.7)
+local function ClickButtonOnEnter(self)
+    local button = self:GetParent()
+    button:SetAlpha(0.7)
+
+    if button.tooltipItemID then
+        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        GameTooltip:SetItemByID(button.tooltipItemID)
+        GameTooltip:Show()
+    end
 end
 
-local function ButtonOnLeave(self)
+local function ClickButtonOnLeave(self)
     self:GetParent():SetAlpha(1)
+    GameTooltip:Hide()
+end
+
+local function InfoButtonOnEnter(self)
+    if self.tooltipAuraID then
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetUnitBuffByAuraInstanceID("player", self.tooltipAuraID)
+        GameTooltip:Show()
+
+        return
+    end
+
+    if self.tooltipItemID then
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetItemByID(self.tooltipItemID)
+        GameTooltip:Show()
+    end
+end
+
+local function InfoButtonOnLeave()
+    GameTooltip:Hide()
 end
 
 RCC.consumables.state = CreateFrame("Frame", nil, nil,
@@ -176,10 +204,14 @@ for i = 1, 9 do
             button.click:SetAttribute("type", "macro")
         end
 
-        button.click:SetScript("OnEnter", ButtonOnEnter)
-        button.click:SetScript("OnLeave", ButtonOnLeave)
+        button.click:SetScript("OnEnter", ClickButtonOnEnter)
+        button.click:SetScript("OnLeave", ClickButtonOnLeave)
 
         RCC.consumables.state:SetFrameRef("Button" .. i, button.click)
+    else
+        button:EnableMouse(true)
+        button:SetScript("OnEnter", InfoButtonOnEnter)
+        button:SetScript("OnLeave", InfoButtonOnLeave)
     end
 
     if i == i_food then
@@ -260,6 +292,7 @@ local function scanPlayerAuras(buttons, now)
             buttons.food.texture:SetDesaturated(false)
             buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                    ceil((expiry - now) / 60))
+            buttons.food.tooltipAuraID = auraData.auraInstanceID
 
         elseif RCC.db.flaskBuffIDs[sid] then
             buttons.flask.statustexture:SetTexture(READY)
@@ -306,6 +339,7 @@ local function updateHealthstones(buttons)
         buttons.hs.count:SetFormattedText("%d", totalCount)
         buttons.hs.statustexture:SetTexture(READY)
         buttons.hs.texture:SetDesaturated(false)
+        buttons.hs.tooltipItemID = RCC.db.healthstone_item_id
     else
         buttons.hs.count:SetText("0")
     end
@@ -328,6 +362,8 @@ local function updateFlasks(buttons, isFlask, LCG)
     end
 
     if flask_count > 0 then
+        buttons.flask.tooltipItemID = flask_item_id
+
         if not isFlask then
             local texture = select(5, GetItemInfoInstant(flask_item_id))
 
@@ -473,6 +509,11 @@ local function updateWeaponEnchants(buttons, LCG)
     buttons.oil.count:SetText(oilCount)
     buttons.oiloh.count:SetText(oilCount)
 
+    if type(oilItemID) == "number" and oilItemID > 0 then
+        buttons.oil.tooltipItemID = oilItemID
+        buttons.oiloh.tooltipItemID = oilItemID
+    end
+
     if type(oilItemID) == "number" and oilItemID < 0 then
         if not InCombatLockdown() then
             local spellInfo = GetSpellInfo(-oilItemID)
@@ -561,6 +602,7 @@ local function updateRunes(buttons, isRune, LCG)
         and unlimited_rune_item_count > 0
     then
         buttons.rune.count:SetText("")
+        buttons.rune.tooltipItemID = RCC.db.unlimited_rune_item_id
 
         if not isRune then
             buttons.rune.texture:SetTexture(RCC.db.unlimited_rune_icon_id)
@@ -581,6 +623,7 @@ local function updateRunes(buttons, isRune, LCG)
         end
     elseif rune_item_count and rune_item_count > 0 then
         buttons.rune.count:SetFormattedText("%d", rune_item_count)
+        buttons.rune.tooltipItemID = RCC.db.rune_item_id
 
         if not isRune then
             buttons.rune.texture:SetTexture(RCC.db.rune_icon_id)
@@ -645,6 +688,7 @@ local function updateDamagePotions(buttons)
         buttons.dmgpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
         buttons.dmgpot.texture:SetTexture(GetItemIcon(inventoryItem))
         buttons.dmgpot.texture:SetDesaturated(false)
+        buttons.dmgpot.tooltipItemID = inventoryItem
     else
         buttons.dmgpot.count:SetText("0")
     end
@@ -671,6 +715,7 @@ local function updateHealingPotions(buttons)
         buttons.healpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
         buttons.healpot.texture:SetTexture(GetItemIcon(inventoryItem))
         buttons.healpot.texture:SetDesaturated(false)
+        buttons.healpot.tooltipItemID = inventoryItem
     else
         buttons.healpot.count:SetText("0")
     end
@@ -741,6 +786,7 @@ local function updateVantusRune(buttons, isVantus)
 
     if itemID and count > 0 then
         buttons.vantus.count:SetFormattedText("%d", count)
+        buttons.vantus.tooltipItemID = itemID
 
         if not InCombatLockdown() then
             local itemName = GetItemInfo(itemID)
@@ -872,6 +918,8 @@ function RCC.consumables:Update()
         buttons[i].timeleft:SetText("")
         buttons[i].count:SetText("")
         buttons[i].texture:SetDesaturated(true)
+        buttons[i].tooltipAuraID = nil
+        buttons[i].tooltipItemID = nil
     end
 
     local LCG = LibStub("LibCustomGlow-1.0", true)
