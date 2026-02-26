@@ -11,13 +11,15 @@ local ceil            = ceil
 local CURRENT_RUNE_TIER = 6
 
 local DIFFICULTY_TO_SETTING = {
-    [16] = "chatReport_mythicRaid",
-    [15] = "chatReport_heroicRaid",
-    [14] = "chatReport_normalRaid",
-    [17] = "chatReport_lfr",
-    [8]  = "chatReport_mythicDungeon",
-    [2]  = "chatReport_heroicDungeon",
-    [1]  = "chatReport_normalDungeon",
+    [16]  = "chatReport_mythicRaid",
+    [15]  = "chatReport_heroicRaid",
+    [14]  = "chatReport_normalRaid",
+    [5]   = "chatReport_normalRaid",  -- Story mode (legacy)
+    [220] = "chatReport_normalRaid",  -- Story mode
+    [17]  = "chatReport_lfr",
+    [8]   = "chatReport_mythicDungeon",
+    [2]   = "chatReport_heroicDungeon",
+    [1]   = "chatReport_normalDungeon",
 }
 
 local getRosterInfo = F.GetRosterInfo
@@ -58,9 +60,10 @@ local function sendResults(msg, toChat)
         return
     end
 
+    local chatType = F.chatType()
     msg = msg:gsub("|c%x%x%x%x%x%x%x%x", "")
     msg = msg:gsub("|r", "")
-    SendChatMessage(msg, F.chatType())
+    SendChatMessage(msg, chatType)
 end
 
 -------------------------------------------------------------------------------
@@ -401,10 +404,10 @@ local function hasPermission()
     end
 
     if perm == "assist" then
-        return IsRaidLeader() or IsRaidOfficer()
+        return UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")
     end
 
-    return IsRaidLeader()
+    return UnitIsGroupLeader("player")
 end
 
 local function isInstanceAllowed()

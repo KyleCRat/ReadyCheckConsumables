@@ -119,11 +119,11 @@ function F.chatType()
         return "INSTANCE_CHAT"
     end
 
-    if IsInRaid() then
+    if IsInRaid(LE_PARTY_CATEGORY_HOME) then
         return "RAID"
     end
 
-    if IsInGroup() then
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) then
         return "PARTY"
     end
 
