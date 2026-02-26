@@ -135,3 +135,41 @@ function F.shortName(fullName)
 
     return name
 end
+
+-------------------------------------------------------------------------------
+--- GetRosterInfo(index)
+--- Returns name, unit, subgroup, class for a single roster slot.
+--- Works in both raid and party. Returns nil when no player at index.
+-------------------------------------------------------------------------------
+
+function F.GetRosterInfo(index)
+    if IsInRaid() then
+        local name, _, subgroup, _, _, class = GetRaidRosterInfo(index)
+
+        if not name then
+            return nil
+        end
+
+        return name, "raid" .. index, subgroup, class
+    end
+
+    if index > 5 then
+        return nil
+    end
+
+    local unit = index == 5 and "player" or "party" .. index
+
+    if not UnitExists(unit) then
+        return nil
+    end
+
+    local name = GetUnitName(unit, true)
+
+    if not name then
+        return nil
+    end
+
+    local _, fileName = UnitClass(unit)
+
+    return name, unit, 1, fileName
+end

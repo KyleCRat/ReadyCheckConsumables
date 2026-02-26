@@ -144,9 +144,24 @@ RCC.db.foodItemIDs = {
 }
 
 -------------------------------------------------------------------------------
+--- Food Detection Icon IDs
+--- Icon IDs used as a fallback to detect food/drink auras when the spell ID
+--- is not in foodBuffIDs. 136000 is the canonical Well Fed icon and is
+--- prioritized over others when multiple food auras are present.
+-------------------------------------------------------------------------------
+
+RCC.db.foodIconIDs = {
+    [136000] = true, -- Spell_misc_food,  Well Fed / Food Buff
+    [132805] = true, -- Inv_drink_18,     Drinking
+    [133950] = true, -- Inv_misc_food_08, Eating
+}
+
+RCC.db.foodWellFedIconID = 136000
+
+-------------------------------------------------------------------------------
 --- Food Buff Spell IDs
 --- Maps spell ID -> true for detecting Well Fed auras on players.
---- Also detected by icon ID (136000) as a fallback.
+--- Also detected by icon ID (foodIconIDs) as a fallback.
 -------------------------------------------------------------------------------
 
 RCC.db.foodBuffIDs = {

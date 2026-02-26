@@ -8,48 +8,9 @@ local format          = format
 local floor           = floor
 local ceil            = ceil
 
-local FOOD_ICONS = {
-    [136000] = true, -- Spell_misc_food,  Food Buff
-    [132805] = true, -- Inv_drink_18,     Drinking
-    [133950] = true, -- Inv_misc_food_08, Eating
-}
-
 local CURRENT_RUNE_TIER = 6
 
--------------------------------------------------------------------------------
---- Roster info wrapper
---- GetRaidRosterInfo does not work in party, so we wrap it.
---- Returns: name, unit, subgroup, class
--------------------------------------------------------------------------------
-
-local _GetRaidRosterInfo = GetRaidRosterInfo
-
-local function getRosterInfo(index)
-    if IsInRaid() then
-        local name, _, subgroup, _, _, class = _GetRaidRosterInfo(index)
-
-        if not name then
-            return nil
-        end
-
-        return name, "raid" .. index, subgroup, class
-    end
-
-    if index > 5 then
-        return nil
-    end
-
-    local unit = index == 5 and "player" or "party" .. index
-    local name = GetUnitName(unit, true)
-
-    if not name then
-        return nil
-    end
-
-    local _, fileName = UnitClass(unit)
-
-    return name, unit, 1, fileName
-end
+local getRosterInfo = F.GetRosterInfo
 
 -------------------------------------------------------------------------------
 --- Class color helper
@@ -119,7 +80,7 @@ local function reportFood(toChat)
                     break
                 end
 
-                if FOOD_ICONS[aura.icon] then
+                if db.foodIconIDs[aura.icon] then
                     hasFood = true
                     break
                 end

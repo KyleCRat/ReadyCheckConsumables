@@ -4,6 +4,7 @@
 ## Author: Yvairel
 ## Version: 12.0.1-1
 ## Category: Raid
+## SavedVariables: ReadyCheckConsumablesDB
 
 Functions.lua
 data/Food.lua
@@ -17,5 +18,6 @@ data/Enchants.lua
 data/Gems.lua
 data/Settings.lua
 ConsumablesFrame.lua
+RaidFrame.lua
 ReadyCheckConsumables.lua
 ChatReport.lua

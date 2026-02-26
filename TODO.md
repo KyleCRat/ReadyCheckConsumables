@@ -1,1 +1,32 @@
 # TODO
+
+## Features
+- Settings menu
+  - Report to Chat
+    - Enable / Disable
+    - Permissions Check in Raid
+      - Raid Lead
+      - Raid Assist
+      - Any
+    - Enable in Instance Type
+      - Mythic Raid
+      - Heroic Raid
+      - Normal Raid
+      - LFR
+      - Mythic Dungeon
+      - Heroic Dungeon
+      - Normal Dungeon
+  - Consumables Frame
+    - Enable / Disable
+    - Enable / Disable each Icon
+      - Food
+      - Flask
+      - Mainhand Oil
+      - Offhand Oil
+      - Healthstone
+      - Damage Potion
+      - Healing Potion
+      - Augment Rune
+      - Vantus Rune
+  - Raid Frame
+    - Enable / Disable

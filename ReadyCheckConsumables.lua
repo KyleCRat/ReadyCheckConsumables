@@ -1,5 +1,7 @@
 local ADDON_NAME, RCC = ...
 
+RCC.color = "cff00cc"
+
 RCC.db = RCC.db or {}
 
 -------------------------------------------------------------------------------
@@ -14,16 +16,19 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
 
         if self.cancelDelay then
             self.cancelDelay:Cancel()
+            self.cancelDelay = nil
         end
 
-        self.cancelDelay = C_Timer.NewTimer(time_to_hide or 12, function()
-            self:UnregisterEvent("UNIT_AURA")
-            self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+        if time_to_hide ~= 0 then
+            self.cancelDelay = C_Timer.NewTimer(time_to_hide or 12, function()
+                self:UnregisterEvent("UNIT_AURA")
+                self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
 
-            if self.isRLpos then
-                self.rlpointer:Hide()
-            end
-        end)
+                if self.isRLpos then
+                    self.rlpointer:Hide()
+                end
+            end)
+        end
 
         if unit and UnitIsUnit(unit, "player") then
             self:Repos(true)
@@ -81,12 +86,16 @@ SlashCmdList["RCC"] = function(msg)
         local name = UnitName("player")
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,
                                              "READY_CHECK",
-                                             name)
+                                             name, 0)
+        RCC.raidFrame:GetScript("OnEvent")(RCC.raidFrame,
+                                           "READY_CHECK",
+                                           name, 0)
 
     elseif msg == "hide" then
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,
                                              "READY_CHECK_FINISHED",
                                              "")
+        RCC.raidFrame:Hide()
 
     elseif msg == "report" then
         RCC.chatReport.Test(false)
@@ -95,7 +104,7 @@ SlashCmdList["RCC"] = function(msg)
         RCC.chatReport.Test(true)
 
     else
-        print("|cff00ccffReadyCheckConsumables|r commands:")
+        print("|" .. RCC.color .. "ff" .. "ReadyCheckConsumables|r commands:")
         print("  /rcc show - Show the consumable icon frame")
         print("  /rcc hide - Hide the consumable icon frame")
         print("  /rcc report - Print consumable report locally")

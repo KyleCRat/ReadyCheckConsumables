@@ -1,0 +1,23 @@
+Legend:
+[R] = Check Icon
+[X] = Not Ready X Icon
+[?] = Has not answered "?" Icon
+[Fo] = Food Buff Icon (Should show the actual food buff the player has with the tooltip showing buff time remaining)
+[Fl] = Flask Buff Icon (Same should show the actual buff the player has)
+[AR] = Augment Rune Buff Icon
+[VR] = Vantus Rune Buff Icon
+[BS] = Battle Shout Buff icon
+[PF] = Power word Fort Buff icon
+[AI] = Arcane Intellect Buff Icon
+[MW] = Mark of the Wild Buff icon
+[SF] = Skyfury Buff icon
+[BB] = Blessing of the Bronze Buff Icon
+
+--------------------------------------------------------------------------------
+| X/4 39s                 [X]     [X]  [X]  [X]  [X]  [X]  [R]  [X]  [X]  [X]  |
+--------------------------------------------------------------------------------
+| [R] PlayerName1    59m [Fo] 12m [Fl] [AR] [VR] [BS] [PF] [AI] [MW] [SF] [BB] |
+| [X] Yvairel                 11m [Fl] [AR] [VR] [BS]      [AI] [MW] [SF] [BB] |
+| [?] PName2         12m [Fo] 13m [Fl] [AR]      [BS] [PF] [AI]      [SF] [BB] |
+| [?] SuperLongPl... 10m [Fo]               [VR]           [AI]                |
+--------------------------------------------------------------------------------
