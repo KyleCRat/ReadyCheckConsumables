@@ -837,6 +837,18 @@ end
 --- Update() coordinator
 -------------------------------------------------------------------------------
 
+local ICON_SETTINGS = {
+    [i_food]     = "icon_food",
+    [i_flask]    = "icon_flask",
+    [i_mh_oil]   = "icon_mhOil",
+    [i_oh_oil]   = "icon_ohOil",
+    [i_hs]       = "icon_healthstone",
+    [i_dmg_pot]  = "icon_dmgPotion",
+    [i_heal_pot] = "icon_healPotion",
+    [i_rune]     = "icon_rune",
+    [i_vantus]   = "icon_vantus",
+}
+
 function RCC.consumables:Update()
     updateElvUIParent(self)
     local buttons = self.buttons
@@ -906,6 +918,12 @@ function RCC.consumables:Update()
         if buttons.vantus:IsShown() then
             buttons.vantus:ClearAllPoints()
             buttons.vantus:SetPoint("LEFT", buttons.healpot, "RIGHT", 0, 0)
+        end
+
+        for idx, key in pairs(ICON_SETTINGS) do
+            if not RCC.GetSetting(key) then
+                buttons[idx]:Hide()
+            end
         end
 
         self:SetWidth(consumables_size * countVisibleButtons(buttons))

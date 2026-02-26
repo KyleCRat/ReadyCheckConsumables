@@ -10,6 +10,12 @@ RCC.db = RCC.db or {}
 
 RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
     if event == "READY_CHECK" then
+        if not RCC.GetSetting("consumables_enabled") then
+            self:Hide()
+
+            return
+        end
+
         self:Update()
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
@@ -82,7 +88,7 @@ SLASH_RCC1 = "/rcc"
 SlashCmdList["RCC"] = function(msg)
     msg = strlower(strtrim(msg))
 
-    if msg == "show" then
+    if msg == "test" or msg == "t" then
         local name = UnitName("player")
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,
                                              "READY_CHECK",
@@ -91,23 +97,29 @@ SlashCmdList["RCC"] = function(msg)
                                            "READY_CHECK",
                                            name, 0)
 
-    elseif msg == "hide" then
+    elseif msg == "hide" or msg == "h" then
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,
                                              "READY_CHECK_FINISHED",
                                              "")
         RCC.raidFrame:Hide()
 
-    elseif msg == "report" then
+    elseif msg == "report" or msg == "r" then
         RCC.chatReport.Test(false)
 
-    elseif msg == "reportchat" then
+    elseif msg == "reportchat" or msg == "rc" then
         RCC.chatReport.Test(true)
+
+    elseif msg == "settings" or msg == "s" then
+        if RCC.settingsCategory then
+            Settings.OpenToCategory(RCC.settingsCategory:GetID())
+        end
 
     else
         print("|" .. RCC.color .. "ff" .. "ReadyCheckConsumables|r commands:")
-        print("  /rcc show - Show the consumable icon frame")
-        print("  /rcc hide - Hide the consumable icon frame")
-        print("  /rcc report - Print consumable report locally")
-        print("  /rcc reportchat - Send consumable report to chat")
+        print("  /rcc test, t - Show a test consumable icon frame")
+        print("  /rcc hide, h - Immediately hide the consumable icon frame")
+        print("  /rcc report, r - Print consumable report locally")
+        print("  /rcc reportchat, rc - Send consumable report to chat")
+        print("  /rcc settings, s - Open settings panel")
     end
 end

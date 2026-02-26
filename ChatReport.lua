@@ -10,6 +10,16 @@ local ceil            = ceil
 
 local CURRENT_RUNE_TIER = 6
 
+local DIFFICULTY_TO_SETTING = {
+    [16] = "chatReport_mythicRaid",
+    [15] = "chatReport_heroicRaid",
+    [14] = "chatReport_normalRaid",
+    [17] = "chatReport_lfr",
+    [8]  = "chatReport_mythicDungeon",
+    [2]  = "chatReport_heroicDungeon",
+    [1]  = "chatReport_normalDungeon",
+}
+
 local getRosterInfo = F.GetRosterInfo
 
 -------------------------------------------------------------------------------
@@ -379,7 +389,48 @@ end
 --- data to propagate for all raid members.
 -------------------------------------------------------------------------------
 
+local function hasPermission()
+    if not IsInRaid() then
+        return true
+    end
+
+    local perm = RCC.GetSetting("chatReport_permission")
+
+    if perm == "any" then
+        return true
+    end
+
+    if perm == "assist" then
+        return IsRaidLeader() or IsRaidOfficer()
+    end
+
+    return IsRaidLeader()
+end
+
+local function isInstanceAllowed()
+    local _, _, difficultyID = GetInstanceInfo()
+    local key = DIFFICULTY_TO_SETTING[difficultyID]
+
+    if not key then
+        return false
+    end
+
+    return RCC.GetSetting(key)
+end
+
 local function onReadyCheck()
+    if not RCC.GetSetting("chatReport_enabled") then
+        return
+    end
+
+    if not hasPermission() then
+        return
+    end
+
+    if not isInstanceAllowed() then
+        return
+    end
+
     reportFood(true)
     reportFlasks(true)
     reportRunes(true)

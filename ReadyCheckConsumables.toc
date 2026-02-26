@@ -19,5 +19,6 @@ data/Gems.lua
 data/Settings.lua
 ConsumablesFrame.lua
 RaidFrame.lua
+Settings.lua
 ReadyCheckConsumables.lua
 ChatReport.lua
