@@ -2,21 +2,33 @@
 
 All notable changes to Ready Check Consumables will be documented in this file.
 
-## [12.0.1-2] - 2026-xx-xx
+## [12.0.1-1] - 2026-02-26
 
+- Initial Addon Release
 
-## [12.0.1-1] - 2026-02-10
+### Consumables Frame
+- Personal consumable status icons on the ready check frame
+- Tracks food, flask, weapon oils (MH/OH), augment rune, healthstone, damage potion, healing potion, and vantus rune
+- Remaining duration for timed buffs; inventory counts for potions, healthstones, and runes
+- Click-to-use buttons for flasks, oils, augment runes, and vantus runes
+- Glow highlights when a consumable is missing or expiring
+- Auto-detects weapon enchant items in bags when no enchant is applied
+- Each icon individually toggleable in settings
 
-Initial Addon Release
+### Raid Status Frame
+- Per-member consumable and buff overview for the entire raid
+- Columns for food, flask, augment rune, vantus rune, and all six raid buffs
+- Ready check response tracking with disconnect/dead player icons
+- Colored summary text on completion (ready / not ready / AFK)
+- Countdown progress bar and draggable frame
 
-- Displays consumable status icons on the ready check frame
-- Tracks food, flask, weapon enchant, augment rune, healthstone, combat potion, healing potion, and vantus rune status
-- Shows remaining duration for timed buffs (flasks, weapon enchants)
-- Shows inventory count for potions, healthstones, and runes
-- Click-to-use buttons for flasks, weapon enchants, augment runes, and vantus runes
-- Automatically detects weapon enchant items in bags when no enchant is applied
-- Off-hand weapon enchant detection for dual wielders
-- Glow highlights on buttons when a consumable is missing or expiring
-- Chat reporting of missing consumables to raid/party
+### Chat Report
+- Automatic missing consumable reports to raid/party chat on ready check
+- Reports food, flasks, augment runes, and raid buffs (only when provider class is present)
+- Flask expiration and low-tier rune warnings
+- Configurable per difficulty with role-based permission system
+
+### General
+- Settings panel via `/rcc settings` or the WoW AddOns menu
 - Hides on combat start
 - ElvUI compatible
