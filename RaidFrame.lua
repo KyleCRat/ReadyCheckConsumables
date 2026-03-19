@@ -492,43 +492,45 @@ local function scanMemberAuras(unit, now)
 
         local sid = aura.spellId
 
-        if db.foodBuffIDs[sid] or db.foodIconIDs[aura.icon] then
-            if not result.hasFood or aura.icon == db.foodWellFedIconID then
-                result.hasFood    = true
-                result.foodTime   = (aura.expirationTime or 0) - now
-                result.foodAuraID = aura.auraInstanceID
-                result.foodIconID = aura.icon
+        if sid then
+            if db.foodBuffIDs[sid] or db.foodIconIDs[aura.icon] then
+                if not result.hasFood or aura.icon == db.foodWellFedIconID then
+                    result.hasFood    = true
+                    result.foodTime   = (aura.expirationTime or 0) - now
+                    result.foodAuraID = aura.auraInstanceID
+                    result.foodIconID = aura.icon
+                end
             end
-        end
 
-        if not result.hasFlask and db.flaskBuffIDs[sid] then
-            result.hasFlask    = true
-            result.flaskTime   = (aura.expirationTime or 0) - now
-            result.flaskAuraID = aura.auraInstanceID
-            result.flaskIconID = aura.icon
-        end
+            if not result.hasFlask and db.flaskBuffIDs[sid] then
+                result.hasFlask    = true
+                result.flaskTime   = (aura.expirationTime or 0) - now
+                result.flaskAuraID = aura.auraInstanceID
+                result.flaskIconID = aura.icon
+            end
 
-        if not result.hasRune and db.runeBuffIDs[sid] then
-            result.hasRune    = true
-            result.runeAuraID = aura.auraInstanceID
-            result.runeIconID = aura.icon
-        end
+            if not result.hasRune and db.runeBuffIDs[sid] then
+                result.hasRune    = true
+                result.runeAuraID = aura.auraInstanceID
+                result.runeIconID = aura.icon
+            end
 
-        if not result.hasVantus and db.vantusBuffIDs[sid] then
-            result.hasVantus    = true
-            result.vantusAuraID = aura.auraInstanceID
-            result.vantusIconID = aura.icon
-        end
+            if not result.hasVantus and db.vantusBuffIDs[sid] then
+                result.hasVantus    = true
+                result.vantusAuraID = aura.auraInstanceID
+                result.vantusIconID = aura.icon
+            end
 
-        for k = 1, #buffsList do
-            if not result.raidBuff[k] then
-                local b = buffsList[k]
+            for k = 1, #buffsList do
+                if not result.raidBuff[k] then
+                    local b = buffsList[k]
 
-                if sid == b[3]
-                    or (b[4] and sid == b[4])
-                    or (b[5] and b[5][sid])
-                then
-                    result.raidBuff[k] = aura.auraInstanceID or true
+                    if sid == b[3]
+                        or (b[4] and sid == b[4])
+                        or (b[5] and b[5][sid])
+                    then
+                        result.raidBuff[k] = aura.auraInstanceID or true
+                    end
                 end
             end
         end
