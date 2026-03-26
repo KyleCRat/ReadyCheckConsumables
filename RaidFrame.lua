@@ -775,7 +775,9 @@ end
 local function updateTitleCount()
     local readyCount = 0
 
-    for unit, status in pairs(rcStatus) do
+    for unit in pairs(unitToIndex) do
+        local status = rcStatus[unit]
+
         if status == RC_READY or status == RC_NOT then
             readyCount = readyCount + 1
         end
@@ -783,6 +785,8 @@ local function updateTitleCount()
 
     titleBar.countText:SetTextColor(1, 1, 1)
     titleBar.countText:SetText(readyCount .. "/" .. activeCount)
+
+    return readyCount
 end
 
 local function showFinishedSummary()
@@ -964,7 +968,12 @@ function frame:OnReadyCheckConfirm(unit, ready)
         end
     end
 
-    updateTitleCount()
+    local responded = updateTitleCount()
+
+    if responded >= activeCount then
+        stopProgressBar()
+        showFinishedSummary()
+    end
 end
 
 function frame:OnReadyCheckFinished()
