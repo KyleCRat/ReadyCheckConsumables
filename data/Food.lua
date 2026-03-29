@@ -7,13 +7,7 @@ RCC.db = RCC.db or {}
 --- "Hearty" variants are the same food but persist through death.
 -------------------------------------------------------------------------------
 
-RCC.db.foodItemIDs = {
-    -- Alcohol
-    262880, -- Vintage Purple Stuff
-
-    ----------------------------------------------------------------------------
-    --- Feasts
-
+RCC.db.feastItemids = {
     242745, -- [Epic] Hearty Blooming Feast       | 98 Stam, 65 Primary Stat
     266996, -- [Epic] Hearty Harandar Celebration | 98 Stam, 65 Primary Stat
     242744, -- [Epic] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
@@ -26,29 +20,9 @@ RCC.db.foodItemIDs = {
     255846, -- [Rare] Harandar Celebration   | 98 Stam, 50 Primary Stat
     255845, -- [Rare] Silvermoon Parade      | 98 Stam, 50 Primary Stat
     255847, -- [Rare] Impossibly Royal Roast | 98 Stam, 50 Primary Stat
+}
 
-
-    ----------------------------------------------------------------------------
-    --- Personal Food
-
-    242275, -- [Rare] Royal Roast                   | 50 Primary Stat
-    242279, -- [Rare] Baked Lucky Loa               | 46 Primary Stat
-
-    242274, -- [Rare] Champion's Bento              | 65 Highest Secondary Stat
-    255848, -- [Rare] Flora Frenzy                  | 65 Highest Secondary Stat
-
-    242287, -- [Rare] Arcano Cutlets                | 59 Critical Strike
-    242278, -- [Rare] Tasty Smoked Tetra            | 59 Critical Strike
-    242283, -- [Rare] Sun-Seared Lumifin            | 59 Critical Strike
-    242277, -- [Rare] Crimson Calamari              | 59 Haste
-    242286, -- [Rare] Fel-Kissed Filet              | 59 Haste
-    242282, -- [Rare] Null and Void Plate           | 59 Haste
-    242285, -- [Rare] Warped Wise Wings             | 59 Mastery
-    242281, -- [Rare] Glitter Skewers               | 59 Mastery
-    242276, -- [Rare] Braised Blood Hunter          | 59 Versatility
-    242280, -- [Rare] Buttered Root Crab            | 59 Versatility
-    242284, -- [Rare] Void-Kissed Fish Rolls        | 59 Versatility
-
+RCC.db.foodItemIDs = {
     242747, -- [Rare] Hearty Royal Roast            | 50 Primary Stat
     268679, -- [Rare] Hearty Impossibly Royal Roast | 50 Primary Stat
     242751, -- [Rare] Hearty Rootland Surprise      | 46 Primary Stat
@@ -71,32 +45,43 @@ RCC.db.foodItemIDs = {
     242753, -- [Rare] Hearty Glitter Skewers        | 59 Mastery
     242757, -- [Rare] Hearty Warped Wise Wings      | 59 Mastery
 
+    242767, -- [Rare] Hearty Hearthflame Supper     | 22 Critical Strike, 22 Haste
+    242775, -- [Rare] Hearty Portable Snack         | 16 Critical Strike, 16 Haste
+    242762, -- [Rare] Hearty Wise Tails             | 22 Critical Strike, 22 Versatility
+    242771, -- [Rare] Hearty Spiced Biscuits        | 16 Critical Strike, 16 Versatility
+    242764, -- [Rare] Hearty Eversong Pudding       | 22 Mastery, 22 Critical Strike
+    242773, -- [Rare] Hearty Forager's Medley       | 16 Mastery, 16 Critical Strike
+    242768, -- [Rare] Hearty Bloodthistle-Wrapped C | 22 Mastery, 22 Haste
+    242776, -- [Rare] Hearty Farstrider Rations     | 16 Mastery, 16 Haste
+    242763, -- [Rare] Hearty Fried Bloomtail        | 22 Mastery, 22 Versatility
+    242772, -- [Rare] Hearty Silvermoon Standard    | 16 Mastery, 16 Versatility
+    242765, -- [Rare] Hearty Sunwell Delight        | 22 Versatility, 22 Haste
+    242774, -- [Rare] Hearty Quick Sandwich         | 16 Versatility, 16 Haste
+
     242752, -- [Rare] Hearty Buttered Root Crab     | 59 Versatility
     242756, -- [Rare] Hearty Void-Kissed Fish Rolls | 59 Versatility
     242748, -- [Rare] Hearty Braised Blood Hunter   | 59 Versatility
     242766, -- [Rare] Hearty Felberry Figs          | 46 Versatility
 
-    242767, -- [Rare] Hearty Hearthflame Supper     | 22 Critical Strike, 22 Haste
-    242775, -- [Rare] Hearty Portable Snack         | 16 Critical Strike, 16 Haste
 
-    242762, -- [Rare] Hearty Wise Tails             | 22 Critical Strike, 22 Versatility
-    242771, -- [Rare] Hearty Spiced Biscuits        | 16 Critical Strike, 16 Versatility
-
-    242764, -- [Rare] Hearty Eversong Pudding       | 22 Mastery, 22 Critical Strike
-    242773, -- [Rare] Hearty Forager's Medley       | 16 Mastery, 16 Critical Strike
-
-    242768, -- [Rare] Hearty Bloodthistle-Wrapped C | 22 Mastery, 22 Haste
-    242776, -- [Rare] Hearty Farstrider Rations     | 16 Mastery, 16 Haste
-
-    242763, -- [Rare] Hearty Fried Bloomtail        | 22 Mastery, 22 Versatility
-    242772, -- [Rare] Hearty Silvermoon Standard    | 16 Mastery, 16 Versatility
-
-    242765, -- [Rare] Hearty Sunwell Delight        | 22 Versatility, 22 Haste
-    242774, -- [Rare] Hearty Quick Sandwich         | 16 Versatility, 16 Haste
-
-
+    242275, -- [Rare] Royal Roast                   | 50 Primary Stat
+    242279, -- [Rare] Baked Lucky Loa               | 46 Primary Stat
     242288, -- [Uncm] Twilight Angler's Medley      | 35 Primary Stat
     242289, -- [Uncm] Spellfire Filet               | 35 Primary Stat
+
+    242274, -- [Rare] Champion's Bento              | 65 Highest Secondary Stat
+    255848, -- [Rare] Flora Frenzy                  | 65 Highest Secondary Stat
+
+    242287, -- [Rare] Arcano Cutlets                | 59 Critical Strike
+    242278, -- [Rare] Tasty Smoked Tetra            | 59 Critical Strike
+    242283, -- [Rare] Sun-Seared Lumifin            | 59 Critical Strike
+
+    242277, -- [Rare] Crimson Calamari              | 59 Haste
+    242286, -- [Rare] Fel-Kissed Filet              | 59 Haste
+    242282, -- [Rare] Null and Void Plate           | 59 Haste
+
+    242285, -- [Rare] Warped Wise Wings             | 59 Mastery
+    242281, -- [Rare] Glitter Skewers               | 59 Mastery
 
     242295, -- [Uncm] Hearthflame Supper            | 22 Critical Strike, 22 Haste
     242290, -- [Uncm] Wise Tails                    | 22 Critical Strike, 22 Versatility
@@ -106,6 +91,9 @@ RCC.db.foodItemIDs = {
     242293, -- [Uncm] Sunwell Delight               | 22 Versatility, 22 Haste
 
     242294, -- [Uncm] Felberry Figs                 | 46 Versatility
+    242276, -- [Rare] Braised Blood Hunter          | 59 Versatility
+    242280, -- [Rare] Buttered Root Crab            | 59 Versatility
+    242284, -- [Rare] Void-Kissed Fish Rolls        | 59 Versatility
 
     242297, -- [Uncm] Mana Lily Tea                 | Mana
     242298, -- [Uncm] Argentleaf Tea                | Mana
@@ -113,34 +101,6 @@ RCC.db.foodItemIDs = {
     242300, -- [Uncm] Tranquility Bloom Tea         | Mana
     242301, -- [Uncm] Azeroot Tea                   | Mana
     249689, -- [Uncm] Ghostflower Tea with Sunfruit | Mana
-
-    ----------------------------------------------------------------------------
-    --- Boon
-
-    -- Epic Boon's
-    267240, -- Boon of Fortitude
-    267235, -- Boon of Vitality
-    267236, -- Boon of Speed
-    267238, -- Boon of Potency
-    267239, -- Boon of Possibilities
-    267648, -- Boon of Vigor
-    267241, -- Boon of Abstinence
-    267237, -- Boon of Power
-
-    -- Rare Boon's
-    260878, -- Boon of Possibilities
-    260879, -- Boon of Power
-    260882, -- Boon of Potency
-    260884, -- Boon of Abstinence
-    260910, -- Boon of Vitality
-    260911, -- Boon of Fortitude
-    264668, -- Boon of Speed
-    267649, -- Boon of Vigor
-
-    -- Uncommon Boon's
-    267647, -- Boon of Vigor
-    267243, -- Boon of Vitality
-    267242, -- Boon of Speed
 }
 
 -------------------------------------------------------------------------------

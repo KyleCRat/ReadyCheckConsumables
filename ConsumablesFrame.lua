@@ -121,7 +121,7 @@ RCC.consumables.state = CreateFrame("Frame", nil, nil,
                                     "SecureHandlerStateTemplate")
 
 RCC.consumables.state:SetAttribute("_onstate-combat", [=[
-    for i = 2, 9 do
+    for i = 1, 9 do
         if i ~= 5 and i ~= 7 and i ~= 8 then
             if self:GetFrameRef("Button"..i) then
                 if newstate == "hide" then
@@ -156,6 +156,7 @@ local i_heal_pot = 8
 local   i_vantus = 9
 
 local CLICKABLE_BUTTONS = {
+    [i_food]   = true,
     [i_flask]  = true,
     [i_mh_oil] = true,
     [i_rune]   = true,
@@ -276,7 +277,7 @@ local function updateElvUIParent(self)
 end
 
 local function scanPlayerAuras(buttons, now)
-    local isFlask, isRune, isVantus
+    local isFood, isFlask, isRune, isVantus
 
     for i = 1, 60 do
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
@@ -292,7 +293,7 @@ local function scanPlayerAuras(buttons, now)
             buttons.food.texture:SetDesaturated(false)
             buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                    ceil((expiry - now) / 60))
-            buttons.food.tooltipAuraID = auraData.auraInstanceID
+            isFood = true
 
         elseif RCC.db.flaskBuffIDs[sid] then
             buttons.flask.statustexture:SetTexture(READY)
@@ -320,7 +321,67 @@ local function scanPlayerAuras(buttons, now)
         end
     end
 
-    return isFlask, isRune, isVantus
+    return isFood, isFlask, isRune, isVantus
+end
+
+local function updateFood(buttons, isFood, LCG)
+    local food_count = 0
+    local food_item_id
+
+    for food_index = 1, #RCC.db.foodItemIDs do
+        local fid = RCC.db.foodItemIDs[food_index]
+        local count = GetItemCount(fid, false, false)
+
+        if count and count > 0 then
+            food_item_id = fid
+            food_count = count
+
+            break
+        end
+    end
+
+    if food_count > 0 then
+        buttons.food.tooltipItemID = food_item_id
+
+        if not isFood then
+            local texture = select(5, GetItemInfoInstant(food_item_id))
+
+            if texture then
+                buttons.food.texture:SetTexture(texture)
+            end
+        end
+
+        if not InCombatLockdown() then
+            local itemName = GetItemInfo(food_item_id)
+
+            if itemName then
+                buttons.food.click:SetAttribute("macrotext1",
+                    format("/stopmacro [combat]\n/use %s", itemName))
+
+                buttons.food.click:Show()
+                buttons.food.click.IsON = true
+            else
+                buttons.food.click:Hide()
+                buttons.food.click.IsON = false
+            end
+        end
+    else
+        if not InCombatLockdown() then
+            buttons.food.click:Hide()
+            buttons.food.click.IsON = false
+        end
+    end
+
+    buttons.food.count:SetFormattedText(
+        "%s", food_count > 0 and food_count or "")
+
+    if not LCG then return end
+
+    if not isFood and food_count > 0 then
+        LCG.PixelGlow_Start(buttons.food)
+    else
+        LCG.PixelGlow_Stop(buttons.food)
+    end
 end
 
 local function updateHealthstones(buttons)
@@ -925,8 +986,9 @@ function RCC.consumables:Update()
     local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
-    local isFlask, isRune, isVantus = scanPlayerAuras(buttons, now)
+    local isFood, isFlask, isRune, isVantus = scanPlayerAuras(buttons, now)
 
+    updateFood(buttons, isFood, LCG)
     updateHealthstones(buttons)
     updateFlasks(buttons, isFlask, LCG)
     updateWeaponEnchants(buttons, LCG)
