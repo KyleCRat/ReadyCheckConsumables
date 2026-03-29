@@ -2,6 +2,14 @@
 
 All notable changes to Ready Check Consumables will be documented in this file.
 
+## [12.0.1-4] - 2026-03-29
+
+### Added
+- Food button on consumables frame is now clickable to use food from inventory
+
+### Fixes
+- Fix "table index is secret" error when scanning auras on other players
+
 ## [12.0.1-3] - 2026-03-19
 
 ### Fixes
