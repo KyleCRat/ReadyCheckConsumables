@@ -91,7 +91,9 @@ local function reportFood(toChat)
                     break
                 end
 
-                if db.foodBuffIDs[aura.spellId] or db.foodIconIDs[aura.icon] then
+                if type(aura.spellId) ~= "number" then
+                    -- spellId is secret for cross-player auras; skip
+                elseif db.foodBuffIDs[aura.spellId] or db.foodIconIDs[aura.icon] then
                     hasFood = true
                     break
                 end
@@ -157,7 +159,9 @@ local function reportFlasks(toChat)
                     break
                 end
 
-                if db.flaskBuffIDs[aura.spellId] then
+                if type(aura.spellId) ~= "number" then
+                    -- spellId is secret for cross-player auras; skip
+                elseif db.flaskBuffIDs[aura.spellId] then
                     hasFlask = true
                     local remaining = aura.expirationTime - now
 
@@ -246,13 +250,14 @@ local function reportRunes(toChat)
                     break
                 end
 
-                local tier = db.runeBuffIDs[aura.spellId]
-
-                if tier then
+                if type(aura.spellId) ~= "number" then
+                    -- spellId is secret for cross-player auras; skip
+                elseif db.runeBuffIDs[aura.spellId] then
                     hasRune = true
 
-                    if tier < CURRENT_RUNE_TIER then
-                        lowTier[#lowTier + 1] = format("%s(%d)", colored, tier)
+                    if db.runeBuffIDs[aura.spellId] < CURRENT_RUNE_TIER then
+                        lowTier[#lowTier + 1] = format("%s(%d)", colored,
+                            db.runeBuffIDs[aura.spellId])
                     end
 
                     break
@@ -346,13 +351,15 @@ local function reportBuffs(toChat)
                     break
                 end
 
-                for k = 1, buffsCount do
-                    if aura.spellId == buffsList[k][3] then
-                        hasBuff[k] = true
-                    elseif buffsList[k][4] and aura.spellId == buffsList[k][4] then
-                        hasBuff[k] = true
-                    elseif buffsList[k][5] and buffsList[k][5][aura.spellId] then
-                        hasBuff[k] = true
+                if type(aura.spellId) == "number" then
+                    for k = 1, buffsCount do
+                        if aura.spellId == buffsList[k][3] then
+                            hasBuff[k] = true
+                        elseif buffsList[k][4] and aura.spellId == buffsList[k][4] then
+                            hasBuff[k] = true
+                        elseif buffsList[k][5] and buffsList[k][5][aura.spellId] then
+                            hasBuff[k] = true
+                        end
                     end
                 end
             end
