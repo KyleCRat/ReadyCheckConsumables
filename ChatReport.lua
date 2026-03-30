@@ -127,7 +127,7 @@ local function reportFood(toChat)
     end
 
     if #missing == 0 then
-        sendResults("Food: All present", toChat)
+        sendResults("Food: All Fed", toChat)
 
         return
     end
@@ -205,7 +205,7 @@ local function reportFlasks(toChat)
     local totalBad = #missing + #expiring
 
     if totalBad == 0 then
-        sendResults("Flasks: All present", toChat)
+        sendResults("Flasks: All Flasked", toChat)
 
         return
     end
@@ -294,7 +294,7 @@ local function reportRunes(toChat)
     local totalBad = #missing + #lowTier
 
     if totalBad == 0 then
-        sendResults("Runes: All present", toChat)
+        sendResults("Runes: All Runed", toChat)
 
         return
     end
@@ -404,7 +404,7 @@ local function reportBuffs(toChat)
     end
 
     if #parts == 0 then
-        sendResults("Buffs: All present", toChat)
+        sendResults("Party Buffs: All Buffed", toChat)
 
         return
     end
