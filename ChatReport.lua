@@ -91,9 +91,11 @@ local function reportFood(toChat)
                     break
                 end
 
-                if type(aura.spellId) ~= "number" then
-                    -- spellId is secret for cross-player auras; skip
-                elseif db.foodBuffIDs[aura.spellId] or db.foodIconIDs[aura.icon] then
+                local sid = tonumber(aura.spellId)
+
+                local icon = tonumber(aura.icon)
+
+                if sid and (db.foodBuffIDs[sid] or (icon and db.foodIconIDs[icon])) then
                     hasFood = true
                     break
                 end
@@ -159,11 +161,11 @@ local function reportFlasks(toChat)
                     break
                 end
 
-                if type(aura.spellId) ~= "number" then
-                    -- spellId is secret for cross-player auras; skip
-                elseif db.flaskBuffIDs[aura.spellId] then
+                local sid = tonumber(aura.spellId)
+
+                if sid and db.flaskBuffIDs[sid] then
                     hasFlask = true
-                    local remaining = aura.expirationTime - now
+                    local remaining = (tonumber(aura.expirationTime) or 0) - now
 
                     if remaining > 0 and remaining <= 600 then
                         local mins = floor(remaining / 60)
@@ -250,14 +252,14 @@ local function reportRunes(toChat)
                     break
                 end
 
-                if type(aura.spellId) ~= "number" then
-                    -- spellId is secret for cross-player auras; skip
-                elseif db.runeBuffIDs[aura.spellId] then
+                local sid = tonumber(aura.spellId)
+
+                if sid and db.runeBuffIDs[sid] then
                     hasRune = true
 
-                    if db.runeBuffIDs[aura.spellId] < CURRENT_RUNE_TIER then
+                    if db.runeBuffIDs[sid] < CURRENT_RUNE_TIER then
                         lowTier[#lowTier + 1] = format("%s(%d)", colored,
-                            db.runeBuffIDs[aura.spellId])
+                            db.runeBuffIDs[sid])
                     end
 
                     break
@@ -351,13 +353,15 @@ local function reportBuffs(toChat)
                     break
                 end
 
-                if type(aura.spellId) == "number" then
+                local sid = tonumber(aura.spellId)
+
+                if sid then
                     for k = 1, buffsCount do
-                        if aura.spellId == buffsList[k][3] then
+                        if sid == buffsList[k][3] then
                             hasBuff[k] = true
-                        elseif buffsList[k][4] and aura.spellId == buffsList[k][4] then
+                        elseif buffsList[k][4] and sid == buffsList[k][4] then
                             hasBuff[k] = true
-                        elseif buffsList[k][5] and buffsList[k][5][aura.spellId] then
+                        elseif buffsList[k][5] and buffsList[k][5][sid] then
                             hasBuff[k] = true
                         end
                     end

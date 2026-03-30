@@ -2,6 +2,11 @@
 
 All notable changes to Ready Check Consumables will be documented in this file.
 
+## [12.0.1-5] - 2026-03-30
+
+### Fixes
+- Fix remaining "secret" aura value errors across all aura scanning code (icon, expirationTime)
+
 ## [12.0.1-4] - 2026-03-29
 
 ### Added

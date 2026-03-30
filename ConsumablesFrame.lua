@@ -284,11 +284,13 @@ local function scanPlayerAuras(buttons, now)
 
         if not auraData then break end
 
-        local sid = auraData.spellId
+        local sid = tonumber(auraData.spellId)
         local expiry = auraData.expirationTime
         local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
-        if RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
+        if not sid then
+            -- spellId is secret for cross-player auras; skip
+        elseif RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
             buttons.food.statustexture:SetTexture(READY)
             buttons.food.texture:SetDesaturated(false)
             buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,

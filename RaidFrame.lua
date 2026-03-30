@@ -491,13 +491,16 @@ local function scanMemberAuras(unit, now)
             break
         end
 
-        local sid = aura.spellId
+        local sid = tonumber(aura.spellId)
 
-        if type(sid) == "number" then
-            if db.foodBuffIDs[sid] or db.foodIconIDs[aura.icon] then
-                if not result.hasFood or aura.icon == db.foodWellFedIconID then
+        if sid then
+            local icon = tonumber(aura.icon)
+            local expiry = tonumber(aura.expirationTime) or 0
+
+            if db.foodBuffIDs[sid] or (icon and db.foodIconIDs[icon]) then
+                if not result.hasFood or icon == db.foodWellFedIconID then
                     result.hasFood    = true
-                    result.foodTime   = (aura.expirationTime or 0) - now
+                    result.foodTime   = expiry - now
                     result.foodAuraID = aura.auraInstanceID
                     result.foodIconID = aura.icon
                 end
@@ -505,7 +508,7 @@ local function scanMemberAuras(unit, now)
 
             if not result.hasFlask and db.flaskBuffIDs[sid] then
                 result.hasFlask    = true
-                result.flaskTime   = (aura.expirationTime or 0) - now
+                result.flaskTime   = expiry - now
                 result.flaskAuraID = aura.auraInstanceID
                 result.flaskIconID = aura.icon
             end
@@ -714,7 +717,7 @@ local function applyRowData(row, member)
         row.raidBuffIcons[k]:SetVertexColor(1, 1, 1, has and 1 or MISSING_ALPHA)
         row.raidBuffOverlays[k].unit = unit
 
-        if has and type(auraID) == "number" then
+        if has and tonumber(auraID) then
             row.raidBuffOverlays[k].auraID = auraID
         else
             row.raidBuffOverlays[k].auraID = nil
