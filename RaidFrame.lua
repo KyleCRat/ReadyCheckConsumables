@@ -798,6 +798,9 @@ local function showFinishedSummary()
 
     for i = 1, activeCount do
         local member = memberData[i]
+
+        if not member then break end
+
         local status = rcStatus[member.unit]
 
         if status == RC_PENDING then
