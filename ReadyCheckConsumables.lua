@@ -8,6 +8,9 @@ RCC.db = RCC.db or {}
 --- Event handler
 -------------------------------------------------------------------------------
 
+local MIN_SHOW_TIME = 10
+local consumablesShowStart = 0
+
 RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
     if event == "READY_CHECK" then
         if InCombatLockdown() then
@@ -20,6 +23,8 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
             return
         end
 
+        consumablesShowStart = GetTime()
+
         self:Update()
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
@@ -29,31 +34,36 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
             self.cancelDelay = nil
         end
 
-        if time_to_hide ~= 0 then
-            self.cancelDelay = C_Timer.NewTimer(time_to_hide or 12, function()
-                self:UnregisterEvent("UNIT_AURA")
-                self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
-
-                if self.isRLpos then
-                    self.rlpointer:Hide()
-                end
-            end)
-        end
-
         if unit and UnitIsUnit(unit, "player") then
             self:Repos(true)
         else
             self:Repos()
         end
 
-    elseif event == "READY_CHECK_FINISHED"
-        or event == "PLAYER_REGEN_DISABLED" then
-
+    elseif event == "READY_CHECK_FINISHED" then
         RCC.consumables:OnHide()
 
-        if self.isRLpos
-            and not InCombatLockdown()
-        then
+        if InCombatLockdown() then
+            return
+        end
+
+        if not self.isRLpos then
+            self:Repos(true)
+        end
+
+        local elapsed = GetTime() - consumablesShowStart
+        local delay = max(MIN_SHOW_TIME - elapsed, 0)
+
+        self.cancelDelay = C_Timer.NewTimer(delay, function()
+            if not InCombatLockdown() then
+                self.rlpointer:Hide()
+            end
+        end)
+
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        RCC.consumables:OnHide()
+
+        if not InCombatLockdown() and self.isRLpos then
             self.rlpointer:Hide()
         end
 

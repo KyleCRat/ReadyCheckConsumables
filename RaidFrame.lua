@@ -860,10 +860,13 @@ end
 --- Ready check lifecycle
 -------------------------------------------------------------------------------
 
+local MIN_SHOW_TIME = 10
+
 local hideTimer
 local rcTickTimer
 local rcEndTime   = 0
 local rcDuration  = 0
+local showStartTime = 0
 
 local function cancelHideTimer()
     if hideTimer then
@@ -922,6 +925,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     wipe(rcStatus)
 
     self.manualShow = (timeToHide == 0)
+    showStartTime = GetTime()
 
     scanAllMembers()
 
@@ -992,7 +996,10 @@ function frame:OnReadyCheckFinished()
 
     cancelHideTimer()
 
-    hideTimer = C_Timer.NewTimer(15, function()
+    local elapsed = GetTime() - showStartTime
+    local delay = max(MIN_SHOW_TIME - elapsed, 0)
+
+    hideTimer = C_Timer.NewTimer(delay, function()
         if not InCombatLockdown() then
             frame:Hide()
         end
