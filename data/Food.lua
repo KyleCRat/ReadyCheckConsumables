@@ -116,6 +116,11 @@ RCC.db.foodIconIDs = {
     [133950] = true, -- Inv_misc_food_08, Eating
 }
 
+RCC.db.eatingIconIDs = {
+    [132805] = true, -- Inv_drink_18,     Drinking
+    [133950] = true, -- Inv_misc_food_08, Eating
+}
+
 RCC.db.foodWellFedIconID = 136000
 
 -------------------------------------------------------------------------------

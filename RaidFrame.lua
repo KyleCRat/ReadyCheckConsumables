@@ -860,7 +860,7 @@ end
 --- Ready check lifecycle
 -------------------------------------------------------------------------------
 
-local MIN_SHOW_TIME = 10
+local MIN_SHOW_TIME = 15
 
 local hideTimer
 local rcTickTimer

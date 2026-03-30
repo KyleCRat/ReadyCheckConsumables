@@ -217,6 +217,10 @@ for i = 1, 9 do
 
     if i == i_food then
         button.texture:SetTexture(RCC.db.food_icon_id)
+        button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+        button.cooldown:SetAllPoints()
+        button.cooldown:SetDrawEdge(true)
+        button.cooldown:SetDrawSwipe(true)
         RCC.consumables.buttons.food = button
 
     elseif i == i_flask then
@@ -278,6 +282,8 @@ end
 
 local function scanPlayerAuras(buttons, now)
     local isFood, isFlask, isRune, isVantus
+    local isEating, eatingExpiry, eatingDuration
+    local foodExpiry
 
     for i = 1, 60 do
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
@@ -291,11 +297,14 @@ local function scanPlayerAuras(buttons, now)
         if not sid then
             -- spellId is secret for cross-player auras; skip
         elseif RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
-            buttons.food.statustexture:SetTexture(READY)
-            buttons.food.texture:SetDesaturated(false)
-            buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                   ceil((expiry - now) / 60))
-            isFood = true
+            if RCC.db.eatingIconIDs[auraData.icon] then
+                isEating = true
+                eatingExpiry = expiry
+                eatingDuration = auraData.duration
+            else
+                isFood = true
+                foodExpiry = expiry
+            end
 
         elseif RCC.db.flaskBuffIDs[sid] then
             buttons.flask.statustexture:SetTexture(READY)
@@ -323,7 +332,22 @@ local function scanPlayerAuras(buttons, now)
         end
     end
 
-    return isFood, isFlask, isRune, isVantus
+    if isFood then
+        isEating = false
+    elseif isEating then
+        isFood = true
+        foodExpiry = eatingExpiry
+    end
+
+    if isFood then
+        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+        buttons.food.statustexture:SetTexture(READY)
+        buttons.food.texture:SetDesaturated(false)
+        buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+                                               ceil((foodExpiry - now) / 60))
+    end
+
+    return isFood, isFlask, isRune, isVantus, isEating, eatingExpiry, eatingDuration
 end
 
 local function updateFood(buttons, isFood, LCG)
@@ -988,7 +1012,15 @@ function RCC.consumables:Update()
     local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
-    local isFood, isFlask, isRune, isVantus = scanPlayerAuras(buttons, now)
+    local isFood, isFlask, isRune, isVantus,
+          isEating, eatingExpiry, eatingDuration = scanPlayerAuras(buttons, now)
+
+    if isEating and eatingDuration and eatingDuration > 0 then
+        buttons.food.cooldown:SetCooldown(eatingExpiry - eatingDuration, eatingDuration)
+        buttons.food.cooldown:Show()
+    else
+        buttons.food.cooldown:Clear()
+    end
 
     updateFood(buttons, isFood, LCG)
     updateHealthstones(buttons)

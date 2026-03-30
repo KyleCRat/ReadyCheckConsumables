@@ -8,7 +8,7 @@ RCC.db = RCC.db or {}
 --- Event handler
 -------------------------------------------------------------------------------
 
-local MIN_SHOW_TIME = 10
+local MIN_SHOW_TIME = 15
 local consumablesShowStart = 0
 
 RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
@@ -41,9 +41,14 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         end
 
     elseif event == "READY_CHECK_FINISHED" then
-        RCC.consumables:OnHide()
+        if self.cancelDelay then
+            self.cancelDelay:Cancel()
+            self.cancelDelay = nil
+        end
 
         if InCombatLockdown() then
+            RCC.consumables:OnHide()
+
             return
         end
 
@@ -55,6 +60,8 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         local delay = max(MIN_SHOW_TIME - elapsed, 0)
 
         self.cancelDelay = C_Timer.NewTimer(delay, function()
+            RCC.consumables:OnHide()
+
             if not InCombatLockdown() then
                 self.rlpointer:Hide()
             end
