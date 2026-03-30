@@ -16,12 +16,17 @@ local CURRENT_RUNE_TIER = 6
 --- should report. On READY_CHECK each eligible reporter broadcasts intent
 --- via addon messages. After a short collection window the alphabetically
 --- first candidate wins and is the sole reporter.
+--- If MRT (Method Raid Tools) is also broadcasting report intent, RCC
+--- defers entirely and lets MRT handle the report.
 -------------------------------------------------------------------------------
 
 local ADDON_PREFIX = "RCC"
+local MRT_PREFIX = "raidcheck"
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
+C_ChatInfo.RegisterAddonMessagePrefix(MRT_PREFIX)
 
 local reportCandidates = {}
+local mrtWillReport = false
 
 local DIFFICULTY_TO_SETTING = {
     [16]  = "chatReport_mythicRaid",
@@ -484,6 +489,7 @@ local function broadcastReportIntent()
 
     local playerName = UnitName("player")
     reportCandidates = { [playerName] = true }
+    mrtWillReport = false
 
     local chatType = F.chatType()
 
@@ -494,6 +500,10 @@ end
 
 local function onReadyCheck()
     if not shouldReport() then
+        return
+    end
+
+    if mrtWillReport then
         return
     end
 
@@ -517,6 +527,9 @@ local function onEvent(self, event, ...)
 
         if prefix == ADDON_PREFIX and message == "REPORT" then
             reportCandidates[F.shortName(sender)] = true
+
+        elseif prefix == MRT_PREFIX then
+            mrtWillReport = true
         end
     end
 end
