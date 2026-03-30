@@ -6,8 +6,22 @@ local SendChatMessage = SendChatMessage
 local GetTime         = GetTime
 local format          = format
 local floor           = floor
+local UnitName        = UnitName
 
 local CURRENT_RUNE_TIER = 6
+
+-------------------------------------------------------------------------------
+--- Addon message coordination
+--- When multiple players have RCC with chat reporting enabled, only one
+--- should report. On READY_CHECK each eligible reporter broadcasts intent
+--- via addon messages. After a short collection window the alphabetically
+--- first candidate wins and is the sole reporter.
+-------------------------------------------------------------------------------
+
+local ADDON_PREFIX = "RCC"
+C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
+
+local reportCandidates = {}
 
 local DIFFICULTY_TO_SETTING = {
     [16]  = "chatReport_mythicRaid",
@@ -397,8 +411,9 @@ end
 
 -------------------------------------------------------------------------------
 --- Ready Check Handler
---- Fires all reports 1 second after READY_CHECK to allow aura
---- data to propagate for all raid members.
+--- On READY_CHECK, eligible reporters broadcast intent via addon messages.
+--- After a 1-second collection window the alphabetically first candidate
+--- is elected as the sole reporter.
 -------------------------------------------------------------------------------
 
 local function hasPermission()
@@ -430,20 +445,59 @@ local function isInstanceAllowed()
     return RCC.GetSetting(key)
 end
 
-local function onReadyCheck()
+local function shouldReport()
     if InCombatLockdown() then
-        return
+        return false
     end
 
     if not RCC.GetSetting("chatReport_enabled") then
-        return
+        return false
     end
 
     if not hasPermission() then
-        return
+        return false
     end
 
     if not isInstanceAllowed() then
+        return false
+    end
+
+    return true
+end
+
+local function isElectedReporter()
+    local playerName = UnitName("player")
+
+    for name in pairs(reportCandidates) do
+        if name < playerName then
+            return false
+        end
+    end
+
+    return true
+end
+
+local function broadcastReportIntent()
+    if not shouldReport() then
+        return
+    end
+
+    local playerName = UnitName("player")
+    reportCandidates = { [playerName] = true }
+
+    local chatType = F.chatType()
+
+    if chatType ~= "SAY" then
+        C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "REPORT", chatType)
+    end
+end
+
+local function onReadyCheck()
+    if not shouldReport() then
+        return
+    end
+
+    if not isElectedReporter() then
         return
     end
 
@@ -453,16 +507,23 @@ local function onReadyCheck()
     reportBuffs(true)
 end
 
-local function onEvent(self, event)
-    if event ~= "READY_CHECK" then
-        return
-    end
+local function onEvent(self, event, ...)
+    if event == "READY_CHECK" then
+        broadcastReportIntent()
+        C_Timer.After(1, onReadyCheck)
 
-    C_Timer.After(.25, onReadyCheck)
+    elseif event == "CHAT_MSG_ADDON" then
+        local prefix, message, _, sender = ...
+
+        if prefix == ADDON_PREFIX and message == "REPORT" then
+            reportCandidates[F.shortName(sender)] = true
+        end
+    end
 end
 
 local chatReportFrame = CreateFrame("Frame")
 chatReportFrame:RegisterEvent("READY_CHECK")
+chatReportFrame:RegisterEvent("CHAT_MSG_ADDON")
 chatReportFrame:SetScript("OnEvent", onEvent)
 
 -------------------------------------------------------------------------------
