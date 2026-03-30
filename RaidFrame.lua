@@ -911,6 +911,10 @@ local function startProgressBar(duration)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
+    if InCombatLockdown() then
+        return
+    end
+
     if not RCC.GetSetting("raidFrame_enabled") then
         return
     end

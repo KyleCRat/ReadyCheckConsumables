@@ -10,6 +10,10 @@ RCC.db = RCC.db or {}
 
 RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
     if event == "READY_CHECK" then
+        if InCombatLockdown() then
+            return
+        end
+
         if not RCC.GetSetting("consumables_enabled") then
             self:Hide()
 

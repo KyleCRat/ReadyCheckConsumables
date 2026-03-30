@@ -431,6 +431,10 @@ local function isInstanceAllowed()
 end
 
 local function onReadyCheck()
+    if InCombatLockdown() then
+        return
+    end
+
     if not RCC.GetSetting("chatReport_enabled") then
         return
     end
