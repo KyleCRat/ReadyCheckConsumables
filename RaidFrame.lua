@@ -3,9 +3,12 @@ local _, RCC = ...
 local F  = RCC.F
 local db = RCC.db
 
-local GetTime = GetTime
-local ceil    = ceil
-local format  = format
+local GetTime    = GetTime
+local ceil       = ceil
+local floor      = floor
+local format     = format
+local strsplit   = strsplit
+local UnitName   = UnitName
 
 -------------------------------------------------------------------------------
 --- Constants
@@ -23,6 +26,11 @@ local FRAME_PAD            = 3
 local MAX_ROWS             = 40
 local MISSING_ALPHA        = 0.3
 local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
+local DURABILITY_WIDTH     = 42
+local DURABILITY_THRESHOLD = 50
+local COLOR_DUR_GREEN      = { r = 0.2, g = 1,   b = 0.2 }
+local COLOR_DUR_YELLOW     = { r = 1,   g = 0.82, b = 0  }
+local COLOR_DUR_RED        = { r = 1,   g = 0.2, b = 0.2 }
 local MISSING_BG           = { r = 0,   g = 0,   b = 0   }
 local COLOR_TIME_NORMAL    = { r = 1,   g = 1,   b = 1   }
 local COLOR_TIME_WARN      = { r = 1,   g = 0.2, b = 0.2 }
@@ -60,6 +68,7 @@ local FRAME_WIDTH = FRAME_PAD
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- food
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- flask
     + (ICON_SIZE + H_PAD) * 8         -- rune + vantus + 6 raid buffs
+    + DURABILITY_WIDTH + H_PAD        -- durability
     + FRAME_PAD
 
 -- X offsets of each icon column within a row (and title bar), relative to row left edge.
@@ -72,6 +81,8 @@ local COL_X_RAIDBUFF = {}  -- [1..N]
 for k = 1, 8 do
     COL_X_RAIDBUFF[k] = COL_X_VANTUS + k * (ICON_SIZE + H_PAD)
 end
+
+local COL_X_DURABILITY = COL_X_RAIDBUFF[#db.raidBuffDefs] + ICON_SIZE + H_PAD
 
 -------------------------------------------------------------------------------
 --- Raid buff default icons (spell texture IDs)
@@ -91,6 +102,46 @@ local function resolveRaidBuffIcons()
 end
 
 resolveRaidBuffIcons()
+
+-------------------------------------------------------------------------------
+--- Durability sharing via addon messages
+--- Each RCC user broadcasts their lowest-slot durability percentage on
+--- READY_CHECK. Results are stored by short name and displayed in the
+--- raid frame. Players without RCC show "?".
+-------------------------------------------------------------------------------
+
+local ADDON_PREFIX = "RCC"
+local durabilityData = {}  -- [shortName] = percent (0-100)
+
+local function getPlayerMinDurability()
+    local minPct = 100
+
+    for slot = 1, 18 do
+        local cur, mx = GetInventoryItemDurability(slot)
+
+        if cur and mx and mx > 0 then
+            local pct = cur / mx * 100
+
+            if pct < minPct then
+                minPct = pct
+            end
+        end
+    end
+
+    return floor(minPct)
+end
+
+local function broadcastDurability()
+    local pct = getPlayerMinDurability()
+    local playerName = UnitName("player")
+    durabilityData[playerName] = pct
+
+    local chatType = F.chatType()
+
+    if chatType ~= "SAY" then
+        C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "DUR\t" .. pct, chatType)
+    end
+end
 
 -------------------------------------------------------------------------------
 --- Frame creation
@@ -247,7 +298,7 @@ titleBar.timerText:SetTextColor(1, 1, 1)
 titleBar.timerText:SetText("")
 
 -- Per-column summary icons (CHECK or X), one per buff column
--- Indices: 1=food, 2=flask, 3=rune, 4=vantus, 5..10=raid buffs 1-6
+-- Indices: 1=food, 2=flask, 3=rune, 4=vantus, 5..10=raid buffs 1-6, 11=durability
 local TITLE_COL_X = {
     COL_X_FOOD,
     COL_X_FLASK,
@@ -257,6 +308,8 @@ local TITLE_COL_X = {
 for k = 1, 6 do
     TITLE_COL_X[4 + k] = COL_X_RAIDBUFF[k]
 end
+
+TITLE_COL_X[#TITLE_COL_X + 1] = COL_X_DURABILITY + (DURABILITY_WIDTH - ICON_SIZE) / 2
 
 titleBar.colIcons = {}
 for i = 1, #TITLE_COL_X do
@@ -441,6 +494,15 @@ local function createRow(index)
         row.raidBuffOverlays[k] = overlay
         x = x + ICON_SIZE + H_PAD
     end
+
+    -- Durability percentage
+    row.durabilityText = row:CreateFontString(nil, "ARTWORK")
+    row.durabilityText:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.durabilityText:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
+    row.durabilityText:SetWidth(DURABILITY_WIDTH)
+    row.durabilityText:SetJustifyH("CENTER")
+    row.durabilityText:SetText("?")
+    row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
 
     -- Anchor row in frame (row 1 sits below the title bar)
     if index == 1 then
@@ -724,6 +786,27 @@ local function applyRowData(row, member)
         end
     end
 
+    -- Durability
+    local durPct = durabilityData[F.shortName(member.name)]
+
+    if durPct then
+        row.durabilityText:SetText(durPct .. "%")
+
+        local c
+        if durPct <= 20 then
+            c = COLOR_DUR_RED
+        elseif durPct <= 50 then
+            c = COLOR_DUR_YELLOW
+        else
+            c = COLOR_DUR_GREEN
+        end
+
+        row.durabilityText:SetTextColor(c.r, c.g, c.b)
+    else
+        row.durabilityText:SetText("?")
+        row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
+    end
+
     row:Show()
 end
 
@@ -733,6 +816,8 @@ end
 
 -- Returns true if the column buff is considered "bad" for a member.
 -- bad = missing, or (food/flask) present but expiring soon.
+local DURABILITY_COL_INDEX = 4 + #db.raidBuffDefs + 1
+
 local function isBad(member, colIndex)
     local a = member.auras
 
@@ -750,6 +835,16 @@ local function isBad(member, colIndex)
 
     if colIndex == 4 then
         return not a.hasVantus
+    end
+
+    if colIndex == DURABILITY_COL_INDEX then
+        local pct = durabilityData[F.shortName(member.name)]
+
+        if not pct then
+            return false
+        end
+
+        return pct < DURABILITY_THRESHOLD
     end
 
     local raidIdx = colIndex - 4
@@ -923,6 +1018,8 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 
     cancelHideTimer()
     wipe(rcStatus)
+    wipe(durabilityData)
+    broadcastDurability()
 
     self.manualShow = (timeToHide == 0)
     showStartTime = GetTime()
@@ -1031,6 +1128,7 @@ end
 function frame:OnHide()
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
+    self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
     cancelHideTimer()
     cancelRcTick()
     stopProgressBar()
@@ -1041,7 +1139,7 @@ end
 --- Event wiring
 -------------------------------------------------------------------------------
 
-frame:SetScript("OnEvent", function(self, event, arg1, arg2)
+frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
     if event == "READY_CHECK" then
         if InCombatLockdown() then
             return
@@ -1051,6 +1149,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2)
         self:OnReadyCheck(initiatorUnit, duration)
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("READY_CHECK_CONFIRM")
+        self:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 
         return
     end
@@ -1074,9 +1173,36 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2)
         return
     end
 
+    if event == "UPDATE_INVENTORY_DURABILITY" then
+        broadcastDurability()
+        refreshAllRows()
+
+        return
+    end
+
     if event == "UNIT_AURA" then
         local unit = arg1
         self:OnUnitAura(unit)
+
+        return
+    end
+
+    if event == "CHAT_MSG_ADDON" then
+        if arg1 == ADDON_PREFIX then
+            local msgType, value = strsplit("\t", arg2)
+
+            if msgType == "DUR" then
+                local pct = tonumber(value)
+
+                if pct and arg4 then
+                    durabilityData[F.shortName(arg4)] = pct
+
+                    if self:IsShown() then
+                        refreshAllRows()
+                    end
+                end
+            end
+        end
 
         return
     end
@@ -1100,4 +1226,5 @@ end)
 frame:RegisterEvent("READY_CHECK")
 frame:RegisterEvent("READY_CHECK_FINISHED")
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+frame:RegisterEvent("CHAT_MSG_ADDON")
 frame:RegisterEvent("ADDON_LOADED")
