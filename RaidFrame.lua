@@ -914,10 +914,6 @@ local function startProgressBar(duration)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
-    if InCombatLockdown() then
-        return
-    end
-
     if not RCC.GetSetting("raidFrame_enabled") then
         return
     end
@@ -997,7 +993,9 @@ function frame:OnReadyCheckFinished()
     cancelHideTimer()
 
     hideTimer = C_Timer.NewTimer(15, function()
-        frame:Hide()
+        if not InCombatLockdown() then
+            frame:Hide()
+        end
     end)
 end
 
@@ -1038,6 +1036,10 @@ end
 
 frame:SetScript("OnEvent", function(self, event, arg1, arg2)
     if event == "READY_CHECK" then
+        if InCombatLockdown() then
+            return
+        end
+
         local initiatorUnit, duration = arg1, arg2
         self:OnReadyCheck(initiatorUnit, duration)
         self:RegisterEvent("UNIT_AURA")
