@@ -1226,9 +1226,7 @@ end
 local MIN_SHOW_TIME = 15
 
 local hideTimer
-local rcTickTimer
-local rcEndTime   = 0
-local rcDuration  = 0
+local progressTextTimer
 local showStartTime = 0
 
 local function cancelHideTimer()
@@ -1238,45 +1236,49 @@ local function cancelHideTimer()
     end
 end
 
-local function cancelRcTick()
-    if rcTickTimer then
-        rcTickTimer:Cancel()
-        rcTickTimer = nil
-    end
-end
-
 local function stopProgressBar()
-    cancelRcTick()
     titleBar.progress:Hide()
+    titleBar:SetScript("OnUpdate", nil)
+
+    if progressTextTimer then
+        progressTextTimer:Cancel()
+        progressTextTimer = nil
+    end
+
     titleBar.timerText:SetText("")
 end
 
-local function tickProgressBar()
-    local now       = GetTime()
-    local remaining = rcEndTime - now
-
-    if remaining <= 0 then
-        stopProgressBar()
-
-        return
-    end
-
-    local frac = remaining / rcDuration
-    titleBar.progress:SetWidth(math.max(1, (FRAME_WIDTH - FRAME_PAD * 2) * frac))
-
-    local secs = ceil(remaining)
-    titleBar.timerText:SetText(secs .. "s")
-end
-
 local function startProgressBar(duration)
-    rcDuration = duration
-    rcEndTime  = GetTime() + duration
+    local barWidth = FRAME_WIDTH - FRAME_PAD * 2
+    local endTime = GetTime() + duration
 
-    titleBar.progress:SetWidth(FRAME_WIDTH - FRAME_PAD * 2)
+    titleBar.progress:SetWidth(barWidth)
     titleBar.progress:Show()
+    titleBar.timerText:SetText(ceil(duration) .. "s")
 
-    cancelRcTick()
-    rcTickTimer = C_Timer.NewTicker(0.1, tickProgressBar)
+    titleBar:SetScript("OnUpdate", function()
+        local remaining = endTime - GetTime()
+
+        if remaining <= 0 then
+            stopProgressBar()
+
+            return
+        end
+
+        titleBar.progress:SetWidth(math.max(1, barWidth * remaining / duration))
+    end)
+
+    progressTextTimer = C_Timer.NewTicker(1, function(ticker)
+        local remaining = endTime - GetTime()
+
+        if remaining <= 0 then
+            ticker:Cancel()
+
+            return
+        end
+
+        titleBar.timerText:SetText(ceil(remaining) .. "s")
+    end)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
@@ -1440,7 +1442,6 @@ function frame:OnHide()
     self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     cancelHideTimer()
-    cancelRcTick()
     stopProgressBar()
     self.manualShow = false
 end
