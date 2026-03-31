@@ -114,9 +114,7 @@ SlashCmdList["RCC"] = function(msg)
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,
                                              "READY_CHECK",
                                              name, 0)
-        RCC.raidFrame:GetScript("OnEvent")(RCC.raidFrame,
-                                           "READY_CHECK",
-                                           name, 0)
+        RCC.raidFrame:OnTestReadyCheck()
 
     elseif msg == "hide" or msg == "h" then
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,

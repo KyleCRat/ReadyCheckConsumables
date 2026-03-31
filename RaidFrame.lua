@@ -750,6 +750,124 @@ local function scanAllMembers()
 end
 
 -------------------------------------------------------------------------------
+--- Test data generation
+-------------------------------------------------------------------------------
+
+local ALL_CLASSES = {
+    "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST",
+    "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "MONK",
+    "DRUID", "DEMONHUNTER", "EVOKER",
+}
+
+local TEST_NAMES = {
+    "Thunderclap", "Lightforge", "Windrunner", "Shadowstep", "Faithweaver",
+    "Frostmourne", "Tidecaller", "Frostbolt", "Felblood", "Mistwalker",
+    "Moonfire", "Havocblade", "Scalewing",
+}
+
+local function randomBool()
+    return math.random() > 0.35
+end
+
+local function generateTestAuras()
+    local numBuffs = #db.raidBuffDefs
+    local raidBuff = {}
+
+    for k = 1, numBuffs do
+        raidBuff[k] = randomBool() and true or false
+    end
+
+    local hasFood  = randomBool()
+    local hasFlask = randomBool()
+    local hasRune  = randomBool()
+    local hasVantus = randomBool()
+
+    return {
+        hasFood     = hasFood,
+        foodTime    = hasFood and math.random(60, 3600) or 0,
+        foodAuraID  = nil,
+        foodIconID  = hasFood and db.food_icon_id or nil,
+        hasFlask    = hasFlask,
+        flaskTime   = hasFlask and math.random(60, 3600) or 0,
+        flaskAuraID = nil,
+        flaskIconID = hasFlask and db.flask_icon_id or nil,
+        hasRune     = hasRune,
+        runeAuraID  = nil,
+        runeIconID  = hasRune and db.rune_icon_id or nil,
+        hasVantus   = hasVantus,
+        vantusAuraID = nil,
+        vantusIconID = hasVantus and db.vantus_icon_id or nil,
+        raidBuff    = raidBuff,
+    }
+end
+
+local function generateTestData()
+    wipe(memberData)
+    wipe(unitToIndex)
+    wipe(rcStatus)
+    wipe(durabilityData)
+    wipe(oilData)
+
+    local playerName = UnitName("player")
+    local _, playerClass = UnitClass("player")
+
+    memberData[1] = {
+        name   = playerName,
+        unit   = "player",
+        class  = playerClass,
+        online = true,
+        isDead = false,
+        auras  = scanMemberAuras("player", GetTime()),
+    }
+    unitToIndex["player"] = 1
+    rcStatus["player"] = RC_READY
+
+    local count = 1
+
+    for i = 1, #ALL_CLASSES do
+        if ALL_CLASSES[i] ~= playerClass then
+            count = count + 1
+            local fakeUnit = "raid" .. count
+            local name = TEST_NAMES[i]
+
+            memberData[count] = {
+                name   = name,
+                unit   = fakeUnit,
+                class  = ALL_CLASSES[i],
+                online = math.random() > 0.1,
+                isDead = math.random() > 0.9,
+                auras  = generateTestAuras(),
+            }
+
+            unitToIndex[fakeUnit] = count
+
+            local roll = math.random()
+            if roll < 0.6 then
+                rcStatus[fakeUnit] = RC_READY
+            elseif roll < 0.85 then
+                rcStatus[fakeUnit] = RC_NOT
+            else
+                rcStatus[fakeUnit] = RC_PENDING
+            end
+
+            local shortName = F.shortName(name)
+            durabilityData[shortName] = math.random(10, 100)
+
+            local oilRoll = math.random()
+            if oilRoll < 0.5 then
+                oilData[shortName] = { time = math.random(60, 3600), item = 0 }
+            elseif oilRoll < 0.7 then
+                oilData[shortName] = { time = 0, item = 0 }
+            elseif oilRoll < 0.85 then
+                oilData[shortName] = { time = -1, item = 0 }
+            end
+        end
+    end
+
+    activeCount = count
+end
+
+-------------------------------------------------------------------------------
 --- Formatting helpers
 -------------------------------------------------------------------------------
 
@@ -1206,6 +1324,25 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
         stopProgressBar()
         titleBar.timerText:SetText("")
     end
+
+    restorePosition()
+    self:Show()
+end
+
+function frame:OnTestReadyCheck()
+    cancelHideTimer()
+
+    self.manualShow = true
+    showStartTime = GetTime()
+
+    generateTestData()
+    broadcastDurability()
+    broadcastOilStatus()
+
+    refreshAllRows()
+    updateTitleCount()
+    stopProgressBar()
+    titleBar.timerText:SetText("")
 
     restorePosition()
     self:Show()
