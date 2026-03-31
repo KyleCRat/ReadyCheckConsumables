@@ -111,7 +111,6 @@ local function reportFood(toChat)
                 end
 
                 local sid = tonumber(aura.spellId)
-
                 local icon = tonumber(aura.icon)
 
                 if sid and (db.foodBuffIDs[sid] or (icon and db.foodIconIDs[icon])) then

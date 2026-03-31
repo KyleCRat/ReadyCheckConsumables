@@ -3,12 +3,13 @@ local _, RCC = ...
 local F  = RCC.F
 local db = RCC.db
 
-local GetTime    = GetTime
-local ceil       = ceil
-local floor      = floor
-local format     = format
-local strsplit   = strsplit
-local UnitName   = UnitName
+local GetTime            = GetTime
+local ceil               = ceil
+local floor              = floor
+local format             = format
+local strsplit           = strsplit
+local UnitName           = UnitName
+local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 -------------------------------------------------------------------------------
 --- Constants
@@ -67,6 +68,7 @@ local FRAME_WIDTH = FRAME_PAD
     + NAME_WIDTH + H_PAD
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- food
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- flask
+    + TIME_WIDTH + ICON_SIZE + H_PAD  -- oil
     + (ICON_SIZE + H_PAD) * 8         -- rune + vantus + 6 raid buffs
     + DURABILITY_WIDTH + H_PAD        -- durability
     + FRAME_PAD
@@ -75,7 +77,8 @@ local FRAME_WIDTH = FRAME_PAD
 -- These mirror the layout computed in createRow so title icons align with data icons.
 local COL_X_FOOD  = RC_ICON_WIDTH + H_PAD + NAME_WIDTH + H_PAD + TIME_WIDTH
 local COL_X_FLASK = COL_X_FOOD  + ICON_SIZE + H_PAD + TIME_WIDTH
-local COL_X_RUNE  = COL_X_FLASK + ICON_SIZE + H_PAD
+local COL_X_OIL   = COL_X_FLASK + ICON_SIZE + H_PAD + TIME_WIDTH
+local COL_X_RUNE  = COL_X_OIL   + ICON_SIZE + H_PAD
 local COL_X_VANTUS = COL_X_RUNE + ICON_SIZE + H_PAD
 local COL_X_RAIDBUFF = {}  -- [1..N]
 for k = 1, 8 do
@@ -112,6 +115,7 @@ resolveRaidBuffIcons()
 
 local ADDON_PREFIX = "RCC"
 local durabilityData = {}  -- [shortName] = percent (0-100)
+local oilData        = {}  -- [shortName] = seconds (-1=N/A, 0=missing, >0=remaining)
 
 local MRT_PREFIXES = {
     "EXRTADD", "MRTADDA", "MRTADDB", "MRTADDC", "MRTADDD",
@@ -152,6 +156,64 @@ local function broadcastDurability()
 
     if chatType ~= "SAY" then
         C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "DUR\t" .. pct, chatType)
+    end
+end
+
+local function getPlayerOilStatus()
+    local mainHandItemID = GetInventoryItemID("player", 16)
+
+    if not mainHandItemID then
+        return -1, 0
+    end
+
+    local hasMainHandEnchant, mainHandExpiration, _,
+          mainHandEnchantID, hasOffHandEnchant, offHandExpiration,
+          _, offHandEnchantID = GetWeaponEnchantInfo()
+
+    if not hasMainHandEnchant then
+        return 0, 0
+    end
+
+    local lowestTime = (mainHandExpiration or 0) / 1000
+    local enchData = db.weaponEnchants[mainHandEnchantID or 0]
+    local itemID = enchData and enchData.item or 0
+
+    local offhandItemID = GetInventoryItemID("player", 17)
+
+    if offhandItemID then
+        local itemClassID = select(6, GetItemInfoInstant(offhandItemID))
+
+        if itemClassID == 2 then
+            if not hasOffHandEnchant then
+                return 0, 0
+            end
+
+            local ohTime = (offHandExpiration or 0) / 1000
+
+            if ohTime < lowestTime then
+                lowestTime = ohTime
+                local ohData = db.weaponEnchants[offHandEnchantID or 0]
+                itemID = ohData and ohData.item or 0
+            end
+        end
+    end
+
+    return floor(lowestTime), itemID
+end
+
+local function broadcastOilStatus()
+    local oilTime, itemID = getPlayerOilStatus()
+    local playerName = UnitName("player")
+    oilData[playerName] = { time = oilTime, item = itemID }
+
+    local chatType = F.chatType()
+
+    if chatType ~= "SAY" then
+        C_ChatInfo.SendAddonMessage(
+            ADDON_PREFIX,
+            "OIL\t" .. oilTime .. "\t" .. (itemID or 0),
+            chatType
+        )
     end
 end
 
@@ -310,15 +372,16 @@ titleBar.timerText:SetTextColor(1, 1, 1)
 titleBar.timerText:SetText("")
 
 -- Per-column summary icons (CHECK or X), one per buff column
--- Indices: 1=food, 2=flask, 3=rune, 4=vantus, 5..10=raid buffs 1-6, 11=durability
+-- Indices: 1=food, 2=flask, 3=oil, 4=rune, 5=vantus, 6..11=raid buffs, 12=durability
 local TITLE_COL_X = {
     COL_X_FOOD,
     COL_X_FLASK,
+    COL_X_OIL,
     COL_X_RUNE,
     COL_X_VANTUS,
 }
 for k = 1, 6 do
-    TITLE_COL_X[4 + k] = COL_X_RAIDBUFF[k]
+    TITLE_COL_X[5 + k] = COL_X_RAIDBUFF[k]
 end
 
 TITLE_COL_X[#TITLE_COL_X + 1] = COL_X_DURABILITY + (DURABILITY_WIDTH - ICON_SIZE) / 2
@@ -340,11 +403,20 @@ local function onOverlayEnter(self)
     local unit    = self.unit
     local auraID  = self.auraID
     local spellID = self.spellID
+    local itemID  = self.itemID
     local label   = self.label
 
     if auraID and unit then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetUnitBuffByAuraInstanceID(unit, auraID)
+        GameTooltip:Show()
+
+        return
+    end
+
+    if itemID then
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetItemByID(itemID)
         GameTooltip:Show()
 
         return
@@ -381,6 +453,7 @@ local function createOverlay(row, icon)
     overlay.unit    = nil
     overlay.auraID  = nil
     overlay.spellID = nil
+    overlay.itemID  = nil
     overlay.label   = nil
 
     return overlay
@@ -467,6 +540,23 @@ local function createRow(index)
     createIconBg(row, row.flaskIcon)
     row.flaskOverlay = createOverlay(row, row.flaskIcon)
     row.flaskOverlay.label = "Flask: Missing"
+    x = x + ICON_SIZE + H_PAD
+
+    -- Oil time + icon
+    row.oilTime = row:CreateFontString(nil, "ARTWORK")
+    row.oilTime:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.oilTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
+    row.oilTime:SetWidth(TIME_WIDTH)
+    row.oilTime:SetJustifyH("RIGHT")
+    x = x + TIME_WIDTH
+
+    row.oilIcon = row:CreateTexture(nil, "ARTWORK")
+    row.oilIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.oilIcon:SetSize(ICON_SIZE, ICON_SIZE)
+    row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
+    createIconBg(row, row.oilIcon)
+    row.oilOverlay = createOverlay(row, row.oilIcon)
+    row.oilOverlay.label = "Weapon Oil: Unknown"
     x = x + ICON_SIZE + H_PAD
 
     -- Augment Rune icon
@@ -768,6 +858,52 @@ local function applyRowData(row, member)
     row.flaskOverlay.unit   = unit
     row.flaskOverlay.auraID = auras.flaskAuraID
 
+    -- Weapon Oil
+    local shortName = F.shortName(member.name)
+    local oil = oilData[shortName]
+    local oilTime = oil and oil.time
+    local oilItemID = oil and oil.item or 0
+
+    row.oilOverlay.itemID = nil
+    row.oilOverlay.label  = nil
+
+    if oilTime and oilTime > 0 then
+        row.oilIcon:SetDesaturated(false)
+        row.oilIcon:SetVertexColor(1, 1, 1, 1)
+        row.oilTime:SetText(formatDuration(oilTime))
+
+        if oilTime < EXPIRE_WARN_SECONDS then
+            row.oilTime:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
+        else
+            row.oilTime:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
+        end
+
+        if oilItemID > 0 then
+            row.oilOverlay.itemID = oilItemID
+        else
+            row.oilOverlay.label = "Weapon Oil"
+        end
+    elseif oilTime == 0 then
+        row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
+        row.oilIcon:SetDesaturated(true)
+        row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+        row.oilTime:SetText("")
+        row.oilOverlay.label = "Weapon Oil: Missing"
+    elseif oilTime == -1 then
+        row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
+        row.oilIcon:SetDesaturated(true)
+        row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+        row.oilTime:SetText("")
+        row.oilOverlay.label = "Weapon Oil: N/A"
+    else
+        row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
+        row.oilIcon:SetDesaturated(true)
+        row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+        row.oilTime:SetText("?")
+        row.oilTime:SetTextColor(0.5, 0.5, 0.5)
+        row.oilOverlay.label = "Weapon Oil: Unknown"
+    end
+
     -- Augment Rune
     row.runeIcon:SetTexture(auras.runeIconID or db.rune_icon_id)
     row.runeIcon:SetDesaturated(not auras.hasRune)
@@ -799,7 +935,7 @@ local function applyRowData(row, member)
     end
 
     -- Durability
-    local durPct = durabilityData[F.shortName(member.name)]
+    local durPct = durabilityData[shortName]
 
     if durPct then
         row.durabilityText:SetText(durPct .. "%")
@@ -828,7 +964,7 @@ end
 
 -- Returns true if the column buff is considered "bad" for a member.
 -- bad = missing, or (food/flask) present but expiring soon.
-local DURABILITY_COL_INDEX = 4 + #db.raidBuffDefs + 1
+local DURABILITY_COL_INDEX = 5 + #db.raidBuffDefs + 1
 
 local function isBad(member, colIndex)
     local a = member.auras
@@ -842,10 +978,21 @@ local function isBad(member, colIndex)
     end
 
     if colIndex == 3 then
-        return not a.hasRune
+        local oil = oilData[F.shortName(member.name)]
+        local oilTime = oil and oil.time
+
+        if oilTime == nil or oilTime == -1 then
+            return false
+        end
+
+        return oilTime == 0 or oilTime < EXPIRE_WARN_SECONDS
     end
 
     if colIndex == 4 then
+        return not a.hasRune
+    end
+
+    if colIndex == 5 then
         return not a.hasVantus
     end
 
@@ -859,7 +1006,7 @@ local function isBad(member, colIndex)
         return pct < DURABILITY_THRESHOLD
     end
 
-    local raidIdx = colIndex - 4
+    local raidIdx = colIndex - 5
     return not a.raidBuff[raidIdx] or a.raidBuff[raidIdx] == false
 end
 
@@ -1031,7 +1178,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelHideTimer()
     wipe(rcStatus)
     wipe(durabilityData)
+    wipe(oilData)
     broadcastDurability()
+    broadcastOilStatus()
 
     self.manualShow = (timeToHide == 0)
     showStartTime = GetTime()
@@ -1141,6 +1290,7 @@ function frame:OnHide()
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
     self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
+    self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     cancelHideTimer()
     cancelRcTick()
     stopProgressBar()
@@ -1162,6 +1312,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("READY_CHECK_CONFIRM")
         self:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
+        self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
         return
     end
@@ -1192,6 +1343,15 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
         return
     end
 
+    if event == "UNIT_INVENTORY_CHANGED" then
+        if arg1 == "player" then
+            broadcastOilStatus()
+            refreshAllRows()
+        end
+
+        return
+    end
+
     if event == "UNIT_AURA" then
         local unit = arg1
         self:OnUnitAura(unit)
@@ -1201,13 +1361,28 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
     if event == "CHAT_MSG_ADDON" then
         if arg1 == ADDON_PREFIX then
-            local msgType, value = strsplit("\t", arg2)
+            local msgType, val1, val2 = strsplit("\t", arg2)
 
             if msgType == "DUR" then
-                local pct = tonumber(value)
+                local pct = tonumber(val1)
 
                 if pct and arg4 then
                     durabilityData[F.shortName(arg4)] = pct
+
+                    if self:IsShown() then
+                        refreshAllRows()
+                    end
+                end
+
+            elseif msgType == "OIL" then
+                local oilTime = tonumber(val1)
+                local itemID = tonumber(val2) or 0
+
+                if oilTime and arg4 then
+                    oilData[F.shortName(arg4)] = {
+                        time = oilTime,
+                        item = itemID,
+                    }
 
                     if self:IsShown() then
                         refreshAllRows()
