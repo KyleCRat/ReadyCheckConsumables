@@ -655,7 +655,7 @@ local function scanMemberAuras(unit, now)
             break
         end
 
-        if not F.isSecretAura(aura) then
+        if not issecretvalue(aura.spellId) then
             local sid = aura.spellId
             local icon = aura.icon
             local expiry = aura.expirationTime
@@ -926,7 +926,7 @@ local function applyRowData(row, member)
         row.raidBuffIcons[k]:SetVertexColor(1, 1, 1, has and 1 or MISSING_ALPHA)
         row.raidBuffOverlays[k].unit = unit
 
-        if has and tonumber(auraID) then
+        if has and not issecretvalue(auraID) then
             row.raidBuffOverlays[k].auraID = auraID
         else
             row.raidBuffOverlays[k].auraID = nil

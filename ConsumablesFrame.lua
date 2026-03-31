@@ -294,7 +294,7 @@ local function scanPlayerAuras(buttons, now)
             break
         end
 
-        if not F.isSecretAura(auraData) then
+        if not issecretvalue(auraData.spellId) then
             local sid = auraData.spellId
             local expiry = auraData.expirationTime
 

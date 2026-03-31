@@ -110,7 +110,7 @@ local function reportFood(toChat)
                     break
                 end
 
-                if not F.isSecretAura(aura) then
+                if not issecretvalue(aura.spellId) then
                     local sid = aura.spellId
                     local icon = aura.icon
 
@@ -181,7 +181,7 @@ local function reportFlasks(toChat)
                     break
                 end
 
-                if not F.isSecretAura(aura) then
+                if not issecretvalue(aura.spellId) then
                     local sid = aura.spellId
 
                     if db.flaskBuffIDs[sid] then
@@ -274,7 +274,7 @@ local function reportRunes(toChat)
                     break
                 end
 
-                if not F.isSecretAura(aura) then
+                if not issecretvalue(aura.spellId) then
                     local sid = aura.spellId
 
                     if db.runeBuffIDs[sid] then
@@ -377,7 +377,7 @@ local function reportBuffs(toChat)
                     break
                 end
 
-                if not F.isSecretAura(aura) then
+                if not issecretvalue(aura.spellId) then
                     local sid = aura.spellId
 
                     for k = 1, buffsCount do
