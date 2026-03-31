@@ -110,12 +110,14 @@ local function reportFood(toChat)
                     break
                 end
 
-                local sid = tonumber(aura.spellId)
-                local icon = tonumber(aura.icon)
+                if not F.isSecretAura(aura) then
+                    local sid = aura.spellId
+                    local icon = aura.icon
 
-                if sid and (db.foodBuffIDs[sid] or (icon and db.foodIconIDs[icon])) then
-                    hasFood = true
-                    break
+                    if db.foodBuffIDs[sid] or db.foodIconIDs[icon] then
+                        hasFood = true
+                        break
+                    end
                 end
             end
 
@@ -179,19 +181,21 @@ local function reportFlasks(toChat)
                     break
                 end
 
-                local sid = tonumber(aura.spellId)
+                if not F.isSecretAura(aura) then
+                    local sid = aura.spellId
 
-                if sid and db.flaskBuffIDs[sid] then
-                    hasFlask = true
-                    local remaining = (tonumber(aura.expirationTime) or 0) - now
+                    if db.flaskBuffIDs[sid] then
+                        hasFlask = true
+                        local remaining = aura.expirationTime - now
 
-                    if remaining > 0 and remaining <= 600 then
-                        local mins = floor(remaining / 60)
-                        local label = mins == 0 and "<1" or tostring(mins)
-                        expiring[#expiring + 1] = format("%s(%s)", colored, label)
+                        if remaining > 0 and remaining <= 600 then
+                            local mins = floor(remaining / 60)
+                            local label = mins == 0 and "<1" or tostring(mins)
+                            expiring[#expiring + 1] = format("%s(%s)", colored, label)
+                        end
+
+                        break
                     end
-
-                    break
                 end
             end
 
@@ -270,17 +274,19 @@ local function reportRunes(toChat)
                     break
                 end
 
-                local sid = tonumber(aura.spellId)
+                if not F.isSecretAura(aura) then
+                    local sid = aura.spellId
 
-                if sid and db.runeBuffIDs[sid] then
-                    hasRune = true
+                    if db.runeBuffIDs[sid] then
+                        hasRune = true
 
-                    if db.runeBuffIDs[sid] < CURRENT_RUNE_TIER then
-                        lowTier[#lowTier + 1] = format("%s(%d)", colored,
-                            db.runeBuffIDs[sid])
+                        if db.runeBuffIDs[sid] < CURRENT_RUNE_TIER then
+                            lowTier[#lowTier + 1] = format("%s(%d)", colored,
+                                db.runeBuffIDs[sid])
+                        end
+
+                        break
                     end
-
-                    break
                 end
             end
 
@@ -371,9 +377,9 @@ local function reportBuffs(toChat)
                     break
                 end
 
-                local sid = tonumber(aura.spellId)
+                if not F.isSecretAura(aura) then
+                    local sid = aura.spellId
 
-                if sid then
                     for k = 1, buffsCount do
                         if sid == buffsList[k][3] then
                             hasBuff[k] = true

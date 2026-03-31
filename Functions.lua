@@ -60,6 +60,12 @@ function F.shortName(fullName)
     return (strsplit("-", fullName))
 end
 
+function F.isSecretAura(aura)
+    local ok = pcall(function() return aura.spellId + 0 end)
+
+    return not ok
+end
+
 -------------------------------------------------------------------------------
 --- GetRosterInfo(index)
 --- Returns name, unit, subgroup, class for a single roster slot.

@@ -655,18 +655,17 @@ local function scanMemberAuras(unit, now)
             break
         end
 
-        local sid = tonumber(aura.spellId)
+        if not F.isSecretAura(aura) then
+            local sid = aura.spellId
+            local icon = aura.icon
+            local expiry = aura.expirationTime
 
-        if sid then
-            local icon = tonumber(aura.icon)
-            local expiry = tonumber(aura.expirationTime) or 0
-
-            if db.foodBuffIDs[sid] or (icon and db.foodIconIDs[icon]) then
+            if db.foodBuffIDs[sid] or db.foodIconIDs[icon] then
                 if not result.hasFood or icon == db.foodWellFedIconID then
                     result.hasFood    = true
                     result.foodTime   = expiry - now
                     result.foodAuraID = aura.auraInstanceID
-                    result.foodIconID = aura.icon
+                    result.foodIconID = icon
                 end
             end
 
@@ -674,19 +673,19 @@ local function scanMemberAuras(unit, now)
                 result.hasFlask    = true
                 result.flaskTime   = expiry - now
                 result.flaskAuraID = aura.auraInstanceID
-                result.flaskIconID = aura.icon
+                result.flaskIconID = icon
             end
 
             if not result.hasRune and db.runeBuffIDs[sid] then
                 result.hasRune    = true
                 result.runeAuraID = aura.auraInstanceID
-                result.runeIconID = aura.icon
+                result.runeIconID = icon
             end
 
             if not result.hasVantus and db.vantusBuffIDs[sid] then
                 result.hasVantus    = true
                 result.vantusAuraID = aura.auraInstanceID
-                result.vantusIconID = aura.icon
+                result.vantusIconID = icon
             end
 
             for k = 1, #buffsList do

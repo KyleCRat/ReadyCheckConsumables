@@ -285,50 +285,53 @@ local function scanPlayerAuras(buttons, now)
     local isEating, eatingExpiry, eatingDuration
     local foodExpiry
 
+    local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+
     for i = 1, 60 do
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
 
-        if not auraData then break end
+        if not auraData then
+            break
+        end
 
-        local sid = tonumber(auraData.spellId)
-        local expiry = auraData.expirationTime
-        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+        if not F.isSecretAura(auraData) then
+            local sid = auraData.spellId
+            local expiry = auraData.expirationTime
 
-        if not sid then
-            -- spellId is secret for cross-player auras; skip
-        elseif RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
-            if RCC.db.eatingIconIDs[auraData.icon] then
-                isEating = true
-                eatingExpiry = expiry
-                eatingDuration = auraData.duration
-            else
-                isFood = true
-                foodExpiry = expiry
+            if RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
+                if RCC.db.eatingIconIDs[auraData.icon] then
+                    isEating = true
+                    eatingExpiry = expiry
+                    eatingDuration = auraData.duration
+                else
+                    isFood = true
+                    foodExpiry = expiry
+                end
+
+            elseif RCC.db.flaskBuffIDs[sid] then
+                buttons.flask.statustexture:SetTexture(READY)
+                buttons.flask.texture:SetDesaturated(false)
+                buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+                                                        ceil((expiry - now) / 60))
+                buttons.flask.texture:SetTexture(auraData.icon)
+                isFlask = true
+
+                if expiry - now <= 600 then
+                    isFlask = false
+                end
+
+            elseif RCC.db.runeBuffIDs[sid] then
+                buttons.rune.statustexture:SetTexture(READY)
+                buttons.rune.texture:SetDesaturated(false)
+                buttons.rune.texture:SetTexture(auraData.icon)
+                buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+                                                       ceil((expiry - now) / 60))
+                isRune = true
+
+            elseif RCC.db.vantusBuffIDs[sid] then
+                local name = auraData.name or ""
+                isVantus = name:gsub("^Vantus Rune: ", "")
             end
-
-        elseif RCC.db.flaskBuffIDs[sid] then
-            buttons.flask.statustexture:SetTexture(READY)
-            buttons.flask.texture:SetDesaturated(false)
-            buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                    ceil((expiry - now) / 60))
-            buttons.flask.texture:SetTexture(auraData.icon)
-            isFlask = true
-
-            if expiry - now <= 600 then
-                isFlask = false
-            end
-
-        elseif RCC.db.runeBuffIDs[sid] then
-            buttons.rune.statustexture:SetTexture(READY)
-            buttons.rune.texture:SetDesaturated(false)
-            buttons.rune.texture:SetTexture(auraData.icon)
-            buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                   ceil((expiry - now) / 60))
-            isRune = true
-
-        elseif RCC.db.vantusBuffIDs[sid] then
-            local name = auraData.name or ""
-            isVantus = name:gsub("^Vantus Rune: ", "")
         end
     end
 
