@@ -23,7 +23,7 @@ A row of icons appears on the ready check frame showing your own consumable stat
 A full raid overview frame that appears alongside the ready check:
 
 - One row per raid member showing ready check response, name, and buff/consumable status
-- Columns for food, flask, augment rune, vantus rune, and all six raid buffs
+- Columns for food, flask, weapon oil, augment rune, vantus rune, durability, and all six raid buffs
 - Remaining duration shown for timed buffs (flasks, food)
 - Missing consumables highlighted with reduced opacity
 - Title bar shows column summary icons (green check / red X per category)
@@ -32,6 +32,9 @@ A full raid overview frame that appears alongside the ready check:
   - Red: "X Players not Ready" (explicitly declined)
   - Yellow: "X Players are AFK" (never responded)
 - Distinct icons for offline (disconnect) and dead (tombstone) players
+- Durability percentage per member (color-coded green/yellow/red)
+- Weapon oil status with remaining duration
+- Interoperability with Method Raid Tools (reads MRT durability broadcasts, delegates chat reporting to avoid duplicates)
 - Countdown progress bar for ready check duration
 - Draggable, remembers position between checks
 
@@ -50,7 +53,7 @@ Automatically reports missing consumables to raid/party chat on ready check:
 
 | Command | Cmd | Description |
 |---|---|---|
-| `/rcc test` | `/rcc t` | Show test frames (simulates a ready check) |
+| `/rcc test` | `/rcc t` | Show test frames (full fake raid with randomized data) |
 | `/rcc hide` | `/rcc h` | Hide all frames |
 | `/rcc report` | `/rcc r` | Print consumable report locally |
 | `/rcc reportchat` | `/rcc r` | Send report to raid/party chat |
