@@ -840,15 +840,7 @@ local function generateTestData()
             }
 
             unitToIndex[fakeUnit] = count
-
-            local roll = math.random()
-            if roll < 0.6 then
-                rcStatus[fakeUnit] = RC_READY
-            elseif roll < 0.85 then
-                rcStatus[fakeUnit] = RC_NOT
-            else
-                rcStatus[fakeUnit] = RC_PENDING
-            end
+            rcStatus[fakeUnit] = RC_PENDING
 
             local shortName = F.shortName(name)
             durabilityData[shortName] = math.random(10, 100)
@@ -1329,10 +1321,12 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     self:Show()
 end
 
+local TEST_DURATION = 15
+
 function frame:OnTestReadyCheck()
     cancelHideTimer()
 
-    self.manualShow = true
+    self.manualShow = false
     showStartTime = GetTime()
 
     generateTestData()
@@ -1341,11 +1335,29 @@ function frame:OnTestReadyCheck()
 
     refreshAllRows()
     updateTitleCount()
-    stopProgressBar()
-    titleBar.timerText:SetText("")
+    startProgressBar(TEST_DURATION)
 
     restorePosition()
     self:Show()
+
+    for unit in pairs(unitToIndex) do
+        if unit ~= "player" then
+            local roll = math.random()
+
+            if roll > 0.25 then
+                local delay = math.random(1, TEST_DURATION)
+                local ready = roll > 0.5
+
+                C_Timer.After(delay, function()
+                    if not self:IsShown() then
+                        return
+                    end
+
+                    self:OnReadyCheckConfirm(unit, ready)
+                end)
+            end
+        end
+    end
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
