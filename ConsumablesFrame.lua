@@ -283,7 +283,7 @@ end
 local function scanPlayerAuras(buttons, now)
     local isFood, isFlask, isRune, isVantus
     local isEating, eatingExpiry, eatingDuration
-    local foodExpiry
+    local foodExpiry, foodIcon
 
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
@@ -306,6 +306,7 @@ local function scanPlayerAuras(buttons, now)
                 else
                     isFood = true
                     foodExpiry = expiry
+                    foodIcon = auraData.icon
                 end
 
             elseif RCC.db.flaskBuffIDs[sid] then
@@ -348,6 +349,10 @@ local function scanPlayerAuras(buttons, now)
         buttons.food.texture:SetDesaturated(false)
         buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                ceil((foodExpiry - now) / 60))
+
+        if foodIcon then
+            buttons.food.texture:SetTexture(foodIcon)
+        end
     end
 
     return isFood, isFlask, isRune, isVantus, isEating, eatingExpiry, eatingDuration
