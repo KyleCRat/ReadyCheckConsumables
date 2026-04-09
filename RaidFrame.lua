@@ -406,7 +406,10 @@ local function onOverlayEnter(self)
     local itemID  = self.itemID
     local label   = self.label
 
-    if auraID and unit then
+    if auraID and unit
+        and type(auraID) == "number"
+        and not issecretvalue(auraID)
+    then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetUnitBuffByAuraInstanceID(unit, auraID)
         GameTooltip:Show()

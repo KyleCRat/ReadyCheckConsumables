@@ -85,6 +85,14 @@ local function ClickButtonOnEnter(self)
     local button = self:GetParent()
     button:SetAlpha(0.7)
 
+    if button.tooltipAuraID then
+        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        GameTooltip:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        GameTooltip:Show()
+
+        return
+    end
+
     if button.tooltipItemID then
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(button.tooltipItemID)
@@ -283,7 +291,7 @@ end
 local function scanPlayerAuras(buttons, now)
     local isFood, isFlask, isRune, isVantus
     local isEating, eatingExpiry, eatingDuration
-    local foodExpiry, foodIcon
+    local foodExpiry, foodIcon, foodAuraID
 
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
@@ -307,6 +315,7 @@ local function scanPlayerAuras(buttons, now)
                     isFood = true
                     foodExpiry = expiry
                     foodIcon = auraData.icon
+                    foodAuraID = auraData.auraInstanceID
                 end
 
             elseif RCC.db.flaskBuffIDs[sid] then
@@ -352,6 +361,10 @@ local function scanPlayerAuras(buttons, now)
 
         if foodIcon then
             buttons.food.texture:SetTexture(foodIcon)
+        end
+
+        if foodAuraID and not issecretvalue(foodAuraID) then
+            buttons.food.tooltipAuraID = foodAuraID
         end
     end
 
