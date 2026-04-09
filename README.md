@@ -63,6 +63,7 @@ Automatically reports missing consumables to raid/party chat on ready check:
 
 Access via `/rcc settings` or the WoW AddOns settings panel. Options include:
 
+- Scale sliders for consumables frame and raid status frame (0.5x–2.0x)
 - Toggle the consumables frame and individual icons
 - Toggle the raid status frame
 - Toggle chat reporting and configure which difficulties trigger it
