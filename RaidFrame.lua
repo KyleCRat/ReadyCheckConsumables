@@ -1432,7 +1432,9 @@ function frame:OnUnitAura(unit)
         return
     end
 
-    member.auras = scanMemberAuras(unit, GetTime())
+    member.online = UnitIsConnected(unit)
+    member.isDead  = UnitIsDeadOrGhost(unit)
+    member.auras   = scanMemberAuras(unit, GetTime())
     refreshRow(index)
 end
 
