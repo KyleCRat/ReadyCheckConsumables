@@ -1320,6 +1320,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     end
 
     restorePosition()
+    self:SetScale(RCC.GetSetting("raidFrame_scale"))
     self:Show()
 end
 
@@ -1340,6 +1341,7 @@ function frame:OnTestReadyCheck()
     startProgressBar(TEST_DURATION)
 
     restorePosition()
+    self:SetScale(RCC.GetSetting("raidFrame_scale"))
     self:Show()
 
     for unit in pairs(unitToIndex) do

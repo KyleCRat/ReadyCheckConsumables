@@ -16,6 +16,10 @@ local DEFAULTS = {
     chatReport_heroicDungeon = false,
     chatReport_normalDungeon = false,
 
+    -- Scale
+    consumables_scale        = 1.0,
+    raidFrame_scale          = 1.0,
+
     -- Consumables Frame
     consumables_enabled      = true,
     icon_food                = true,
@@ -68,6 +72,40 @@ local function registerPanel()
     local category, layout = Settings.RegisterVerticalLayoutCategory(
         "Ready Check Consumables"
     )
+
+    ---------------------------------------------------------------------------
+    --- Scale
+    ---------------------------------------------------------------------------
+
+    layout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Scale")
+    )
+
+    local scaleOptions = Settings.CreateSliderOptions(0.5, 2.0, 0.1)
+    scaleOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
+        function(value) return string.format("%.1f", value) end)
+
+    local cfScale = Settings.RegisterAddOnSetting(
+        category, "consumables_scale", "consumables_scale",
+        db, "number", "Consumables Frame Scale", db.consumables_scale
+    )
+    Settings.CreateSlider(category, cfScale, scaleOptions,
+        "Scale of the consumable icon bar.")
+
+    local rfScale = Settings.RegisterAddOnSetting(
+        category, "raidFrame_scale", "raidFrame_scale",
+        db, "number", "Raid Status Frame Scale", db.raidFrame_scale
+    )
+    Settings.CreateSlider(category, rfScale, scaleOptions,
+        "Scale of the raid status frame.")
+
+    Settings.SetOnValueChangedCallback("consumables_scale", function()
+        RCC.consumables:SetScale(db.consumables_scale)
+    end)
+
+    Settings.SetOnValueChangedCallback("raidFrame_scale", function()
+        RCC.raidFrame:SetScale(db.raidFrame_scale)
+    end)
 
     ---------------------------------------------------------------------------
     --- Chat Report

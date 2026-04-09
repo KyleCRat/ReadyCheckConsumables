@@ -25,6 +25,7 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
 
         consumablesShowStart = GetTime()
 
+        self:SetScale(RCC.GetSetting("consumables_scale"))
         self:Update()
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
