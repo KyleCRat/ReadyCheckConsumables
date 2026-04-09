@@ -87,8 +87,13 @@ local function ClickButtonOnEnter(self)
 
     if button.tooltipAuraID then
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-        GameTooltip:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        GameTooltip:SetItemByID(button.tooltipItemID)
         GameTooltip:Show()
+
+        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
+        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
+        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        ShoppingTooltip1:Show()
 
         return
     end
@@ -102,14 +107,20 @@ end
 
 local function ClickButtonOnLeave(self)
     self:GetParent():SetAlpha(1)
+    ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
 
 local function InfoButtonOnEnter(self)
     if self.tooltipAuraID then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetUnitBuffByAuraInstanceID("player", self.tooltipAuraID)
+        GameTooltip:SetItemByID(self.tooltipItemID)
         GameTooltip:Show()
+
+        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
+        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
+        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", self.tooltipAuraID)
+        ShoppingTooltip1:Show()
 
         return
     end
@@ -122,6 +133,7 @@ local function InfoButtonOnEnter(self)
 end
 
 local function InfoButtonOnLeave()
+    ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
 
