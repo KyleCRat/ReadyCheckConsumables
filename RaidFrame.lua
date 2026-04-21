@@ -627,10 +627,11 @@ end
 --- Member data storage
 -------------------------------------------------------------------------------
 
-local memberData  = {}  -- [i] = { name, unit, class, online, isDead, auras }
-local unitToIndex = {}  -- [unit] = i
-local rcStatus    = {}  -- [unit] = RC_PENDING | RC_READY | RC_NOT
-local activeCount = 0
+local memberData     = {}  -- [i] = { name, unit, class, online, isDead, auras }
+local unitToIndex    = {}  -- [unit] = i
+local rcStatus       = {}  -- [unit] = RC_PENDING | RC_READY | RC_NOT
+local activeCount    = 0
+local readyAnnounced = false
 
 -------------------------------------------------------------------------------
 --- Aura scanning
@@ -1190,6 +1191,14 @@ local function showFinishedSummary()
         local c = COLOR_SUMMARY_READY
         titleBar.countText:SetTextColor(c.r, c.g, c.b)
         titleBar.countText:SetText("Everyone is Ready!")
+
+        if not readyAnnounced and GetNumGroupMembers() > activeCount then
+            readyAnnounced = true
+
+            if RCC.AnnounceAllReady then
+                RCC.AnnounceAllReady()
+            end
+        end
     end
 end
 
@@ -1290,6 +1299,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     end
 
     cancelHideTimer()
+    readyAnnounced = false
     wipe(rcStatus)
     wipe(durabilityData)
     wipe(oilData)

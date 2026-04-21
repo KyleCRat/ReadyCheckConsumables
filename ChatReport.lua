@@ -545,6 +545,26 @@ chatReportFrame:RegisterEvent("CHAT_MSG_ADDON")
 chatReportFrame:SetScript("OnEvent", onEvent)
 
 -------------------------------------------------------------------------------
+--- Ready check completion announcement
+--- Sent to raid chat when all tracked members are ready but benched members
+--- have not yet responded, so the raid leader knows they can pull.
+-------------------------------------------------------------------------------
+
+function RCC.AnnounceAllReady()
+    local playerName = UnitName("player")
+
+    if not reportCandidates[playerName] then
+        return
+    end
+
+    if not isElectedReporter() then
+        return
+    end
+
+    SendChatMessage("RCC: Everyone in raid is ready!", F.chatType())
+end
+
+-------------------------------------------------------------------------------
 --- Test Interface (called via /rcc report and /rcc reportchat)
 -------------------------------------------------------------------------------
 
