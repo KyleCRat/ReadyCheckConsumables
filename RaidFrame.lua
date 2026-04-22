@@ -665,7 +665,13 @@ local function scanMemberAuras(unit, now)
             local expiry = aura.expirationTime
 
             if db.foodBuffIDs[sid] or db.foodIconIDs[icon] then
-                if not result.hasFood or icon == db.foodWellFedIconID then
+                if db.eatingIconIDs[icon] then
+                    result.isEating   = true
+                    result.hasFood    = true
+                    result.foodTime   = expiry - now
+                    result.foodAuraID = aura.auraInstanceID
+                    result.foodIconID = icon
+                elseif not result.isEating then
                     result.hasFood    = true
                     result.foodTime   = expiry - now
                     result.foodAuraID = aura.auraInstanceID

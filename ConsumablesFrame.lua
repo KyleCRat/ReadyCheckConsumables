@@ -302,7 +302,7 @@ end
 
 local function scanPlayerAuras(buttons, now)
     local isFood, isFlask, isRune, isVantus
-    local isEating, eatingExpiry, eatingDuration
+    local isEating, eatingExpiry, eatingDuration, eatingIcon
     local foodExpiry, foodIcon, foodAuraID
 
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
@@ -323,6 +323,7 @@ local function scanPlayerAuras(buttons, now)
                     isEating = true
                     eatingExpiry = expiry
                     eatingDuration = auraData.duration
+                    eatingIcon = auraData.icon
                 else
                     isFood = true
                     foodExpiry = expiry
@@ -362,6 +363,7 @@ local function scanPlayerAuras(buttons, now)
     elseif isEating then
         isFood = true
         foodExpiry = eatingExpiry
+        foodIcon = eatingIcon
     end
 
     if isFood then
