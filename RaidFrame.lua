@@ -1511,8 +1511,13 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
     if event == "UNIT_INVENTORY_CHANGED" then
         if arg1 == "player" then
-            broadcastOilStatus()
-            refreshAllRows()
+            C_Timer.After(0.2, function()
+                broadcastOilStatus()
+
+                if self:IsShown() then
+                    refreshAllRows()
+                end
+            end)
         end
 
         return
