@@ -129,7 +129,9 @@ SlashCmdList["RCC"] = function(msg)
     elseif msg == "reportchat" or msg == "rc" then
         RCC.chatReport.Test(true)
 
-    elseif msg == "settings" or msg == "s" then
+    elseif msg == "settings" or msg == "s"
+        or msg == "options" or msg == "o"
+    then
         if RCC.settingsCategory then
             Settings.OpenToCategory(RCC.settingsCategory:GetID())
         end
@@ -140,6 +142,6 @@ SlashCmdList["RCC"] = function(msg)
         print("  /rcc hide, h - Immediately hide the consumable icon frame")
         print("  /rcc report, r - Print consumable report locally")
         print("  /rcc reportchat, rc - Send consumable report to chat")
-        print("  /rcc settings, s - Open settings panel")
+        print("  /rcc settings, s, options, o - Open settings panel")
     end
 end
