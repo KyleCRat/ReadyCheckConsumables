@@ -61,6 +61,8 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
             return
         end
 
+        self.close:Show()
+
         local minShowTime = RCC.GetSetting("consumables_minShowTime")
         local elapsed = GetTime() - consumablesShowStart
         local delay = max(minShowTime - elapsed, 0)
