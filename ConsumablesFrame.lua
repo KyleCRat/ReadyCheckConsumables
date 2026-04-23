@@ -34,11 +34,58 @@ RCC.consumables.rlpointer:SetSize(1, 1)
 RCC.consumables.rlpointer:SetPoint("CENTER")
 RCC.consumables.rlpointer:Hide()
 
+--- Drag handle
+RCC.consumables:SetMovable(true)
+RCC.consumables:SetClampedToScreen(true)
+
+RCC.consumables.drag = CreateFrame("Frame", nil, RCC.consumables)
+RCC.consumables.drag:SetSize(20, 20)
+RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 1, -3)
+RCC.consumables.drag:EnableMouse(true)
+RCC.consumables.drag:RegisterForDrag("LeftButton")
+RCC.consumables.drag:Hide()
+
+RCC.consumables.drag.bg = RCC.consumables.drag:CreateTexture(nil, "BACKGROUND")
+RCC.consumables.drag.bg:SetAllPoints()
+RCC.consumables.drag.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+
+RCC.consumables.drag.border = RCC.consumables.drag:CreateTexture(nil, "BORDER")
+RCC.consumables.drag.border:SetPoint("TOPLEFT", -1, 1)
+RCC.consumables.drag.border:SetPoint("BOTTOMRIGHT", 1, -1)
+RCC.consumables.drag.border:SetColorTexture(0, 0, 0, 1)
+
+RCC.consumables.drag.highlight = RCC.consumables.drag:CreateTexture(nil, "ARTWORK")
+RCC.consumables.drag.highlight:SetAllPoints(RCC.consumables.drag.bg)
+RCC.consumables.drag.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
+RCC.consumables.drag.highlight:SetBlendMode("ADD")
+RCC.consumables.drag.highlight:Hide()
+
+RCC.consumables.drag.icon = RCC.consumables.drag:CreateTexture(nil, "OVERLAY")
+RCC.consumables.drag.icon:SetSize(12, 12)
+RCC.consumables.drag.icon:SetPoint("CENTER")
+RCC.consumables.drag.icon:SetTexture("Interface\\CURSOR\\UI-Cursor-Move")
+
+RCC.consumables.drag:SetScript("OnEnter", function(self)
+    self.highlight:Show()
+end)
+
+RCC.consumables.drag:SetScript("OnLeave", function(self)
+    self.highlight:Hide()
+end)
+
+RCC.consumables.drag:SetScript("OnDragStart", function(self)
+    RCC.consumables:StartMoving()
+end)
+
+RCC.consumables.drag:SetScript("OnDragStop", function(self)
+    RCC.consumables:StopMovingOrSizing()
+end)
+
 --- Close button
 RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables,
                                     "SecureHandlerClickTemplate")
 RCC.consumables.close:SetSize(0, 20)
-RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 1, -3)
+RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT", 3, 0)
 RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", -1, -3)
 RCC.consumables.close:Hide()
 
@@ -1112,10 +1159,11 @@ function RCC.consumables:Repos(isRL)
         self:SetPoint("CENTER", self.rlpointer, "CENTER", 0, 0)
 
         self.rlpointer:Show()
+        self.drag:Show()
         self.close:Show()
 
         self.isRLpos = true
-    elseif self.isRLpos then
+    else
         local anchor = isElvUIFix and ReadyCheckFrame
                                    or ReadyCheckListenerFrame
 

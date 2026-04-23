@@ -61,6 +61,7 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
             return
         end
 
+        self.drag:Show()
         self.close:Show()
 
         local minShowTime = RCC.GetSetting("consumables_minShowTime")
@@ -93,9 +94,8 @@ end)
 RCC.consumables:SetScript("OnHide", function(self)
     RCC.consumables:OnHide()
 
-    if not InCombatLockdown()
-        and self.close:IsShown()
-    then
+    if not InCombatLockdown() then
+        self.drag:Hide()
         self.close:Hide()
     end
 end)
