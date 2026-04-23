@@ -56,8 +56,9 @@ Automatically reports missing consumables to raid/party chat on ready check:
 | `/rcc test` | `/rcc t` | Show test frames (full fake raid with randomized data) |
 | `/rcc hide` | `/rcc h` | Hide all frames |
 | `/rcc report` | `/rcc r` | Print consumable report locally |
-| `/rcc reportchat` | `/rcc r` | Send report to raid/party chat |
+| `/rcc reportchat` | `/rcc rc` | Send report to raid/party chat |
 | `/rcc settings` | `/rcc s` | Open the settings panel |
+| `/rcc options` | `/rcc o` | Open the settings panel |
 
 ## Settings
 
@@ -65,6 +66,8 @@ Access via `/rcc settings` or the WoW AddOns settings panel. Options include:
 
 - Scale sliders for consumables frame and raid status frame (0.5x–2.0x)
 - Toggle the consumables frame and individual icons
+- Minimum display time toggle and slider (1–20s) to keep the frame visible after the ready check ends
+- Draggable frame via drag handle when lingering or as the ready check initiator
 - Toggle the raid status frame
 - Toggle chat reporting and configure which difficulties trigger it
 - Set the required raid role for chat reports (Leader / Assist / Any)
