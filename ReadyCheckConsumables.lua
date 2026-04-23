@@ -8,7 +8,6 @@ RCC.db = RCC.db or {}
 --- Event handler
 -------------------------------------------------------------------------------
 
-local MIN_SHOW_TIME = 15
 local consumablesShowStart = 0
 
 RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
@@ -57,8 +56,19 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
             self:Repos(true)
         end
 
+        if not RCC.GetSetting("consumables_minShow") then
+            RCC.consumables:OnHide()
+
+            if not InCombatLockdown() then
+                self.rlpointer:Hide()
+            end
+
+            return
+        end
+
+        local minShowTime = RCC.GetSetting("consumables_minShowTime")
         local elapsed = GetTime() - consumablesShowStart
-        local delay = max(MIN_SHOW_TIME - elapsed, 0)
+        local delay = max(minShowTime - elapsed, 0)
 
         self.cancelDelay = C_Timer.NewTimer(delay, function()
             RCC.consumables:OnHide()

@@ -22,6 +22,8 @@ local DEFAULTS = {
 
     -- Consumables Frame
     consumables_enabled      = true,
+    consumables_minShow      = false,
+    consumables_minShowTime  = 15,
     icon_food                = true,
     icon_flask               = true,
     icon_mhOil               = true,
@@ -74,6 +76,31 @@ local function registerPanel()
     )
 
     ---------------------------------------------------------------------------
+    --- Enable / Disable
+    ---------------------------------------------------------------------------
+
+    local cfEnabled = Settings.RegisterAddOnSetting(
+        category, "consumables_enabled", "consumables_enabled",
+        db, "boolean", "Enable Consumables Frame", db.consumables_enabled
+    )
+    Settings.CreateCheckbox(category, cfEnabled,
+        "Show the consumable icon bar during ready checks.")
+
+    local rfEnabled = Settings.RegisterAddOnSetting(
+        category, "raidFrame_enabled", "raidFrame_enabled",
+        db, "boolean", "Enable Raid Status Frame", db.raidFrame_enabled
+    )
+    Settings.CreateCheckbox(category, rfEnabled,
+        "Show the per-member consumable status frame during ready checks.")
+
+    local crEnabled = Settings.RegisterAddOnSetting(
+        category, "chatReport_enabled", "chatReport_enabled",
+        db, "boolean", "Enable Chat Report", db.chatReport_enabled
+    )
+    Settings.CreateCheckbox(category, crEnabled,
+        "Automatically report missing consumables to chat on ready check.")
+
+    ---------------------------------------------------------------------------
     --- Scale
     ---------------------------------------------------------------------------
 
@@ -108,19 +135,12 @@ local function registerPanel()
     end)
 
     ---------------------------------------------------------------------------
-    --- Chat Report
+    --- Report to Chat
     ---------------------------------------------------------------------------
 
     layout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Report to Chat")
     )
-
-    local crEnabled = Settings.RegisterAddOnSetting(
-        category, "chatReport_enabled", "chatReport_enabled",
-        db, "boolean", "Enable Chat Report", db.chatReport_enabled
-    )
-    Settings.CreateCheckbox(category, crEnabled,
-        "Automatically report missing consumables to chat on ready check.")
 
     local function getPermOptions()
         local c = Settings.CreateControlTextContainer()
@@ -137,10 +157,6 @@ local function registerPanel()
     )
     Settings.CreateDropdown(category, crPerm, getPermOptions,
         "Which raid role is allowed to trigger chat reports.")
-
-    ---------------------------------------------------------------------------
-    --- Chat Report — Instance Types
-    ---------------------------------------------------------------------------
 
     layout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Only Report to Chat in:")
@@ -172,19 +188,30 @@ local function registerPanel()
         CreateSettingsListSectionHeaderInitializer("Consumables Frame")
     )
 
-    local cfEnabled = Settings.RegisterAddOnSetting(
-        category, "consumables_enabled", "consumables_enabled",
-        db, "boolean", "Enable Consumables Frame", db.consumables_enabled
+    local cfMinShow = Settings.RegisterAddOnSetting(
+        category, "consumables_minShow", "consumables_minShow",
+        db, "boolean", "Minimum Display Time", db.consumables_minShow
     )
-    Settings.CreateCheckbox(category, cfEnabled,
-        "Show the consumable icon bar during ready checks.")
+    Settings.CreateCheckbox(category, cfMinShow,
+        "Re-open the consumables frame after the ready check closes to ensure a minimum display time.")
+
+    local minShowOptions = Settings.CreateSliderOptions(1, 20, 1)
+    minShowOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
+        function(value) return string.format("%ds", value) end)
+
+    local cfMinShowTime = Settings.RegisterAddOnSetting(
+        category, "consumables_minShowTime", "consumables_minShowTime",
+        db, "number", "Minimum Display Seconds", db.consumables_minShowTime
+    )
+    Settings.CreateSlider(category, cfMinShowTime, minShowOptions,
+        "How long the consumables frame stays open after a ready check (1–20 seconds).")
 
     ---------------------------------------------------------------------------
     --- Consumables Frame — Icons
     ---------------------------------------------------------------------------
 
     layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Enable / Disable Icons for Consumables Frame")
+        CreateSettingsListSectionHeaderInitializer("Consumables Frame Icons")
     )
 
     local iconKeys = {
@@ -206,21 +233,6 @@ local function registerPanel()
         )
         Settings.CreateCheckbox(category, s, "Show " .. label .. " icon.")
     end
-
-    ---------------------------------------------------------------------------
-    --- Raid Frame
-    ---------------------------------------------------------------------------
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Raid Status Frame")
-    )
-
-    local rfEnabled = Settings.RegisterAddOnSetting(
-        category, "raidFrame_enabled", "raidFrame_enabled",
-        db, "boolean", "Enable Raid Status Frame", db.raidFrame_enabled
-    )
-    Settings.CreateCheckbox(category, rfEnabled,
-        "Show the per-member consumable status frame during ready checks.")
 
     Settings.RegisterAddOnCategory(category)
     RCC.settingsCategory = category
