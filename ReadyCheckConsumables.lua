@@ -25,6 +25,7 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         consumablesShowStart = GetTime()
 
         self:SetScale(RCC.GetSetting("consumables_scale"))
+        self:Show()
         self:Update()
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
@@ -47,21 +48,15 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         end
 
         if InCombatLockdown() then
-            RCC.consumables:OnHide()
+            self:Hide()
+            self.rlpointer:Hide()
 
             return
         end
 
-        if not self.isRLpos then
-            self:Repos(true)
-        end
-
         if not RCC.GetSetting("consumables_minShow") then
-            RCC.consumables:OnHide()
-
-            if not InCombatLockdown() then
-                self.rlpointer:Hide()
-            end
+            self:Hide()
+            self.rlpointer:Hide()
 
             return
         end
@@ -71,19 +66,15 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         local delay = max(minShowTime - elapsed, 0)
 
         self.cancelDelay = C_Timer.NewTimer(delay, function()
-            RCC.consumables:OnHide()
-
             if not InCombatLockdown() then
-                self.rlpointer:Hide()
+                RCC.consumables:Hide()
+                RCC.consumables.rlpointer:Hide()
             end
         end)
 
     elseif event == "PLAYER_REGEN_DISABLED" then
-        RCC.consumables:OnHide()
-
-        if not InCombatLockdown() and self.isRLpos then
-            self.rlpointer:Hide()
-        end
+        self:Hide()
+        self.rlpointer:Hide()
 
     elseif event == "UNIT_AURA" then
         if unit == "player" then
@@ -110,7 +101,6 @@ end)
 RCC.consumables:RegisterEvent("READY_CHECK")
 RCC.consumables:RegisterEvent("READY_CHECK_FINISHED")
 RCC.consumables:RegisterEvent("PLAYER_REGEN_DISABLED")
-RCC.consumables:Show()
 
 -------------------------------------------------------------------------------
 --- Slash Commands

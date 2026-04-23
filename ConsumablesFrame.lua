@@ -23,7 +23,7 @@ local FONT = "Interface\\AddOns\\"
 --- Construct the button frame
 -------------------------------------------------------------------------------
 
-RCC.consumables = CreateFrame("Frame", "RCConsumables", ReadyCheckListenerFrame)
+RCC.consumables = CreateFrame("Frame", "RCConsumables", UIParent)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
 RCC.consumables:SetSize(consumables_size * 5, consumables_size)
 RCC.consumables:Hide()
@@ -74,6 +74,7 @@ end)
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
 RCC.consumables.close:SetFrameRef("rlpointer", RCC.consumables.rlpointer)
 RCC.consumables.close:SetAttribute("_onclick", [[
+    self:GetFrameRef("consumables"):Hide()
     self:GetFrameRef("rlpointer"):Hide()
 ]])
 
@@ -293,7 +294,6 @@ local function updateElvUIParent(self)
 
     if not needsFix then return end
 
-    self:SetParent(ReadyCheckFrame)
     self:ClearAllPoints()
     self:SetPoint("BOTTOM", ReadyCheckFrame, "TOP", 0, 5)
 
@@ -1108,7 +1108,6 @@ function RCC.consumables:Repos(isRL)
     end
 
     if isRL then
-        self:SetParent(self.rlpointer)
         self:ClearAllPoints()
         self:SetPoint("CENTER", self.rlpointer, "CENTER", 0, 0)
 
@@ -1117,17 +1116,11 @@ function RCC.consumables:Repos(isRL)
 
         self.isRLpos = true
     elseif self.isRLpos then
-        local parent
+        local anchor = isElvUIFix and ReadyCheckFrame
+                                   or ReadyCheckListenerFrame
 
-        if isElvUIFix then
-            parent = ReadyCheckFrame
-        else
-            parent = ReadyCheckListenerFrame
-        end
-
-        self:SetParent(parent)
         self:ClearAllPoints()
-        self:SetPoint("BOTTOM", parent, "TOP", 0, 5)
+        self:SetPoint("BOTTOM", anchor, "TOP", 0, 5)
 
         self.isRLpos = false
     end
