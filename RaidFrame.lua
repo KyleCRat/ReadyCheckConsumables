@@ -1300,6 +1300,9 @@ local function startProgressBar(duration)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
+    broadcastDurability()
+    broadcastOilStatus()
+
     if not RCC.GetSetting("raidFrame_enabled") then
         return
     end
@@ -1309,8 +1312,6 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     wipe(rcStatus)
     wipe(durabilityData)
     wipe(oilData)
-    broadcastDurability()
-    broadcastOilStatus()
 
     self.manualShow = (timeToHide == 0)
     showStartTime = GetTime()
