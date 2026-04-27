@@ -2,12 +2,12 @@ local _, RCC = ...
 
 RCC.db = RCC.db or {}
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Weapon Enchant / Oil Lookup
 --- Maps enchant ID -> { item, icon, [q], [iconoh] }
 --- Used by the consumable frame to detect and display weapon buffs.
 --- Detected via GetWeaponEnchantInfo() — only weapon-slot enchants belong here.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.weaponEnchants = {
     -- Shaman Enchants (negative item = spell-based, not item-based)
@@ -109,22 +109,22 @@ RCC.db.weaponEnchants = {
     [6199] = { item = 171438, icon = 3528425 }, -- Porous Weightstone
 }
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Reverse Lookup: item ID -> enchant data
 --- Built at load time from RCC.db.weaponEnchants.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.weaponEnchantItems = {}
 for _, v in pairs(RCC.db.weaponEnchants) do
     RCC.db.weaponEnchantItems[v.item] = v
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Non-Weapon Enchants
 --- These use the enchant system but are applied to non-weapon slots.
 --- Cannot be detected via GetWeaponEnchantInfo().
 --- Stored for future use. Not currently used by the addon.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.spellthreadEnchantIDs = {
     -- 11.0.0 - The War Within

@@ -62,12 +62,12 @@ function F.shortName(fullName)
 end
 
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- GetRosterInfo(index)
 --- Returns name, unit, subgroup, class for a single roster slot.
 --- Works in both raid and party. Returns nil when no player at index.
 --- Party order: 1=player, 2=party1, 3=party2, 4=party3, 5=party4.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function F.GetRosterInfo(index)
     if IsInRaid() then
@@ -101,10 +101,10 @@ function F.GetRosterInfo(index)
     return name, unit, 1, fileName
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- hasClassInRoster(className)
 --- Returns true if any roster member within active groups is the given class.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function F.hasClassInRoster(className)
     for j = 1, 40 do

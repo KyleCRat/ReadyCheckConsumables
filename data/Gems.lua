@@ -2,12 +2,12 @@ local _, RCC = ...
 
 RCC.db = RCC.db or {}
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Gem Item IDs (12.0.0 - Midnight)
 --- Stored for future use. Not currently used by the addon.
 --- Organized by gem color, then stat prefix.
 --- Base gems are uncommon, Flawless gems are rare.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.gemItemIDs = {
     -- 12.0.0 - Midnight

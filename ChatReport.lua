@@ -10,7 +10,7 @@ local UnitName        = UnitName
 
 local CURRENT_RUNE_TIER = db.currentRuneTier
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Addon message coordination
 --- When multiple players have RCC with chat reporting enabled, only one
 --- should report. On READY_CHECK each eligible reporter broadcasts intent
@@ -18,7 +18,7 @@ local CURRENT_RUNE_TIER = db.currentRuneTier
 --- first candidate wins and is the sole reporter.
 --- If MRT (Method Raid Tools) is also broadcasting report intent, RCC
 --- defers entirely and lets MRT handle the report.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local ADDON_PREFIX = "RCC"
 local MRT_PREFIX = "raidcheck"
@@ -42,10 +42,10 @@ local DIFFICULTY_TO_SETTING = {
 
 local getRosterInfo = F.GetRosterInfo
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Class color helper
 --- Wraps a name in its class color. Falls back to white if unknown.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function colorName(name, class)
     if not class then
@@ -61,11 +61,11 @@ local function colorName(name, class)
     return format("|c%s%s|r", color.colorStr, name)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Output helper
 --- When toChat is true, strips color codes and sends to chat.
 --- When toChat is false/nil, prints locally.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function sendResults(msg, toChat)
     if not msg or msg == "" then
@@ -84,10 +84,10 @@ local function sendResults(msg, toChat)
     SendChatMessage(msg, chatType)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Food Report
 --- Reports players with no food buff.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function reportFood(toChat)
     local missing = {}
@@ -151,11 +151,11 @@ local function reportFood(toChat)
     sendResults(result, toChat)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Flask Report
 --- Uses RCC.db.flaskBuffIDs spell ID table.
 --- Reports missing flasks and flasks expiring within 10 minutes.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function reportFlasks(toChat)
     local missing = {}
@@ -245,11 +245,11 @@ local function reportFlasks(toChat)
     sendResults(result, toChat)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Augment Rune Report
 --- Uses RCC.db.runeBuffIDs (spellId -> tier mapping).
 --- Reports missing runes and runes below CURRENT_RUNE_TIER.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function reportRunes(toChat)
     local missing = {}
@@ -337,12 +337,12 @@ local function reportRunes(toChat)
     sendResults(result, toChat)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Raid Buff Report
 --- Uses RCC.db.raidBuffDefs. Only reports missing buffs when the
 --- providing class IS present in the raid.
 --- Output: "Buffs AP (2), Int (1)" or nothing if all present.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function reportBuffs(toChat)
     local buffsList = db.raidBuffDefs
@@ -420,12 +420,12 @@ local function reportBuffs(toChat)
     sendResults(result, toChat)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Ready Check Handler
 --- On READY_CHECK, eligible reporters broadcast intent via addon messages.
 --- After a 1-second collection window the alphabetically first candidate
 --- is elected as the sole reporter.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function hasPermission()
     if not IsInRaid() then
@@ -545,11 +545,11 @@ chatReportFrame:RegisterEvent("READY_CHECK")
 chatReportFrame:RegisterEvent("CHAT_MSG_ADDON")
 chatReportFrame:SetScript("OnEvent", onEvent)
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Ready check completion announcement
 --- Sent to raid chat when all tracked members are ready but benched members
 --- have not yet responded, so the raid leader knows they can pull.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function RCC.AnnounceAllReady()
     local playerName = UnitName("player")
@@ -565,9 +565,9 @@ function RCC.AnnounceAllReady()
     SendChatMessage("RCC: Everyone in raid is ready!", F.chatType())
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Test Interface (called via /rcc report and /rcc reportchat)
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.chatReport = {}
 

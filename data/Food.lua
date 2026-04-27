@@ -2,11 +2,11 @@ local _, RCC = ...
 
 RCC.db = RCC.db or {}
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Food Item IDs (12.0.0 - Midnight)
 --- Stored for future use. Not currently used by the addon.
 --- "Hearty" variants are the same food but persist through death.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.feastItemids = {
     242745, -- [Epic] Hearty Blooming Feast       | 98 Stam, 65 Primary Stat
@@ -104,12 +104,12 @@ RCC.db.foodItemIDs = {
     249689, -- [Uncm] Ghostflower Tea with Sunfruit | Mana
 }
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Food Detection Icon IDs
 --- Icon IDs used as a fallback to detect food/drink auras when the spell ID
 --- is not in foodBuffIDs. 136000 is the canonical Well Fed icon and is
 --- prioritized over others when multiple food auras are present.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.foodIconIDs = {
     [136000] = true, -- Spell_misc_food,  Well Fed / Food Buff
@@ -124,11 +124,11 @@ RCC.db.eatingIconIDs = {
 
 RCC.db.foodWellFedIconID = 136000
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Food Buff Spell IDs
 --- Maps spell ID -> true for detecting Well Fed auras on players.
 --- Also detected by icon ID (foodIconIDs) as a fallback.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.foodBuffIDs = {
     -- 8.0.1 - Battle for Azeroth
