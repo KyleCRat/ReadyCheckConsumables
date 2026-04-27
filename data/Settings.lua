@@ -19,19 +19,19 @@ local MIDNIGHT       = 12
 
 RCC.settings = {
     [SHADOWLANDS] = {
-        rune           = { item_id = 181468, icon_id = 134078 },
-        unlimited_rune = { item_id = 190384, icon_id = 4224736 },
+        augment        = { item_id = 181468, icon_id = 134078 },
+        unlimited_augment = { item_id = 190384, icon_id = 4224736 },
         armor_kit      = { item_id = 3528447 },
     },
     [DRAGONFLIGHT] = {},
     [THE_WAR_WITHIN] = {
-        rune           = { item_id = 224572, icon_id = 4549102 },
-        unlimited_rune = { item_id = 243191, icon_id = 3566863 },
+        augment        = { item_id = 224572, icon_id = 4549102 },
+        unlimited_augment = { item_id = 243191, icon_id = 3566863 },
         flask          = { icon_id = 3566840 },
         vantus_rune    = { icon_id = 4638737 },
     },
     [MIDNIGHT] = {
-        rune           = { item_id = 259085, icon_id = 4549099 },
+        augment        = { item_id = 259085, icon_id = 4549099 },
         flask          = { icon_id = 7548902 },
         vantus_rune    = { icon_id = 5976918 },
         potion         = { icon_id = 7548911 },
@@ -78,14 +78,14 @@ for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
     local xpac = RCC.settings[xpac_id]
 
     if xpac then
-        if xpac.rune then
-            RCC.db.rune_item_id = xpac.rune.item_id
-            RCC.db.rune_icon_id = xpac.rune.icon_id
+        if xpac.augment then
+            RCC.db.augment_item_id = xpac.augment.item_id
+            RCC.db.augment_icon_id = xpac.augment.icon_id
         end
 
-        if xpac.unlimited_rune then
-            RCC.db.unlimited_rune_item_id = xpac.unlimited_rune.item_id
-            RCC.db.unlimited_rune_icon_id = xpac.unlimited_rune.icon_id
+        if xpac.unlimited_augment then
+            RCC.db.unlimited_augment_item_id = xpac.unlimited_augment.item_id
+            RCC.db.unlimited_augment_icon_id = xpac.unlimited_augment.icon_id
         end
 
         for _, key in ipairs(icon_keys) do

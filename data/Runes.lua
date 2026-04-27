@@ -8,7 +8,7 @@ RCC.db = RCC.db or {}
 --- Higher tier = more current expansion.
 --------------------------------------------------------------------------------
 
-RCC.db.runeTierNames = {
+RCC.db.augmentTierNames = {
     [7]  = "Legion",
     [8]  = "BfA",
     [9]  = "SL",
@@ -17,7 +17,7 @@ RCC.db.runeTierNames = {
     [12] = "MN",
 }
 
-RCC.db.runeBuffIDs = {
+RCC.db.augmentBuffIDs = {
     [1264426] = 12, -- 12.0.0: Void-Touched Augment Rune
     [1242347] = 11, -- 11.2.0: Soulgorged Augmentation
     [1234969] = 11, -- 11.2.0: Ethereal Augmentation
@@ -32,13 +32,13 @@ RCC.db.runeBuffIDs = {
 
 local maxTier = 0
 
-for _, tier in pairs(RCC.db.runeBuffIDs) do
+for _, tier in pairs(RCC.db.augmentBuffIDs) do
     if tier > maxTier then
         maxTier = tier
     end
 end
 
-RCC.db.currentRuneTier = maxTier
+RCC.db.currentAugmentTier = maxTier
 
 --------------------------------------------------------------------------------
 --- Augment Rune Item IDs
@@ -47,7 +47,7 @@ RCC.db.currentRuneTier = maxTier
 --- Permanent runes are not consumed on use.
 --------------------------------------------------------------------------------
 
-RCC.db.runeItemIDs = {
+RCC.db.augmentItemIDs = {
     -- Midnight
     [259085] = { tier = 12, priority = 1, permanent = false }, -- 12.0.0: Void-Touched Augment Rune
 

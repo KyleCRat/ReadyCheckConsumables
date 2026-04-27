@@ -17,7 +17,7 @@ local DEFAULTS = {
     icon_healthstone         = true,
     icon_dmgPotion           = true,
     icon_healPotion          = true,
-    icon_rune                = true,
+    icon_augment             = true,
     icon_vantus              = true,
 
     -- Raid Frame
@@ -64,6 +64,12 @@ end
 
 local function registerPanel()
     local db = ReadyCheckConsumablesDB
+
+    -- Migrate renamed keys
+    if db.icon_rune ~= nil then
+        db.icon_augment = db.icon_rune
+        db.icon_rune = nil
+    end
 
     for key, default in pairs(DEFAULTS) do
         if db[key] == nil then
@@ -191,7 +197,7 @@ local function registerPanel()
         { "icon_healthstone", "Healthstone"    },
         { "icon_dmgPotion",   "Damage Potion"  },
         { "icon_healPotion",  "Healing Potion" },
-        { "icon_rune",        "Augment Rune"   },
+        { "icon_augment",     "Augment Rune"   },
         { "icon_vantus",      "Vantus Rune"    },
     }
 

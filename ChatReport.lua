@@ -8,7 +8,7 @@ local format          = format
 local floor           = floor
 local UnitName        = UnitName
 
-local CURRENT_RUNE_TIER = db.currentRuneTier
+local CURRENT_AUGMENT_TIER = db.currentAugmentTier
 
 --------------------------------------------------------------------------------
 --- Addon message coordination
@@ -247,11 +247,11 @@ end
 
 --------------------------------------------------------------------------------
 --- Augment Rune Report
---- Uses RCC.db.runeBuffIDs (spellId -> tier mapping).
---- Reports missing runes and runes below CURRENT_RUNE_TIER.
+--- Uses RCC.db.augmentBuffIDs (spellId -> tier mapping).
+--- Reports missing runes and runes below CURRENT_AUGMENT_TIER.
 --------------------------------------------------------------------------------
 
-local function reportRunes(toChat)
+local function reportAugments(toChat)
     local missing = {}
     local lowTier = {}
     local maxGroup = F.GetRaidDiffMaxGroup()
@@ -264,7 +264,7 @@ local function reportRunes(toChat)
                 break
             end
         elseif subgroup <= maxGroup then
-            local hasRune = false
+            local hasAugment = false
             local colored = colorName(F.shortName(name), class)
 
             for i = 1, 60 do
@@ -277,12 +277,12 @@ local function reportRunes(toChat)
                 if not issecretvalue(aura.spellId) then
                     local sid = aura.spellId
 
-                    if db.runeBuffIDs[sid] then
-                        hasRune = true
+                    if db.augmentBuffIDs[sid] then
+                        hasAugment = true
 
-                        if db.runeBuffIDs[sid] < CURRENT_RUNE_TIER then
-                            local tierName = db.runeTierNames[db.runeBuffIDs[sid]]
-                                or tostring(db.runeBuffIDs[sid])
+                        if db.augmentBuffIDs[sid] < CURRENT_AUGMENT_TIER then
+                            local tierName = db.augmentTierNames[db.augmentBuffIDs[sid]]
+                                or tostring(db.augmentBuffIDs[sid])
                             lowTier[#lowTier + 1] = format("%s(%s)", colored, tierName)
                         end
 
@@ -291,7 +291,7 @@ local function reportRunes(toChat)
                 end
             end
 
-            if not hasRune then
+            if not hasAugment then
                 missing[#missing + 1] = colored
             end
         end
@@ -300,12 +300,12 @@ local function reportRunes(toChat)
     local totalBad = #missing + #lowTier
 
     if totalBad == 0 then
-        sendResults("Runes: All Runed", toChat)
+        sendResults("Augments: All Augmented", toChat)
 
         return
     end
 
-    local result = format("No Runes (%d): ", totalBad)
+    local result = format("No Augment (%d): ", totalBad)
 
     for i = 1, #missing do
         local isLast = (i == #missing and #lowTier == 0)
@@ -519,7 +519,7 @@ local function onReadyCheck()
 
     reportFood(true)
     reportFlasks(true)
-    reportRunes(true)
+    reportAugments(true)
     reportBuffs(true)
 end
 
@@ -574,6 +574,6 @@ RCC.chatReport = {}
 function RCC.chatReport.Test(toChat)
     reportFood(toChat)
     reportFlasks(toChat)
-    reportRunes(toChat)
+    reportAugments(toChat)
     reportBuffs(toChat)
 end

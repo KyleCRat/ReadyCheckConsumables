@@ -207,14 +207,14 @@ RegisterStateDriver(RCC.consumables.state, "combat",
 
 --------------------------------------------------------------------------------
 --- Button creation (9 buttons)
---- 1=food  2=flask  3=mh_oil  4=rune  5=hs  6=oh_oil
+--- 1=food  2=flask  3=mh_oil  4=augment  5=hs  6=oh_oil
 --- 7=dmg_pot  8=heal_pot  9=vantus
 --------------------------------------------------------------------------------
 
 local     i_food = 1
 local    i_flask = 2
 local   i_mh_oil = 3
-local     i_rune = 4
+local     i_augment = 4
 local       i_hs = 5
 local   i_oh_oil = 6
 local  i_dmg_pot = 7
@@ -225,7 +225,7 @@ local CLICKABLE_BUTTONS = {
     [i_food]   = true,
     [i_flask]  = true,
     [i_mh_oil] = true,
-    [i_rune]   = true,
+    [i_augment]   = true,
     [i_oh_oil] = true,
     [i_vantus] = true,
 }
@@ -297,9 +297,9 @@ for i = 1, 9 do
         button.texture:SetTexture(RCC.db.weapon_enchant_icon_id)
         RCC.consumables.buttons.oil = button
 
-    elseif i == i_rune then
-        button.texture:SetTexture(RCC.db.rune_icon_id)
-        RCC.consumables.buttons.rune = button
+    elseif i == i_augment then
+        button.texture:SetTexture(RCC.db.augment_icon_id)
+        RCC.consumables.buttons.augment = button
 
     elseif i == i_hs then
         button.texture:SetTexture(RCC.db.healthstone_icon_id)
@@ -346,7 +346,7 @@ local function updateElvUIParent(self)
 end
 
 local function scanPlayerAuras(buttons, now)
-    local isFood, isFlask, isRune, isVantus
+    local isFood, isFlask, isAugment, isVantus
     local isEating, eatingExpiry, eatingDuration, eatingIcon
     local foodExpiry, foodIcon, foodAuraID
 
@@ -388,13 +388,13 @@ local function scanPlayerAuras(buttons, now)
                     isFlask = false
                 end
 
-            elseif RCC.db.runeBuffIDs[sid] then
-                buttons.rune.statustexture:SetTexture(READY)
-                buttons.rune.texture:SetDesaturated(false)
-                buttons.rune.texture:SetTexture(auraData.icon)
-                buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
+            elseif RCC.db.augmentBuffIDs[sid] then
+                buttons.augment.statustexture:SetTexture(READY)
+                buttons.augment.texture:SetDesaturated(false)
+                buttons.augment.texture:SetTexture(auraData.icon)
+                buttons.augment.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                        ceil((expiry - now) / 60))
-                isRune = true
+                isAugment = true
 
             elseif RCC.db.vantusBuffIDs[sid] then
                 local name = auraData.name or ""
@@ -427,7 +427,7 @@ local function scanPlayerAuras(buttons, now)
         end
     end
 
-    return isFood, isFlask, isRune, isVantus, isEating, eatingExpiry, eatingDuration
+    return isFood, isFlask, isAugment, isVantus, isEating, eatingExpiry, eatingDuration
 end
 
 local function updateFood(buttons, isFood, LCG)
@@ -591,13 +591,13 @@ local function updateWeaponEnchants(buttons, LCG)
             buttons.oiloh:Show()
             buttons.oiloh:ClearAllPoints()
             buttons.oiloh:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
-            buttons.rune:ClearAllPoints()
-            buttons.rune:SetPoint("LEFT", buttons.oiloh, "RIGHT", 0, 0)
+            buttons.augment:ClearAllPoints()
+            buttons.augment:SetPoint("LEFT", buttons.oiloh, "RIGHT", 0, 0)
 
         else
             buttons.oiloh:Hide()
-            buttons.rune:ClearAllPoints()
-            buttons.rune:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
+            buttons.augment:ClearAllPoints()
+            buttons.augment:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
         end
     end
 
@@ -759,62 +759,62 @@ local function updateWeaponEnchants(buttons, LCG)
     end
 end
 
-local function updateRunes(buttons, isRune, LCG)
-    local rune_item_count =
-        GetItemCount(RCC.db.rune_item_id, false, true)
-    local unlimited_rune_item_count =
-        GetItemCount(RCC.db.unlimited_rune_item_id, false, true)
+local function updateAugments(buttons, isAugment, LCG)
+    local augment_item_count =
+        GetItemCount(RCC.db.augment_item_id, false, true)
+    local unlimited_augment_item_count =
+        GetItemCount(RCC.db.unlimited_augment_item_id, false, true)
 
-    if unlimited_rune_item_count
-        and unlimited_rune_item_count > 0
+    if unlimited_augment_item_count
+        and unlimited_augment_item_count > 0
     then
-        buttons.rune.count:SetText("")
-        buttons.rune.tooltipItemID = RCC.db.unlimited_rune_item_id
+        buttons.augment.count:SetText("")
+        buttons.augment.tooltipItemID = RCC.db.unlimited_augment_item_id
 
-        if not isRune then
-            buttons.rune.texture:SetTexture(RCC.db.unlimited_rune_icon_id)
+        if not isAugment then
+            buttons.augment.texture:SetTexture(RCC.db.unlimited_augment_icon_id)
         end
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(RCC.db.unlimited_rune_item_id)
+            local itemName = GetItemInfo(RCC.db.unlimited_augment_item_id)
 
             if itemName then
-                buttons.rune.click:SetAttribute("macrotext1",
+                buttons.augment.click:SetAttribute("macrotext1",
                     format("/stopmacro [combat]\n/use %s", itemName))
-                buttons.rune.click:Show()
-                buttons.rune.click.IsON = true
+                buttons.augment.click:Show()
+                buttons.augment.click.IsON = true
             else
-                buttons.rune.click:Hide()
-                buttons.rune.click.IsON = false
+                buttons.augment.click:Hide()
+                buttons.augment.click.IsON = false
             end
         end
-    elseif rune_item_count and rune_item_count > 0 then
-        buttons.rune.count:SetFormattedText("%d", rune_item_count)
-        buttons.rune.tooltipItemID = RCC.db.rune_item_id
+    elseif augment_item_count and augment_item_count > 0 then
+        buttons.augment.count:SetFormattedText("%d", augment_item_count)
+        buttons.augment.tooltipItemID = RCC.db.augment_item_id
 
-        if not isRune then
-            buttons.rune.texture:SetTexture(RCC.db.rune_icon_id)
+        if not isAugment then
+            buttons.augment.texture:SetTexture(RCC.db.augment_icon_id)
         end
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(RCC.db.rune_item_id)
+            local itemName = GetItemInfo(RCC.db.augment_item_id)
 
             if itemName then
-                buttons.rune.click:SetAttribute("macrotext1",
+                buttons.augment.click:SetAttribute("macrotext1",
                     format("/stopmacro [combat]\n/use %s", itemName))
-                buttons.rune.click:Show()
-                buttons.rune.click.IsON = true
+                buttons.augment.click:Show()
+                buttons.augment.click.IsON = true
             else
-                buttons.rune.click:Hide()
-                buttons.rune.click.IsON = false
+                buttons.augment.click:Hide()
+                buttons.augment.click.IsON = false
             end
         end
     else
-        buttons.rune.count:SetText("0")
+        buttons.augment.count:SetText("0")
 
         if not InCombatLockdown() then
-            buttons.rune.click:Hide()
-            buttons.rune.click.IsON = false
+            buttons.augment.click:Hide()
+            buttons.augment.click.IsON = false
         end
     end
 
@@ -822,13 +822,13 @@ local function updateRunes(buttons, isRune, LCG)
         return
     end
 
-    local hasRunes = (rune_item_count and rune_item_count > 0) or
-        (unlimited_rune_item_count and unlimited_rune_item_count > 0)
+    local hasAugments = (augment_item_count and augment_item_count > 0) or
+        (unlimited_augment_item_count and unlimited_augment_item_count > 0)
 
-    if hasRunes and not isRune then
-        LCG.PixelGlow_Start(buttons.rune)
+    if hasAugments and not isAugment then
+        LCG.PixelGlow_Start(buttons.augment)
     else
-        LCG.PixelGlow_Stop(buttons.rune)
+        LCG.PixelGlow_Stop(buttons.augment)
     end
 end
 
@@ -897,7 +897,7 @@ local function getVantusForCurrentRaid()
         return nil, nil, 0
     end
 
-    -- Return the first rune we have in our inventory and the count
+    -- Return the first Vantus Rune we have in our inventory and the count
     for i = 1, #vantusRuneIDs do
         local count = GetItemCount(vantusRuneIDs[i], false, true)
 
@@ -906,7 +906,7 @@ local function getVantusForCurrentRaid()
         end
     end
 
-    -- Return the first rune in the list so we can use the icon
+    -- Return the first Vantus Rune in the list so we can use the icon
     return vantusRuneIDs, vantusRuneIDs[1], 0
 end
 
@@ -1057,7 +1057,7 @@ local ICON_SETTINGS = {
     [i_hs]       = "icon_healthstone",
     [i_dmg_pot]  = "icon_dmgPotion",
     [i_heal_pot] = "icon_healPotion",
-    [i_rune]     = "icon_rune",
+    [i_augment]     = "icon_augment",
     [i_vantus]   = "icon_vantus",
 }
 
@@ -1092,7 +1092,7 @@ function RCC.consumables:Update()
     local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
-    local isFood, isFlask, isRune, isVantus,
+    local isFood, isFlask, isAugment, isVantus,
           isEating, eatingExpiry, eatingDuration = scanPlayerAuras(buttons, now)
 
     if isEating and eatingDuration and eatingDuration > 0 then
@@ -1106,15 +1106,15 @@ function RCC.consumables:Update()
     updateHealthstones(buttons)
     updateFlasks(buttons, isFlask, LCG)
     updateWeaponEnchants(buttons, LCG)
-    updateRunes(buttons, isRune, LCG)
+    updateAugments(buttons, isAugment, LCG)
     updateDamagePotions(buttons)
     updateHealingPotions(buttons)
     updateVantusRune(buttons, isVantus)
 
     if not InCombatLockdown() then
         -- Chain potion buttons after the last dynamic button.
-        -- Rune is always the last in the oil/oiloh/rune chain.
-        local anchor = buttons.rune
+        -- Augment is always the last in the oil/oiloh/augment chain.
+        local anchor = buttons.augment
 
         if isWarlockInRaid then
             buttons.hs:ClearAllPoints()

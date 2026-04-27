@@ -36,7 +36,7 @@ local function generateTestAuras()
 
     local hasFood  = randomBool()
     local hasFlask = randomBool()
-    local hasRune  = randomBool()
+    local hasAugment  = randomBool()
     local hasVantus = randomBool()
 
     return {
@@ -48,9 +48,9 @@ local function generateTestAuras()
         flaskTime   = hasFlask and math.random(60, 3600) or 0,
         flaskAuraID = nil,
         flaskIconID = hasFlask and db.flask_icon_id or nil,
-        hasRune     = hasRune,
-        runeAuraID  = nil,
-        runeIconID  = hasRune and db.rune_icon_id or nil,
+        hasAugment     = hasAugment,
+        augmentAuraID  = nil,
+        augmentIconID  = hasAugment and db.augment_icon_id or nil,
         hasVantus   = hasVantus,
         vantusAuraID = nil,
         vantusIconID = hasVantus and db.vantus_icon_id or nil,

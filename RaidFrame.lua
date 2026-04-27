@@ -69,7 +69,7 @@ local FRAME_WIDTH = FRAME_PAD
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- food
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- flask
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- oil
-    + (ICON_SIZE + H_PAD) * 8         -- rune + vantus + 6 raid buffs
+    + (ICON_SIZE + H_PAD) * 8         -- augment + vantus + 6 raid buffs
     + DURABILITY_WIDTH + H_PAD        -- durability
     + FRAME_PAD
 
@@ -78,8 +78,8 @@ local FRAME_WIDTH = FRAME_PAD
 local COL_X_FOOD  = RC_ICON_WIDTH + H_PAD + NAME_WIDTH + H_PAD + TIME_WIDTH
 local COL_X_FLASK = COL_X_FOOD  + ICON_SIZE + H_PAD + TIME_WIDTH
 local COL_X_OIL   = COL_X_FLASK + ICON_SIZE + H_PAD + TIME_WIDTH
-local COL_X_RUNE  = COL_X_OIL   + ICON_SIZE + H_PAD
-local COL_X_VANTUS = COL_X_RUNE + ICON_SIZE + H_PAD
+local COL_X_AUGMENT  = COL_X_OIL   + ICON_SIZE + H_PAD
+local COL_X_VANTUS = COL_X_AUGMENT + ICON_SIZE + H_PAD
 local COL_X_RAIDBUFF = {}  -- [1..N]
 for k = 1, 8 do
     COL_X_RAIDBUFF[k] = COL_X_VANTUS + k * (ICON_SIZE + H_PAD)
@@ -91,7 +91,7 @@ local COL_X_DURABILITY = COL_X_RAIDBUFF[#db.raidBuffDefs] + ICON_SIZE + H_PAD
 local COL_FOOD       = 1
 local COL_FLASK      = 2
 local COL_OIL        = 3
-local COL_RUNE       = 4
+local COL_AUGMENT       = 4
 local COL_VANTUS     = 5
 local COL_RAIDBUFF   = 6
 local COL_DURABILITY = COL_VANTUS + #db.raidBuffDefs + 1
@@ -384,7 +384,7 @@ local TITLE_COL_X = {
     [COL_FOOD]   = COL_X_FOOD,
     [COL_FLASK]  = COL_X_FLASK,
     [COL_OIL]    = COL_X_OIL,
-    [COL_RUNE]   = COL_X_RUNE,
+    [COL_AUGMENT]   = COL_X_AUGMENT,
     [COL_VANTUS] = COL_X_VANTUS,
 }
 for k = 1, #db.raidBuffDefs do
@@ -570,13 +570,13 @@ local function createRow(index)
     x = x + ICON_SIZE + H_PAD
 
     -- Augment Rune icon
-    row.runeIcon = row:CreateTexture(nil, "ARTWORK")
-    row.runeIcon:SetPoint("LEFT", row, "LEFT", x, 0)
-    row.runeIcon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.runeIcon:SetTexture(db.rune_icon_id)
-    createIconBg(row, row.runeIcon)
-    row.runeOverlay = createOverlay(row, row.runeIcon)
-    row.runeOverlay.label = "Augment Rune: Missing"
+    row.augmentIcon = row:CreateTexture(nil, "ARTWORK")
+    row.augmentIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.augmentIcon:SetSize(ICON_SIZE, ICON_SIZE)
+    row.augmentIcon:SetTexture(db.augment_icon_id)
+    createIconBg(row, row.augmentIcon)
+    row.augmentOverlay = createOverlay(row, row.augmentIcon)
+    row.augmentOverlay.label = "Augment Rune: Missing"
     x = x + ICON_SIZE + H_PAD
 
     -- Vantus Rune icon
@@ -648,7 +648,7 @@ local function scanMemberAuras(unit, now)
     local result = {
         hasFood  = false, foodTime  = 0, foodAuraID  = nil, foodIconID  = nil,
         hasFlask = false, flaskTime = 0, flaskAuraID = nil, flaskIconID = nil,
-        hasRune  = false, runeAuraID  = nil, runeIconID  = nil,
+        hasAugment  = false, augmentAuraID  = nil, augmentIconID  = nil,
         hasVantus = false, vantusAuraID = nil, vantusIconID = nil,
         raidBuff = {},
     }
@@ -693,10 +693,10 @@ local function scanMemberAuras(unit, now)
                 result.flaskIconID = icon
             end
 
-            if not result.hasRune and db.runeBuffIDs[sid] then
-                result.hasRune    = true
-                result.runeAuraID = aura.auraInstanceID
-                result.runeIconID = icon
+            if not result.hasAugment and db.augmentBuffIDs[sid] then
+                result.hasAugment    = true
+                result.augmentAuraID = aura.auraInstanceID
+                result.augmentIconID = icon
             end
 
             if not result.hasVantus and db.vantusBuffIDs[sid] then
@@ -1017,8 +1017,8 @@ local function applyRowData(row, member)
 
     applyOil(row, shortName)
 
-    applySimpleBuff(row.runeIcon, row.runeOverlay,
-        unit, auras.hasRune, auras.runeIconID, db.rune_icon_id, auras.runeAuraID)
+    applySimpleBuff(row.augmentIcon, row.augmentOverlay,
+        unit, auras.hasAugment, auras.augmentIconID, db.augment_icon_id, auras.augmentAuraID)
 
     applySimpleBuff(row.vantusIcon, row.vantusOverlay,
         unit, auras.hasVantus, auras.vantusIconID, db.vantus_icon_id, auras.vantusAuraID)
@@ -1057,8 +1057,8 @@ local function isBad(member, colIndex)
         return oilTime == 0 or oilTime < EXPIRE_WARN_SECONDS
     end
 
-    if colIndex == COL_RUNE then
-        return not a.hasRune
+    if colIndex == COL_AUGMENT then
+        return not a.hasAugment
     end
 
     if colIndex == COL_VANTUS then
