@@ -5,23 +5,9 @@ local _, RCC = ...
 -------------------------------------------------------------------------------
 
 local DEFAULTS = {
-    -- Chat Report
-    chatReport_enabled       = true,
-    chatReport_permission    = "assist",
-    chatReport_mythicRaid    = true,
-    chatReport_heroicRaid    = true,
-    chatReport_normalRaid    = false,
-    chatReport_lfr           = false,
-    chatReport_mythicDungeon = false,
-    chatReport_heroicDungeon = false,
-    chatReport_normalDungeon = false,
-
-    -- Scale
-    consumables_scale        = 1.0,
-    raidFrame_scale          = 1.0,
-
     -- Consumables Frame
     consumables_enabled      = true,
+    consumables_scale        = 1.0,
     consumables_minShow      = false,
     consumables_minShowTime  = 15,
     icon_food                = true,
@@ -36,8 +22,20 @@ local DEFAULTS = {
 
     -- Raid Frame
     raidFrame_enabled        = true,
+    raidFrame_scale          = 1.0,
     raidFrame_minShow        = true,
     raidFrame_minShowTime    = 15,
+
+    -- Chat Report
+    chatReport_enabled       = true,
+    chatReport_permission    = "assist",
+    chatReport_mythicRaid    = true,
+    chatReport_heroicRaid    = true,
+    chatReport_normalRaid    = false,
+    chatReport_lfr           = false,
+    chatReport_mythicDungeon = false,
+    chatReport_heroicDungeon = false,
+    chatReport_normalDungeon = false,
 }
 
 -------------------------------------------------------------------------------
@@ -78,36 +76,70 @@ local function registerPanel()
     )
 
     ---------------------------------------------------------------------------
-    --- Enable / Disable
+    --- Consumables Frame (subcategory)
     ---------------------------------------------------------------------------
+
+    local cfCat, cfLayout = Settings.RegisterVerticalLayoutSubcategory(
+        category, "Consumables Frame"
+    )
+
+    ---------------------------------------------------------------------------
+    --- Raid Frame (subcategory — declared early for parent page buttons)
+    ---------------------------------------------------------------------------
+
+    local rfCat, rfLayout = Settings.RegisterVerticalLayoutSubcategory(
+        category, "Raid Frame"
+    )
+
+    ---------------------------------------------------------------------------
+    --- Chat Report (subcategory — declared early for parent page buttons)
+    ---------------------------------------------------------------------------
+
+    local crCat, crLayout = Settings.RegisterVerticalLayoutSubcategory(
+        category, "Chat Report"
+    )
+
+    ---------------------------------------------------------------------------
+    --- Parent page
+    ---------------------------------------------------------------------------
+
+    local cfButton = CreateSettingsButtonInitializer(
+        "", "Consumables Frame",
+        function() Settings.OpenToCategory(cfCat:GetID()) end,
+        "Personal consumable icon bar shown during ready checks.",
+        false
+    )
+    layout:AddInitializer(cfButton)
+
+    local rfButton = CreateSettingsButtonInitializer(
+        "", "Raid Frame",
+        function() Settings.OpenToCategory(rfCat:GetID()) end,
+        "Per-member consumable status grid shown during ready checks.",
+        false
+    )
+    layout:AddInitializer(rfButton)
+
+    local crButton = CreateSettingsButtonInitializer(
+        "", "Chat Report",
+        function() Settings.OpenToCategory(crCat:GetID()) end,
+        "Automatic missing consumable reports sent to chat.",
+        false
+    )
+    layout:AddInitializer(crButton)
+
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
+        "Version: " .. (C_AddOns.GetAddOnMetadata("ReadyCheckConsumables", "Version") or "Unknown")
+    ))
 
     local cfEnabled = Settings.RegisterAddOnSetting(
-        category, "consumables_enabled", "consumables_enabled",
-        db, "boolean", "Enable Consumables Frame", db.consumables_enabled
+        cfCat, "consumables_enabled", "consumables_enabled",
+        db, "boolean", "Enabled", db.consumables_enabled
     )
-    Settings.CreateCheckbox(category, cfEnabled,
+    Settings.CreateCheckbox(cfCat, cfEnabled,
         "Show the consumable icon bar during ready checks.")
 
-    local rfEnabled = Settings.RegisterAddOnSetting(
-        category, "raidFrame_enabled", "raidFrame_enabled",
-        db, "boolean", "Enable Raid Status Frame", db.raidFrame_enabled
-    )
-    Settings.CreateCheckbox(category, rfEnabled,
-        "Show the per-member consumable status frame during ready checks.")
-
-    local crEnabled = Settings.RegisterAddOnSetting(
-        category, "chatReport_enabled", "chatReport_enabled",
-        db, "boolean", "Enable Chat Report", db.chatReport_enabled
-    )
-    Settings.CreateCheckbox(category, crEnabled,
-        "Automatically report missing consumables to chat on ready check.")
-
-    ---------------------------------------------------------------------------
-    --- Scale
-    ---------------------------------------------------------------------------
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Scale")
+    cfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Display")
     )
 
     local scaleOptions = Settings.CreateSliderOptions(0.5, 2.0, 0.1)
@@ -115,86 +147,25 @@ local function registerPanel()
         function(value) return string.format("%.1f", value) end)
 
     local cfScale = Settings.RegisterAddOnSetting(
-        category, "consumables_scale", "consumables_scale",
-        db, "number", "Consumables Frame Scale", db.consumables_scale
+        cfCat, "consumables_scale", "consumables_scale",
+        db, "number", "Scale", db.consumables_scale
     )
-    Settings.CreateSlider(category, cfScale, scaleOptions,
+    Settings.CreateSlider(cfCat, cfScale, scaleOptions,
         "Scale of the consumable icon bar.")
-
-    local rfScale = Settings.RegisterAddOnSetting(
-        category, "raidFrame_scale", "raidFrame_scale",
-        db, "number", "Raid Status Frame Scale", db.raidFrame_scale
-    )
-    Settings.CreateSlider(category, rfScale, scaleOptions,
-        "Scale of the raid status frame.")
 
     Settings.SetOnValueChangedCallback("consumables_scale", function()
         RCC.consumables:SetScale(db.consumables_scale)
     end)
 
-    Settings.SetOnValueChangedCallback("raidFrame_scale", function()
-        RCC.raidFrame:SetScale(db.raidFrame_scale)
-    end)
-
-    ---------------------------------------------------------------------------
-    --- Report to Chat
-    ---------------------------------------------------------------------------
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Report to Chat")
-    )
-
-    local function getPermOptions()
-        local c = Settings.CreateControlTextContainer()
-        c:Add("lead", "Raid Leader")
-        c:Add("assist", "Raid Assist")
-        c:Add("any", "Any")
-
-        return c:GetData()
-    end
-
-    local crPerm = Settings.RegisterAddOnSetting(
-        category, "chatReport_permission", "chatReport_permission",
-        db, "string", "Require Role to Report", db.chatReport_permission
-    )
-    Settings.CreateDropdown(category, crPerm, getPermOptions,
-        "Which raid role is allowed to trigger chat reports.")
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Only Report to Chat in:")
-    )
-
-    local instanceKeys = {
-        { "chatReport_mythicRaid",    "Mythic Raid"    },
-        { "chatReport_heroicRaid",    "Heroic Raid"    },
-        { "chatReport_normalRaid",    "Normal Raid"    },
-        { "chatReport_lfr",           "LFR"            },
-        { "chatReport_mythicDungeon", "Mythic Dungeon" },
-        { "chatReport_heroicDungeon", "Heroic Dungeon" },
-        { "chatReport_normalDungeon", "Normal Dungeon" },
-    }
-
-    for _, pair in ipairs(instanceKeys) do
-        local key, label = pair[1], pair[2]
-        local s = Settings.RegisterAddOnSetting(
-            category, key, key, db, "boolean", label, db[key]
-        )
-        Settings.CreateCheckbox(category, s, "Report in " .. label .. ".")
-    end
-
-    ---------------------------------------------------------------------------
-    --- Consumables Frame
-    ---------------------------------------------------------------------------
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Consumables Frame")
+    cfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Visibility")
     )
 
     local cfMinShow = Settings.RegisterAddOnSetting(
-        category, "consumables_minShow", "consumables_minShow",
+        cfCat, "consumables_minShow", "consumables_minShow",
         db, "boolean", "Keep Open After Response", db.consumables_minShow
     )
-    Settings.CreateCheckbox(category, cfMinShow,
+    Settings.CreateCheckbox(cfCat, cfMinShow,
         "Keep the consumables frame open for a minimum duration after you respond to a ready check.")
 
     local minShowOptions = Settings.CreateSliderOptions(1, 40, 1)
@@ -202,44 +173,14 @@ local function registerPanel()
         function(value) return string.format("%ds", value) end)
 
     local cfMinShowTime = Settings.RegisterAddOnSetting(
-        category, "consumables_minShowTime", "consumables_minShowTime",
+        cfCat, "consumables_minShowTime", "consumables_minShowTime",
         db, "number", "Keep Open Duration", db.consumables_minShowTime
     )
-    Settings.CreateSlider(category, cfMinShowTime, minShowOptions,
-        "How long the consumables frame stays open after a ready check (1–40 seconds).")
+    Settings.CreateSlider(cfCat, cfMinShowTime, minShowOptions,
+        "How long the consumables frame stays open after a ready check (1-40 seconds).")
 
-    ---------------------------------------------------------------------------
-    --- Raid Frame
-    ---------------------------------------------------------------------------
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Raid Frame")
-    )
-
-    local rfMinShow = Settings.RegisterAddOnSetting(
-        category, "raidFrame_minShow", "raidFrame_minShow",
-        db, "boolean", "Keep Open After Finished", db.raidFrame_minShow
-    )
-    Settings.CreateCheckbox(category, rfMinShow,
-        "Keep the raid status frame open for a minimum duration after the ready check finishes.")
-
-    local rfMinShowOptions = Settings.CreateSliderOptions(1, 40, 1)
-    rfMinShowOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
-        function(value) return string.format("%ds", value) end)
-
-    local rfMinShowTime = Settings.RegisterAddOnSetting(
-        category, "raidFrame_minShowTime", "raidFrame_minShowTime",
-        db, "number", "Keep Open Duration", db.raidFrame_minShowTime
-    )
-    Settings.CreateSlider(category, rfMinShowTime, rfMinShowOptions,
-        "How long the raid status frame stays open after a ready check (1–40 seconds).")
-
-    ---------------------------------------------------------------------------
-    --- Consumables Frame — Icons
-    ---------------------------------------------------------------------------
-
-    layout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Consumables Frame Icons")
+    cfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Icons")
     )
 
     local iconKeys = {
@@ -257,9 +198,110 @@ local function registerPanel()
     for _, pair in ipairs(iconKeys) do
         local key, label = pair[1], pair[2]
         local s = Settings.RegisterAddOnSetting(
-            category, key, key, db, "boolean", label, db[key]
+            cfCat, key, key, db, "boolean", label, db[key]
         )
-        Settings.CreateCheckbox(category, s, "Show " .. label .. " icon.")
+        Settings.CreateCheckbox(cfCat, s, "Show " .. label .. " icon.")
+    end
+
+    ---------------------------------------------------------------------------
+    --- Raid Frame (settings)
+    ---------------------------------------------------------------------------
+
+    local rfEnabled = Settings.RegisterAddOnSetting(
+        rfCat, "raidFrame_enabled", "raidFrame_enabled",
+        db, "boolean", "Enabled", db.raidFrame_enabled
+    )
+    Settings.CreateCheckbox(rfCat, rfEnabled,
+        "Show the per-member consumable status frame during ready checks.")
+
+    rfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Display")
+    )
+
+    local rfScaleOptions = Settings.CreateSliderOptions(0.5, 2.0, 0.1)
+    rfScaleOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
+        function(value) return string.format("%.1f", value) end)
+
+    local rfScale = Settings.RegisterAddOnSetting(
+        rfCat, "raidFrame_scale", "raidFrame_scale",
+        db, "number", "Scale", db.raidFrame_scale
+    )
+    Settings.CreateSlider(rfCat, rfScale, rfScaleOptions,
+        "Scale of the raid status frame.")
+
+    Settings.SetOnValueChangedCallback("raidFrame_scale", function()
+        RCC.raidFrame:SetScale(db.raidFrame_scale)
+    end)
+
+    rfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Visibility")
+    )
+
+    local rfMinShow = Settings.RegisterAddOnSetting(
+        rfCat, "raidFrame_minShow", "raidFrame_minShow",
+        db, "boolean", "Keep Open After Finished", db.raidFrame_minShow
+    )
+    Settings.CreateCheckbox(rfCat, rfMinShow,
+        "Keep the raid status frame open for a minimum duration after the ready check finishes.")
+
+    local rfMinShowOptions = Settings.CreateSliderOptions(1, 40, 1)
+    rfMinShowOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
+        function(value) return string.format("%ds", value) end)
+
+    local rfMinShowTime = Settings.RegisterAddOnSetting(
+        rfCat, "raidFrame_minShowTime", "raidFrame_minShowTime",
+        db, "number", "Keep Open Duration", db.raidFrame_minShowTime
+    )
+    Settings.CreateSlider(rfCat, rfMinShowTime, rfMinShowOptions,
+        "How long the raid status frame stays open after a ready check (1-40 seconds).")
+
+    ---------------------------------------------------------------------------
+    --- Chat Report (settings)
+    ---------------------------------------------------------------------------
+
+    local crEnabled = Settings.RegisterAddOnSetting(
+        crCat, "chatReport_enabled", "chatReport_enabled",
+        db, "boolean", "Enabled", db.chatReport_enabled
+    )
+    Settings.CreateCheckbox(crCat, crEnabled,
+        "Automatically report missing consumables to chat on ready check.")
+
+    local function getPermOptions()
+        local c = Settings.CreateControlTextContainer()
+        c:Add("lead", "Raid Leader")
+        c:Add("assist", "Raid Assist")
+        c:Add("any", "Any")
+
+        return c:GetData()
+    end
+
+    local crPerm = Settings.RegisterAddOnSetting(
+        crCat, "chatReport_permission", "chatReport_permission",
+        db, "string", "Require Role to Report", db.chatReport_permission
+    )
+    Settings.CreateDropdown(crCat, crPerm, getPermOptions,
+        "Which raid role is allowed to trigger chat reports.")
+
+    crLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Instance Types")
+    )
+
+    local instanceKeys = {
+        { "chatReport_mythicRaid",    "Mythic Raid"    },
+        { "chatReport_heroicRaid",    "Heroic Raid"    },
+        { "chatReport_normalRaid",    "Normal Raid"    },
+        { "chatReport_lfr",           "LFR"            },
+        { "chatReport_mythicDungeon", "Mythic Dungeon" },
+        { "chatReport_heroicDungeon", "Heroic Dungeon" },
+        { "chatReport_normalDungeon", "Normal Dungeon" },
+    }
+
+    for _, pair in ipairs(instanceKeys) do
+        local key, label = pair[1], pair[2]
+        local s = Settings.RegisterAddOnSetting(
+            crCat, key, key, db, "boolean", label, db[key]
+        )
+        Settings.CreateCheckbox(crCat, s, "Report in " .. label .. ".")
     end
 
     Settings.RegisterAddOnCategory(category)
