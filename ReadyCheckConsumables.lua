@@ -83,8 +83,14 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
     elseif event == "READY_CHECK_CONFIRM" then
         if unit and UnitIsUnit(unit, "player") then
             self:UnregisterEvent("READY_CHECK_CONFIRM")
-            self.drag:Show()
-            self.close:Show()
+
+            if not RCC.GetSetting("consumables_minShow") then
+                self:Hide()
+                self.rlpointer:Hide()
+            else
+                self.drag:Show()
+                self.close:Show()
+            end
         end
 
     elseif event == "UNIT_AURA" then
