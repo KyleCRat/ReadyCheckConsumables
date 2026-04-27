@@ -5,129 +5,162 @@ RCC.color = "cff00cc"
 RCC.db = RCC.db or {}
 
 -------------------------------------------------------------------------------
---- Event handler
+--- Helpers
 -------------------------------------------------------------------------------
 
 local consumablesShowStart = 0
 
-RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
-    if event == "READY_CHECK" then
-        if InCombatLockdown() then
-            return
-        end
+local function cancelDelay(self)
+    if self.cancelDelay then
+        self.cancelDelay:Cancel()
+        self.cancelDelay = nil
+    end
+end
 
-        if not RCC.GetSetting("consumables_enabled") then
-            self:Hide()
-
-            return
-        end
-
-        consumablesShowStart = GetTime()
-
-        self:SetScale(RCC.GetSetting("consumables_scale"))
-        self:Show()
-        self:Update()
-        self:RegisterEvent("UNIT_AURA")
-        self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-        self:RegisterEvent("READY_CHECK_CONFIRM")
-
-        if self.cancelDelay then
-            self.cancelDelay:Cancel()
-            self.cancelDelay = nil
-        end
-
-        if unit and UnitIsUnit(unit, "player") then
-            self:Repos(true)
-        else
-            self:Repos()
-        end
-
-    elseif event == "READY_CHECK_FINISHED" then
-        if not self:IsShown() then
-            if self.cancelDelay then
-                self.cancelDelay:Cancel()
-                self.cancelDelay = nil
-            end
-
-            return
-        end
-
-        if InCombatLockdown() then
-            if self.cancelDelay then
-                self.cancelDelay:Cancel()
-                self.cancelDelay = nil
-            end
-
-            self:Hide()
-
-            return
-        end
-
-        if self.cancelDelay then
-            return
-        end
-
-        if not RCC.GetSetting("consumables_minShow") then
-            self:Hide()
-
-            return
-        end
-
-        self.drag:Show()
-        self.close:Show()
-
-        local minShowTime = RCC.GetSetting("consumables_minShowTime")
-        local elapsed = GetTime() - consumablesShowStart
-        local delay = max(minShowTime - elapsed, 0)
-
-        self.cancelDelay = C_Timer.NewTimer(delay, function()
-            if not InCombatLockdown() then
-                RCC.consumables:Hide()
-            end
-        end)
-
-    elseif event == "PLAYER_REGEN_DISABLED" then
+local function startMinShowDelay(self)
+    if not RCC.GetSetting("consumables_minShow") then
         self:Hide()
 
-    elseif event == "READY_CHECK_CONFIRM" then
-        if unit and UnitIsUnit(unit, "player") then
-            self:UnregisterEvent("READY_CHECK_CONFIRM")
+        return
+    end
 
-            if not RCC.GetSetting("consumables_minShow") then
-                self:Hide()
+    local minShowTime = RCC.GetSetting("consumables_minShowTime")
+    local elapsed = GetTime() - consumablesShowStart
+    local delay = max(minShowTime - elapsed, 0)
 
-                return
-            end
+    if delay == 0 then
+        self:Hide()
 
-            local minShowTime = RCC.GetSetting("consumables_minShowTime")
-            local elapsed = GetTime() - consumablesShowStart
-            local delay = max(minShowTime - elapsed, 0)
+        return
+    end
 
-            if delay == 0 then
-                self:Hide()
+    self.drag:Show()
+    self.close:Show()
 
-                return
-            end
-
-            self.drag:Show()
-            self.close:Show()
-
-            self.cancelDelay = C_Timer.NewTimer(delay, function()
-                if not InCombatLockdown() then
-                    RCC.consumables:Hide()
-                end
-            end)
+    self.cancelDelay = C_Timer.NewTimer(delay, function()
+        if not InCombatLockdown() then
+            RCC.consumables:Hide()
         end
+    end)
+end
 
-    elseif event == "UNIT_AURA" then
-        if unit == "player" then
-            self:Update()
-        end
+-------------------------------------------------------------------------------
+--- READY_CHECK
+-------------------------------------------------------------------------------
 
-    elseif event == "UNIT_INVENTORY_CHANGED" then
-        if unit == "player" then
-            C_Timer.After(0.2, function() self:Update() end)
-        end
+local function onReadyCheck(self, initiatorUnit)
+    if InCombatLockdown() then
+        return
+    end
+
+    if not RCC.GetSetting("consumables_enabled") then
+        self:Hide()
+
+        return
+    end
+
+    consumablesShowStart = GetTime()
+
+    self:SetScale(RCC.GetSetting("consumables_scale"))
+    self:Show()
+    self:Update()
+    self:RegisterEvent("UNIT_AURA")
+    self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    self:RegisterEvent("READY_CHECK_CONFIRM")
+
+    cancelDelay(self)
+
+    if initiatorUnit and UnitIsUnit(initiatorUnit, "player") then
+        self:Repos(true)
+    else
+        self:Repos()
+    end
+end
+
+-------------------------------------------------------------------------------
+--- READY_CHECK_FINISHED
+-------------------------------------------------------------------------------
+
+local function onReadyCheckFinished(self)
+    if not self:IsShown() then
+        cancelDelay(self)
+
+        return
+    end
+
+    if InCombatLockdown() then
+        cancelDelay(self)
+        self:Hide()
+
+        return
+    end
+
+    if self.cancelDelay then
+        return
+    end
+
+    startMinShowDelay(self)
+end
+
+-------------------------------------------------------------------------------
+--- READY_CHECK_CONFIRM
+-------------------------------------------------------------------------------
+
+local function onReadyCheckConfirm(self, unit)
+    if not unit or not UnitIsUnit(unit, "player") then
+        return
+    end
+
+    self:UnregisterEvent("READY_CHECK_CONFIRM")
+    startMinShowDelay(self)
+end
+
+-------------------------------------------------------------------------------
+--- PLAYER_REGEN_DISABLED
+-------------------------------------------------------------------------------
+
+local function onCombat(self)
+    self:Hide()
+end
+
+-------------------------------------------------------------------------------
+--- UNIT_AURA
+-------------------------------------------------------------------------------
+
+local function onUnitAura(self, unit)
+    if unit == "player" then
+        self:Update()
+    end
+end
+
+-------------------------------------------------------------------------------
+--- UNIT_INVENTORY_CHANGED
+-------------------------------------------------------------------------------
+
+local function onInventoryChanged(self, unit)
+    if unit == "player" then
+        C_Timer.After(0.2, function() self:Update() end)
+    end
+end
+
+-------------------------------------------------------------------------------
+--- Dispatch
+-------------------------------------------------------------------------------
+
+local eventHandlers = {
+    READY_CHECK            = onReadyCheck,
+    READY_CHECK_FINISHED   = onReadyCheckFinished,
+    READY_CHECK_CONFIRM    = onReadyCheckConfirm,
+    PLAYER_REGEN_DISABLED  = onCombat,
+    UNIT_AURA              = onUnitAura,
+    UNIT_INVENTORY_CHANGED = onInventoryChanged,
+}
+
+RCC.consumables:SetScript("OnEvent", function(self, event, ...)
+    local handler = eventHandlers[event]
+
+    if handler then
+        handler(self, ...)
     end
 end)
 
