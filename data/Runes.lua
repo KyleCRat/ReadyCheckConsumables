@@ -7,18 +7,37 @@ RCC.db = RCC.db or {}
 --- Higher tier = more current expansion.
 -------------------------------------------------------------------------------
 
-RCC.db.runeBuffIDs = {
-    [1264426] = 7, -- 12.0.0: Void-Touched Augment Rune
-    [1242347] = 6, -- 11.2.0: Soulgorged Augmentation
-    [1234969] = 6, -- 11.2.0: Ethereal Augmentation
-    [453250]  = 6, -- 11.0.0: Crystallization
-    [393438]  = 6, -- 10.0.0: Draconic Augmentation
-    [367405]  = 5, -- 9.2.0:  Eternal Augmentation
-    [347901]  = 5, -- 9.0.2:  Veiled Augmentation
-    [317065]  = 4, -- 8.3.0:  Battle-Scarred Augmentation
-    [270058]  = 4, -- 8.1.0:  Battle-Scarred Augmentation
-    [224001]  = 3, -- 7.0.3:  Defiled Augmentation
+RCC.db.runeTierNames = {
+    [7]  = "Legion",
+    [8]  = "BfA",
+    [9]  = "SL",
+    [10] = "DF",
+    [11] = "TWW",
+    [12] = "MN",
 }
+
+RCC.db.runeBuffIDs = {
+    [1264426] = 12, -- 12.0.0: Void-Touched Augment Rune
+    [1242347] = 11, -- 11.2.0: Soulgorged Augmentation
+    [1234969] = 11, -- 11.2.0: Ethereal Augmentation
+    [453250]  = 11, -- 11.0.0: Crystallization
+    [393438]  = 10, -- 10.0.0: Draconic Augmentation
+    [367405]  = 9,  -- 9.2.0:  Eternal Augmentation
+    [347901]  = 9,  -- 9.0.2:  Veiled Augmentation
+    [317065]  = 8,  -- 8.3.0:  Battle-Scarred Augmentation
+    [270058]  = 8,  -- 8.1.0:  Battle-Scarred Augmentation
+    [224001]  = 7,  -- 7.0.3:  Defiled Augmentation
+}
+
+local maxTier = 0
+
+for _, tier in pairs(RCC.db.runeBuffIDs) do
+    if tier > maxTier then
+        maxTier = tier
+    end
+end
+
+RCC.db.currentRuneTier = maxTier
 
 -- Rune Item Ids? 259085 12.0.0: Void-Touched Augment Rune
 

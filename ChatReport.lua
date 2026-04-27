@@ -8,7 +8,7 @@ local format          = format
 local floor           = floor
 local UnitName        = UnitName
 
-local CURRENT_RUNE_TIER = 6
+local CURRENT_RUNE_TIER = db.currentRuneTier
 
 -------------------------------------------------------------------------------
 --- Addon message coordination
@@ -281,8 +281,9 @@ local function reportRunes(toChat)
                         hasRune = true
 
                         if db.runeBuffIDs[sid] < CURRENT_RUNE_TIER then
-                            lowTier[#lowTier + 1] = format("%s(%d)", colored,
-                                db.runeBuffIDs[sid])
+                            local tierName = db.runeTierNames[db.runeBuffIDs[sid]]
+                                or tostring(db.runeBuffIDs[sid])
+                            lowTier[#lowTier + 1] = format("%s(%s)", colored, tierName)
                         end
 
                         break
