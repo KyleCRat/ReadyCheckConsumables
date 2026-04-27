@@ -66,7 +66,8 @@ Access via `/rcc settings` or the WoW AddOns settings panel. Options include:
 
 - Scale sliders for consumables frame and raid status frame (0.5x–2.0x)
 - Toggle the consumables frame and individual icons
-- Minimum display time toggle and slider (1–20s) to keep the frame visible after the ready check ends
+- Minimum display time toggle and slider (1–40s) to keep the consumables frame visible after the ready check ends
+- Minimum display time toggle and slider (1–40s) for the raid status frame
 - Draggable frame via drag handle when lingering or as the ready check initiator
 - Toggle the raid status frame
 - Toggle chat reporting and configure which difficulties trigger it

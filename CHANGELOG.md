@@ -1,21 +1,20 @@
 # Changelog
 
+## [12.0.5-11] - 2026-04-27
+
+### Changed
+- Minimum display time slider range extended from 1-20s to 1-40s
+- Added minimum display time setting for the raid status frame
+- Consumables frame hides immediately on ready check response when minimum display time is disabled
+- Consumables frame shows a close button after ready check response
+
+### Fixed
+- Corrected minimum display time logic and cleaned up unnecessary timer restart
+
+### Internal
+- Settings refactored and variable names clarified
+
 ## [12.0.5-10] - 2026-04-24
 
 ### Fixed
 - Durability and weapon oil status not broadcasting to raid members when the raid status frame is disabled
-
-## [12.0.5-9] - 2026-04-23
-
-### Added
-- Settings: minimum display time toggle and slider (1–20s) to keep the consumables frame open after the ready check ends
-- Settings: `/rcc options` and `/rcc o` as aliases for opening the settings panel
-- Consumables frame: drag handle appears when the frame lingers after a ready check or when you are the initiator
-
-### Changed
-- Consumables frame re-parented to UIParent — eliminates the close/re-open flicker when the ready check ends
-- Settings panel reorganized: enable/disable toggles and scale at the top, followed by chat report and consumables frame sections
-
-### Fixed
-- Oils not updating on use
-- Consumables frame showing eating icon over food buff icon
