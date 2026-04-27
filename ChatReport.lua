@@ -6,7 +6,6 @@ local SendChatMessage = SendChatMessage
 local GetTime         = GetTime
 local format          = format
 local floor           = floor
-local UnitName        = UnitName
 
 local CURRENT_AUGMENT_TIER = db.currentAugmentTier
 
@@ -475,7 +474,11 @@ local function shouldReport()
 end
 
 local function isElectedReporter()
-    local playerName = UnitName("player")
+    local playerName = F.unitFullName("player")
+
+    if not playerName then
+        return false
+    end
 
     for name in pairs(reportCandidates) do
         if name < playerName then
@@ -496,7 +499,12 @@ local function broadcastReportIntent()
         return
     end
 
-    local playerName = UnitName("player")
+    local playerName = F.unitFullName("player")
+
+    if not playerName then
+        return
+    end
+
     reportCandidates[playerName] = true
 
     local chatType = F.chatType()
@@ -535,7 +543,11 @@ local function onEvent(self, event, ...)
         local prefix, message, _, sender = ...
 
         if prefix == ADDON_PREFIX and message == "REPORT" then
-            reportCandidates[F.shortName(sender)] = true
+            local senderKey = F.fullName(sender)
+
+            if senderKey then
+                reportCandidates[senderKey] = true
+            end
 
         elseif F.IsMrtPrefix(prefix) then
             local moduleName, msgType = F.ParseMrtMessage(message)
@@ -563,9 +575,9 @@ function RCC.AnnounceAllReady()
         return
     end
 
-    local playerName = UnitName("player")
+    local playerName = F.unitFullName("player")
 
-    if not reportCandidates[playerName] then
+    if not playerName or not reportCandidates[playerName] then
         return
     end
 

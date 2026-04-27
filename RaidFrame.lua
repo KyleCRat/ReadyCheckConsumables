@@ -118,13 +118,13 @@ resolveRaidBuffIcons()
 --------------------------------------------------------------------------------
 --- Durability sharing via addon messages
 --- Each RCC user broadcasts their lowest-slot durability percentage on
---- READY_CHECK. Results are stored by short name and displayed in the
+--- READY_CHECK. Results are keyed by full player name and displayed in the
 --- raid frame. Players without RCC show "?".
 --------------------------------------------------------------------------------
 
 local ADDON_PREFIX = "RCC"
-local durabilityData = {}  -- [shortName] = percent (0-100)
-local oilData        = {}  -- [shortName] = seconds (-1=N/A, 0=missing, >0=remaining)
+local durabilityData = {}  -- [fullName] = percent (0-100)
+local oilData        = {}  -- [fullName] = { time = -1 N/A, 0 missing, >0 seconds, item = itemID }
 
 local function getPlayerMinDurability()
     local minPct = 100
@@ -146,8 +146,11 @@ end
 
 local function broadcastDurability()
     local pct = getPlayerMinDurability()
-    local playerName = UnitName("player")
-    durabilityData[playerName] = pct
+    local playerKey = F.unitFullName("player")
+
+    if playerKey then
+        durabilityData[playerKey] = pct
+    end
 
     local chatType = F.chatType()
 
@@ -200,8 +203,11 @@ end
 
 local function broadcastOilStatus()
     local oilTime, itemID = getPlayerOilStatus()
-    local playerName = UnitName("player")
-    oilData[playerName] = { time = oilTime, item = itemID }
+    local playerKey = F.unitFullName("player")
+
+    if playerKey then
+        oilData[playerKey] = { time = oilTime, item = itemID }
+    end
 
     local chatType = F.chatType()
 
@@ -734,8 +740,11 @@ local function scanAllMembers()
             count = count + 1
             local online = UnitIsConnected(unit)
             local isDead = UnitIsDeadOrGhost(unit)
+            local playerKey = F.fullName(name)
+
             memberData[count] = {
                 name   = name,
+                key    = playerKey,
                 unit   = unit,
                 class  = class,
                 online = online,
@@ -765,11 +774,12 @@ local function populateTestData()
     wipe(durabilityData)
     wipe(oilData)
 
-    local playerName = UnitName("player")
+    local playerName = F.unitFullName("player") or UnitName("player")
     local _, playerClass = UnitClass("player")
 
     memberData[1] = {
         name   = playerName,
+        key    = F.fullName(playerName),
         unit   = "player",
         class  = playerClass,
         online = true,
@@ -786,9 +796,11 @@ local function populateTestData()
         count = count + 1
         local fm = fakeMembers[i]
         local fakeUnit = "raid" .. count
+        local playerKey = F.fullName(fm.name)
 
         memberData[count] = {
-            name   = fm.name,
+            name   = playerKey,
+            key    = playerKey,
             unit   = fakeUnit,
             class  = fm.class,
             online = fm.online,
@@ -799,11 +811,10 @@ local function populateTestData()
         unitToIndex[fakeUnit] = count
         rcStatus[fakeUnit] = RC_PENDING
 
-        local shortName = F.shortName(fm.name)
-        durabilityData[shortName] = fm.durability
+        durabilityData[playerKey] = fm.durability
 
         if fm.oil then
-            oilData[shortName] = fm.oil
+            oilData[playerKey] = fm.oil
         end
     end
 
@@ -905,8 +916,8 @@ local function setOilMissing(row, label)
     row.oilOverlay.label = label
 end
 
-local function applyOil(row, shortName)
-    local oil = oilData[shortName]
+local function applyOil(row, playerKey)
+    local oil = oilData[playerKey]
     local oilTime = oil and oil.time
     local oilItemID = oil and oil.item or 0
 
@@ -957,8 +968,8 @@ local function applyRaidBuffs(row, unit, auras)
     end
 end
 
-local function applyDurability(row, shortName)
-    local durPct = durabilityData[shortName]
+local function applyDurability(row, playerKey)
+    local durPct = durabilityData[playerKey]
 
     if durPct then
         row.durabilityText:SetText(durPct .. "%")
@@ -991,7 +1002,7 @@ local function applyRowData(row, member)
 
     local unit      = member.unit
     local auras     = member.auras
-    local shortName = F.shortName(member.name)
+    local playerKey = member.key or F.fullName(member.name)
 
     applyRcIcon(row, unit, member)
     applyClassBackground(row, member)
@@ -1003,7 +1014,7 @@ local function applyRowData(row, member)
     applyTimedBuff(row.flaskIcon, row.flaskTime, row.flaskOverlay,
         unit, auras.hasFlask, auras.flaskTime, auras.flaskIconID, db.flask_icon_id, auras.flaskAuraID)
 
-    applyOil(row, shortName)
+    applyOil(row, playerKey)
 
     applySimpleBuff(row.augmentIcon, row.augmentOverlay,
         unit, auras.hasAugment, auras.augmentIconID, db.augment_icon_id, auras.augmentAuraID)
@@ -1012,7 +1023,7 @@ local function applyRowData(row, member)
         unit, auras.hasVantus, auras.vantusIconID, db.vantus_icon_id, auras.vantusAuraID)
 
     applyRaidBuffs(row, unit, auras)
-    applyDurability(row, shortName)
+    applyDurability(row, playerKey)
 
     row:Show()
 end
@@ -1035,7 +1046,7 @@ local function isBad(member, colIndex)
     end
 
     if colIndex == COL_OIL then
-        local oil = oilData[F.shortName(member.name)]
+        local oil = oilData[member.key or F.fullName(member.name)]
         local oilTime = oil and oil.time
 
         if oilTime == nil or oilTime == -1 then
@@ -1054,7 +1065,7 @@ local function isBad(member, colIndex)
     end
 
     if colIndex == COL_DURABILITY then
-        local pct = durabilityData[F.shortName(member.name)]
+        local pct = durabilityData[member.key or F.fullName(member.name)]
 
         if not pct then
             return false
@@ -1502,9 +1513,10 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
             if msgType == "DUR" then
                 local pct = tonumber(val1)
+                local senderKey = F.fullName(arg4)
 
-                if pct and arg4 then
-                    durabilityData[F.shortName(arg4)] = pct
+                if pct and senderKey then
+                    durabilityData[senderKey] = pct
 
                     if self:IsShown() then
                         refreshAllRows()
@@ -1514,9 +1526,10 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
             elseif msgType == "OIL" then
                 local oilTime = tonumber(val1)
                 local itemID = tonumber(val2) or 0
+                local senderKey = F.fullName(arg4)
 
-                if oilTime and arg4 then
-                    oilData[F.shortName(arg4)] = {
+                if oilTime and senderKey then
+                    oilData[senderKey] = {
                         time = oilTime,
                         item = itemID,
                     }
@@ -1532,9 +1545,10 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
             if module == "raidcheck" and msgType == "DUR" and durStr then
                 local pct = tonumber(durStr)
+                local senderKey = F.fullName(arg4)
 
-                if pct and arg4 then
-                    durabilityData[F.shortName(arg4)] = floor(pct)
+                if pct and senderKey then
+                    durabilityData[senderKey] = floor(pct)
 
                     if self:IsShown() then
                         refreshAllRows()

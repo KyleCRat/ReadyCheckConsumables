@@ -99,10 +99,42 @@ function F.shortName(fullName)
     return (strsplit("-", fullName))
 end
 
+local function getNormalizedRealm()
+    local realm = GetNormalizedRealmName and GetNormalizedRealmName() or GetRealmName()
+
+    if not realm then
+        return nil
+    end
+
+    return realm:gsub("%s+", "")
+end
+
+function F.fullName(name)
+    if not name or name == "" then
+        return nil
+    end
+
+    if name:find("-", 1, true) then
+        return name
+    end
+
+    local realm = getNormalizedRealm()
+
+    if realm and realm ~= "" then
+        return name .. "-" .. realm
+    end
+
+    return name
+end
+
+function F.unitFullName(unit)
+    return F.fullName(GetUnitName(unit, true) or UnitName(unit))
+end
+
 
 --------------------------------------------------------------------------------
 --- GetRosterInfo(index)
---- Returns name, unit, subgroup, class for a single roster slot.
+--- Returns full name, unit, subgroup, class for a single roster slot.
 --- Works in both raid and party. Returns nil when no player at index.
 --- Party order: 1=player, 2=party1, 3=party2, 4=party3, 5=party4.
 --------------------------------------------------------------------------------
@@ -115,7 +147,7 @@ function F.GetRosterInfo(index)
             return nil
         end
 
-        return name, "raid" .. index, subgroup, class
+        return F.fullName(name), "raid" .. index, subgroup, class
     end
 
     if index > 5 then
@@ -136,7 +168,7 @@ function F.GetRosterInfo(index)
 
     local _, fileName = UnitClass(unit)
 
-    return name, unit, 1, fileName
+    return F.fullName(name), unit, 1, fileName
 end
 
 --------------------------------------------------------------------------------
