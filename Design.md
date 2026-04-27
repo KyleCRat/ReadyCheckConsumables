@@ -1,4 +1,4 @@
-Legend:
+# Legend:
 [R] = Check Icon
 [X] = Not Ready X Icon
 [?] = Has not answered "?" Icon
