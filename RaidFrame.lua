@@ -1263,6 +1263,11 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
         return
     end
 
+    self:RegisterEvent("UNIT_AURA")
+    self:RegisterEvent("READY_CHECK_CONFIRM")
+    self:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
+    self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+
     self.manualShow = (timeToHide == 0)
     showStartTime = GetTime()
 
@@ -1452,10 +1457,6 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
         local initiatorUnit, duration = arg1, arg2
         self:OnReadyCheck(initiatorUnit, duration)
-        self:RegisterEvent("UNIT_AURA")
-        self:RegisterEvent("READY_CHECK_CONFIRM")
-        self:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
-        self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
         return
     end
