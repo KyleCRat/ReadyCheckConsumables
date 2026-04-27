@@ -43,21 +43,32 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         end
 
     elseif event == "READY_CHECK_FINISHED" then
-        if self.cancelDelay then
-            self.cancelDelay:Cancel()
-            self.cancelDelay = nil
+        if not self:IsShown() then
+            if self.cancelDelay then
+                self.cancelDelay:Cancel()
+                self.cancelDelay = nil
+            end
+
+            return
         end
 
         if InCombatLockdown() then
-            self:Hide()
-            self.rlpointer:Hide()
+            if self.cancelDelay then
+                self.cancelDelay:Cancel()
+                self.cancelDelay = nil
+            end
 
+            self:Hide()
+
+            return
+        end
+
+        if self.cancelDelay then
             return
         end
 
         if not RCC.GetSetting("consumables_minShow") then
             self:Hide()
-            self.rlpointer:Hide()
 
             return
         end
@@ -72,13 +83,11 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         self.cancelDelay = C_Timer.NewTimer(delay, function()
             if not InCombatLockdown() then
                 RCC.consumables:Hide()
-                RCC.consumables.rlpointer:Hide()
             end
         end)
 
     elseif event == "PLAYER_REGEN_DISABLED" then
         self:Hide()
-        self.rlpointer:Hide()
 
     elseif event == "READY_CHECK_CONFIRM" then
         if unit and UnitIsUnit(unit, "player") then
@@ -86,11 +95,28 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
 
             if not RCC.GetSetting("consumables_minShow") then
                 self:Hide()
-                self.rlpointer:Hide()
-            else
-                self.drag:Show()
-                self.close:Show()
+
+                return
             end
+
+            local minShowTime = RCC.GetSetting("consumables_minShowTime")
+            local elapsed = GetTime() - consumablesShowStart
+            local delay = max(minShowTime - elapsed, 0)
+
+            if delay == 0 then
+                self:Hide()
+
+                return
+            end
+
+            self.drag:Show()
+            self.close:Show()
+
+            self.cancelDelay = C_Timer.NewTimer(delay, function()
+                if not InCombatLockdown() then
+                    RCC.consumables:Hide()
+                end
+            end)
         end
 
     elseif event == "UNIT_AURA" then

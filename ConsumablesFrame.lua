@@ -1178,6 +1178,7 @@ function RCC.consumables:OnHide()
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
+    self.rlpointer:Hide()
 
     if self.cancelDelay then
         self.cancelDelay:Cancel()
