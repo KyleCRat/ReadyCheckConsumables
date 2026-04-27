@@ -21,3 +21,4 @@ RaidFrame.lua
 Settings.lua
 ReadyCheckConsumables.lua
 ChatReport.lua
+SlashCommands.lua
