@@ -11,9 +11,9 @@ local strsplit           = strsplit
 local UnitName           = UnitName
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Constants
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local ROW_HEIGHT           = 30
 local TITLE_HEIGHT         = 28
@@ -96,10 +96,10 @@ local COL_VANTUS     = 5
 local COL_RAIDBUFF   = 6
 local COL_DURABILITY = COL_VANTUS + #db.raidBuffDefs + 1
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Raid buff default icons (spell texture IDs)
 --- Looked up via C_Spell.GetSpellInfo at load time
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local RAID_BUFF_ICONS = {}
 local FALLBACK_SPELL_ICON = 134400  -- INV_Misc_QuestionMark
@@ -115,12 +115,12 @@ end
 
 resolveRaidBuffIcons()
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Durability sharing via addon messages
 --- Each RCC user broadcasts their lowest-slot durability percentage on
 --- READY_CHECK. Results are stored by short name and displayed in the
 --- raid frame. Players without RCC show "?".
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local ADDON_PREFIX = "RCC"
 local durabilityData = {}  -- [shortName] = percent (0-100)
@@ -226,10 +226,9 @@ local function broadcastOilStatus()
     end
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Frame creation
--------------------------------------------------------------------------------
----
+--------------------------------------------------------------------------------
 
 local frame = CreateFrame("Frame", "RCRaidFrame", UIParent, "BackdropTemplate")
 RCC.raidFrame = frame
@@ -339,12 +338,12 @@ local function restorePosition()
     frame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Title bar
 --- Progress bar bg that drains left-to-right over the RC duration.
 --- Left side: "X/N" ready count + "Xs" countdown.
 --- Right side: per-column CHECK/X summary icons aligned with data rows.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local titleBar = CreateFrame("Frame", nil, frame)
 titleBar:SetPoint("TOPLEFT",  frame, "TOPLEFT",  FRAME_PAD, -FRAME_PAD)
@@ -403,9 +402,9 @@ for i = 1, #TITLE_COL_X do
     titleBar.colIcons[i] = icon
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Tooltip overlay helper
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function onOverlayEnter(self)
     local unit    = self.unit
@@ -470,11 +469,11 @@ local function createOverlay(row, icon)
     return overlay
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Icon background helper
 --- Places a dark red BACKGROUND texture behind an icon texture.
 --- Call after the icon texture is positioned so the bg matches its location.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function createIconBg(row, icon)
     local bg = row:CreateTexture(nil, "BACKGROUND")
@@ -484,9 +483,9 @@ local function createIconBg(row, icon)
     bg:SetVertexColor(MISSING_BG.r, MISSING_BG.g, MISSING_BG.b, 1)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 frame.rows = {}
 
@@ -631,9 +630,9 @@ for i = 1, MAX_ROWS do
     frame.rows[i] = createRow(i)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Member data storage
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local memberData     = {}  -- [i] = { name, unit, class, online, isDead, auras }
 local unitToIndex    = {}  -- [unit] = i
@@ -641,9 +640,9 @@ local rcStatus       = {}  -- [unit] = RC_PENDING | RC_READY | RC_NOT
 local activeCount    = 0
 local readyAnnounced = false
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Aura scanning
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function scanMemberAuras(unit, now)
     local result = {
@@ -724,9 +723,9 @@ local function scanMemberAuras(unit, now)
     return result
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Roster scanning
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function scanAllMembers()
     local maxGroup = F.GetRaidDiffMaxGroup()
@@ -767,9 +766,9 @@ local function scanAllMembers()
     activeCount = count
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Test data generation
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local ALL_CLASSES = {
     "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST",
@@ -877,9 +876,9 @@ local function generateTestData()
     activeCount = count
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Formatting helpers
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function formatDuration(seconds)
     local mins = ceil(seconds / 60)
@@ -1004,7 +1003,6 @@ local function applyOil(row, shortName)
         setOilMissing(row, "Weapon Oil: Unknown")
         row.oilTime:SetText("?")
         row.oilTime:SetTextColor(0.5, 0.5, 0.5)
-        row.oilOverlay.label = "Weapon Oil: Unknown"
     end
 end
 
@@ -1243,9 +1241,9 @@ local function refreshAllRows()
     refreshTitleBar()
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Ready check lifecycle
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 local hideTimer
 local progressTextTimer
@@ -1483,9 +1481,9 @@ function frame:OnHide()
     self.manualShow = false
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Event wiring
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
     if event == "READY_CHECK" then
