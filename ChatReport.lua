@@ -488,14 +488,18 @@ local function isElectedReporter()
     return true
 end
 
+local function resetReportElection()
+    wipe(reportCandidates)
+    mrtWillReport = false
+end
+
 local function broadcastReportIntent()
     if not shouldReport() then
         return
     end
 
     local playerName = UnitName("player")
-    reportCandidates = { [playerName] = true }
-    mrtWillReport = false
+    reportCandidates[playerName] = true
 
     local chatType = F.chatType()
 
@@ -525,6 +529,7 @@ end
 
 local function onEvent(self, event, ...)
     if event == "READY_CHECK" then
+        resetReportElection()
         broadcastReportIntent()
         C_Timer.After(1, onReadyCheck)
 
@@ -552,6 +557,10 @@ chatReportFrame:SetScript("OnEvent", onEvent)
 --------------------------------------------------------------------------------
 
 function RCC.AnnounceAllReady()
+    if not shouldReport() then
+        return
+    end
+
     local playerName = UnitName("player")
 
     if not reportCandidates[playerName] then
