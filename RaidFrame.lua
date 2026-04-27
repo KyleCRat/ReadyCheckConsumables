@@ -87,6 +87,15 @@ end
 
 local COL_X_DURABILITY = COL_X_RAIDBUFF[#db.raidBuffDefs] + ICON_SIZE + H_PAD
 
+-- Title bar column indices — used by isBad() and refreshTitleBar()
+local COL_FOOD       = 1
+local COL_FLASK      = 2
+local COL_OIL        = 3
+local COL_RUNE       = 4
+local COL_VANTUS     = 5
+local COL_RAIDBUFF   = 6
+local COL_DURABILITY = COL_VANTUS + #db.raidBuffDefs + 1
+
 -------------------------------------------------------------------------------
 --- Raid buff default icons (spell texture IDs)
 --- Looked up via C_Spell.GetSpellInfo at load time
@@ -372,19 +381,18 @@ titleBar.timerText:SetTextColor(1, 1, 1)
 titleBar.timerText:SetText("")
 
 -- Per-column summary icons (CHECK or X), one per buff column
--- Indices: 1=food, 2=flask, 3=oil, 4=rune, 5=vantus, 6..11=raid buffs, 12=durability
 local TITLE_COL_X = {
-    COL_X_FOOD,
-    COL_X_FLASK,
-    COL_X_OIL,
-    COL_X_RUNE,
-    COL_X_VANTUS,
+    [COL_FOOD]   = COL_X_FOOD,
+    [COL_FLASK]  = COL_X_FLASK,
+    [COL_OIL]    = COL_X_OIL,
+    [COL_RUNE]   = COL_X_RUNE,
+    [COL_VANTUS] = COL_X_VANTUS,
 }
-for k = 1, 6 do
-    TITLE_COL_X[5 + k] = COL_X_RAIDBUFF[k]
+for k = 1, #db.raidBuffDefs do
+    TITLE_COL_X[COL_VANTUS + k] = COL_X_RAIDBUFF[k]
 end
 
-TITLE_COL_X[#TITLE_COL_X + 1] = COL_X_DURABILITY + (DURABILITY_WIDTH - ICON_SIZE) / 2
+TITLE_COL_X[COL_DURABILITY] = COL_X_DURABILITY + (DURABILITY_WIDTH - ICON_SIZE) / 2
 
 titleBar.colIcons = {}
 for i = 1, #TITLE_COL_X do
@@ -1083,20 +1091,18 @@ end
 
 -- Returns true if the column buff is considered "bad" for a member.
 -- bad = missing, or (food/flask) present but expiring soon.
-local DURABILITY_COL_INDEX = 5 + #db.raidBuffDefs + 1
-
 local function isBad(member, colIndex)
     local a = member.auras
 
-    if colIndex == 1 then
+    if colIndex == COL_FOOD then
         return not a.hasFood or a.foodTime < EXPIRE_WARN_SECONDS
     end
 
-    if colIndex == 2 then
+    if colIndex == COL_FLASK then
         return not a.hasFlask or a.flaskTime < EXPIRE_WARN_SECONDS
     end
 
-    if colIndex == 3 then
+    if colIndex == COL_OIL then
         local oil = oilData[F.shortName(member.name)]
         local oilTime = oil and oil.time
 
@@ -1107,15 +1113,15 @@ local function isBad(member, colIndex)
         return oilTime == 0 or oilTime < EXPIRE_WARN_SECONDS
     end
 
-    if colIndex == 4 then
+    if colIndex == COL_RUNE then
         return not a.hasRune
     end
 
-    if colIndex == 5 then
+    if colIndex == COL_VANTUS then
         return not a.hasVantus
     end
 
-    if colIndex == DURABILITY_COL_INDEX then
+    if colIndex == COL_DURABILITY then
         local pct = durabilityData[F.shortName(member.name)]
 
         if not pct then
@@ -1125,7 +1131,7 @@ local function isBad(member, colIndex)
         return pct < DURABILITY_THRESHOLD
     end
 
-    local raidIdx = colIndex - 5
+    local raidIdx = colIndex - COL_VANTUS
     return not a.raidBuff[raidIdx] or a.raidBuff[raidIdx] == false
 end
 
