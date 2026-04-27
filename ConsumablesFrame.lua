@@ -29,10 +29,10 @@ RCC.consumables:SetSize(consumables_size * 5, consumables_size)
 RCC.consumables:Hide()
 RCC.consumables.buttons = {}
 
-RCC.consumables.rlpointer = CreateFrame("Frame", nil, UIParent)
-RCC.consumables.rlpointer:SetSize(1, 1)
-RCC.consumables.rlpointer:SetPoint("CENTER")
-RCC.consumables.rlpointer:Hide()
+RCC.consumables.anchor = CreateFrame("Frame", nil, UIParent)
+RCC.consumables.anchor:SetSize(1, 1)
+RCC.consumables.anchor:SetPoint("CENTER")
+RCC.consumables.anchor:Hide()
 
 --- Drag handle
 RCC.consumables:SetMovable(true)
@@ -119,10 +119,10 @@ RCC.consumables.close:SetScript("OnLeave", function(self)
 end)
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
-RCC.consumables.close:SetFrameRef("rlpointer", RCC.consumables.rlpointer)
+RCC.consumables.close:SetFrameRef("anchor", RCC.consumables.anchor)
 RCC.consumables.close:SetAttribute("_onclick", [[
     self:GetFrameRef("consumables"):Hide()
-    self:GetFrameRef("rlpointer"):Hide()
+    self:GetFrameRef("anchor"):Hide()
 ]])
 
 -------------------------------------------------------------------------------
@@ -1149,28 +1149,24 @@ end
 --- Repos / OnHide
 -------------------------------------------------------------------------------
 
-function RCC.consumables:Repos(isRL)
+function RCC.consumables:Repos(isInitiator)
     if InCombatLockdown() then
         return
     end
 
-    if isRL then
+    if isInitiator then
         self:ClearAllPoints()
-        self:SetPoint("CENTER", self.rlpointer, "CENTER", 0, 0)
+        self:SetPoint("CENTER", self.anchor, "CENTER", 0, 0)
 
-        self.rlpointer:Show()
+        self.anchor:Show()
         self.drag:Show()
         self.close:Show()
-
-        self.isRLpos = true
     else
         local anchor = isElvUIFix and ReadyCheckFrame
                                    or ReadyCheckListenerFrame
 
         self:ClearAllPoints()
         self:SetPoint("BOTTOM", anchor, "TOP", 0, 5)
-
-        self.isRLpos = false
     end
 end
 
@@ -1178,7 +1174,7 @@ function RCC.consumables:OnHide()
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
-    self.rlpointer:Hide()
+    self.anchor:Hide()
 
     if self.cancelDelay then
         self.cancelDelay:Cancel()
