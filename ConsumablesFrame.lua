@@ -1,10 +1,8 @@
 local ADDON_NAME, RCC = ...
 
 local F = RCC.F
-
-local GetTime = GetTime
-
-local      IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+local GetTime            = GetTime
+local IsAddOnLoaded      = C_AddOns.IsAddOnLoaded
 local       GetSpellInfo = C_Spell.GetSpellInfo
 local        GetItemInfo = C_Item.GetItemInfo
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
