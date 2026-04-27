@@ -2,11 +2,11 @@ local _, RCC = ...
 
 RCC.db = RCC.db or {}
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Augment Rune Spell IDs
 --- Maps spell ID -> tier for detecting augment rune auras.
 --- Higher tier = more current expansion.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.runeTierNames = {
     [7]  = "Legion",
@@ -40,13 +40,51 @@ end
 
 RCC.db.currentRuneTier = maxTier
 
--- Rune Item Ids? 259085 12.0.0: Void-Touched Augment Rune
+--------------------------------------------------------------------------------
+--- Augment Rune Item IDs
+--- Maps item ID -> { tier, priority, permanent } for bag scanning.
+--- Higher tier wins. Within same tier, higher priority wins.
+--- Permanent runes are not consumed on use.
+--------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
+RCC.db.runeItemIDs = {
+    -- Midnight
+    [259085] = { tier = 12, priority = 1, permanent = false }, -- 12.0.0: Void-Touched Augment Rune
+
+    -- The War Within
+    [243191] = { tier = 11, priority = 2, permanent = true  }, -- 11.2.0: Ethereal Augment Rune
+    [246492] = { tier = 11, priority = 1, permanent = false }, -- 11.2.0: Soulgorged Augment Rune
+    [224572] = { tier = 11, priority = 0, permanent = false }, -- 11.0.0: Crystallized Augment Rune
+
+    -- Dragonflight
+    [211495] = { tier = 10, priority = 1, permanent = true  }, -- 10.2.0: Dreambound Augment Rune
+    [201325] = { tier = 10, priority = 0, permanent = false }, -- 10.0.0: Draconic Augment Rune
+
+    -- Shadowlands
+    [190384] = { tier = 9, priority = 1, permanent = false }, --  9.2.0: Eternal Augment Rune
+    [181468] = { tier = 9, priority = 0, permanent = false }, --  9.0.1: Veiled Augment Rune
+
+    -- Battle for Azeroth
+    [174906] = { tier = 8, priority = 1, permanent = false }, --  8.3.0: Lightning-Forged Augment Rune
+    [160053] = { tier = 8, priority = 0, permanent = false }, --  8.0.1: Battle-Scarred Augment Rune
+
+    -- Legion
+    [153023] = { tier = 7, priority = 1, permanent = false }, --  7.3.0: Lightforged Augment Rune
+    [140587] = { tier = 7, priority = 0, permanent = false }, --  7.0.3: Defiled Augment Rune
+
+    -- Warlords of Draenor
+    [128482] = { tier = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
+    [128475] = { tier = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
+    [118630] = { tier = 6, priority = 0, permanent = false }, --  6.0.1: Hyper Augment Rune
+    [118631] = { tier = 6, priority = 0, permanent = false }, --  6.0.1: Stout Augment Rune
+    [118632] = { tier = 6, priority = 0, permanent = false }, --  6.0.1: Focus Augment Rune
+}
+
+--------------------------------------------------------------------------------
 --- Vantus Rune Buff Spell IDs (TWW + Midnight)
 --- Set-style lookup for detecting active vantus rune auras.
 --- The buff name contains "Vantus Rune: <Boss Name>".
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.vantusBuffIDs = {
     ----------------------------------------------------------------------------
@@ -209,22 +247,22 @@ RCC.db.vantusBuffIDs = {
     [269413] = 8,
 }
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Vantus Rune Item IDs by Raid Instance
 --- Keyed by WoW instance ID (GetInstanceInfo 8th return).
 --- Each array is ordered highest quality first so the update
 --- function can stop at the first item found in bags.
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 RCC.db.vantusItemsByRaid = {
+    -- Midnight
+    [2912] = { 245880, 245879 }, -- The Voidspire
+    [2913] = { 245880, 245879 }, -- March on Quel'Danas
+    [2939] = { 245880, 245879 }, -- The Dreamrift
+
     -- The War Within
     [1273] = { 226036, 226035, 226034 }, -- Nerub-ar Palace
     [1296] = { 232937, 232936, 232935 }, -- Liberation of Undermine
     [1301] = { 244149, 244148, 244147 }, -- Manaforge Omega
     [2810] = { 244149, 244148, 244147 }, -- Manaforge Omega Story mode
-
-    -- Midnight
-    [2912] = { 245880, 245879 }, -- The Voidspire
-    [2913] = { 245880, 245879 }, -- March on Quel'Danas
-    [2939] = { 245880, 245879 }, -- The Dreamrift
 }
