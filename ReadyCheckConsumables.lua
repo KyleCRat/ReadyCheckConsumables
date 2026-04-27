@@ -29,6 +29,7 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
         self:Update()
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+        self:RegisterEvent("READY_CHECK_CONFIRM")
 
         if self.cancelDelay then
             self.cancelDelay:Cancel()
@@ -78,6 +79,13 @@ RCC.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide)
     elseif event == "PLAYER_REGEN_DISABLED" then
         self:Hide()
         self.rlpointer:Hide()
+
+    elseif event == "READY_CHECK_CONFIRM" then
+        if unit and UnitIsUnit(unit, "player") then
+            self:UnregisterEvent("READY_CHECK_CONFIRM")
+            self.drag:Show()
+            self.close:Show()
+        end
 
     elseif event == "UNIT_AURA" then
         if unit == "player" then
