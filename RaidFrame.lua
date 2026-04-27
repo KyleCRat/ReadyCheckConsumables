@@ -891,21 +891,43 @@ local function formatDuration(seconds)
     return format("%dm", mins > 0 and mins or 0)
 end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --- Row rendering
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--- Row Functions
 
-local function applyRowData(row, member)
-    if not member then
-        row:Hide()
+local function applyTimedBuff(icon, timeText, overlay, unit, hasBuff, time, auraIconID, fallbackIcon, auraID)
+    if hasBuff then
+        icon:SetDesaturated(false)
+        icon:SetVertexColor(1, 1, 1, 1)
+        icon:SetTexture(auraIconID or fallbackIcon)
+        timeText:SetText(formatDuration(time))
 
-        return
+        if time < EXPIRE_WARN_SECONDS then
+            timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
+        else
+            timeText:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
+        end
+    else
+        icon:SetTexture(fallbackIcon)
+        icon:SetDesaturated(true)
+        icon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+        timeText:SetText("")
     end
 
-    local unit  = member.unit
-    local auras = member.auras
+    overlay.unit   = unit
+    overlay.auraID = auraID
+end
 
-    -- Ready check icon
+local function applySimpleBuff(icon, overlay, unit, hasBuff, auraIconID, fallbackIcon, auraID)
+    icon:SetTexture(auraIconID or fallbackIcon)
+    icon:SetDesaturated(not hasBuff)
+    icon:SetVertexColor(1, 1, 1, hasBuff and 1 or MISSING_ALPHA)
+    overlay.unit   = unit
+    overlay.auraID = auraID
+end
+
+local function applyRcIcon(row, unit, member)
     local status = rcStatus[unit] or RC_PENDING
 
     if status == RC_NOT and not member.online then
@@ -918,8 +940,9 @@ local function applyRowData(row, member)
         row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
         row.rcIcon:SetTexture(RC_TEXTURES[status])
     end
+end
 
-    -- Row background (class color)
+local function applyClassBackground(row, member)
     local color = RAID_CLASS_COLORS[member.class]
 
     if color then
@@ -927,10 +950,9 @@ local function applyRowData(row, member)
     else
         row.bg:SetVertexColor(0.5, 0.5, 0.5, 0.25)
     end
+end
 
-    -- Player name (white)
-    local shortName = F.shortName(member.name)
-
+local function applyName(row, member)
     if not member.online then
         row.nameText:SetTextColor(COLOR_NAME_OFFLINE.r, COLOR_NAME_OFFLINE.g, COLOR_NAME_OFFLINE.b)
     elseif member.isDead then
@@ -939,54 +961,18 @@ local function applyRowData(row, member)
         row.nameText:SetTextColor(COLOR_NAME_NORMAL.r, COLOR_NAME_NORMAL.g, COLOR_NAME_NORMAL.b)
     end
 
-    row.nameText:SetText(shortName)
+    row.nameText:SetText(F.shortName(member.name))
+end
 
-    -- Food
-    if auras.hasFood then
-        row.foodIcon:SetDesaturated(false)
-        row.foodIcon:SetVertexColor(1, 1, 1, 1)
-        row.foodIcon:SetTexture(auras.foodIconID or db.food_icon_id)
-        row.foodTime:SetText(formatDuration(auras.foodTime))
+local function setOilMissing(row, label)
+    row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
+    row.oilIcon:SetDesaturated(true)
+    row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+    row.oilTime:SetText("")
+    row.oilOverlay.label = label
+end
 
-        if auras.foodTime < EXPIRE_WARN_SECONDS then
-            row.foodTime:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
-        else
-            row.foodTime:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
-        end
-    else
-        row.foodIcon:SetTexture(db.food_icon_id)
-        row.foodIcon:SetDesaturated(true)
-        row.foodIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-        row.foodTime:SetText("")
-    end
-
-    row.foodOverlay.unit   = unit
-    row.foodOverlay.auraID = auras.foodAuraID
-
-    -- Flask
-    if auras.hasFlask then
-        row.flaskIcon:SetDesaturated(false)
-        row.flaskIcon:SetVertexColor(1, 1, 1, 1)
-        row.flaskIcon:SetTexture(auras.flaskIconID or db.flask_icon_id)
-        row.flaskTime:SetText(formatDuration(auras.flaskTime))
-
-        if auras.flaskTime < EXPIRE_WARN_SECONDS then
-            row.flaskTime:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
-        else
-            row.flaskTime:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
-        end
-    else
-        row.flaskIcon:SetTexture(db.flask_icon_id)
-        row.flaskIcon:SetDesaturated(true)
-        row.flaskIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-        row.flaskTime:SetText("")
-    end
-
-    row.flaskOverlay.unit   = unit
-    row.flaskOverlay.auraID = auras.flaskAuraID
-
-    -- Weapon Oil
-    local shortName = F.shortName(member.name)
+local function applyOil(row, shortName)
     local oil = oilData[shortName]
     local oilTime = oil and oil.time
     local oilItemID = oil and oil.item or 0
@@ -1011,41 +997,18 @@ local function applyRowData(row, member)
             row.oilOverlay.label = "Weapon Oil"
         end
     elseif oilTime == 0 then
-        row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
-        row.oilIcon:SetDesaturated(true)
-        row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-        row.oilTime:SetText("")
-        row.oilOverlay.label = "Weapon Oil: Missing"
+        setOilMissing(row, "Weapon Oil: Missing")
     elseif oilTime == -1 then
-        row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
-        row.oilIcon:SetDesaturated(true)
-        row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-        row.oilTime:SetText("")
-        row.oilOverlay.label = "Weapon Oil: N/A"
+        setOilMissing(row, "Weapon Oil: N/A")
     else
-        row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
-        row.oilIcon:SetDesaturated(true)
-        row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+        setOilMissing(row, "Weapon Oil: Unknown")
         row.oilTime:SetText("?")
         row.oilTime:SetTextColor(0.5, 0.5, 0.5)
         row.oilOverlay.label = "Weapon Oil: Unknown"
     end
+end
 
-    -- Augment Rune
-    row.runeIcon:SetTexture(auras.runeIconID or db.rune_icon_id)
-    row.runeIcon:SetDesaturated(not auras.hasRune)
-    row.runeIcon:SetVertexColor(1, 1, 1, auras.hasRune and 1 or MISSING_ALPHA)
-    row.runeOverlay.unit   = unit
-    row.runeOverlay.auraID = auras.runeAuraID
-
-    -- Vantus Rune
-    row.vantusIcon:SetTexture(auras.vantusIconID or db.vantus_icon_id)
-    row.vantusIcon:SetDesaturated(not auras.hasVantus)
-    row.vantusIcon:SetVertexColor(1, 1, 1, auras.hasVantus and 1 or MISSING_ALPHA)
-    row.vantusOverlay.unit   = unit
-    row.vantusOverlay.auraID = auras.vantusAuraID
-
-    -- Raid buffs
+local function applyRaidBuffs(row, unit, auras)
     for k = 1, #db.raidBuffDefs do
         local auraID = auras.raidBuff[k]
         local has = auraID and auraID ~= false
@@ -1060,8 +1023,9 @@ local function applyRowData(row, member)
             row.raidBuffOverlays[k].auraID = nil
         end
     end
+end
 
-    -- Durability
+local function applyDurability(row, shortName)
     local durPct = durabilityData[shortName]
 
     if durPct then
@@ -1081,6 +1045,42 @@ local function applyRowData(row, member)
         row.durabilityText:SetText("?")
         row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
     end
+end
+
+--------------------------------------------------------------------------------
+--- Row Orchestrator
+
+local function applyRowData(row, member)
+    if not member then
+        row:Hide()
+
+        return
+    end
+
+    local unit      = member.unit
+    local auras     = member.auras
+    local shortName = F.shortName(member.name)
+
+    applyRcIcon(row, unit, member)
+    applyClassBackground(row, member)
+    applyName(row, member)
+
+    applyTimedBuff(row.foodIcon, row.foodTime, row.foodOverlay,
+        unit, auras.hasFood, auras.foodTime, auras.foodIconID, db.food_icon_id, auras.foodAuraID)
+
+    applyTimedBuff(row.flaskIcon, row.flaskTime, row.flaskOverlay,
+        unit, auras.hasFlask, auras.flaskTime, auras.flaskIconID, db.flask_icon_id, auras.flaskAuraID)
+
+    applyOil(row, shortName)
+
+    applySimpleBuff(row.runeIcon, row.runeOverlay,
+        unit, auras.hasRune, auras.runeIconID, db.rune_icon_id, auras.runeAuraID)
+
+    applySimpleBuff(row.vantusIcon, row.vantusOverlay,
+        unit, auras.hasVantus, auras.vantusIconID, db.vantus_icon_id, auras.vantusAuraID)
+
+    applyRaidBuffs(row, unit, auras)
+    applyDurability(row, shortName)
 
     row:Show()
 end
