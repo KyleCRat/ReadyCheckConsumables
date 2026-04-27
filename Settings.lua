@@ -195,7 +195,7 @@ local function registerPanel()
     Settings.CreateCheckbox(category, cfMinShow,
         "Re-open the consumables frame after the ready check closes to ensure a minimum display time.")
 
-    local minShowOptions = Settings.CreateSliderOptions(1, 20, 1)
+    local minShowOptions = Settings.CreateSliderOptions(1, 40, 1)
     minShowOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
         function(value) return string.format("%ds", value) end)
 
@@ -204,7 +204,7 @@ local function registerPanel()
         db, "number", "Minimum Display Seconds", db.consumables_minShowTime
     )
     Settings.CreateSlider(category, cfMinShowTime, minShowOptions,
-        "How long the consumables frame stays open after a ready check (1–20 seconds).")
+        "How long the consumables frame stays open after a ready check (1–40 seconds).")
 
     ---------------------------------------------------------------------------
     --- Consumables Frame — Icons
