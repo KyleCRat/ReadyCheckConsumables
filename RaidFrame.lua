@@ -1241,8 +1241,6 @@ end
 --- Ready check lifecycle
 -------------------------------------------------------------------------------
 
-local MIN_SHOW_TIME = 15
-
 local hideTimer
 local progressTextTimer
 local showStartTime = 0
@@ -1426,8 +1424,17 @@ function frame:OnReadyCheckFinished()
 
     cancelHideTimer()
 
+    if not RCC.GetSetting("raidFrame_minShow") then
+        if not InCombatLockdown() then
+            self:Hide()
+        end
+
+        return
+    end
+
+    local minShowTime = RCC.GetSetting("raidFrame_minShowTime")
     local elapsed = GetTime() - showStartTime
-    local delay = max(MIN_SHOW_TIME - elapsed, 0)
+    local delay = max(minShowTime - elapsed, 0)
 
     hideTimer = C_Timer.NewTimer(delay, function()
         if not InCombatLockdown() then

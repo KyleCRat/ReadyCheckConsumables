@@ -36,6 +36,8 @@ local DEFAULTS = {
 
     -- Raid Frame
     raidFrame_enabled        = true,
+    raidFrame_minShow        = true,
+    raidFrame_minShowTime    = 15,
 }
 
 -------------------------------------------------------------------------------
@@ -205,6 +207,32 @@ local function registerPanel()
     )
     Settings.CreateSlider(category, cfMinShowTime, minShowOptions,
         "How long the consumables frame stays open after a ready check (1–40 seconds).")
+
+    ---------------------------------------------------------------------------
+    --- Raid Frame
+    ---------------------------------------------------------------------------
+
+    layout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Raid Frame")
+    )
+
+    local rfMinShow = Settings.RegisterAddOnSetting(
+        category, "raidFrame_minShow", "raidFrame_minShow",
+        db, "boolean", "Keep Open After Finished", db.raidFrame_minShow
+    )
+    Settings.CreateCheckbox(category, rfMinShow,
+        "Keep the raid status frame open for a minimum duration after the ready check finishes.")
+
+    local rfMinShowOptions = Settings.CreateSliderOptions(1, 40, 1)
+    rfMinShowOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
+        function(value) return string.format("%ds", value) end)
+
+    local rfMinShowTime = Settings.RegisterAddOnSetting(
+        category, "raidFrame_minShowTime", "raidFrame_minShowTime",
+        db, "number", "Keep Open Duration", db.raidFrame_minShowTime
+    )
+    Settings.CreateSlider(category, rfMinShowTime, rfMinShowOptions,
+        "How long the raid status frame stays open after a ready check (1–40 seconds).")
 
     ---------------------------------------------------------------------------
     --- Consumables Frame — Icons
