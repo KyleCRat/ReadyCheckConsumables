@@ -1248,18 +1248,20 @@ local function startProgressBar(duration)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
+    cancelHideTimer()
+    readyAnnounced = false
+    wipe(rcStatus)
+    wipe(durabilityData)
+    wipe(oilData)
+
+    -- Broadcast even when the local raid frame is disabled so other RCC users
+    -- can still see this player's durability and weapon oil status.
     broadcastDurability()
     broadcastOilStatus()
 
     if not RCC.GetSetting("raidFrame_enabled") then
         return
     end
-
-    cancelHideTimer()
-    readyAnnounced = false
-    wipe(rcStatus)
-    wipe(durabilityData)
-    wipe(oilData)
 
     self.manualShow = (timeToHide == 0)
     showStartTime = GetTime()
