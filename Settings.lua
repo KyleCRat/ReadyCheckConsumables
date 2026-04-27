@@ -65,12 +65,6 @@ end
 local function registerPanel()
     local db = ReadyCheckConsumablesDB
 
-    -- Migrate renamed keys
-    if db.icon_rune ~= nil then
-        db.icon_augment = db.icon_rune
-        db.icon_rune = nil
-    end
-
     for key, default in pairs(DEFAULTS) do
         if db[key] == nil then
             db[key] = default
@@ -207,6 +201,13 @@ local function registerPanel()
             cfCat, key, key, db, "boolean", label, db[key]
         )
         Settings.CreateCheckbox(cfCat, s, "Show " .. label .. " icon.")
+        Settings.SetOnValueChangedCallback(key, function()
+            if RCC.consumables and RCC.consumables:IsShown()
+                and not InCombatLockdown()
+            then
+                RCC.consumables:Update()
+            end
+        end)
     end
 
     ----------------------------------------------------------------------------

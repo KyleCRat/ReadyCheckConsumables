@@ -589,15 +589,8 @@ local function updateWeaponEnchants(buttons, LCG)
     if not InCombatLockdown() then
         if offhandCanBeEnchanted then
             buttons.oiloh:Show()
-            buttons.oiloh:ClearAllPoints()
-            buttons.oiloh:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
-            buttons.augment:ClearAllPoints()
-            buttons.augment:SetPoint("LEFT", buttons.oiloh, "RIGHT", 0, 0)
-
         else
             buttons.oiloh:Hide()
-            buttons.augment:ClearAllPoints()
-            buttons.augment:SetPoint("LEFT", buttons.oil, "RIGHT", 0, 0)
         end
     end
 
@@ -980,18 +973,6 @@ local function updateVantusRune(buttons, isVantus)
     end
 end
 
-local function countVisibleButtons(buttons)
-    local count = 0
-
-    for i = 1, #buttons do
-        if buttons[i]:IsShown() then
-            count = count + 1
-        end
-    end
-
-    return count
-end
-
 --------------------------------------------------------------------------------
 --- Dormant: Armor Kit handling
 --- Not currently called. Preserved for future re-use.
@@ -1061,6 +1042,58 @@ local ICON_SETTINGS = {
     [i_vantus]   = "icon_vantus",
 }
 
+local BUTTON_LAYOUT_ORDER = {
+    i_food,
+    i_flask,
+    i_mh_oil,
+    i_oh_oil,
+    i_augment,
+    i_hs,
+    i_dmg_pot,
+    i_heal_pot,
+    i_vantus,
+}
+
+local function applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
+    local available = {
+        [i_food]     = true,
+        [i_flask]    = true,
+        [i_mh_oil]   = true,
+        [i_oh_oil]   = buttons.oiloh:IsShown(),
+        [i_augment]  = true,
+        [i_hs]       = isWarlockInRaid,
+        [i_dmg_pot]  = true,
+        [i_heal_pot] = true,
+        [i_vantus]   = buttons.vantus:IsShown(),
+    }
+
+    local previous
+    local visibleCount = 0
+
+    for _, idx in ipairs(BUTTON_LAYOUT_ORDER) do
+        local button = buttons[idx]
+        local shouldShow = available[idx] and RCC.GetSetting(ICON_SETTINGS[idx])
+
+        button:ClearAllPoints()
+
+        if shouldShow then
+            if previous then
+                button:SetPoint("LEFT", previous, "RIGHT", 0, 0)
+            else
+                button:SetPoint("LEFT", 0, 0)
+            end
+
+            button:Show()
+            previous = button
+            visibleCount = visibleCount + 1
+        else
+            button:Hide()
+        end
+    end
+
+    self:SetWidth(consumables_size * visibleCount)
+end
+
 function RCC.consumables:Update()
     updateElvUIParent(self)
     local buttons = self.buttons
@@ -1073,9 +1106,6 @@ function RCC.consumables:Update()
         else
             buttons.hs:Hide()
         end
-
-        buttons.oil:ClearAllPoints()
-        buttons.oil:SetPoint("LEFT", buttons.flask, "RIGHT", 0, 0)
     end
 
     local NOT_READY = "Interface\\RaidFrame\\ReadyCheck-NotReady"
@@ -1112,34 +1142,7 @@ function RCC.consumables:Update()
     updateVantusRune(buttons, isVantus)
 
     if not InCombatLockdown() then
-        -- Chain potion buttons after the last dynamic button.
-        -- Augment is always the last in the oil/oiloh/augment chain.
-        local anchor = buttons.augment
-
-        if isWarlockInRaid then
-            buttons.hs:ClearAllPoints()
-            buttons.hs:SetPoint("LEFT", anchor, "RIGHT", 0, 0)
-            anchor = buttons.hs
-        end
-
-        buttons.dmgpot:ClearAllPoints()
-        buttons.dmgpot:SetPoint("LEFT", anchor, "RIGHT", 0, 0)
-
-        buttons.healpot:ClearAllPoints()
-        buttons.healpot:SetPoint("LEFT", buttons.dmgpot, "RIGHT", 0, 0)
-
-        if buttons.vantus:IsShown() then
-            buttons.vantus:ClearAllPoints()
-            buttons.vantus:SetPoint("LEFT", buttons.healpot, "RIGHT", 0, 0)
-        end
-
-        for idx, key in pairs(ICON_SETTINGS) do
-            if not RCC.GetSetting(key) then
-                buttons[idx]:Hide()
-            end
-        end
-
-        self:SetWidth(consumables_size * countVisibleButtons(buttons))
+        applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
     end
 end
 
