@@ -126,18 +126,6 @@ local ADDON_PREFIX = "RCC"
 local durabilityData = {}  -- [shortName] = percent (0-100)
 local oilData        = {}  -- [shortName] = seconds (-1=N/A, 0=missing, >0=remaining)
 
-local MRT_PREFIXES = {
-    "EXRTADD", "MRTADDA", "MRTADDB", "MRTADDC", "MRTADDD",
-    "MRTADDE", "MRTADDF", "MRTADDG", "MRTADDH", "MRTADDI",
-}
-
-local isMrtPrefix = {}
-
-for _, p in ipairs(MRT_PREFIXES) do
-    C_ChatInfo.RegisterAddonMessagePrefix(p)
-    isMrtPrefix[p] = true
-end
-
 local function getPlayerMinDurability()
     local minPct = 100
 
@@ -1539,8 +1527,8 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
                 end
             end
 
-        elseif isMrtPrefix[arg1] then
-            local module, msgType, _, durStr = strsplit("\t", arg2)
+        elseif F.IsMrtPrefix(arg1) then
+            local module, msgType, _, durStr = F.ParseMrtMessage(arg2)
 
             if module == "raidcheck" and msgType == "DUR" and durStr then
                 local pct = tonumber(durStr)

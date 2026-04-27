@@ -21,9 +21,7 @@ local CURRENT_AUGMENT_TIER = db.currentAugmentTier
 --------------------------------------------------------------------------------
 
 local ADDON_PREFIX = "RCC"
-local MRT_PREFIX = "raidcheck"
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
-C_ChatInfo.RegisterAddonMessagePrefix(MRT_PREFIX)
 
 local reportCandidates = {}
 local mrtWillReport = false
@@ -539,8 +537,12 @@ local function onEvent(self, event, ...)
         if prefix == ADDON_PREFIX and message == "REPORT" then
             reportCandidates[F.shortName(sender)] = true
 
-        elseif prefix == MRT_PREFIX then
-            mrtWillReport = true
+        elseif F.IsMrtPrefix(prefix) then
+            local moduleName, msgType = F.ParseMrtMessage(message)
+
+            if F.IsMrtRaidCheckReportMessage(moduleName, msgType) then
+                mrtWillReport = true
+            end
         end
     end
 end

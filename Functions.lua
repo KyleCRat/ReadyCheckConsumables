@@ -22,6 +22,44 @@ local GROUP_COUNT_BY_CONTENT_TYPE = {
     [33]  = 6, -- Timewalking Raid
 }
 
+local MRT_PREFIXES = {
+    "EXRTADD", "MRTADDA", "MRTADDB", "MRTADDC", "MRTADDD",
+    "MRTADDE", "MRTADDF", "MRTADDG", "MRTADDH", "MRTADDI",
+}
+
+local isMrtPrefix = {}
+
+local MRT_RAIDCHECK_REPORT_TYPES = {
+    FOOD        = true,
+    FLASK       = true,
+    RUNES       = true,
+    BUFFS       = true,
+    REPORT_KITS = true,
+    REPORT_OILS = true,
+}
+
+for _, prefix in ipairs(MRT_PREFIXES) do
+    C_ChatInfo.RegisterAddonMessagePrefix(prefix)
+    isMrtPrefix[prefix] = true
+end
+
+function F.IsMrtPrefix(prefix)
+    return isMrtPrefix[prefix] == true
+end
+
+function F.ParseMrtMessage(message)
+    if not message then
+        return nil
+    end
+
+    return strsplit("\t", message)
+end
+
+function F.IsMrtRaidCheckReportMessage(moduleName, msgType)
+    return moduleName == "raidcheck"
+        and MRT_RAIDCHECK_REPORT_TYPES[msgType] == true
+end
+
 function F.GetRaidDiffMaxGroup()
     local _, instance_type, difficulty = GetInstanceInfo()
 
