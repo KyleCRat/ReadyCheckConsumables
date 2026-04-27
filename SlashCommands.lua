@@ -11,6 +11,19 @@ SlashCmdList["RCC"] = function(msg)
                                              name, 0)
         RCC.raidFrame:OnTestReadyCheck()
 
+        C_Timer.After(RCC.raidFrameTest.TEST_DURATION, function()
+            RCC.consumables:GetScript("OnEvent")(RCC.consumables,
+                                                 "READY_CHECK_FINISHED",
+                                                 "")
+        end)
+
+    elseif msg == "testp" or msg == "tp" then
+        local name = UnitName("player")
+        RCC.consumables:GetScript("OnEvent")(RCC.consumables,
+                                             "READY_CHECK",
+                                             name, 0)
+        RCC.raidFrame:OnTestReadyCheck(true)
+
     elseif msg == "hide" or msg == "h" then
         RCC.consumables:GetScript("OnEvent")(RCC.consumables,
                                              "READY_CHECK_FINISHED",
@@ -32,7 +45,8 @@ SlashCmdList["RCC"] = function(msg)
 
     else
         print("|" .. RCC.color .. "ff" .. "ReadyCheckConsumables|r commands:")
-        print("  /rcc test, t - Show a test consumable icon frame")
+        print("  /rcc test, t - Show a timed test frame (auto-hides)")
+        print("  /rcc testp, tp - Show a permanent test frame")
         print("  /rcc hide, h - Immediately hide the consumable icon frame")
         print("  /rcc report, r - Print consumable report locally")
         print("  /rcc reportchat, rc - Send consumable report to chat")

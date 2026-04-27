@@ -767,58 +767,10 @@ local function scanAllMembers()
 end
 
 --------------------------------------------------------------------------------
---- Test data generation
+--- Test data population
 --------------------------------------------------------------------------------
 
-local ALL_CLASSES = {
-    "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST",
-    "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "MONK",
-    "DRUID", "DEMONHUNTER", "EVOKER",
-}
-
-local TEST_NAMES = {
-    "Thunderclap", "Lightforge", "Windrunner", "Shadowstep", "Faithweaver",
-    "Frostmourne", "Tidecaller", "Frostbolt", "Felblood", "Mistwalker",
-    "Moonfire", "Havocblade", "Scalewing",
-}
-
-local function randomBool()
-    return math.random() > 0.35
-end
-
-local function generateTestAuras()
-    local numBuffs = #db.raidBuffDefs
-    local raidBuff = {}
-
-    for k = 1, numBuffs do
-        raidBuff[k] = randomBool() and true or false
-    end
-
-    local hasFood  = randomBool()
-    local hasFlask = randomBool()
-    local hasRune  = randomBool()
-    local hasVantus = randomBool()
-
-    return {
-        hasFood     = hasFood,
-        foodTime    = hasFood and math.random(60, 3600) or 0,
-        foodAuraID  = nil,
-        foodIconID  = hasFood and db.food_icon_id or nil,
-        hasFlask    = hasFlask,
-        flaskTime   = hasFlask and math.random(60, 3600) or 0,
-        flaskAuraID = nil,
-        flaskIconID = hasFlask and db.flask_icon_id or nil,
-        hasRune     = hasRune,
-        runeAuraID  = nil,
-        runeIconID  = hasRune and db.rune_icon_id or nil,
-        hasVantus   = hasVantus,
-        vantusAuraID = nil,
-        vantusIconID = hasVantus and db.vantus_icon_id or nil,
-        raidBuff    = raidBuff,
-    }
-end
-
-local function generateTestData()
+local function populateTestData()
     wipe(memberData)
     wipe(unitToIndex)
     wipe(rcStatus)
@@ -839,37 +791,31 @@ local function generateTestData()
     unitToIndex["player"] = 1
     rcStatus["player"] = RC_READY
 
+    local fakeMembers = RCC.raidFrameTest.generateTestMembers(playerClass)
     local count = 1
 
-    for i = 1, #ALL_CLASSES do
-        if ALL_CLASSES[i] ~= playerClass then
-            count = count + 1
-            local fakeUnit = "raid" .. count
-            local name = TEST_NAMES[i]
+    for i = 1, #fakeMembers do
+        count = count + 1
+        local fm = fakeMembers[i]
+        local fakeUnit = "raid" .. count
 
-            memberData[count] = {
-                name   = name,
-                unit   = fakeUnit,
-                class  = ALL_CLASSES[i],
-                online = math.random() > 0.1,
-                isDead = math.random() > 0.9,
-                auras  = generateTestAuras(),
-            }
+        memberData[count] = {
+            name   = fm.name,
+            unit   = fakeUnit,
+            class  = fm.class,
+            online = fm.online,
+            isDead = fm.isDead,
+            auras  = fm.auras,
+        }
 
-            unitToIndex[fakeUnit] = count
-            rcStatus[fakeUnit] = RC_PENDING
+        unitToIndex[fakeUnit] = count
+        rcStatus[fakeUnit] = RC_PENDING
 
-            local shortName = F.shortName(name)
-            durabilityData[shortName] = math.random(10, 100)
+        local shortName = F.shortName(fm.name)
+        durabilityData[shortName] = fm.durability
 
-            local oilRoll = math.random()
-            if oilRoll < 0.5 then
-                oilData[shortName] = { time = math.random(60, 3600), item = 0 }
-            elseif oilRoll < 0.7 then
-                oilData[shortName] = { time = 0, item = 0 }
-            elseif oilRoll < 0.85 then
-                oilData[shortName] = { time = -1, item = 0 }
-            end
+        if fm.oil then
+            oilData[shortName] = fm.oil
         end
     end
 
@@ -1346,20 +1292,21 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     self:Show()
 end
 
-local TEST_DURATION = 15
+local TEST_DURATION = RCC.raidFrameTest.TEST_DURATION
 
-function frame:OnTestReadyCheck()
+function frame:OnTestReadyCheck(permanent)
     cancelHideTimer()
 
-    self.manualShow = false
+    self.manualShow = permanent or false
     showStartTime = GetTime()
 
-    generateTestData()
+    populateTestData()
     broadcastDurability()
     broadcastOilStatus()
 
     refreshAllRows()
     updateTitleCount()
+
     startProgressBar(TEST_DURATION)
 
     restorePosition()
@@ -1383,6 +1330,16 @@ function frame:OnTestReadyCheck()
                 end)
             end
         end
+    end
+
+    if not permanent then
+        C_Timer.After(TEST_DURATION, function()
+            if not self:IsShown() then
+                return
+            end
+
+            self:OnReadyCheckFinished()
+        end)
     end
 end
 
