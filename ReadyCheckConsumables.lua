@@ -138,7 +138,11 @@ end
 
 local function onInventoryChanged(self, unit)
     if unit == "player" then
-        C_Timer.After(0.2, function() self:Update() end)
+        C_Timer.After(0.2, function()
+            if self:IsShown() and not InCombatLockdown() then
+                self:Update()
+            end
+        end)
     end
 end
 
