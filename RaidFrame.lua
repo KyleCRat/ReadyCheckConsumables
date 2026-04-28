@@ -28,6 +28,7 @@ local MAX_ROWS             = 40
 local MISSING_ALPHA        = 0.3
 local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
 local ADDON_REFRESH_DELAY  = 0.25
+local FADE_OUT_DURATION    = 0.5
 local DURABILITY_WIDTH     = 42
 local DURABILITY_THRESHOLD = 50
 local COLOR_DUR_GREEN      = { r = 0.2, g = 1,   b = 0.2 }
@@ -1194,7 +1195,17 @@ end
 local hideTimer
 local progressTextTimer
 local addonRefreshTimer
+local fadeOutGroup
 local showStartTime = 0
+
+local function cancelFadeOut()
+    if fadeOutGroup and fadeOutGroup:IsPlaying() then
+        fadeOutGroup:Stop()
+    end
+
+    frame.isFadingOut = false
+    frame:SetAlpha(1)
+end
 
 local function cancelAddonRefreshTimer()
     if addonRefreshTimer then
@@ -1215,6 +1226,37 @@ local function scheduleAddonRefresh()
             refreshAllRows()
         end
     end)
+end
+
+fadeOutGroup = frame:CreateAnimationGroup()
+local fadeOutAlpha = fadeOutGroup:CreateAnimation("Alpha")
+fadeOutAlpha:SetFromAlpha(1)
+fadeOutAlpha:SetToAlpha(0)
+fadeOutAlpha:SetDuration(FADE_OUT_DURATION)
+fadeOutGroup:SetScript("OnFinished", function()
+    frame.isFadingOut = false
+    frame:Hide()
+    frame:SetAlpha(1)
+end)
+
+function frame:HideWithFade()
+    if not self:IsShown() then
+        return
+    end
+
+    if InCombatLockdown() then
+        self:Hide()
+
+        return
+    end
+
+    if self.isFadingOut then
+        return
+    end
+
+    self.isFadingOut = true
+    self:SetAlpha(1)
+    fadeOutGroup:Play()
 end
 
 local function cancelHideTimer()
@@ -1272,6 +1314,7 @@ end
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelHideTimer()
     cancelAddonRefreshTimer()
+    cancelFadeOut()
     readyAnnounced = false
     wipe(rcStatus)
     wipe(durabilityData)
@@ -1327,6 +1370,7 @@ local TEST_DURATION = RCC.raidFrameTest.TEST_DURATION
 function frame:OnTestReadyCheck(permanent)
     cancelHideTimer()
     cancelAddonRefreshTimer()
+    cancelFadeOut()
 
     self.manualShow = permanent or false
     showStartTime = GetTime()
@@ -1418,7 +1462,7 @@ function frame:OnReadyCheckFinished()
 
     if not RCC.GetSetting("raidFrame_minShow") then
         if not InCombatLockdown() then
-            self:Hide()
+            self:HideWithFade()
         end
 
         return
@@ -1430,7 +1474,7 @@ function frame:OnReadyCheckFinished()
 
     hideTimer = C_Timer.NewTimer(delay, function()
         if not InCombatLockdown() then
-            frame:Hide()
+            frame:HideWithFade()
         end
     end)
 end
@@ -1438,6 +1482,7 @@ end
 function frame:OnCombat()
     cancelHideTimer()
     cancelAddonRefreshTimer()
+    cancelFadeOut()
     self:Hide()
 end
 
@@ -1466,6 +1511,7 @@ function frame:OnHide()
     self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     cancelHideTimer()
+    cancelFadeOut()
     stopProgressBar()
     self.manualShow = false
 end
