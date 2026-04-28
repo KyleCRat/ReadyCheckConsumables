@@ -177,14 +177,16 @@ end
 --------------------------------------------------------------------------------
 
 function F.hasClassInRoster(className)
+    local maxGroup = F.GetRaidDiffMaxGroup()
+
     for j = 1, 40 do
-        local name, _, _, class = F.GetRosterInfo(j)
+        local name, _, subgroup, class = F.GetRosterInfo(j)
 
         if not name then
             if not IsInRaid() then
                 return false
             end
-        elseif class == className then
+        elseif subgroup <= maxGroup and class == className then
             return true
         end
     end
