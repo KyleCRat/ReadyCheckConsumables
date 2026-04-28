@@ -27,6 +27,7 @@ local FRAME_PAD            = 3
 local MAX_ROWS             = 40
 local MISSING_ALPHA        = 0.3
 local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
+local ADDON_REFRESH_DELAY  = 0.25
 local DURABILITY_WIDTH     = 42
 local DURABILITY_THRESHOLD = 50
 local COLOR_DUR_GREEN      = { r = 0.2, g = 1,   b = 0.2 }
@@ -1192,7 +1193,29 @@ end
 
 local hideTimer
 local progressTextTimer
+local addonRefreshTimer
 local showStartTime = 0
+
+local function cancelAddonRefreshTimer()
+    if addonRefreshTimer then
+        addonRefreshTimer:Cancel()
+        addonRefreshTimer = nil
+    end
+end
+
+local function scheduleAddonRefresh()
+    if addonRefreshTimer or not frame:IsShown() then
+        return
+    end
+
+    addonRefreshTimer = C_Timer.NewTimer(ADDON_REFRESH_DELAY, function()
+        addonRefreshTimer = nil
+
+        if frame:IsShown() then
+            refreshAllRows()
+        end
+    end)
+end
 
 local function cancelHideTimer()
     if hideTimer then
@@ -1248,6 +1271,7 @@ end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelHideTimer()
+    cancelAddonRefreshTimer()
     readyAnnounced = false
     wipe(rcStatus)
     wipe(durabilityData)
@@ -1302,6 +1326,7 @@ local TEST_DURATION = RCC.raidFrameTest.TEST_DURATION
 
 function frame:OnTestReadyCheck(permanent)
     cancelHideTimer()
+    cancelAddonRefreshTimer()
 
     self.manualShow = permanent or false
     showStartTime = GetTime()
@@ -1412,6 +1437,7 @@ end
 
 function frame:OnCombat()
     cancelHideTimer()
+    cancelAddonRefreshTimer()
     self:Hide()
 end
 
@@ -1518,9 +1544,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
                 if pct and senderKey then
                     durabilityData[senderKey] = pct
 
-                    if self:IsShown() then
-                        refreshAllRows()
-                    end
+                    scheduleAddonRefresh()
                 end
 
             elseif msgType == "OIL" then
@@ -1534,9 +1558,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
                         item = itemID,
                     }
 
-                    if self:IsShown() then
-                        refreshAllRows()
-                    end
+                    scheduleAddonRefresh()
                 end
             end
 
@@ -1550,9 +1572,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
                 if pct and senderKey then
                     durabilityData[senderKey] = floor(pct)
 
-                    if self:IsShown() then
-                        refreshAllRows()
-                    end
+                    scheduleAddonRefresh()
                 end
             end
         end
