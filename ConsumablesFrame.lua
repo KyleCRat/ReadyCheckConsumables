@@ -329,6 +329,40 @@ end
 --- Update helper functions
 --------------------------------------------------------------------------------
 
+local ITEM_INFO_RETRY_DELAY = 1
+RCC.consumables.itemInfoRetryTimer = nil
+
+local function cancelItemInfoRetry()
+    if RCC.consumables.itemInfoRetryTimer then
+        RCC.consumables.itemInfoRetryTimer:Cancel()
+        RCC.consumables.itemInfoRetryTimer = nil
+    end
+end
+
+local function scheduleItemInfoRetry()
+    if RCC.consumables.itemInfoRetryTimer then
+        return
+    end
+
+    RCC.consumables.itemInfoRetryTimer = C_Timer.NewTimer(ITEM_INFO_RETRY_DELAY, function()
+        RCC.consumables.itemInfoRetryTimer = nil
+
+        if RCC.consumables:IsShown() and not InCombatLockdown() then
+            RCC.consumables:Update()
+        end
+    end)
+end
+
+local function getItemName(itemID)
+    local itemName = itemID and GetItemInfo(itemID)
+
+    if not itemName then
+        scheduleItemInfoRetry()
+    end
+
+    return itemName
+end
+
 local isElvUIFix
 
 local function updateElvUIParent(self)
@@ -458,7 +492,7 @@ local function updateFood(buttons, isFood, LCG)
         end
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(food_item_id)
+            local itemName = getItemName(food_item_id)
 
             if itemName then
                 buttons.food.click:SetAttribute("macrotext1",
@@ -540,7 +574,7 @@ local function updateFlasks(buttons, isFlask, LCG)
         end
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(flask_item_id)
+            local itemName = getItemName(flask_item_id)
 
             if itemName then
                 buttons.flask.click:SetAttribute("macrotext1",
@@ -695,7 +729,7 @@ local function updateWeaponEnchants(buttons, LCG)
         buttons.oiloh.count:SetText("")
     elseif oilCount and oilCount > 0 then
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(oilItemID)
+            local itemName = getItemName(oilItemID)
 
             if itemName then
                 buttons.oil.click:SetAttribute("item", itemName)
@@ -769,7 +803,7 @@ local function updateAugments(buttons, isAugment, LCG)
         end
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(RCC.db.unlimited_augment_item_id)
+            local itemName = getItemName(RCC.db.unlimited_augment_item_id)
 
             if itemName then
                 buttons.augment.click:SetAttribute("macrotext1",
@@ -790,7 +824,7 @@ local function updateAugments(buttons, isAugment, LCG)
         end
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(RCC.db.augment_item_id)
+            local itemName = getItemName(RCC.db.augment_item_id)
 
             if itemName then
                 buttons.augment.click:SetAttribute("macrotext1",
@@ -919,7 +953,7 @@ local function updateVantusRune(buttons, isVantus)
     end
 
     if itemID then
-        local icon_texture_id = select(10, C_Item.GetItemInfo(itemID))
+        local icon_texture_id = GetItemIcon(itemID)
         buttons.vantus.texture:SetTexture(icon_texture_id)
     end
 
@@ -949,7 +983,7 @@ local function updateVantusRune(buttons, isVantus)
         buttons.vantus.tooltipItemID = itemID
 
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(itemID)
+            local itemName = getItemName(itemID)
 
             if itemName then
                 buttons.vantus.click:SetAttribute("macrotext1",
@@ -996,7 +1030,7 @@ local function updateArmorKits(buttons, LCG)
 
     if kitCount and kitCount > 0 then
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(172347)
+            local itemName = getItemName(172347)
 
             if itemName then
                 buttons.kit.click:SetAttribute("macrotext1",
@@ -1172,6 +1206,8 @@ function RCC.consumables:Repos(isInitiator)
 end
 
 function RCC.consumables:OnHide()
+    cancelItemInfoRetry()
+
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
