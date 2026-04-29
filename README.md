@@ -53,7 +53,8 @@ Automatically reports missing consumables to raid/party chat on ready check:
 
 | Command | Cmd | Description |
 |---|---|---|
-| `/rcc test` | `/rcc t` | Show test frames (full fake raid with randomized data) |
+| `/rcc test` | `/rcc t` | Show test frames that auto-hide after a timeout |
+| `/rcc testp` | `/rcc tp` | Show permanent test frames (no auto-hide) |
 | `/rcc hide` | `/rcc h` | Hide all frames |
 | `/rcc report` | `/rcc r` | Print consumable report locally |
 | `/rcc reportchat` | `/rcc rc` | Send report to raid/party chat |
