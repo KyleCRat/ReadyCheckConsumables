@@ -27,6 +27,7 @@ local FRAME_PAD            = 3
 local MAX_ROWS             = 40
 local MISSING_ALPHA        = 0.3
 local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
+local NO_DURATION          = 0
 local ADDON_REFRESH_DELAY  = 0.25
 local FADE_OUT_DURATION    = 0.5
 local DURABILITY_WIDTH     = 42
@@ -666,17 +667,18 @@ local function scanMemberAuras(unit, now)
             local sid = aura.spellId
             local icon = aura.icon
             local expiry = aura.expirationTime
+            local remaining = (expiry and expiry > 0) and (expiry - now) or NO_DURATION
 
             if db.foodBuffIDs[sid] or db.foodIconIDs[icon] then
                 if db.eatingIconIDs[icon] then
                     result.isEating   = true
                     result.hasFood    = true
-                    result.foodTime   = expiry - now
+                    result.foodTime   = remaining
                     result.foodAuraID = aura.auraInstanceID
                     result.foodIconID = icon
                 elseif not result.isEating then
                     result.hasFood    = true
-                    result.foodTime   = expiry - now
+                    result.foodTime   = remaining
                     result.foodAuraID = aura.auraInstanceID
                     result.foodIconID = icon
                 end
@@ -684,7 +686,7 @@ local function scanMemberAuras(unit, now)
 
             if not result.hasFlask and db.flaskBuffIDs[sid] then
                 result.hasFlask    = true
-                result.flaskTime   = expiry - now
+                result.flaskTime   = remaining
                 result.flaskAuraID = aura.auraInstanceID
                 result.flaskIconID = icon
             end
@@ -847,12 +849,17 @@ local function applyTimedBuff(icon, timeText, overlay, unit, hasBuff, time, aura
         icon:SetDesaturated(false)
         icon:SetVertexColor(1, 1, 1, 1)
         icon:SetTexture(auraIconID or fallbackIcon)
-        timeText:SetText(formatDuration(time))
 
-        if time < EXPIRE_WARN_SECONDS then
-            timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
+        if time == NO_DURATION then
+            timeText:SetText("")
         else
-            timeText:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
+            timeText:SetText(formatDuration(time))
+
+            if time < EXPIRE_WARN_SECONDS then
+                timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
+            else
+                timeText:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
+            end
         end
     else
         icon:SetTexture(fallbackIcon)
@@ -1040,11 +1047,13 @@ local function isBad(member, colIndex)
     local a = member.auras
 
     if colIndex == COL_FOOD then
-        return not a.hasFood or a.foodTime < EXPIRE_WARN_SECONDS
+        return not a.hasFood
+            or (a.foodTime ~= NO_DURATION and a.foodTime < EXPIRE_WARN_SECONDS)
     end
 
     if colIndex == COL_FLASK then
-        return not a.hasFlask or a.flaskTime < EXPIRE_WARN_SECONDS
+        return not a.hasFlask
+            or (a.flaskTime ~= NO_DURATION and a.flaskTime < EXPIRE_WARN_SECONDS)
     end
 
     if colIndex == COL_OIL then
