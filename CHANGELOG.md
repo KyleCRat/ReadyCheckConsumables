@@ -1,6 +1,9 @@
 # Changelog
 
-## [12.0.5-12] - 2026-04-28
+## [12.0.5-12] - 2026-04-29
+
+### Important
+- The Consumable Frame Augment Rune icon setting has been renamed internally. If you previously disabled it, it will re-enable itself after this update. You can disable it again in `/rcc settings` → Consumables Frame.
 
 ### Added
 - Added timed and permanent raid status frame test modes via `/rcc test` and `/rcc testp`.
@@ -23,6 +26,7 @@
 - Healthstone visibility now ignores benched warlocks outside the active raid groups.
 - Consumables frame delayed inventory updates no longer run after the frame hides or combat starts.
 - Consumable buttons retry item-name lookups when item data is not cached yet.
+- Fixed permanent-duration buffs (e.g. some feast buffs) showing "0m" in red instead of no time text.
 
 ### Internal
 - Extracted slash commands and raid-frame test data into separate files.
