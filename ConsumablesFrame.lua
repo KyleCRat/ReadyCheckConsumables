@@ -666,26 +666,23 @@ local function updateWeaponEnchants(buttons, LCG)
     local oilItemID = lastWeaponEnchantItem
 
     if not oilItemID then
-        local foundItem
+        local bestItem
+        local bestRank = -1
 
         for itemID, data in pairs(RCC.db.weaponEnchantItems) do
-            -- Negative itemIDs are spells, not items
             if itemID > 0 and GetItemCount(itemID, false, true) > 0 then
-                -- If we find 1 item, we want to store it. If we find a 2nd item
-                --
-                if foundItem then
-                    foundItem = nil
+                local rank = data.q or 0
 
-                    break
+                if rank > bestRank then
+                    bestRank = rank
+                    bestItem = itemID
                 end
-
-                foundItem = itemID
             end
         end
 
-        if foundItem then
-            oilItemID = foundItem
-            local wenchData = RCC.db.weaponEnchantItems[foundItem]
+        if bestItem then
+            oilItemID = bestItem
+            local wenchData = RCC.db.weaponEnchantItems[bestItem]
 
             buttons.oil.texture:SetTexture(wenchData.icon)
             buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
