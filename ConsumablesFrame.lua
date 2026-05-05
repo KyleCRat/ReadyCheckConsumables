@@ -733,6 +733,12 @@ local function updateWeaponEnchants(buttons, LCG)
 
     local oilItemID = lastWeaponEnchantItem
 
+    if oilItemID and oilItemID > 0
+        and GetItemCount(oilItemID, false, true) == 0
+    then
+        oilItemID = nil
+    end
+
     if not oilItemID then
         local bestItem
         local bestRank = -1
