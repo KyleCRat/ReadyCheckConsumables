@@ -124,7 +124,7 @@ RCC.consumables.close:SetAttribute("_onclick", [[
 ]])
 
 --------------------------------------------------------------------------------
---- Combat state driver
+--- Tooltip helpers
 --------------------------------------------------------------------------------
 
 local function addClickHint(button)
@@ -229,6 +229,10 @@ local function InfoButtonOnLeave(self)
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
+
+--------------------------------------------------------------------------------
+--- Combat state driver
+--------------------------------------------------------------------------------
 
 RCC.consumables.state = CreateFrame("Frame", nil, nil,
                                     "SecureHandlerStateTemplate")
