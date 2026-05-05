@@ -644,6 +644,8 @@ local function updateWeaponEnchants(buttons, LCG)
         if RCC.db.weaponEnchants[mainHandEnchantID or 0] then
             lastWeaponEnchantItem = RCC.db.weaponEnchants[mainHandEnchantID].item
         end
+    elseif lastWeaponEnchantItem and lastWeaponEnchantItem < 0 then
+        lastWeaponEnchantItem = nil
     end
 
     if offhandCanBeEnchanted and hasOffHandEnchant then
