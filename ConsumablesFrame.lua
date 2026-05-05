@@ -129,7 +129,6 @@ RCC.consumables.close:SetAttribute("_onclick", [[
 
 local function ClickButtonOnEnter(self)
     local button = self:GetParent()
-    button:SetAlpha(0.7)
 
     if button.tooltipAuraID then
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
@@ -152,12 +151,15 @@ local function ClickButtonOnEnter(self)
 end
 
 local function ClickButtonOnLeave(self)
-    self:GetParent():SetAlpha(1)
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
 
 local function InfoButtonOnEnter(self)
+    if self.outOverlay then
+        self.outOverlay:Show()
+    end
+
     if self.tooltipAuraID then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(self.tooltipItemID)
@@ -178,7 +180,11 @@ local function InfoButtonOnEnter(self)
     end
 end
 
-local function InfoButtonOnLeave()
+local function InfoButtonOnLeave(self)
+    if self.outOverlay then
+        self.outOverlay:Hide()
+    end
+
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
@@ -273,6 +279,16 @@ for i = 1, 9 do
 
         button.click:SetScript("OnEnter", ClickButtonOnEnter)
         button.click:SetScript("OnLeave", ClickButtonOnLeave)
+
+        local highlight = button.click:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints()
+        highlight:SetColorTexture(1, 1, 1, 0.15)
+        highlight:SetBlendMode("ADD")
+
+        button.outOverlay = button:CreateTexture(nil, "ARTWORK", nil, 1)
+        button.outOverlay:SetAllPoints()
+        button.outOverlay:SetColorTexture(0.6, 0, 0, 0.4)
+        button.outOverlay:Hide()
 
         RCC.consumables.state:SetFrameRef("Button" .. i, button.click)
     end
