@@ -275,11 +275,11 @@ for i = 1, 9 do
         button.click:SetScript("OnLeave", ClickButtonOnLeave)
 
         RCC.consumables.state:SetFrameRef("Button" .. i, button.click)
-    else
-        button:EnableMouse(true)
-        button:SetScript("OnEnter", InfoButtonOnEnter)
-        button:SetScript("OnLeave", InfoButtonOnLeave)
     end
+
+    button:EnableMouse(true)
+    button:SetScript("OnEnter", InfoButtonOnEnter)
+    button:SetScript("OnLeave", InfoButtonOnLeave)
 
     if i == i_food then
         button.texture:SetTexture(RCC.db.food_icon_id)
