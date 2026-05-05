@@ -127,6 +127,39 @@ RCC.consumables.close:SetAttribute("_onclick", [[
 --- Combat state driver
 --------------------------------------------------------------------------------
 
+local function addClickHint(button)
+    if not button.tooltipAction or not button.tooltipItemID then
+        return
+    end
+
+    local itemLink = select(2, GetItemInfo(button.tooltipItemID))
+
+    if not itemLink then
+        return
+    end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("|cff00ff00Click to " .. button.tooltipAction .. "|r "
+                        .. itemLink)
+    GameTooltip:Show()
+end
+
+local function addOutOfHint(button)
+    if not button.outOverlay or not button.tooltipItemID then
+        return
+    end
+
+    local itemLink = select(2, GetItemInfo(button.tooltipItemID))
+
+    if not itemLink then
+        return
+    end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("|cffff3333Out of|r " .. itemLink)
+    GameTooltip:Show()
+end
+
 local function ClickButtonOnEnter(self)
     local button = self:GetParent()
 
@@ -140,6 +173,8 @@ local function ClickButtonOnEnter(self)
         ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
         ShoppingTooltip1:Show()
 
+        addClickHint(button)
+
         return
     end
 
@@ -147,6 +182,8 @@ local function ClickButtonOnEnter(self)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(button.tooltipItemID)
         GameTooltip:Show()
+
+        addClickHint(button)
     end
 end
 
@@ -170,6 +207,8 @@ local function InfoButtonOnEnter(self)
         ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", self.tooltipAuraID)
         ShoppingTooltip1:Show()
 
+        addOutOfHint(self)
+
         return
     end
 
@@ -177,6 +216,8 @@ local function InfoButtonOnEnter(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(self.tooltipItemID)
         GameTooltip:Show()
+
+        addOutOfHint(self)
     end
 end
 
@@ -228,12 +269,21 @@ local i_heal_pot = 8
 local   i_vantus = 9
 
 local CLICKABLE_BUTTONS = {
-    [i_food]   = true,
-    [i_flask]  = true,
-    [i_mh_oil] = true,
-    [i_augment]   = true,
-    [i_oh_oil] = true,
-    [i_vantus] = true,
+    [i_food]    = true,
+    [i_flask]   = true,
+    [i_mh_oil]  = true,
+    [i_augment] = true,
+    [i_oh_oil]  = true,
+    [i_vantus]  = true,
+}
+
+local TOOLTIP_ACTIONS = {
+    [i_food]    = "eat",
+    [i_flask]   = "use",
+    [i_mh_oil]  = "apply",
+    [i_oh_oil]  = "apply",
+    [i_augment] = "use",
+    [i_vantus]  = "use",
 }
 
 for i = 1, 9 do
@@ -289,6 +339,8 @@ for i = 1, 9 do
         button.outOverlay:SetAllPoints()
         button.outOverlay:SetColorTexture(0.6, 0, 0, 0.4)
         button.outOverlay:Hide()
+
+        button.tooltipAction = TOOLTIP_ACTIONS[i]
 
         RCC.consumables.state:SetFrameRef("Button" .. i, button.click)
     end
