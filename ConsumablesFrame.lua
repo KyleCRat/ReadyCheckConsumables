@@ -721,15 +721,18 @@ end
 
 local function findWeaponEnchantItemInBags()
     local bestItem
+    local bestXpac = -1
     local bestRank = -1
 
     for itemID, data in pairs(RCC.db.weaponEnchantItems) do
         if itemID > 0
             and GetItemCount(itemID, false, true) > 0
         then
+            local xpac = data.xpac or 0
             local rank = data.q or 0
 
-            if rank > bestRank then
+            if xpac > bestXpac or (xpac == bestXpac and rank > bestRank) then
+                bestXpac = xpac
                 bestRank = rank
                 bestItem = itemID
             end

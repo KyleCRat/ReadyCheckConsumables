@@ -4,7 +4,7 @@ RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
 --- Weapon Enchant / Oil Lookup
---- Maps enchant ID -> { item, icon, [q], [iconoh] }
+--- Maps enchant ID -> { item, icon, [q], [xpac], [iconoh] }
 --- Used by the consumable frame to detect and display weapon buffs.
 --- Detected via GetWeaponEnchantInfo() — only weapon-slot enchants belong here.
 --------------------------------------------------------------------------------
@@ -16,97 +16,97 @@ RCC.db.weaponEnchants = {
 
     ----------------------------------------------------------------------------
     -- 12.0.0 - Midnight: Oils
-    [8056] = { item = 243738, icon = 7548986, q = 2 }, -- Smuggler's Enchanted Edge
-    [8055] = { item = 243737, icon = 7548986, q = 1 }, -- Smuggler's Enchanted Edge
-    [8054] = { item = 243736, icon = 7548985, q = 2 }, -- Oil of Dawn
-    [8053] = { item = 243735, icon = 7548985, q = 1 }, -- Oil of Dawn
-    [8052] = { item = 243734, icon = 7548987, q = 2 }, -- Thalassian Phoenix Oil
-    [8051] = { item = 243733, icon = 7548987, q = 1 }, -- Thalassian Phoenix Oil
+    [8056] = { item = 243738, icon = 7548986, q = 2, xpac = 12 }, -- Smuggler's Enchanted Edge
+    [8055] = { item = 243737, icon = 7548986, q = 1, xpac = 12 }, -- Smuggler's Enchanted Edge
+    [8054] = { item = 243736, icon = 7548985, q = 2, xpac = 12 }, -- Oil of Dawn
+    [8053] = { item = 243735, icon = 7548985, q = 1, xpac = 12 }, -- Oil of Dawn
+    [8052] = { item = 243734, icon = 7548987, q = 2, xpac = 12 }, -- Thalassian Phoenix Oil
+    [8051] = { item = 243733, icon = 7548987, q = 1, xpac = 12 }, -- Thalassian Phoenix Oil
 
     -- 12.0.0 - Midnight: Weightstone
-    [7908] = { item = 237369, icon = 7548939, q = 2 }, -- Refulgent Weightstone
-    [7907] = { item = 237367, icon = 7548938, q = 1 }, -- Refulgent Weightstone
+    [7908] = { item = 237369, icon = 7548939, q = 2, xpac = 12 }, -- Refulgent Weightstone
+    [7907] = { item = 237367, icon = 7548938, q = 1, xpac = 12 }, -- Refulgent Weightstone
 
     -- 12.0.0 - Midnight: Whetstone
-    [7905] = { item = 237371, icon = 7548942, q = 2 }, -- Refulgent Whetstone
-    [7904] = { item = 237370, icon = 7548941, q = 1 }, -- Refulgent Whetstone
+    [7905] = { item = 237371, icon = 7548942, q = 2, xpac = 12 }, -- Refulgent Whetstone
+    [7904] = { item = 237370, icon = 7548941, q = 1, xpac = 12 }, -- Refulgent Whetstone
 
     ----------------------------------------------------------------------------
     -- 11.0.0 - The War Within: Whetstones & Weightstones
-    [7545] = { item = 222504, icon = 3622195, q = 3 }, -- Ironclaw Whetstone
-    [7544] = { item = 222503, icon = 3622195, q = 2 }, -- Ironclaw Whetstone
-    [7543] = { item = 222502, icon = 3622195, q = 1 }, -- Ironclaw Whetstone
-    [7551] = { item = 222510, icon = 3622199, q = 3 }, -- Ironclaw Weightstone
-    [7550] = { item = 222509, icon = 3622199, q = 2 }, -- Ironclaw Weightstone
-    [7549] = { item = 222508, icon = 3622199, q = 1 }, -- Ironclaw Weightstone
+    [7545] = { item = 222504, icon = 3622195, q = 3, xpac = 11 }, -- Ironclaw Whetstone
+    [7544] = { item = 222503, icon = 3622195, q = 2, xpac = 11 }, -- Ironclaw Whetstone
+    [7543] = { item = 222502, icon = 3622195, q = 1, xpac = 11 }, -- Ironclaw Whetstone
+    [7551] = { item = 222510, icon = 3622199, q = 3, xpac = 11 }, -- Ironclaw Weightstone
+    [7550] = { item = 222509, icon = 3622199, q = 2, xpac = 11 }, -- Ironclaw Weightstone
+    [7549] = { item = 222508, icon = 3622199, q = 1, xpac = 11 }, -- Ironclaw Weightstone
 
     -- 11.0.0 - The War Within: Oils
-    [7498] = { item = 224113, icon = 609897, q = 3 }, -- Oil of Deep Toxins
-    [7497] = { item = 224112, icon = 609897, q = 2 }, -- Oil of Deep Toxins
-    [7496] = { item = 224111, icon = 609897, q = 1 }, -- Oil of Deep Toxins
-    [7495] = { item = 224107, icon = 609892, q = 3 }, -- Algari Mana Oil
-    [7494] = { item = 224106, icon = 609892, q = 2 }, -- Algari Mana Oil
-    [7493] = { item = 224105, icon = 609892, q = 1 }, -- Algari Mana Oil
-    [7502] = { item = 224110, icon = 609896, q = 3 }, -- Oil of Beledar's Grace
-    [7501] = { item = 224109, icon = 609896, q = 2 }, -- Oil of Beledar's Grace
-    [7500] = { item = 224108, icon = 609896, q = 1 }, -- Oil of Beledar's Grace
+    [7498] = { item = 224113, icon = 609897, q = 3, xpac = 11 }, -- Oil of Deep Toxins
+    [7497] = { item = 224112, icon = 609897, q = 2, xpac = 11 }, -- Oil of Deep Toxins
+    [7496] = { item = 224111, icon = 609897, q = 1, xpac = 11 }, -- Oil of Deep Toxins
+    [7495] = { item = 224107, icon = 609892, q = 3, xpac = 11 }, -- Algari Mana Oil
+    [7494] = { item = 224106, icon = 609892, q = 2, xpac = 11 }, -- Algari Mana Oil
+    [7493] = { item = 224105, icon = 609892, q = 1, xpac = 11 }, -- Algari Mana Oil
+    [7502] = { item = 224110, icon = 609896, q = 3, xpac = 11 }, -- Oil of Beledar's Grace
+    [7501] = { item = 224109, icon = 609896, q = 2, xpac = 11 }, -- Oil of Beledar's Grace
+    [7500] = { item = 224108, icon = 609896, q = 1, xpac = 11 }, -- Oil of Beledar's Grace
 
     ----------------------------------------------------------------------------
-    -- 10.0.0 - Dragonflight: Whetstones & Weightstones
-    [6381] = { item = 191940, icon = 4622275, q = 3 }, -- Primal Whetstone
-    [6380] = { item = 191939, icon = 4622275, q = 2 }, -- Primal Whetstone
-    [6379] = { item = 191933, icon = 4622275, q = 1 }, -- Primal Whetstone
-    [6698] = { item = 191945, icon = 4622279, q = 3 }, -- Primal Weightstone
-    [6697] = { item = 191944, icon = 4622279, q = 2 }, -- Primal Weightstone
-    [6696] = { item = 191943, icon = 4622279, q = 1 }, -- Primal Weightstone
-    [6384] = { item = 191950, icon = 4622274, q = 3 }, -- Primal Razorstone
-    [6383] = { item = 191949, icon = 4622274, q = 2 }, -- Primal Razorstone
-    [6382] = { item = 191948, icon = 4622274, q = 1 }, -- Primal Razorstone
-
-    -- 10.0.0 - Dragonflight: Runes
-    [6514] = { item = 194823, icon = 134421, q = 3 }, -- Buzzing Rune
-    [6513] = { item = 194822, icon = 134421, q = 2 }, -- Buzzing Rune
-    [6512] = { item = 194821, icon = 134421, q = 1 }, -- Buzzing Rune
-    [6695] = { item = 194826, icon = 134422, q = 3 }, -- Chirping Rune
-    [6694] = { item = 194825, icon = 134422, q = 2 }, -- Chirping Rune
-    [6515] = { item = 194824, icon = 134422, q = 1 }, -- Chirping Rune
-    [6518] = { item = 194820, icon = 134418, q = 3 }, -- Howling Rune
-    [6517] = { item = 194819, icon = 134418, q = 2 }, -- Howling Rune
-    [6516] = { item = 194817, icon = 134418, q = 1 }, -- Howling Rune
-
-    -- 10.0.0 - Dragonflight: Engineering
-    [6534] = { item = 198165, icon = 135644, q = 3 },  -- Endless Stack of Needles
-    [6533] = { item = 198164, icon = 135644, q = 2 },  -- Endless Stack of Needles
-    [6532] = { item = 198163, icon = 135644, q = 1 },  -- Endless Stack of Needles
-    [6531] = { item = 198162, icon = 249174, q = 3 },  -- Completely Safe Rockets
-    [6530] = { item = 198161, icon = 249174, q = 2 },  -- Completely Safe Rockets
-    [6529] = { item = 198160, icon = 249174, q = 1 },  -- Completely Safe Rockets
-    [6522] = { item = 198312, icon = 4548897, q = 3 }, -- Gyroscopic Kaleidoscope
-    [6521] = { item = 198311, icon = 4548897, q = 2 }, -- Gyroscopic Kaleidoscope
-    [6520] = { item = 198310, icon = 4548897, q = 1 }, -- Gyroscopic Kaleidoscope
-    [6528] = { item = 198318, icon = 4548899, q = 3 }, -- High Intensity Thermal Scanner
-    [6527] = { item = 198317, icon = 4548899, q = 2 }, -- High Intensity Thermal Scanner
-    [6526] = { item = 198316, icon = 4548899, q = 1 }, -- High Intensity Thermal Scanner
-    [6525] = { item = 198315, icon = 4548898, q = 3 }, -- Projectile Propulsion Pinion
-    [6524] = { item = 198314, icon = 4548898, q = 2 }, -- Projectile Propulsion Pinion
-    [6523] = { item = 198313, icon = 4548898, q = 1 }, -- Projectile Propulsion Pinion
+    -- 10.2.0 - Dragonflight
+    [7052] = { item = 210494, icon = 1045108, xpac = 10 }, -- Incandescent Essence
 
     -- 10.1.0 - Dragonflight: Hissing Rune
-    [6839] = { item = 204973, icon = 134422, q = 3 }, -- Hissing Rune
-    [6837] = { item = 204972, icon = 134422, q = 2 }, -- Hissing Rune
-    [6838] = { item = 204971, icon = 134422, q = 1 }, -- Hissing Rune
+    [6839] = { item = 204973, icon = 134422, q = 3, xpac = 10 }, -- Hissing Rune
+    [6837] = { item = 204972, icon = 134422, q = 2, xpac = 10 }, -- Hissing Rune
+    [6838] = { item = 204971, icon = 134422, q = 1, xpac = 10 }, -- Hissing Rune
 
-    -- 10.2.0 - Dragonflight
-    [7052] = { item = 210494, icon = 1045108 }, -- Incandescent Essence
+    -- 10.0.0 - Dragonflight: Whetstones & Weightstones
+    [6381] = { item = 191940, icon = 4622275, q = 3, xpac = 10 }, -- Primal Whetstone
+    [6380] = { item = 191939, icon = 4622275, q = 2, xpac = 10 }, -- Primal Whetstone
+    [6379] = { item = 191933, icon = 4622275, q = 1, xpac = 10 }, -- Primal Whetstone
+    [6698] = { item = 191945, icon = 4622279, q = 3, xpac = 10 }, -- Primal Weightstone
+    [6697] = { item = 191944, icon = 4622279, q = 2, xpac = 10 }, -- Primal Weightstone
+    [6696] = { item = 191943, icon = 4622279, q = 1, xpac = 10 }, -- Primal Weightstone
+    [6384] = { item = 191950, icon = 4622274, q = 3, xpac = 10 }, -- Primal Razorstone
+    [6383] = { item = 191949, icon = 4622274, q = 2, xpac = 10 }, -- Primal Razorstone
+    [6382] = { item = 191948, icon = 4622274, q = 1, xpac = 10 }, -- Primal Razorstone
+
+    -- 10.0.0 - Dragonflight: Runes
+    [6514] = { item = 194823, icon = 134421, q = 3, xpac = 10 }, -- Buzzing Rune
+    [6513] = { item = 194822, icon = 134421, q = 2, xpac = 10 }, -- Buzzing Rune
+    [6512] = { item = 194821, icon = 134421, q = 1, xpac = 10 }, -- Buzzing Rune
+    [6695] = { item = 194826, icon = 134422, q = 3, xpac = 10 }, -- Chirping Rune
+    [6694] = { item = 194825, icon = 134422, q = 2, xpac = 10 }, -- Chirping Rune
+    [6515] = { item = 194824, icon = 134422, q = 1, xpac = 10 }, -- Chirping Rune
+    [6518] = { item = 194820, icon = 134418, q = 3, xpac = 10 }, -- Howling Rune
+    [6517] = { item = 194819, icon = 134418, q = 2, xpac = 10 }, -- Howling Rune
+    [6516] = { item = 194817, icon = 134418, q = 1, xpac = 10 }, -- Howling Rune
+
+    -- 10.0.0 - Dragonflight: Engineering
+    [6534] = { item = 198165, icon = 135644, q = 3, xpac = 10 },  -- Endless Stack of Needles
+    [6533] = { item = 198164, icon = 135644, q = 2, xpac = 10 },  -- Endless Stack of Needles
+    [6532] = { item = 198163, icon = 135644, q = 1, xpac = 10 },  -- Endless Stack of Needles
+    [6531] = { item = 198162, icon = 249174, q = 3, xpac = 10 },  -- Completely Safe Rockets
+    [6530] = { item = 198161, icon = 249174, q = 2, xpac = 10 },  -- Completely Safe Rockets
+    [6529] = { item = 198160, icon = 249174, q = 1, xpac = 10 },  -- Completely Safe Rockets
+    [6522] = { item = 198312, icon = 4548897, q = 3, xpac = 10 }, -- Gyroscopic Kaleidoscope
+    [6521] = { item = 198311, icon = 4548897, q = 2, xpac = 10 }, -- Gyroscopic Kaleidoscope
+    [6520] = { item = 198310, icon = 4548897, q = 1, xpac = 10 }, -- Gyroscopic Kaleidoscope
+    [6528] = { item = 198318, icon = 4548899, q = 3, xpac = 10 }, -- High Intensity Thermal Scanner
+    [6527] = { item = 198317, icon = 4548899, q = 2, xpac = 10 }, -- High Intensity Thermal Scanner
+    [6526] = { item = 198316, icon = 4548899, q = 1, xpac = 10 }, -- High Intensity Thermal Scanner
+    [6525] = { item = 198315, icon = 4548898, q = 3, xpac = 10 }, -- Projectile Propulsion Pinion
+    [6524] = { item = 198314, icon = 4548898, q = 2, xpac = 10 }, -- Projectile Propulsion Pinion
+    [6523] = { item = 198313, icon = 4548898, q = 1, xpac = 10 }, -- Projectile Propulsion Pinion
 
     ----------------------------------------------------------------------------
     -- 9.0.1 - Shadowlands
-    [6190] = { item = 171286, icon = 463544 },  -- Embalmer's Oil
-    [6188] = { item = 171285, icon = 463543 },  -- Shadowcore Oil
-    [6200] = { item = 171437, icon = 3528422 }, -- Shaded Sharpening Stone
-    [6198] = { item = 171436, icon = 3528424 }, -- Porous Sharpening Stone
-    [6201] = { item = 171439, icon = 3528423 }, -- Shaded Weightstone
-    [6199] = { item = 171438, icon = 3528425 }, -- Porous Weightstone
+    [6190] = { item = 171286, icon = 463544, xpac = 9 },  -- Embalmer's Oil
+    [6188] = { item = 171285, icon = 463543, xpac = 9 },  -- Shadowcore Oil
+    [6200] = { item = 171437, icon = 3528422, xpac = 9 }, -- Shaded Sharpening Stone
+    [6198] = { item = 171436, icon = 3528424, xpac = 9 }, -- Porous Sharpening Stone
+    [6201] = { item = 171439, icon = 3528423, xpac = 9 }, -- Shaded Weightstone
+    [6199] = { item = 171438, icon = 3528425, xpac = 9 }, -- Porous Weightstone
 }
 
 --------------------------------------------------------------------------------
