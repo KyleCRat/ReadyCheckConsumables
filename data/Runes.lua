@@ -4,11 +4,11 @@ RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
 --- Augment Rune Spell IDs
---- Maps spell ID -> tier for detecting augment rune auras.
---- Higher tier = more current expansion.
+--- Maps spell ID -> xpac for detecting augment rune auras.
+--- Higher xpac = more current expansion.
 --------------------------------------------------------------------------------
 
-RCC.db.augmentTierNames = {
+RCC.db.augmentXpacNames = {
     [7]  = "Legion",
     [8]  = "BfA",
     [9]  = "SL",
@@ -30,54 +30,54 @@ RCC.db.augmentBuffIDs = {
     [224001]  = 7,  -- 7.0.3:  Defiled Augmentation
 }
 
-local maxTier = 0
+local maxXpac = 0
 
-for _, tier in pairs(RCC.db.augmentBuffIDs) do
-    if tier > maxTier then
-        maxTier = tier
+for _, xpac in pairs(RCC.db.augmentBuffIDs) do
+    if xpac > maxXpac then
+        maxXpac = xpac
     end
 end
 
-RCC.db.currentAugmentTier = maxTier
+RCC.db.currentAugmentXpac = maxXpac
 
 --------------------------------------------------------------------------------
 --- Augment Rune Item IDs
---- Maps item ID -> { tier, priority, permanent } for bag scanning.
---- Higher tier wins. Within same tier, higher priority wins.
+--- Maps item ID -> { xpac, priority, permanent } for bag scanning.
+--- Higher xpac wins. Within same xpac, higher priority wins.
 --- Permanent runes are not consumed on use.
 --------------------------------------------------------------------------------
 
 RCC.db.augmentItemIDs = {
     -- Midnight
-    [259085] = { tier = 12, priority = 1, permanent = false }, -- 12.0.0: Void-Touched Augment Rune
+    [259085] = { xpac = 12, priority = 1, permanent = false }, -- 12.0.0: Void-Touched Augment Rune
 
     -- The War Within
-    [243191] = { tier = 11, priority = 2, permanent = true  }, -- 11.2.0: Ethereal Augment Rune
-    [246492] = { tier = 11, priority = 1, permanent = false }, -- 11.2.0: Soulgorged Augment Rune
-    [224572] = { tier = 11, priority = 0, permanent = false }, -- 11.0.0: Crystallized Augment Rune
+    [243191] = { xpac = 11, priority = 2, permanent = true  }, -- 11.2.0: Ethereal Augment Rune
+    [246492] = { xpac = 11, priority = 1, permanent = false }, -- 11.2.0: Soulgorged Augment Rune
+    [224572] = { xpac = 11, priority = 0, permanent = false }, -- 11.0.0: Crystallized Augment Rune
 
     -- Dragonflight
-    [211495] = { tier = 10, priority = 1, permanent = true  }, -- 10.2.0: Dreambound Augment Rune
-    [201325] = { tier = 10, priority = 0, permanent = false }, -- 10.0.0: Draconic Augment Rune
+    [211495] = { xpac = 10, priority = 1, permanent = true  }, -- 10.2.0: Dreambound Augment Rune
+    [201325] = { xpac = 10, priority = 0, permanent = false }, -- 10.0.0: Draconic Augment Rune
 
     -- Shadowlands
-    [190384] = { tier = 9, priority = 1, permanent = false }, --  9.2.0: Eternal Augment Rune
-    [181468] = { tier = 9, priority = 0, permanent = false }, --  9.0.1: Veiled Augment Rune
+    [190384] = { xpac = 9, priority = 1, permanent = false }, --  9.2.0: Eternal Augment Rune
+    [181468] = { xpac = 9, priority = 0, permanent = false }, --  9.0.1: Veiled Augment Rune
 
     -- Battle for Azeroth
-    [174906] = { tier = 8, priority = 1, permanent = false }, --  8.3.0: Lightning-Forged Augment Rune
-    [160053] = { tier = 8, priority = 0, permanent = false }, --  8.0.1: Battle-Scarred Augment Rune
+    [174906] = { xpac = 8, priority = 1, permanent = false }, --  8.3.0: Lightning-Forged Augment Rune
+    [160053] = { xpac = 8, priority = 0, permanent = false }, --  8.0.1: Battle-Scarred Augment Rune
 
     -- Legion
-    [153023] = { tier = 7, priority = 1, permanent = false }, --  7.3.0: Lightforged Augment Rune
-    [140587] = { tier = 7, priority = 0, permanent = false }, --  7.0.3: Defiled Augment Rune
+    [153023] = { xpac = 7, priority = 1, permanent = false }, --  7.3.0: Lightforged Augment Rune
+    [140587] = { xpac = 7, priority = 0, permanent = false }, --  7.0.3: Defiled Augment Rune
 
     -- Warlords of Draenor
-    [128482] = { tier = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
-    [128475] = { tier = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
-    [118630] = { tier = 6, priority = 0, permanent = false }, --  6.0.1: Hyper Augment Rune
-    [118631] = { tier = 6, priority = 0, permanent = false }, --  6.0.1: Stout Augment Rune
-    [118632] = { tier = 6, priority = 0, permanent = false }, --  6.0.1: Focus Augment Rune
+    [128482] = { xpac = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
+    [128475] = { xpac = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
+    [118630] = { xpac = 6, priority = 0, permanent = false }, --  6.0.1: Hyper Augment Rune
+    [118631] = { xpac = 6, priority = 0, permanent = false }, --  6.0.1: Stout Augment Rune
+    [118632] = { xpac = 6, priority = 0, permanent = false }, --  6.0.1: Focus Augment Rune
 }
 
 --------------------------------------------------------------------------------

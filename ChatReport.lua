@@ -7,7 +7,7 @@ local GetTime         = GetTime
 local format          = format
 local floor           = floor
 
-local CURRENT_AUGMENT_TIER = db.currentAugmentTier
+local CURRENT_AUGMENT_XPAC = db.currentAugmentXpac
 
 --------------------------------------------------------------------------------
 --- Addon message coordination
@@ -244,13 +244,13 @@ end
 
 --------------------------------------------------------------------------------
 --- Augment Rune Report
---- Uses RCC.db.augmentBuffIDs (spellId -> tier mapping).
---- Reports missing runes and runes below CURRENT_AUGMENT_TIER.
+--- Uses RCC.db.augmentBuffIDs (spellId -> xpac mapping).
+--- Reports missing runes and runes below CURRENT_AUGMENT_XPAC.
 --------------------------------------------------------------------------------
 
 local function reportAugments(toChat)
     local missing = {}
-    local lowTier = {}
+    local lowXpac = {}
     local maxGroup = F.GetRaidDiffMaxGroup()
 
     for j = 1, 40 do
@@ -277,10 +277,10 @@ local function reportAugments(toChat)
                     if db.augmentBuffIDs[sid] then
                         hasAugment = true
 
-                        if db.augmentBuffIDs[sid] < CURRENT_AUGMENT_TIER then
-                            local tierName = db.augmentTierNames[db.augmentBuffIDs[sid]]
+                        if db.augmentBuffIDs[sid] < CURRENT_AUGMENT_XPAC then
+                            local xpacName = db.augmentXpacNames[db.augmentBuffIDs[sid]]
                                 or tostring(db.augmentBuffIDs[sid])
-                            lowTier[#lowTier + 1] = format("%s(%s)", colored, tierName)
+                            lowXpac[#lowXpac + 1] = format("%s(%s)", colored, xpacName)
                         end
 
                         break
@@ -294,7 +294,7 @@ local function reportAugments(toChat)
         end
     end
 
-    local totalBad = #missing + #lowTier
+    local totalBad = #missing + #lowXpac
 
     if totalBad == 0 then
         sendResults("Augments: All Augmented", toChat)
@@ -305,7 +305,7 @@ local function reportAugments(toChat)
     local result = format("No Augment (%d): ", totalBad)
 
     for i = 1, #missing do
-        local isLast = (i == #missing and #lowTier == 0)
+        local isLast = (i == #missing and #lowXpac == 0)
         result = result .. missing[i]
 
         if not isLast then
@@ -318,10 +318,10 @@ local function reportAugments(toChat)
         end
     end
 
-    for i = 1, #lowTier do
-        result = result .. lowTier[i]
+    for i = 1, #lowXpac do
+        result = result .. lowXpac[i]
 
-        if i < #lowTier then
+        if i < #lowXpac then
             result = result .. ", "
         end
 
