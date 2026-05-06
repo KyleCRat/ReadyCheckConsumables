@@ -127,12 +127,22 @@ RCC.consumables.close:SetAttribute("_onclick", [[
 --- Tooltip helpers
 --------------------------------------------------------------------------------
 
+local function getItemLink(itemID)
+    if not itemID then
+        return nil
+    end
+
+    return select(2, GetItemInfo(itemID))
+end
+
 local function addClickHint(button)
-    if not button.tooltipAction or not button.tooltipItemID then
+    if not button.tooltipAction then
         return
     end
 
-    local itemLink = select(2, GetItemInfo(button.tooltipItemID))
+    local itemLink = getItemLink(button.clickHintItemID
+                                 or button.usableItemID
+                                 or button.tooltipItemID)
 
     if not itemLink then
         return
@@ -145,44 +155,45 @@ local function addClickHint(button)
 end
 
 local function addOutOfHint(button)
-    if not button.outOverlay or not button.tooltipItemID then
-        return
-    end
-
-    local itemLink = select(2, GetItemInfo(button.tooltipItemID))
-
-    if not itemLink then
+    if not button.outOfItemsText then
         return
     end
 
     GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("|cffff3333Out of|r " .. itemLink)
+    GameTooltip:AddLine("|cffff3333" .. button.outOfItemsText .. "|r")
     GameTooltip:Show()
 end
 
-local function ClickButtonOnEnter(self)
-    local button = self:GetParent()
-
-    if button.tooltipAuraID then
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-        GameTooltip:SetItemByID(button.tooltipItemID)
-        GameTooltip:Show()
-
-        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
-        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
-        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
-        ShoppingTooltip1:Show()
-
-        addClickHint(button)
-
-        return
-    end
+local function showButtonTooltip(button, shoppingTooltip)
+    local shownTooltip
 
     if button.tooltipItemID then
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(button.tooltipItemID)
         GameTooltip:Show()
+        shownTooltip = true
+    end
 
+    if button.tooltipAuraID and shoppingTooltip and shownTooltip then
+        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
+        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
+        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        ShoppingTooltip1:Show()
+
+    elseif button.tooltipAuraID then
+        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        GameTooltip:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        GameTooltip:Show()
+        shownTooltip = true
+    end
+
+    return shownTooltip
+end
+
+local function ClickButtonOnEnter(self)
+    local button = self:GetParent()
+
+    if showButtonTooltip(button, true) then
         addClickHint(button)
     end
 end
@@ -193,31 +204,21 @@ local function ClickButtonOnLeave(self)
 end
 
 local function InfoButtonOnEnter(self)
-    if self.outOverlay then
+    if self.outOverlay and self.outOfItemsText then
         self.outOverlay:Show()
     end
 
-    if self.tooltipAuraID then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetItemByID(self.tooltipItemID)
-        GameTooltip:Show()
-
-        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
-        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
-        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", self.tooltipAuraID)
-        ShoppingTooltip1:Show()
-
+    if showButtonTooltip(self, true) then
         addOutOfHint(self)
 
         return
     end
 
-    if self.tooltipItemID then
+    if self.outOfItemsText then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetItemByID(self.tooltipItemID)
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine(self.outOfItemsText)
         GameTooltip:Show()
-
-        addOutOfHint(self)
     end
 end
 
@@ -228,6 +229,18 @@ local function InfoButtonOnLeave(self)
 
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
+end
+
+local function updateOutOverlay(button)
+    if not button.outOverlay then
+        return
+    end
+
+    if button.outOfItemsText and button:IsMouseOver() then
+        button.outOverlay:Show()
+    else
+        button.outOverlay:Hide()
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -554,6 +567,7 @@ local function updateFood(buttons, isFood, LCG)
 
     if food_count > 0 then
         buttons.food.tooltipItemID = food_item_id
+        buttons.food.usableItemID = food_item_id
 
         if not isFood then
             local texture = select(5, GetItemInfoInstant(food_item_id))
@@ -581,6 +595,10 @@ local function updateFood(buttons, isFood, LCG)
         if not InCombatLockdown() then
             buttons.food.click:Hide()
             buttons.food.click.IsON = false
+        end
+
+        if not isFood then
+            buttons.food.outOfItemsText = "No Food found in Bags"
         end
     end
 
@@ -636,6 +654,7 @@ local function updateFlasks(buttons, isFlask, LCG)
 
     if flask_count > 0 then
         buttons.flask.tooltipItemID = flask_item_id
+        buttons.flask.usableItemID = flask_item_id
 
         if not isFlask then
             local texture = select(5, GetItemInfoInstant(flask_item_id))
@@ -664,6 +683,10 @@ local function updateFlasks(buttons, isFlask, LCG)
             buttons.flask.click:Hide()
             buttons.flask.click.IsON = false
         end
+
+        if not isFlask then
+            buttons.flask.outOfItemsText = "No Flasks found in Bags"
+        end
     end
 
     buttons.flask.count:SetFormattedText(
@@ -679,6 +702,53 @@ local function updateFlasks(buttons, isFlask, LCG)
 end
 
 local lastWeaponEnchantItem
+local WEAPON_ENCHANT_OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
+
+local function getWeaponEnchantItem(enchantID)
+    local enchantData = RCC.db.weaponEnchants[enchantID or 0]
+
+    return enchantData and enchantData.item
+end
+
+local function setWeaponEnchantIcon(button, itemID, isOffhand)
+    local enchantData = itemID and RCC.db.weaponEnchantItems[itemID]
+
+    if enchantData then
+        button.texture:SetTexture(isOffhand and
+            (enchantData.iconoh or enchantData.icon) or enchantData.icon)
+    end
+end
+
+local function findWeaponEnchantItemInBags()
+    local bestItem
+    local bestRank = -1
+
+    for itemID, data in pairs(RCC.db.weaponEnchantItems) do
+        if itemID > 0
+            and GetItemCount(itemID, false, true) > 0
+        then
+            local rank = data.q or 0
+
+            if rank > bestRank then
+                bestRank = rank
+                bestItem = itemID
+            end
+        end
+    end
+
+    return bestItem
+end
+
+local function hideWeaponEnchantClicks(buttons)
+    if InCombatLockdown() then
+        return
+    end
+
+    buttons.oil.click:Hide()
+    buttons.oil.click.IsON = false
+    buttons.oiloh.click:Hide()
+    buttons.oiloh.click.IsON = false
+end
 
 local function updateWeaponEnchants(buttons, LCG)
     local offhandCanBeEnchanted
@@ -707,67 +777,82 @@ local function updateWeaponEnchants(buttons, LCG)
 
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
+    local appliedMainHandItem
+
     if hasMainHandEnchant then
+        appliedMainHandItem = getWeaponEnchantItem(mainHandEnchantID)
+
         buttons.oil.statustexture:SetTexture(READY)
         buttons.oil.texture:SetDesaturated(false)
         buttons.oil.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
             ceil((mainHandExpiration or 0) / 1000 / 60))
 
-        if RCC.db.weaponEnchants[mainHandEnchantID or 0] then
-            lastWeaponEnchantItem = RCC.db.weaponEnchants[mainHandEnchantID].item
+        if appliedMainHandItem then
+            lastWeaponEnchantItem = appliedMainHandItem
+            buttons.oil.appliedItemID = appliedMainHandItem
+            setWeaponEnchantIcon(buttons.oil, appliedMainHandItem)
+
+            if appliedMainHandItem > 0 then
+                buttons.oil.tooltipItemID = appliedMainHandItem
+            end
         end
     elseif lastWeaponEnchantItem and lastWeaponEnchantItem < 0 then
         lastWeaponEnchantItem = nil
     end
 
+    local appliedOffHandItem
+
     if offhandCanBeEnchanted and hasOffHandEnchant then
+        appliedOffHandItem = getWeaponEnchantItem(offHandEnchantID)
+
         buttons.oiloh.statustexture:SetTexture(READY)
         buttons.oiloh.texture:SetDesaturated(false)
         buttons.oiloh.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
             ceil((offHandExpiration or 0) / 1000 / 60))
+
+        if appliedOffHandItem then
+            buttons.oiloh.appliedItemID = appliedOffHandItem
+            setWeaponEnchantIcon(buttons.oiloh, appliedOffHandItem, true)
+
+            if appliedOffHandItem > 0 then
+                buttons.oiloh.tooltipItemID = appliedOffHandItem
+            end
+        end
     end
 
     if lastWeaponEnchantItem
         and RCC.db.weaponEnchantItems[lastWeaponEnchantItem]
     then
-        local wenchData = RCC.db.weaponEnchantItems[lastWeaponEnchantItem]
-        buttons.oil.texture:SetTexture(wenchData.icon)
-        buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
+        setWeaponEnchantIcon(buttons.oil, lastWeaponEnchantItem)
+
+        if not appliedOffHandItem then
+            setWeaponEnchantIcon(buttons.oiloh, lastWeaponEnchantItem, true)
+        end
     end
 
-    local oilItemID = lastWeaponEnchantItem
+    if type(lastWeaponEnchantItem) == "number" and lastWeaponEnchantItem < 0 then
+        if not InCombatLockdown() then
+            local spellInfo = GetSpellInfo(-lastWeaponEnchantItem)
+            local spellName = spellInfo and spellInfo.name
 
-    if oilItemID and oilItemID > 0
-        and GetItemCount(oilItemID, false, true) == 0
-    then
-        oilItemID = nil
-    end
+            if spellName then
+                buttons.oil.click:SetAttribute("spell", spellName)
+                buttons.oil.click:SetAttribute("type", "spell")
+                buttons.oil.click:Show()
+                buttons.oil.click.IsON = true
 
-    if not oilItemID then
-        local bestItem
-        local bestRank = -1
-
-        for itemID, data in pairs(RCC.db.weaponEnchantItems) do
-            if itemID > 0 and GetItemCount(itemID, false, true) > 0 then
-                local rank = data.q or 0
-
-                if rank > bestRank then
-                    bestRank = rank
-                    bestItem = itemID
-                end
+                buttons.oiloh.click:SetAttribute("spell", spellName)
+                buttons.oiloh.click:SetAttribute("type", "spell")
+                buttons.oiloh.click:Show()
+                buttons.oiloh.click.IsON = true
+            else
+                hideWeaponEnchantClicks(buttons)
             end
         end
 
-        if bestItem then
-            oilItemID = bestItem
-            local wenchData = RCC.db.weaponEnchantItems[bestItem]
+        buttons.oil.count:SetText("")
+        buttons.oiloh.count:SetText("")
 
-            buttons.oil.texture:SetTexture(wenchData.icon)
-            buttons.oiloh.texture:SetTexture(wenchData.iconoh or wenchData.icon)
-        end
-    end
-
-    if not oilItemID then
         if LCG then
             LCG.PixelGlow_Stop(buttons.oil)
             LCG.PixelGlow_Stop(buttons.oiloh)
@@ -776,46 +861,71 @@ local function updateWeaponEnchants(buttons, LCG)
         return
     end
 
-    local oilCount = GetItemCount(oilItemID, false, true)
-    buttons.oil.count:SetText(oilCount)
-    buttons.oiloh.count:SetText(oilCount)
+    local usableOilItemID = lastWeaponEnchantItem
 
-    if type(oilItemID) == "number" and oilItemID > 0 then
-        buttons.oil.tooltipItemID = oilItemID
-        buttons.oiloh.tooltipItemID = oilItemID
+    if not usableOilItemID
+        or usableOilItemID <= 0
+        or GetItemCount(usableOilItemID, false, true) == 0
+    then
+        usableOilItemID = findWeaponEnchantItemInBags()
+
+        if usableOilItemID then
+            if not appliedMainHandItem then
+                setWeaponEnchantIcon(buttons.oil, usableOilItemID)
+            end
+
+            if not appliedOffHandItem then
+                setWeaponEnchantIcon(buttons.oiloh, usableOilItemID, true)
+            end
+        end
     end
 
-    if type(oilItemID) == "number" and oilItemID < 0 then
-        if not InCombatLockdown() then
-            local spellInfo = GetSpellInfo(-oilItemID)
-            local spellName = spellInfo and spellInfo.name
-            buttons.oil.click:SetAttribute("spell", spellName)
-            buttons.oil.click:Show()
-            buttons.oil.click.IsON = true
-            buttons.oil.click:SetAttribute("type", "spell")
+    if not usableOilItemID then
+        buttons.oil.outOfItemsText = WEAPON_ENCHANT_OUT_OF_ITEMS
 
-            local ohSpellInfo = GetSpellInfo(-oilItemID)
-            local ohSpellName = ohSpellInfo and ohSpellInfo.name
-            buttons.oiloh.click:SetAttribute("spell", ohSpellName)
-            buttons.oiloh.click:Show()
-            buttons.oiloh.click.IsON = true
-            buttons.oiloh.click:SetAttribute("type", "spell")
+        if offhandCanBeEnchanted then
+            buttons.oiloh.outOfItemsText = WEAPON_ENCHANT_OUT_OF_ITEMS
         end
 
-        buttons.oil.count:SetText("")
-        buttons.oiloh.count:SetText("")
-    elseif oilCount and oilCount > 0 then
+        hideWeaponEnchantClicks(buttons)
+
+        if LCG then
+            LCG.PixelGlow_Stop(buttons.oil)
+            LCG.PixelGlow_Stop(buttons.oiloh)
+        end
+
+        return
+    end
+
+    local oilCount = GetItemCount(usableOilItemID, false, true)
+    buttons.oil.count:SetText(oilCount)
+    buttons.oiloh.count:SetText(oilCount)
+    buttons.oil.usableItemID = usableOilItemID
+    buttons.oil.clickHintItemID = usableOilItemID
+    buttons.oiloh.usableItemID = usableOilItemID
+    buttons.oiloh.clickHintItemID = usableOilItemID
+
+    if not buttons.oil.tooltipItemID then
+        buttons.oil.tooltipItemID = usableOilItemID
+    end
+
+    if not buttons.oiloh.tooltipItemID then
+        buttons.oiloh.tooltipItemID = usableOilItemID
+    end
+
+    if oilCount and oilCount > 0 then
         if not InCombatLockdown() then
-            local itemName = getItemName(oilItemID)
+            local itemName = getItemName(usableOilItemID)
 
             if itemName then
-                local itemRef = "item:" .. oilItemID
+                local itemRef = "item:" .. usableOilItemID
+                buttons.oil.click:SetAttribute("spell", nil)
                 buttons.oil.click:SetAttribute("item", itemRef)
                 buttons.oil.click:Show()
                 buttons.oil.click.IsON = true
 
                 if mainHandExpiration
-                    and (oilItemID == 171285 or oilItemID == 171286)
+                    and (usableOilItemID == 171285 or usableOilItemID == 171286)
                     and offhandItemID
                     and not offhandCanBeEnchanted then
 
@@ -824,23 +934,17 @@ local function updateWeaponEnchants(buttons, LCG)
                     buttons.oil.click:SetAttribute("type", "item")
                 end
 
+                buttons.oiloh.click:SetAttribute("spell", nil)
                 buttons.oiloh.click:SetAttribute("item", itemRef)
+                buttons.oiloh.click:SetAttribute("type", "item")
                 buttons.oiloh.click:Show()
                 buttons.oiloh.click.IsON = true
             else
-                buttons.oil.click:Hide()
-                buttons.oil.click.IsON = false
-                buttons.oiloh.click:Hide()
-                buttons.oiloh.click.IsON = false
+                hideWeaponEnchantClicks(buttons)
             end
         end
     else
-        if not InCombatLockdown() then
-            buttons.oil.click:Hide()
-            buttons.oil.click.IsON = false
-            buttons.oiloh.click:Hide()
-            buttons.oiloh.click.IsON = false
-        end
+        hideWeaponEnchantClicks(buttons)
     end
 
     if not LCG then return end
@@ -875,6 +979,7 @@ local function updateAugments(buttons, isAugment, LCG)
     then
         buttons.augment.count:SetText("")
         buttons.augment.tooltipItemID = RCC.db.unlimited_augment_item_id
+        buttons.augment.usableItemID = RCC.db.unlimited_augment_item_id
 
         if not isAugment then
             buttons.augment.texture:SetTexture(RCC.db.unlimited_augment_icon_id)
@@ -896,6 +1001,7 @@ local function updateAugments(buttons, isAugment, LCG)
     elseif augment_item_count and augment_item_count > 0 then
         buttons.augment.count:SetFormattedText("%d", augment_item_count)
         buttons.augment.tooltipItemID = RCC.db.augment_item_id
+        buttons.augment.usableItemID = RCC.db.augment_item_id
 
         if not isAugment then
             buttons.augment.texture:SetTexture(RCC.db.augment_icon_id)
@@ -920,6 +1026,10 @@ local function updateAugments(buttons, isAugment, LCG)
         if not InCombatLockdown() then
             buttons.augment.click:Hide()
             buttons.augment.click.IsON = false
+        end
+
+        if not isAugment then
+            buttons.augment.outOfItemsText = "No Augment Runes found in Bags"
         end
     end
 
@@ -1059,6 +1169,7 @@ local function updateVantusRune(buttons, isVantus)
     if itemID and count > 0 then
         buttons.vantus.count:SetFormattedText("%d", count)
         buttons.vantus.tooltipItemID = itemID
+        buttons.vantus.usableItemID = itemID
 
         if not InCombatLockdown() then
             local itemName = getItemName(itemID)
@@ -1078,6 +1189,8 @@ local function updateVantusRune(buttons, isVantus)
     end
 
     buttons.vantus.count:SetText("0")
+    buttons.vantus.tooltipItemID = itemID
+    buttons.vantus.outOfItemsText = "No Vantus Runes found in Bags"
 
     if not InCombatLockdown() then
         buttons.vantus.click:Hide()
@@ -1229,6 +1342,10 @@ function RCC.consumables:Update()
         buttons[i].texture:SetDesaturated(true)
         buttons[i].tooltipAuraID = nil
         buttons[i].tooltipItemID = nil
+        buttons[i].usableItemID = nil
+        buttons[i].appliedItemID = nil
+        buttons[i].clickHintItemID = nil
+        buttons[i].outOfItemsText = nil
     end
 
     local LCG = LibStub("LibCustomGlow-1.0", true)
@@ -1255,6 +1372,10 @@ function RCC.consumables:Update()
 
     if not InCombatLockdown() then
         applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
+    end
+
+    for i = 1, #buttons do
+        updateOutOverlay(buttons[i])
     end
 end
 
