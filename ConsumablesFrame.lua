@@ -809,7 +809,8 @@ local function updateWeaponEnchants(buttons, LCG)
             local itemName = getItemName(oilItemID)
 
             if itemName then
-                buttons.oil.click:SetAttribute("item", itemName)
+                local itemRef = "item:" .. oilItemID
+                buttons.oil.click:SetAttribute("item", itemRef)
                 buttons.oil.click:Show()
                 buttons.oil.click.IsON = true
 
@@ -823,7 +824,7 @@ local function updateWeaponEnchants(buttons, LCG)
                     buttons.oil.click:SetAttribute("type", "item")
                 end
 
-                buttons.oiloh.click:SetAttribute("item", itemName)
+                buttons.oiloh.click:SetAttribute("item", itemRef)
                 buttons.oiloh.click:Show()
                 buttons.oiloh.click.IsON = true
             else
