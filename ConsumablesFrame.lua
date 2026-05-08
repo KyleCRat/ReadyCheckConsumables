@@ -35,6 +35,8 @@ RCC.consumables.anchor:Hide()
 --- Drag handle
 RCC.consumables:SetMovable(true)
 RCC.consumables:SetClampedToScreen(true)
+RCC.consumables:SetFrameStrata("HIGH")
+RCC.consumables:SetToplevel(true)
 
 RCC.consumables.drag = CreateFrame("Frame", nil, RCC.consumables)
 RCC.consumables.drag:SetSize(20, 20)
