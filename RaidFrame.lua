@@ -1,6 +1,7 @@
 local _, RCC = ...
 
 local F  = RCC.F
+local UI = RCC.UI
 local db = RCC.db
 
 local GetTime            = GetTime
@@ -49,14 +50,8 @@ local SCALE_MIN            = 50
 local SCALE_MAX            = 150
 local SCALE_STEP           = 5
 local SCALE_BUTTON_WIDTH   = 86
-local SLIDER_HEIGHT        = 120
-local SLIDER_SENSITIVITY   = 2
-local SCALE_POPUP_WIDTH    = 44
-local SCALE_POPUP_PAD_Y    = 20
-local SCALE_POPUP_LABEL_GAP = 4
 
-local FONT = "Interface\\AddOns\\"
-    .. "ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-Bold.ttf"
+local FONT = UI.FONT
 
 local RC_PENDING = 0
 local RC_READY   = 1
@@ -261,184 +256,49 @@ frame:SetScript("OnDragStart", function(self)
     self:StartMoving()
 end)
 
-local function addControlButtonStyle(button)
-    button.bg = button:CreateTexture(nil, "BACKGROUND")
-    button.bg:SetAllPoints()
-    button.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
-
-    button.border = button:CreateTexture(nil, "BORDER")
-    button.border:SetPoint("TOPLEFT", -1, 1)
-    button.border:SetPoint("BOTTOMRIGHT", 1, -1)
-    button.border:SetColorTexture(0, 0, 0, 1)
-
-    button.highlight = button:CreateTexture(nil, "ARTWORK")
-    button.highlight:SetAllPoints(button.bg)
-    button.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
-    button.highlight:SetBlendMode("ADD")
-    button.highlight:Hide()
-
-    button.text = button:CreateFontString(nil, "OVERLAY")
-    button.text:SetPoint("CENTER")
-    button.text:SetFont(FONT, 12, "OUTLINE")
-    button.text:SetTextColor(1, 1, 1)
-
-    button:SetScript("OnEnter", function(self)
-        self.highlight:Show()
-    end)
-
-    button:SetScript("OnLeave", function(self)
-        self.highlight:Hide()
-    end)
-end
-
 --------------------------------------------------------------------------------
 --- Scale popup
 --------------------------------------------------------------------------------
 
-frame.scaleButton = CreateFrame("Button", nil, frame, "BackdropTemplate")
-frame.scaleButton:SetSize(SCALE_BUTTON_WIDTH, 20)
+frame.scaleButton = UI.CreateControlButton(frame, SCALE_BUTTON_WIDTH, 20, "")
 frame.scaleButton:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 1, -3)
-addControlButtonStyle(frame.scaleButton)
 
-local scalePopupHeight = SLIDER_HEIGHT + SCALE_POPUP_PAD_Y * 2
-local scalePopup = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-scalePopup:SetSize(SCALE_POPUP_WIDTH, scalePopupHeight)
-scalePopup:SetFrameStrata("TOOLTIP")
-scalePopup:SetBackdrop({
-    bgFile   = "Interface\\Buttons\\WHITE8x8",
-    edgeFile = "Interface\\Buttons\\WHITE8x8",
-    edgeSize = 1,
+local scalePopup = UI.CreatePopupSlider(frame.scaleButton, {
+    minValue = SCALE_MIN,
+    maxValue = SCALE_MAX,
+    step = SCALE_STEP,
+    label = "Scale",
+
+    formatValue = function(value)
+        return value .. "%"
+    end,
+
+    onValueChanged = function(value)
+        frame.scaleButton.text:SetText("Scale: " .. value .. "%")
+        frame:SetScale(value / 100)
+
+        if ReadyCheckConsumablesDB then
+            ReadyCheckConsumablesDB.raidFrame_scale = value / 100
+        end
+    end,
 })
-scalePopup:SetBackdropColor(0.1, 0.1, 0.1, 0.95)
-scalePopup:SetBackdropBorderColor(0, 0, 0, 1)
-scalePopup:Hide()
-
-scalePopup.track = scalePopup:CreateTexture(nil, "BACKGROUND")
-scalePopup.track:SetSize(2, SLIDER_HEIGHT)
-scalePopup.track:SetPoint("CENTER")
-scalePopup.track:SetColorTexture(0.5, 0.5, 0.5, 0.8)
-
-scalePopup.slider = CreateFrame("Slider", nil, scalePopup, "MinimalSliderTemplate")
-scalePopup.slider:SetOrientation("VERTICAL")
-scalePopup.slider:SetSize(20, SLIDER_HEIGHT)
-scalePopup.slider:SetPoint("CENTER")
-scalePopup.slider:SetMinMaxValues(SCALE_MIN, SCALE_MAX)
-scalePopup.slider:SetValueStep(SCALE_STEP)
-scalePopup.slider:SetObeyStepOnDrag(true)
-scalePopup.slider:EnableMouse(false)
-
-scalePopup.label = scalePopup:CreateFontString(nil, "OVERLAY")
-scalePopup.label:SetPoint("BOTTOM", scalePopup.slider, "TOP", 0, SCALE_POPUP_LABEL_GAP)
-scalePopup.label:SetFont(FONT, 11, "OUTLINE")
-scalePopup.label:SetText("Scale")
-scalePopup.label:SetTextColor(1, 1, 1)
-
-scalePopup.value = scalePopup:CreateFontString(nil, "OVERLAY")
-scalePopup.value:SetPoint("TOP", scalePopup.slider, "BOTTOM", 0, -SCALE_POPUP_LABEL_GAP)
-scalePopup.value:SetFont(FONT, 11, "OUTLINE")
-scalePopup.value:SetTextColor(1, 1, 1)
-
-local function scaleToSlider(value)
-    return SCALE_MAX + SCALE_MIN - value
-end
-
-local function sliderToScale(value)
-    return SCALE_MAX + SCALE_MIN - value
-end
-
-local function snapScale(value)
-    return floor(value / SCALE_STEP + 0.5) * SCALE_STEP
-end
-
-local function applyRaidFrameScale(value)
-    value = max(SCALE_MIN, min(SCALE_MAX, snapScale(value)))
-
-    frame.scaleButton.text:SetText("Scale: " .. value .. "%")
-    scalePopup.value:SetText(value .. "%")
-    frame:SetScale(value / 100)
-
-    if ReadyCheckConsumablesDB then
-        ReadyCheckConsumablesDB.raidFrame_scale = value / 100
-    end
-end
-
-local scaleDragStartY
-
-local function finishScaleDrag()
-    if not scaleDragStartY then
-        return
-    end
-
-    scaleDragStartY = nil
-    scalePopup:SetScript("OnUpdate", nil)
-    scalePopup:Hide()
-end
-
-frame.scaleButton:SetScript("OnMouseDown", function(self, button)
-    if button ~= "LeftButton" then
-        return
-    end
-
-    local mouseX, mouseY = GetCursorPosition()
-    local uiScale = UIParent:GetEffectiveScale()
-    scaleDragStartY = mouseY / uiScale
-
-    scalePopup:ClearAllPoints()
-    scalePopup:SetPoint("TOP", UIParent, "BOTTOMLEFT",
-        mouseX / uiScale, scaleDragStartY + scalePopupHeight / 2)
-    scalePopup:Show()
-
-    scalePopup:SetScript("OnUpdate", function()
-        if not IsMouseButtonDown("LeftButton") then
-            finishScaleDrag()
-
-            return
-        end
-
-        local _, cursorY = GetCursorPosition()
-        cursorY = cursorY / UIParent:GetEffectiveScale()
-
-        local delta = cursorY - scaleDragStartY
-        local pixelsPerUnit = SLIDER_HEIGHT * SLIDER_SENSITIVITY
-            / (SCALE_MAX - SCALE_MIN)
-        local currentScale = sliderToScale(scalePopup.slider:GetValue())
-        local newScale = max(SCALE_MIN, min(SCALE_MAX,
-            snapScale(currentScale + delta / pixelsPerUnit)))
-
-        if newScale ~= currentScale then
-            scalePopup.slider:SetValue(scaleToSlider(newScale))
-            scaleDragStartY = cursorY
-        end
-    end)
-end)
-
-scalePopup.slider:SetScript("OnValueChanged", function(self, value)
-    applyRaidFrameScale(sliderToScale(value))
-end)
 
 local function syncScaleControl()
     local scale = ReadyCheckConsumablesDB
         and ReadyCheckConsumablesDB.raidFrame_scale
         or 1
-    local value = floor(scale * 100 + 0.5)
-    value = max(SCALE_MIN, min(SCALE_MAX, snapScale(value)))
-
-    scalePopup.slider:SetValue(scaleToSlider(value))
-    applyRaidFrameScale(value)
+    scalePopup:SetValue(floor(scale * 100 + 0.5))
 end
 
 frame.SyncScaleControl = syncScaleControl
 syncScaleControl()
 
 --- Close button
--- TODO: Extract into function and reduce duplication with the ConsumablesFrame.lua:37
-frame.close = CreateFrame("Button", nil, frame,
-                                    "SecureHandlerClickTemplate")
-frame.close:SetSize(0, 20)
+frame.close = UI.CreateControlButton(
+    frame, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
+)
 frame.close:SetPoint("TOPLEFT", frame.scaleButton, "TOPRIGHT", 3, 0)
 frame.close:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -1, -3)
-addControlButtonStyle(frame.close)
-frame.close.text:SetText(CLOSE or "x")
 
 frame.close:SetFrameRef("CLLRaidFrame", frame)
 frame.close:SetAttribute("_onclick", [[
@@ -530,11 +390,11 @@ titleBar.timerText:SetText("")
 
 -- Per-column summary icons (CHECK or X), one per buff column
 local TITLE_COL_X = {
-    [COL_FOOD]   = COL_X_FOOD,
-    [COL_FLASK]  = COL_X_FLASK,
-    [COL_OIL]    = COL_X_OIL,
-    [COL_AUGMENT]   = COL_X_AUGMENT,
-    [COL_VANTUS] = COL_X_VANTUS,
+    [COL_FOOD]    = COL_X_FOOD,
+    [COL_FLASK]   = COL_X_FLASK,
+    [COL_OIL]     = COL_X_OIL,
+    [COL_AUGMENT] = COL_X_AUGMENT,
+    [COL_VANTUS]  = COL_X_VANTUS,
 }
 for k = 1, #db.raidBuffDefs do
     TITLE_COL_X[COL_VANTUS + k] = COL_X_RAIDBUFF[k]
@@ -604,6 +464,7 @@ end
 
 local function createOverlay(row, icon)
     local overlay = CreateFrame("Frame", nil, row)
+
     overlay:SetPoint("TOPLEFT", icon, "TOPLEFT")
     overlay:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
     overlay:EnableMouse(true)
@@ -626,6 +487,7 @@ end
 
 local function createIconBg(row, icon)
     local bg = row:CreateTexture(nil, "BACKGROUND")
+
     bg:SetPoint("TOPLEFT",     icon, "TOPLEFT")
     bg:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
     bg:SetTexture("Interface\\Buttons\\WHITE8x8")
@@ -640,6 +502,7 @@ frame.rows = {}
 
 local function createRow(index)
     local row = CreateFrame("Frame", nil, frame)
+
     row:SetSize(FRAME_WIDTH - FRAME_PAD * 2, ROW_HEIGHT)
     row:Hide()
 
@@ -795,11 +658,11 @@ local readyAnnounced = false
 
 local function scanMemberAuras(unit, now)
     local result = {
-        hasFood  = false, foodTime  = 0, foodAuraID  = nil, foodIconID  = nil,
-        hasFlask = false, flaskTime = 0, flaskAuraID = nil, flaskIconID = nil,
-        hasAugment  = false, augmentAuraID  = nil, augmentIconID  = nil,
-        hasVantus = false, vantusAuraID = nil, vantusIconID = nil,
-        raidBuff = {},
+        hasFood    = false, foodTime  = 0, foodAuraID  = nil, foodIconID  = nil,
+        hasFlask   = false, flaskTime = 0, flaskAuraID = nil, flaskIconID = nil,
+        hasAugment = false, augmentAuraID  = nil, augmentIconID  = nil,
+        hasVantus  = false, vantusAuraID = nil, vantusIconID = nil,
+        raidBuff   = {},
     }
 
     local buffsList = db.raidBuffDefs
@@ -894,8 +757,9 @@ local function scanAllMembers()
             end
         elseif subgroup <= maxGroup then
             count = count + 1
-            local online = UnitIsConnected(unit)
-            local isDead = UnitIsDeadOrGhost(unit)
+
+            local online    = UnitIsConnected(unit)
+            local isDead    = UnitIsDeadOrGhost(unit)
             local playerKey = F.fullName(name)
 
             memberData[count] = {

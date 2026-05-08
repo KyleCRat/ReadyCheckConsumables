@@ -1,6 +1,7 @@
 local ADDON_NAME, RCC = ...
 
 local F = RCC.F
+local UI = RCC.UI
 local GetTime            = GetTime
 local IsAddOnLoaded      = C_AddOns.IsAddOnLoaded
 local       GetSpellInfo = C_Spell.GetSpellInfo
@@ -14,8 +15,7 @@ local        GetItemIcon = C_Item.GetItemIconByID
 --------------------------------------------------------------------------------
 
 local consumables_size = 48
-local FONT = "Interface\\AddOns\\"
-    .. "ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-Bold.ttf"
+local FONT = UI.FONT
 
 --------------------------------------------------------------------------------
 --- Construct the button frame
@@ -38,40 +38,16 @@ RCC.consumables:SetClampedToScreen(true)
 RCC.consumables:SetFrameStrata("HIGH")
 RCC.consumables:SetToplevel(true)
 
-RCC.consumables.drag = CreateFrame("Frame", nil, RCC.consumables)
-RCC.consumables.drag:SetSize(20, 20)
+RCC.consumables.drag = UI.CreateControlFrame(RCC.consumables, 20, 20)
 RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 1, -3)
 RCC.consumables.drag:EnableMouse(true)
 RCC.consumables.drag:RegisterForDrag("LeftButton")
 RCC.consumables.drag:Hide()
 
-RCC.consumables.drag.bg = RCC.consumables.drag:CreateTexture(nil, "BACKGROUND")
-RCC.consumables.drag.bg:SetAllPoints()
-RCC.consumables.drag.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
-
-RCC.consumables.drag.border = RCC.consumables.drag:CreateTexture(nil, "BORDER")
-RCC.consumables.drag.border:SetPoint("TOPLEFT", -1, 1)
-RCC.consumables.drag.border:SetPoint("BOTTOMRIGHT", 1, -1)
-RCC.consumables.drag.border:SetColorTexture(0, 0, 0, 1)
-
-RCC.consumables.drag.highlight = RCC.consumables.drag:CreateTexture(nil, "ARTWORK")
-RCC.consumables.drag.highlight:SetAllPoints(RCC.consumables.drag.bg)
-RCC.consumables.drag.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
-RCC.consumables.drag.highlight:SetBlendMode("ADD")
-RCC.consumables.drag.highlight:Hide()
-
 RCC.consumables.drag.icon = RCC.consumables.drag:CreateTexture(nil, "OVERLAY")
 RCC.consumables.drag.icon:SetSize(12, 12)
 RCC.consumables.drag.icon:SetPoint("CENTER")
 RCC.consumables.drag.icon:SetTexture("Interface\\CURSOR\\UI-Cursor-Move")
-
-RCC.consumables.drag:SetScript("OnEnter", function(self)
-    self.highlight:Show()
-end)
-
-RCC.consumables.drag:SetScript("OnLeave", function(self)
-    self.highlight:Hide()
-end)
 
 RCC.consumables.drag:SetScript("OnDragStart", function(self)
     RCC.consumables:StartMoving()
@@ -82,41 +58,12 @@ RCC.consumables.drag:SetScript("OnDragStop", function(self)
 end)
 
 --- Close button
-RCC.consumables.close = CreateFrame("Button", nil, RCC.consumables,
-                                    "SecureHandlerClickTemplate")
-RCC.consumables.close:SetSize(0, 20)
+RCC.consumables.close = UI.CreateControlButton(
+    RCC.consumables, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
+)
 RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT", 3, 0)
 RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", -1, -3)
 RCC.consumables.close:Hide()
-
-RCC.consumables.close.bg = RCC.consumables.close:CreateTexture(nil, "BACKGROUND")
-RCC.consumables.close.bg:SetAllPoints()
-RCC.consumables.close.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
-
-RCC.consumables.close.border = RCC.consumables.close:CreateTexture(nil, "BORDER")
-RCC.consumables.close.border:SetPoint("TOPLEFT", -1, 1)
-RCC.consumables.close.border:SetPoint("BOTTOMRIGHT", 1, -1)
-RCC.consumables.close.border:SetColorTexture(0, 0, 0, 1)
-
-RCC.consumables.close.highlight = RCC.consumables.close:CreateTexture(nil, "ARTWORK")
-RCC.consumables.close.highlight:SetAllPoints(RCC.consumables.close.bg)
-RCC.consumables.close.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
-RCC.consumables.close.highlight:SetBlendMode("ADD")
-RCC.consumables.close.highlight:Hide()
-
-RCC.consumables.close.text = RCC.consumables.close:CreateFontString(nil, "OVERLAY")
-RCC.consumables.close.text:SetPoint("CENTER")
-RCC.consumables.close.text:SetFont(FONT, 12, "OUTLINE")
-RCC.consumables.close.text:SetText(CLOSE or "x")
-RCC.consumables.close.text:SetTextColor(1, 1, 1)
-
-RCC.consumables.close:SetScript("OnEnter", function(self)
-    self.highlight:Show()
-end)
-
-RCC.consumables.close:SetScript("OnLeave", function(self)
-    self.highlight:Hide()
-end)
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
 RCC.consumables.close:SetFrameRef("anchor", RCC.consumables.anchor)

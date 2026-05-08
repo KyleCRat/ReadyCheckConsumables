@@ -8,6 +8,7 @@
 ## SavedVariables: ReadyCheckConsumablesDB
 
 Functions.lua
+UI.lua
 data/Food.lua
 data/Flasks.lua
 data/Potions.lua
