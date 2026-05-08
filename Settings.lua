@@ -225,9 +225,9 @@ local function registerPanel()
         CreateSettingsListSectionHeaderInitializer("Display")
     )
 
-    local rfScaleOptions = Settings.CreateSliderOptions(0.5, 2.0, 0.1)
+    local rfScaleOptions = Settings.CreateSliderOptions(0.5, 1.5, 0.05)
     rfScaleOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
-        function(value) return string.format("%.1f", value) end)
+        function(value) return string.format("%d%%", floor(value * 100 + 0.5)) end)
 
     local rfScale = Settings.RegisterAddOnSetting(
         rfCat, "raidFrame_scale", "raidFrame_scale",
@@ -237,7 +237,11 @@ local function registerPanel()
         "Scale of the raid status frame.")
 
     Settings.SetOnValueChangedCallback("raidFrame_scale", function()
-        RCC.raidFrame:SetScale(db.raidFrame_scale)
+        if RCC.raidFrame.SyncScaleControl then
+            RCC.raidFrame:SyncScaleControl()
+        else
+            RCC.raidFrame:SetScale(db.raidFrame_scale)
+        end
     end)
 
     rfLayout:AddInitializer(
