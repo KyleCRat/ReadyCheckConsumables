@@ -9,7 +9,6 @@ local Rows = RCC.RaidFrameRows
 local TitleBar = RCC.RaidFrameTitleBar
 
 local GetTime            = GetTime
-local ceil               = ceil
 local floor              = floor
 local UnitName           = UnitName
 
@@ -21,12 +20,12 @@ local ROW_HEIGHT           = 30
 local TITLE_HEIGHT         = 28
 local V_PAD                = 0
 local MAX_ROWS             = 40
-local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
+local EXPIRE_WARN_SECONDS  = 600 -- 10 minutes
 local NO_DURATION          = 0
 local ADDON_REFRESH_DELAY  = 0.25
 local FADE_OUT_DURATION    = 0.5
 local DURABILITY_THRESHOLD = 50
-local MISSING_BG           = { r = 0,   g = 0,   b = 0   }
+local MISSING_BG           = { r = 0,   g = 0,   b = 0 }
 local FONT_SIZE_NAME       = 16
 local FONT_SIZE_TIME       = 14
 local SCALE_MIN            = 50
@@ -45,10 +44,6 @@ local RC_TEXTURES = {
     [RC_READY]   = "Interface\\RaidFrame\\ReadyCheck-Ready",
     [RC_NOT]     = "Interface\\RaidFrame\\ReadyCheck-NotReady",
 }
-
-local COLOR_SUMMARY_NOT_READY = { r = 1,   g = 0.2, b = 0.2 }
-local COLOR_SUMMARY_AFK       = { r = 1,   g = 0.82, b = 0  }
-local COLOR_SUMMARY_READY     = { r = 0.2, g = 1,   b = 0.2 }
 
 local LAYOUT = Columns.CreateLayout()
 
@@ -491,22 +486,13 @@ local function isBad(member, colIndex)
 end
 
 local function refreshTitleBar()
-    local numCols = #titleBar.colIcons
-
-    for i = 1, numCols do
-        local anyBad = false
-
-        for j = 1, state.activeCount do
-            local member = state.members[j]
-
-            if member and member.online and isBad(member, i) then
-                anyBad = true
-                break
-            end
-        end
-
-        titleBar.colIcons[i]:SetTexture(anyBad and RC_TEXTURES[RC_NOT] or RC_TEXTURES[RC_READY])
-    end
+    titleBar:RefreshColumns(
+        state.activeCount,
+        state.members,
+        isBad,
+        RC_TEXTURES[RC_READY],
+        RC_TEXTURES[RC_NOT]
+    )
 end
 
 local function updateTitleCount()
@@ -520,13 +506,12 @@ local function updateTitleCount()
         end
     end
 
-    titleBar.countText:SetTextColor(1, 1, 1)
-    titleBar.countText:SetText(readyCount .. "/" .. state.activeCount)
+    titleBar:SetReadyCount(readyCount, state.activeCount)
 
     return readyCount
 end
 
-local function showFinishedSummary()
+local function getFinishedCounts()
     local notReadyCount = 0
     local afkCount      = 0
 
@@ -544,27 +529,23 @@ local function showFinishedSummary()
         end
     end
 
-    if notReadyCount > 0 then
-        local c = COLOR_SUMMARY_NOT_READY
-        titleBar.countText:SetTextColor(c.r, c.g, c.b)
-        local s = notReadyCount == 1 and "Player" or "Players"
-        titleBar.countText:SetText(notReadyCount .. " " .. s .. " not Ready")
-    elseif afkCount > 0 then
-        local c = COLOR_SUMMARY_AFK
-        titleBar.countText:SetTextColor(c.r, c.g, c.b)
-        local verb = afkCount == 1 and "Player is" or "Players are"
-        titleBar.countText:SetText(afkCount .. " " .. verb .. " AFK")
-    else
-        local c = COLOR_SUMMARY_READY
-        titleBar.countText:SetTextColor(c.r, c.g, c.b)
-        titleBar.countText:SetText("Everyone is Ready!")
+    return notReadyCount, afkCount
+end
 
-        if not state.readyAnnounced and GetNumGroupMembers() > state.activeCount then
-            state.readyAnnounced = true
+local function showFinishedSummary()
+    local notReadyCount, afkCount = getFinishedCounts()
 
-            if RCC.AnnounceAllReady then
-                RCC.AnnounceAllReady()
-            end
+    titleBar:ShowFinishedSummary(notReadyCount, afkCount)
+
+    if notReadyCount == 0
+        and afkCount == 0
+        and not state.readyAnnounced
+        and GetNumGroupMembers() > state.activeCount
+    then
+        state.readyAnnounced = true
+
+        if RCC.AnnounceAllReady then
+            RCC.AnnounceAllReady()
         end
     end
 end
@@ -603,7 +584,6 @@ end
 --------------------------------------------------------------------------------
 
 local hideTimer
-local progressTextTimer
 local addonRefreshTimer
 local fadeOutGroup
 local showStartTime = 0
@@ -676,49 +656,10 @@ local function cancelHideTimer()
     end
 end
 
-local function stopProgressBar()
-    titleBar.progress:Hide()
-    titleBar:SetScript("OnUpdate", nil)
-
-    if progressTextTimer then
-        progressTextTimer:Cancel()
-        progressTextTimer = nil
-    end
-
-    titleBar.timerText:SetText("")
-end
-
 local function startProgressBar(duration)
     local barWidth = LAYOUT.frameWidth - LAYOUT.framePad * 2
-    local endTime = GetTime() + duration
 
-    titleBar.progress:SetWidth(barWidth)
-    titleBar.progress:Show()
-    titleBar.timerText:SetText(ceil(duration) .. "s")
-
-    titleBar:SetScript("OnUpdate", function()
-        local remaining = endTime - GetTime()
-
-        if remaining <= 0 then
-            stopProgressBar()
-
-            return
-        end
-
-        titleBar.progress:SetWidth(math.max(1, barWidth * remaining / duration))
-    end)
-
-    progressTextTimer = C_Timer.NewTicker(1, function(ticker)
-        local remaining = endTime - GetTime()
-
-        if remaining <= 0 then
-            ticker:Cancel()
-
-            return
-        end
-
-        titleBar.timerText:SetText(ceil(remaining) .. "s")
-    end)
+    titleBar:StartProgress(duration, barWidth)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
@@ -765,8 +706,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     if not self.manualShow then
         startProgressBar(timeToHide or 30)
     else
-        stopProgressBar()
-        titleBar.timerText:SetText("")
+        titleBar:StopProgress()
     end
 
     restorePosition()
@@ -840,13 +780,13 @@ function frame:OnReadyCheckConfirm(unit, ready)
     local responded = updateTitleCount()
 
     if responded >= state.activeCount then
-        stopProgressBar()
+        titleBar:StopProgress()
         showFinishedSummary()
     end
 end
 
 function frame:OnReadyCheckFinished()
-    stopProgressBar()
+    titleBar:StopProgress()
     showFinishedSummary()
 
     if self.manualShow then
@@ -907,7 +847,7 @@ function frame:OnHide()
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     cancelHideTimer()
     cancelFadeOut()
-    stopProgressBar()
+    titleBar:StopProgress()
     self.manualShow = false
 end
 
