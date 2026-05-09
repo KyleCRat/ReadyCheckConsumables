@@ -155,7 +155,7 @@ local function formatDuration(seconds)
 end
 
 local function setTimeColor(timeText, time, context)
-    if time < context.expireWarnSeconds then
+    if time < context.rules.expireWarnSeconds then
         timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
     else
         timeText:SetTextColor(
@@ -181,7 +181,7 @@ local function renderTimedAuraCell(row, member, column, context)
         icon:SetVertexColor(1, 1, 1, 1)
         icon:SetTexture(data.iconID or column.iconID)
 
-        if not data.time or data.time == context.noDuration then
+        if not data.time or data.time == context.rules.noDuration then
             timeText:SetText("")
         else
             timeText:SetText(formatDuration(data.time))

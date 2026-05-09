@@ -237,17 +237,21 @@ local state = {
 }
 
 local renderContext = {
-    state               = state,
-    oilData             = oilData,
-    durabilityData      = durabilityData,
-    readyCheck          = {
+    state      = state,
+    readyCheck = {
         pending  = RC_PENDING,
         notReady = RC_NOT,
         textures = RC_TEXTURES,
     },
-    expireWarnSeconds   = EXPIRE_WARN_SECONDS,
-    noDuration          = NO_DURATION,
-    durabilityThreshold = DURABILITY_THRESHOLD,
+    shared = {
+        oilData        = oilData,
+        durabilityData = durabilityData,
+    },
+    rules = {
+        expireWarnSeconds   = EXPIRE_WARN_SECONDS,
+        noDuration          = NO_DURATION,
+        durabilityThreshold = DURABILITY_THRESHOLD,
+    },
 }
 
 --------------------------------------------------------------------------------

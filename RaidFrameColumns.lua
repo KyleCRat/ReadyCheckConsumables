@@ -104,15 +104,17 @@ local function setIconAuraData(data, aura)
 end
 
 local function isTimedDataBad(data, context)
+    local rules = context.rules
+
     if not data or not data.has then
         return true
     end
 
-    if not data.time or data.time == context.noDuration then
+    if not data.time or data.time == rules.noDuration then
         return false
     end
 
-    return data.time < context.expireWarnSeconds
+    return data.time < rules.expireWarnSeconds
 end
 
 --------------------------------------------------------------------------------
@@ -242,7 +244,7 @@ local function syncOilData(data, member, context)
         return
     end
 
-    local entry = context.oilData[playerKey]
+    local entry = context.shared.oilData[playerKey]
     local time = entry and entry.time
 
     data.has    = time and time > 0 or false
@@ -258,7 +260,7 @@ local function isOilBad(member, context, column)
         return false
     end
 
-    return time == 0 or time < context.expireWarnSeconds
+    return time == 0 or time < context.rules.expireWarnSeconds
 end
 
 local oilColumn = {
@@ -445,7 +447,7 @@ local function syncDurabilityData(data, member, context)
         return
     end
 
-    local percent = context.durabilityData[playerKey]
+    local percent = context.shared.durabilityData[playerKey]
 
     data.has     = percent ~= nil
     data.percent = percent
@@ -459,7 +461,7 @@ local function isDurabilityBad(member, context, column)
         return false
     end
 
-    return pct < context.durabilityThreshold
+    return pct < context.rules.durabilityThreshold
 end
 
 local durabilityColumn = {
@@ -500,8 +502,9 @@ end
 
 function Columns.ScanUnitData(unit, now, layout, context)
     local columnData = createColumnData(layout)
+    local rules = context.rules
     local scanContext = {
-        remaining = context.noDuration,
+        remaining = rules.noDuration,
     }
 
     for auraIndex = 1, 60 do
@@ -516,7 +519,7 @@ function Columns.ScanUnitData(unit, now, layout, context)
 
             scanContext.remaining = (expiry and expiry > 0)
                 and (expiry - now)
-                or context.noDuration
+                or rules.noDuration
 
             for columnIndex = 1, #layout.columns do
                 local column = layout.columns[columnIndex]
