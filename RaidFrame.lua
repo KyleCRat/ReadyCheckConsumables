@@ -70,13 +70,15 @@ local COLOR_SUMMARY_NOT_READY = { r = 1,   g = 0.2, b = 0.2 }
 local COLOR_SUMMARY_AFK       = { r = 1,   g = 0.82, b = 0  }
 local COLOR_SUMMARY_READY     = { r = 0.2, g = 1,   b = 0.2 }
 
+local RAID_BUFF_COUNT = #db.raidBuffDefs
+
 local FRAME_WIDTH = FRAME_PAD
     + RC_ICON_WIDTH + H_PAD
     + NAME_WIDTH + H_PAD
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- food
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- flask
     + TIME_WIDTH + ICON_SIZE + H_PAD  -- oil
-    + (ICON_SIZE + H_PAD) * 8         -- augment + vantus + 6 raid buffs
+    + (ICON_SIZE + H_PAD) * (2 + RAID_BUFF_COUNT)  -- augment + vantus + raid buffs
     + DURABILITY_WIDTH + H_PAD        -- durability
     + FRAME_PAD
 
@@ -88,11 +90,11 @@ local COL_X_OIL   = COL_X_FLASK + ICON_SIZE + H_PAD + TIME_WIDTH
 local COL_X_AUGMENT  = COL_X_OIL   + ICON_SIZE + H_PAD
 local COL_X_VANTUS = COL_X_AUGMENT + ICON_SIZE + H_PAD
 local COL_X_RAIDBUFF = {}  -- [1..N]
-for k = 1, 8 do
+for k = 1, RAID_BUFF_COUNT do
     COL_X_RAIDBUFF[k] = COL_X_VANTUS + k * (ICON_SIZE + H_PAD)
 end
 
-local COL_X_DURABILITY = COL_X_RAIDBUFF[#db.raidBuffDefs] + ICON_SIZE + H_PAD
+local COL_X_DURABILITY = COL_X_RAIDBUFF[RAID_BUFF_COUNT] + ICON_SIZE + H_PAD
 
 -- Title bar column indices — used by isBad() and refreshTitleBar()
 local COL_FOOD       = 1
@@ -100,8 +102,7 @@ local COL_FLASK      = 2
 local COL_OIL        = 3
 local COL_AUGMENT    = 4
 local COL_VANTUS     = 5
-local COL_RAIDBUFF   = 6
-local COL_DURABILITY = COL_VANTUS + #db.raidBuffDefs + 1
+local COL_DURABILITY = COL_VANTUS + RAID_BUFF_COUNT + 1
 
 --------------------------------------------------------------------------------
 --- Raid buff default icons (spell texture IDs)
