@@ -3,15 +3,14 @@ local _, RCC = ...
 local F  = RCC.F
 local UI = RCC.UI
 local db = RCC.db
+local Broadcast = RCC.RaidFrameBroadcast
 local Columns = RCC.RaidFrameColumns
 local Rows = RCC.RaidFrameRows
 
 local GetTime            = GetTime
 local ceil               = ceil
 local floor              = floor
-local strsplit           = strsplit
 local UnitName           = UnitName
-local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 --------------------------------------------------------------------------------
 --- Constants
@@ -81,110 +80,9 @@ end
 
 resolveRaidBuffIcons()
 
---------------------------------------------------------------------------------
---- Durability sharing via addon messages
---- Each RCC user broadcasts their lowest-slot durability percentage on
---- READY_CHECK. Results are keyed by full player name and displayed in the
---- raid frame. Players without RCC show "?".
---------------------------------------------------------------------------------
-
-local ADDON_PREFIX = "RCC"
-local durabilityData = {}  -- [fullName] = percent (0-100)
-local oilData        = {}  -- [fullName] = { time = -1 N/A, 0 missing, >0 seconds, item = itemID }
-
-local function getPlayerMinDurability()
-    local minPct = 100
-
-    for slot = 1, 18 do
-        local cur, mx = GetInventoryItemDurability(slot)
-
-        if cur and mx and mx > 0 then
-            local pct = cur / mx * 100
-
-            if pct < minPct then
-                minPct = pct
-            end
-        end
-    end
-
-    return floor(minPct)
-end
-
-local function broadcastDurability()
-    local pct = getPlayerMinDurability()
-    local playerKey = F.unitFullName("player")
-
-    if playerKey then
-        durabilityData[playerKey] = pct
-    end
-
-    local chatType = F.chatType()
-
-    if chatType ~= "SAY" then
-        C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "DUR\t" .. pct, chatType)
-    end
-end
-
-local function getPlayerOilStatus()
-    local mainHandItemID = GetInventoryItemID("player", 16)
-
-    if not mainHandItemID then
-        return -1, 0
-    end
-
-    local hasMainHandEnchant, mainHandExpiration, _,
-          mainHandEnchantID, hasOffHandEnchant, offHandExpiration,
-          _, offHandEnchantID = GetWeaponEnchantInfo()
-
-    if not hasMainHandEnchant then
-        return 0, 0
-    end
-
-    local lowestTime = (mainHandExpiration or 0) / 1000
-    local enchData = db.weaponEnchants[mainHandEnchantID or 0]
-    local itemID = enchData and enchData.item or 0
-
-    local offhandItemID = GetInventoryItemID("player", 17)
-
-    if offhandItemID then
-        local itemClassID = select(6, GetItemInfoInstant(offhandItemID))
-
-        if itemClassID == 2 then
-            if not hasOffHandEnchant then
-                return 0, 0
-            end
-
-            local ohTime = (offHandExpiration or 0) / 1000
-
-            if ohTime < lowestTime then
-                lowestTime = ohTime
-                local ohData = db.weaponEnchants[offHandEnchantID or 0]
-                itemID = ohData and ohData.item or 0
-            end
-        end
-    end
-
-    return floor(lowestTime), itemID
-end
-
-local function broadcastOilStatus()
-    local oilTime, itemID = getPlayerOilStatus()
-    local playerKey = F.unitFullName("player")
-
-    if playerKey then
-        oilData[playerKey] = { time = oilTime, item = itemID }
-    end
-
-    local chatType = F.chatType()
-
-    if chatType ~= "SAY" then
-        C_ChatInfo.SendAddonMessage(
-            ADDON_PREFIX,
-            "OIL\t" .. oilTime .. "\t" .. (itemID or 0),
-            chatType
-        )
-    end
-end
+local broadcast = Broadcast.Create()
+local durabilityData = broadcast:GetDurabilityData()
+local oilData = broadcast:GetOilData()
 
 --------------------------------------------------------------------------------
 --- Frame creation
@@ -540,8 +438,7 @@ local function populateTestData()
     wipe(state.members)
     wipe(state.unitToIndex)
     wipe(state.rcStatus)
-    wipe(durabilityData)
-    wipe(oilData)
+    broadcast:Reset()
 
     local playerName = F.unitFullName("player") or UnitName("player")
     local _, playerClass = UnitClass("player")
@@ -580,10 +477,10 @@ local function populateTestData()
         state.unitToIndex[fakeUnit] = count
         state.rcStatus[fakeUnit] = RC_PENDING
 
-        durabilityData[playerKey] = fm.durability
+        broadcast:SetDurability(playerKey, fm.durability)
 
         if fm.oil then
-            oilData[playerKey] = fm.oil
+            broadcast:SetOilStatus(playerKey, fm.oil)
         end
     end
 
@@ -879,13 +776,12 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelFadeOut()
     state.readyAnnounced = false
     wipe(state.rcStatus)
-    wipe(durabilityData)
-    wipe(oilData)
+    broadcast:Reset()
 
     -- Broadcast even when the local raid frame is disabled so other RCC users
     -- can still see this player's durability and weapon oil status.
-    broadcastDurability()
-    broadcastOilStatus()
+    broadcast:SendDurability()
+    broadcast:SendOilStatus()
 
     if not RCC.GetSetting("raidFrame_enabled") then
         return
@@ -938,8 +834,8 @@ function frame:OnTestReadyCheck(permanent)
     showStartTime = GetTime()
 
     populateTestData()
-    broadcastDurability()
-    broadcastOilStatus()
+    broadcast:SendDurability()
+    broadcast:SendOilStatus()
 
     refreshAllRows()
     updateTitleCount()
@@ -1100,7 +996,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
     end
 
     if event == "UPDATE_INVENTORY_DURABILITY" then
-        broadcastDurability()
+        broadcast:SendDurability()
         refreshAllRows()
 
         return
@@ -1109,7 +1005,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
     if event == "UNIT_INVENTORY_CHANGED" then
         if arg1 == "player" then
             C_Timer.After(0.2, function()
-                broadcastOilStatus()
+                broadcast:SendOilStatus()
 
                 if self:IsShown() then
                     refreshAllRows()
@@ -1128,47 +1024,8 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
     end
 
     if event == "CHAT_MSG_ADDON" then
-        if arg1 == ADDON_PREFIX then
-            local msgType, val1, val2 = strsplit("\t", arg2)
-
-            if msgType == "DUR" then
-                local pct = tonumber(val1)
-                local senderKey = F.fullName(arg4)
-
-                if pct and senderKey then
-                    durabilityData[senderKey] = pct
-
-                    scheduleAddonRefresh()
-                end
-
-            elseif msgType == "OIL" then
-                local oilTime = tonumber(val1)
-                local itemID = tonumber(val2) or 0
-                local senderKey = F.fullName(arg4)
-
-                if oilTime and senderKey then
-                    oilData[senderKey] = {
-                        time = oilTime,
-                        item = itemID,
-                    }
-
-                    scheduleAddonRefresh()
-                end
-            end
-
-        elseif F.IsMrtPrefix(arg1) then
-            local module, msgType, _, durStr = F.ParseMrtMessage(arg2)
-
-            if module == "raidcheck" and msgType == "DUR" and durStr then
-                local pct = tonumber(durStr)
-                local senderKey = F.fullName(arg4)
-
-                if pct and senderKey then
-                    durabilityData[senderKey] = floor(pct)
-
-                    scheduleAddonRefresh()
-                end
-            end
+        if broadcast:HandleAddonMessage(arg1, arg2, arg4) then
+            scheduleAddonRefresh()
         end
 
         return
