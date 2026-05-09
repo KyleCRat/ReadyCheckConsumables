@@ -28,95 +28,66 @@ local DATA_SOURCE = {
     DURABILITY = "durability",
 }
 
+local RAID_BUFF_COUNT = #db.raidBuffDefs
+local ICON_STEP       = ICON_SIZE + H_PAD
+
+local READY_ICON_CENTER_X = RC_ICON_WIDTH / 2
+local NAME_X              = RC_ICON_WIDTH + H_PAD
+local FOOD_ICON_X         = NAME_X + NAME_WIDTH + H_PAD + TIME_WIDTH
+local FOOD_TIME_X         = FOOD_ICON_X - TIME_WIDTH
+local FLASK_ICON_X        = FOOD_ICON_X + ICON_STEP + TIME_WIDTH
+local FLASK_TIME_X        = FLASK_ICON_X - TIME_WIDTH
+local OIL_ICON_X          = FLASK_ICON_X + ICON_STEP + TIME_WIDTH
+local OIL_TIME_X          = OIL_ICON_X - TIME_WIDTH
+local AUGMENT_ICON_X      = OIL_ICON_X + ICON_STEP
+local VANTUS_ICON_X       = AUGMENT_ICON_X + ICON_STEP
+
+local function getRaidBuffX(raidBuffIndex)
+    return VANTUS_ICON_X + raidBuffIndex * ICON_STEP
+end
+
+local RAID_BUFF_X = {}
+
+for raidBuffIndex = 1, RAID_BUFF_COUNT do
+    RAID_BUFF_X[raidBuffIndex] = getRaidBuffX(raidBuffIndex)
+end
+
+local DURABILITY_X       = getRaidBuffX(RAID_BUFF_COUNT) + ICON_STEP
+local DURABILITY_TITLE_X = DURABILITY_X + (DURABILITY_WIDTH - ICON_SIZE) / 2
+
+local FRAME_WIDTH = FRAME_PAD
+    + RC_ICON_WIDTH + H_PAD
+    + NAME_WIDTH + H_PAD
+    + TIME_WIDTH + ICON_SIZE + H_PAD      -- food
+    + TIME_WIDTH + ICON_SIZE + H_PAD      -- flask
+    + TIME_WIDTH + ICON_SIZE + H_PAD      -- oil
+    + ICON_SIZE + H_PAD                   -- augment
+    + ICON_SIZE + H_PAD                   -- vantus
+    + ICON_STEP * RAID_BUFF_COUNT         -- raid buffs
+    + DURABILITY_WIDTH + H_PAD
+    + FRAME_PAD
+
+local LAYOUT_X = {
+    readyIconCenter = READY_ICON_CENTER_X,
+    name            = NAME_X,
+    food            = FOOD_ICON_X,
+    foodTime        = FOOD_TIME_X,
+    flask           = FLASK_ICON_X,
+    flaskTime       = FLASK_TIME_X,
+    oil             = OIL_ICON_X,
+    oilTime         = OIL_TIME_X,
+    augment         = AUGMENT_ICON_X,
+    vantus          = VANTUS_ICON_X,
+    raidBuff        = RAID_BUFF_X,
+    durability      = DURABILITY_X,
+}
+
+--------------------------------------------------------------------------------
+--- Shared helpers
+--------------------------------------------------------------------------------
+
 local function getColumnData(member, column)
     return member.columnData and member.columnData[column.key]
-end
-
-local function isTimedAuraBad(member, context, column)
-    local data = getColumnData(member, column)
-
-    if not data or not data.has then
-        return true
-    end
-
-    if not data.time or data.time == context.noDuration then
-        return false
-    end
-
-    return data.time < context.expireWarnSeconds
-end
-
-local function isOilBad(member, context, column)
-    local data = getColumnData(member, column)
-    local time = data and data.time
-
-    if time == nil or time == -1 then
-        return false
-    end
-
-    return time == 0 or time < context.expireWarnSeconds
-end
-
-local function isIconAuraBad(member, context, column)
-    local data = getColumnData(member, column)
-
-    return not data or not data.has
-end
-
-local function isRaidBuffBad(member, context, column)
-    local data = getColumnData(member, column)
-
-    return not data or not data.has
-end
-
-local function isDurabilityBad(member, context, column)
-    local data = getColumnData(member, column)
-    local pct = data and data.percent
-
-    if not pct then
-        return false
-    end
-
-    return pct < context.durabilityThreshold
-end
-
-local function createTimedAuraData()
-    return {
-        has    = false,
-        time   = 0,
-        auraID = nil,
-        iconID = nil,
-    }
-end
-
-local function createIconAuraData()
-    return {
-        has    = false,
-        auraID = nil,
-        iconID = nil,
-    }
-end
-
-local function createRaidBuffData()
-    return {
-        has    = false,
-        auraID = nil,
-    }
-end
-
-local function createOilData()
-    return {
-        has    = false,
-        time   = nil,
-        itemID = nil,
-    }
-end
-
-local function createDurabilityData()
-    return {
-        has     = false,
-        percent = nil,
-    }
 end
 
 local function setTimedAuraData(data, aura, remaining)
@@ -130,6 +101,31 @@ local function setIconAuraData(data, aura)
     data.has    = true
     data.auraID = aura.auraInstanceID
     data.iconID = aura.icon
+end
+
+local function isTimedDataBad(data, context)
+    if not data or not data.has then
+        return true
+    end
+
+    if not data.time or data.time == context.noDuration then
+        return false
+    end
+
+    return data.time < context.expireWarnSeconds
+end
+
+--------------------------------------------------------------------------------
+--- Food Column
+--------------------------------------------------------------------------------
+
+local function createFoodData()
+    return {
+        has    = false,
+        time   = 0,
+        auraID = nil,
+        iconID = nil,
+    }
 end
 
 local function collectFoodAura(data, aura, scanContext)
@@ -154,6 +150,42 @@ local function collectFoodAura(data, aura, scanContext)
     end
 end
 
+local function isFoodBad(member, context, column)
+    return isTimedDataBad(getColumnData(member, column), context)
+end
+
+local foodColumn = {
+    columnType   = COLUMN_TYPE.TIMED,
+    dataSource   = DATA_SOURCE.AURA,
+    key          = "food",
+    timeField    = "foodTime",
+    iconField    = "foodIcon",
+    overlayField = "foodOverlay",
+    timeX        = FOOD_TIME_X,
+    iconX        = FOOD_ICON_X,
+    titleX       = FOOD_ICON_X,
+    iconID       = db.food_icon_id,
+    label        = "Food: Missing",
+    CreateData   = createFoodData,
+    CollectAura  = collectFoodAura,
+    CreateCell   = Renderers.TIMED.CreateCell,
+    RenderCell   = Renderers.TIMED.RenderAuraCell,
+    IsBad        = isFoodBad,
+}
+
+--------------------------------------------------------------------------------
+--- Flask Column
+--------------------------------------------------------------------------------
+
+local function createFlaskData()
+    return {
+        has    = false,
+        time   = 0,
+        auraID = nil,
+        iconID = nil,
+    }
+end
+
 local function collectFlaskAura(data, aura, scanContext)
     local spellID = aura.spellId
 
@@ -164,40 +196,39 @@ local function collectFlaskAura(data, aura, scanContext)
     setTimedAuraData(data, aura, scanContext.remaining)
 end
 
-local function collectAugmentAura(data, aura)
-    local spellID = aura.spellId
-
-    if not spellID or data.has or not db.augmentBuffIDs[spellID] then
-        return
-    end
-
-    setIconAuraData(data, aura)
+local function isFlaskBad(member, context, column)
+    return isTimedDataBad(getColumnData(member, column), context)
 end
 
-local function collectVantusAura(data, aura)
-    local spellID = aura.spellId
+local flaskColumn = {
+    columnType   = COLUMN_TYPE.TIMED,
+    dataSource   = DATA_SOURCE.AURA,
+    key          = "flask",
+    timeField    = "flaskTime",
+    iconField    = "flaskIcon",
+    overlayField = "flaskOverlay",
+    timeX        = FLASK_TIME_X,
+    iconX        = FLASK_ICON_X,
+    titleX       = FLASK_ICON_X,
+    iconID       = db.flask_icon_id,
+    label        = "Flask: Missing",
+    CreateData   = createFlaskData,
+    CollectAura  = collectFlaskAura,
+    CreateCell   = Renderers.TIMED.CreateCell,
+    RenderCell   = Renderers.TIMED.RenderAuraCell,
+    IsBad        = isFlaskBad,
+}
 
-    if not spellID or data.has or not db.vantusBuffIDs[spellID] then
-        return
-    end
+--------------------------------------------------------------------------------
+--- Weapon Oil Column
+--------------------------------------------------------------------------------
 
-    setIconAuraData(data, aura)
-end
-
-local function collectRaidBuffAura(data, aura, scanContext, column)
-    local spellID = aura.spellId
-
-    if not spellID or data.has then
-        return
-    end
-
-    if spellID == column.spellID
-        or (column.altSpellID and spellID == column.altSpellID)
-        or (column.equivalentSpellIDs and column.equivalentSpellIDs[spellID])
-    then
-        data.has = true
-        data.auraID = aura.auraInstanceID or true
-    end
+local function createOilData()
+    return {
+        has    = false,
+        time   = nil,
+        itemID = nil,
+    }
 end
 
 local function syncOilData(data, member, context)
@@ -219,6 +250,191 @@ local function syncOilData(data, member, context)
     data.itemID = entry and entry.item or nil
 end
 
+local function isOilBad(member, context, column)
+    local data = getColumnData(member, column)
+    local time = data and data.time
+
+    if time == nil or time == -1 then
+        return false
+    end
+
+    return time == 0 or time < context.expireWarnSeconds
+end
+
+local oilColumn = {
+    columnType   = COLUMN_TYPE.TIMED,
+    dataSource   = DATA_SOURCE.OIL,
+    key          = "oil",
+    timeField    = "oilTime",
+    iconField    = "oilIcon",
+    overlayField = "oilOverlay",
+    timeX        = OIL_TIME_X,
+    iconX        = OIL_ICON_X,
+    titleX       = OIL_ICON_X,
+    iconID       = db.weapon_enchant_icon_id,
+    label        = "Weapon Oil: Unknown",
+    CreateData   = createOilData,
+    SyncData     = syncOilData,
+    CreateCell   = Renderers.TIMED.CreateCell,
+    RenderCell   = Renderers.TIMED.RenderOilCell,
+    IsBad        = isOilBad,
+}
+
+--------------------------------------------------------------------------------
+--- Augment Rune Column
+--------------------------------------------------------------------------------
+
+local function createAugmentData()
+    return {
+        has    = false,
+        auraID = nil,
+        iconID = nil,
+    }
+end
+
+local function collectAugmentAura(data, aura)
+    local spellID = aura.spellId
+
+    if not spellID or data.has or not db.augmentBuffIDs[spellID] then
+        return
+    end
+
+    setIconAuraData(data, aura)
+end
+
+local function isAugmentBad(member, context, column)
+    local data = getColumnData(member, column)
+
+    return not data or not data.has
+end
+
+local augmentColumn = {
+    columnType   = COLUMN_TYPE.ICON,
+    dataSource   = DATA_SOURCE.AURA,
+    key          = "augment",
+    iconField    = "augmentIcon",
+    overlayField = "augmentOverlay",
+    iconX        = AUGMENT_ICON_X,
+    titleX       = AUGMENT_ICON_X,
+    iconID       = db.augment_icon_id,
+    label        = "Augment Rune: Missing",
+    CreateData   = createAugmentData,
+    CollectAura  = collectAugmentAura,
+    CreateCell   = Renderers.ICON.CreateCell,
+    RenderCell   = Renderers.ICON.RenderAuraCell,
+    IsBad        = isAugmentBad,
+}
+
+--------------------------------------------------------------------------------
+--- Vantus Rune Column
+--------------------------------------------------------------------------------
+
+local function createVantusData()
+    return {
+        has    = false,
+        auraID = nil,
+        iconID = nil,
+    }
+end
+
+local function collectVantusAura(data, aura)
+    local spellID = aura.spellId
+
+    if not spellID or data.has or not db.vantusBuffIDs[spellID] then
+        return
+    end
+
+    setIconAuraData(data, aura)
+end
+
+local function isVantusBad(member, context, column)
+    local data = getColumnData(member, column)
+
+    return not data or not data.has
+end
+
+local vantusColumn = {
+    columnType   = COLUMN_TYPE.ICON,
+    dataSource   = DATA_SOURCE.AURA,
+    key          = "vantus",
+    iconField    = "vantusIcon",
+    overlayField = "vantusOverlay",
+    iconX        = VANTUS_ICON_X,
+    titleX       = VANTUS_ICON_X,
+    iconID       = db.vantus_icon_id,
+    label        = "Vantus Rune: Missing",
+    CreateData   = createVantusData,
+    CollectAura  = collectVantusAura,
+    CreateCell   = Renderers.ICON.CreateCell,
+    RenderCell   = Renderers.ICON.RenderAuraCell,
+    IsBad        = isVantusBad,
+}
+
+--------------------------------------------------------------------------------
+--- Raid Buff Columns
+--------------------------------------------------------------------------------
+
+local function createRaidBuffData()
+    return {
+        has    = false,
+        auraID = nil,
+    }
+end
+
+local function collectRaidBuffAura(data, aura, scanContext, column)
+    local spellID = aura.spellId
+
+    if not spellID or data.has then
+        return
+    end
+
+    if spellID == column.spellID
+        or (column.altSpellID and spellID == column.altSpellID)
+        or (column.equivalentSpellIDs and column.equivalentSpellIDs[spellID])
+    then
+        data.has = true
+        data.auraID = aura.auraInstanceID or true
+    end
+end
+
+local function isRaidBuffBad(member, context, column)
+    local data = getColumnData(member, column)
+
+    return not data or not data.has
+end
+
+local function createRaidBuffColumn(raidBuffIndex)
+    local buffDef = db.raidBuffDefs[raidBuffIndex]
+
+    return {
+        columnType         = COLUMN_TYPE.RAID_BUFF,
+        dataSource         = DATA_SOURCE.RAID_BUFF,
+        key                = "raidBuff" .. raidBuffIndex,
+        index              = raidBuffIndex,
+        iconX              = RAID_BUFF_X[raidBuffIndex],
+        titleX             = RAID_BUFF_X[raidBuffIndex],
+        spellID            = buffDef[3],
+        altSpellID         = buffDef[4],
+        equivalentSpellIDs = buffDef[5],
+        CreateData         = createRaidBuffData,
+        CollectAura        = collectRaidBuffAura,
+        CreateCell         = Renderers.RAID_BUFF.CreateCell,
+        RenderCell         = Renderers.RAID_BUFF.RenderCell,
+        IsBad              = isRaidBuffBad,
+    }
+end
+
+--------------------------------------------------------------------------------
+--- Durability Column
+--------------------------------------------------------------------------------
+
+local function createDurabilityData()
+    return {
+        has     = false,
+        percent = nil,
+    }
+end
+
 local function syncDurabilityData(data, member, context)
     local playerKey = member.key
 
@@ -234,6 +450,35 @@ local function syncDurabilityData(data, member, context)
     data.has     = percent ~= nil
     data.percent = percent
 end
+
+local function isDurabilityBad(member, context, column)
+    local data = getColumnData(member, column)
+    local pct = data and data.percent
+
+    if not pct then
+        return false
+    end
+
+    return pct < context.durabilityThreshold
+end
+
+local durabilityColumn = {
+    columnType = COLUMN_TYPE.DURABILITY,
+    dataSource = DATA_SOURCE.DURABILITY,
+    key        = "durability",
+    textField  = "durabilityText",
+    textX      = DURABILITY_X,
+    titleX     = DURABILITY_TITLE_X,
+    CreateData = createDurabilityData,
+    SyncData   = syncDurabilityData,
+    CreateCell = Renderers.DURABILITY.CreateCell,
+    RenderCell = Renderers.DURABILITY.RenderCell,
+    IsBad      = isDurabilityBad,
+}
+
+--------------------------------------------------------------------------------
+--- Public API
+--------------------------------------------------------------------------------
 
 local function createColumnData(layout)
     local columnData = {}
@@ -315,176 +560,30 @@ function Columns.SyncExternalData(member, layout, context)
 end
 
 function Columns.CreateLayout()
-    local raidBuffCount = #db.raidBuffDefs
-
-    local frameWidth = FRAME_PAD
-        + RC_ICON_WIDTH + H_PAD
-        + NAME_WIDTH + H_PAD
-        + TIME_WIDTH + ICON_SIZE + H_PAD       -- food
-        + TIME_WIDTH + ICON_SIZE + H_PAD       -- flask
-        + TIME_WIDTH + ICON_SIZE + H_PAD       -- oil
-        + ICON_SIZE + H_PAD                    -- augment
-        + ICON_SIZE + H_PAD                    -- vantus
-        + (ICON_SIZE + H_PAD) * raidBuffCount  -- raid buffs
-        + DURABILITY_WIDTH + H_PAD
-        + FRAME_PAD
-
-    local x = {
-        raidBuff = {},
-    }
-
-    x.readyIconCenter = RC_ICON_WIDTH / 2
-    x.name            = RC_ICON_WIDTH + H_PAD
-    x.food            = RC_ICON_WIDTH + H_PAD + NAME_WIDTH + H_PAD + TIME_WIDTH
-    x.foodTime        = x.food - TIME_WIDTH
-    x.flask           = x.food + ICON_SIZE + H_PAD + TIME_WIDTH
-    x.flaskTime       = x.flask - TIME_WIDTH
-    x.oil             = x.flask + ICON_SIZE + H_PAD + TIME_WIDTH
-    x.oilTime         = x.oil - TIME_WIDTH
-    x.augment         = x.oil + ICON_SIZE + H_PAD
-    x.vantus          = x.augment + ICON_SIZE + H_PAD
-
-    for raidBuffIndex = 1, raidBuffCount do
-        x.raidBuff[raidBuffIndex] = x.vantus
-            + raidBuffIndex * (ICON_SIZE + H_PAD)
-    end
-
-    x.durability = x.raidBuff[raidBuffCount] + ICON_SIZE + H_PAD
-
     local columns = {
-        {
-            columnType    = COLUMN_TYPE.TIMED,
-            dataSource    = DATA_SOURCE.AURA,
-            key           = "food",
-            timeField     = "foodTime",
-            iconField     = "foodIcon",
-            overlayField  = "foodOverlay",
-            timeX         = x.foodTime,
-            iconX         = x.food,
-            titleX        = x.food,
-            iconID        = db.food_icon_id,
-            label         = "Food: Missing",
-            CreateData    = createTimedAuraData,
-            CollectAura   = collectFoodAura,
-            CreateCell    = Renderers.TIMED.CreateCell,
-            RenderCell    = Renderers.TIMED.RenderAuraCell,
-            IsBad         = isTimedAuraBad,
-        },
-        {
-            columnType    = COLUMN_TYPE.TIMED,
-            dataSource    = DATA_SOURCE.AURA,
-            key           = "flask",
-            timeField     = "flaskTime",
-            iconField     = "flaskIcon",
-            overlayField  = "flaskOverlay",
-            timeX         = x.flaskTime,
-            iconX         = x.flask,
-            titleX        = x.flask,
-            iconID        = db.flask_icon_id,
-            label         = "Flask: Missing",
-            CreateData    = createTimedAuraData,
-            CollectAura   = collectFlaskAura,
-            CreateCell    = Renderers.TIMED.CreateCell,
-            RenderCell    = Renderers.TIMED.RenderAuraCell,
-            IsBad         = isTimedAuraBad,
-        },
-        {
-            columnType   = COLUMN_TYPE.TIMED,
-            dataSource   = DATA_SOURCE.OIL,
-            key          = "oil",
-            timeField    = "oilTime",
-            iconField    = "oilIcon",
-            overlayField = "oilOverlay",
-            timeX        = x.oilTime,
-            iconX        = x.oil,
-            titleX       = x.oil,
-            iconID       = db.weapon_enchant_icon_id,
-            label        = "Weapon Oil: Unknown",
-            CreateData   = createOilData,
-            SyncData     = syncOilData,
-            CreateCell   = Renderers.TIMED.CreateCell,
-            RenderCell   = Renderers.TIMED.RenderOilCell,
-            IsBad        = isOilBad,
-        },
-        {
-            columnType    = COLUMN_TYPE.ICON,
-            dataSource    = DATA_SOURCE.AURA,
-            key           = "augment",
-            iconField     = "augmentIcon",
-            overlayField  = "augmentOverlay",
-            iconX         = x.augment,
-            titleX        = x.augment,
-            iconID        = db.augment_icon_id,
-            label         = "Augment Rune: Missing",
-            CreateData    = createIconAuraData,
-            CollectAura   = collectAugmentAura,
-            CreateCell    = Renderers.ICON.CreateCell,
-            RenderCell    = Renderers.ICON.RenderAuraCell,
-            IsBad         = isIconAuraBad,
-        },
-        {
-            columnType    = COLUMN_TYPE.ICON,
-            dataSource    = DATA_SOURCE.AURA,
-            key           = "vantus",
-            iconField     = "vantusIcon",
-            overlayField  = "vantusOverlay",
-            iconX         = x.vantus,
-            titleX        = x.vantus,
-            iconID        = db.vantus_icon_id,
-            label         = "Vantus Rune: Missing",
-            CreateData    = createIconAuraData,
-            CollectAura   = collectVantusAura,
-            CreateCell    = Renderers.ICON.CreateCell,
-            RenderCell    = Renderers.ICON.RenderAuraCell,
-            IsBad         = isIconAuraBad,
-        },
+        foodColumn,
+        flaskColumn,
+        oilColumn,
+        augmentColumn,
+        vantusColumn,
     }
 
-    for raidBuffIndex = 1, raidBuffCount do
-        local buffDef = db.raidBuffDefs[raidBuffIndex]
-
-        columns[#columns + 1] = {
-            columnType         = COLUMN_TYPE.RAID_BUFF,
-            dataSource         = DATA_SOURCE.RAID_BUFF,
-            key                = "raidBuff" .. raidBuffIndex,
-            index              = raidBuffIndex,
-            iconX              = x.raidBuff[raidBuffIndex],
-            titleX             = x.raidBuff[raidBuffIndex],
-            spellID            = buffDef[3],
-            altSpellID         = buffDef[4],
-            equivalentSpellIDs = buffDef[5],
-            CreateData         = createRaidBuffData,
-            CollectAura        = collectRaidBuffAura,
-            CreateCell         = Renderers.RAID_BUFF.CreateCell,
-            RenderCell         = Renderers.RAID_BUFF.RenderCell,
-            IsBad              = isRaidBuffBad,
-        }
+    for raidBuffIndex = 1, RAID_BUFF_COUNT do
+        columns[#columns + 1] = createRaidBuffColumn(raidBuffIndex)
     end
 
-    columns[#columns + 1] = {
-        columnType   = COLUMN_TYPE.DURABILITY,
-        dataSource   = DATA_SOURCE.DURABILITY,
-        key          = "durability",
-        textField    = "durabilityText",
-        textX        = x.durability,
-        titleX       = x.durability + (DURABILITY_WIDTH - ICON_SIZE) / 2,
-        CreateData   = createDurabilityData,
-        SyncData     = syncDurabilityData,
-        CreateCell   = Renderers.DURABILITY.CreateCell,
-        RenderCell   = Renderers.DURABILITY.RenderCell,
-        IsBad        = isDurabilityBad,
-    }
+    columns[#columns + 1] = durabilityColumn
 
     return {
-        raidBuffCount   = raidBuffCount,
-        frameWidth      = frameWidth,
+        raidBuffCount   = RAID_BUFF_COUNT,
+        frameWidth      = FRAME_WIDTH,
         framePad        = FRAME_PAD,
         iconSize        = ICON_SIZE,
         rcIconWidth     = RC_ICON_WIDTH,
         nameWidth       = NAME_WIDTH,
         timeWidth       = TIME_WIDTH,
         durabilityWidth = DURABILITY_WIDTH,
-        x               = x,
+        x               = LAYOUT_X,
         columns         = columns,
     }
 end
