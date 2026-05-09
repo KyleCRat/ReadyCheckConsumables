@@ -20,6 +20,7 @@ data/Settings.lua
 ConsumablesFrame.lua
 RaidFrameTest.lua
 RaidFrameColumns.lua
+RaidFrameRows.lua
 RaidFrame.lua
 Settings.lua
 ReadyCheckConsumables.lua

@@ -4,6 +4,7 @@ local F  = RCC.F
 local UI = RCC.UI
 local db = RCC.db
 local Columns = RCC.RaidFrameColumns
+local Rows = RCC.RaidFrameRows
 
 local GetTime            = GetTime
 local ceil               = ceil
@@ -389,206 +390,28 @@ for i = 1, #TITLE_COL_X do
 end
 
 --------------------------------------------------------------------------------
---- Tooltip overlay helper
---------------------------------------------------------------------------------
-
-local function onOverlayEnter(self)
-    local unit    = self.unit
-    local auraID  = self.auraID
-    local spellID = self.spellID
-    local itemID  = self.itemID
-    local label   = self.label
-
-    if auraID and unit
-        and type(auraID) == "number"
-        and not issecretvalue(auraID)
-    then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetUnitBuffByAuraInstanceID(unit, auraID)
-        GameTooltip:Show()
-
-        return
-    end
-
-    if itemID then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetItemByID(itemID)
-        GameTooltip:Show()
-
-        return
-    end
-
-    if spellID then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetSpellByID(spellID)
-        GameTooltip:Show()
-
-        return
-    end
-
-    if label then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(label)
-        GameTooltip:Show()
-
-        return
-    end
-end
-
-local function onOverlayLeave()
-    GameTooltip:Hide()
-end
-
-local function createOverlay(row, icon)
-    local overlay = CreateFrame("Frame", nil, row)
-
-    overlay:SetPoint("TOPLEFT", icon, "TOPLEFT")
-    overlay:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
-    overlay:EnableMouse(true)
-    overlay:SetScript("OnEnter", onOverlayEnter)
-    overlay:SetScript("OnLeave", onOverlayLeave)
-    overlay.unit    = nil
-    overlay.auraID  = nil
-    overlay.spellID = nil
-    overlay.itemID  = nil
-    overlay.label   = nil
-
-    return overlay
-end
-
---------------------------------------------------------------------------------
---- Icon background helper
---- Places a dark red BACKGROUND texture behind an icon texture.
---- Call after the icon texture is positioned so the bg matches its location.
---------------------------------------------------------------------------------
-
-local function createIconBg(row, icon)
-    local bg = row:CreateTexture(nil, "BACKGROUND")
-
-    bg:SetPoint("TOPLEFT",     icon, "TOPLEFT")
-    bg:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
-    bg:SetTexture("Interface\\Buttons\\WHITE8x8")
-    bg:SetVertexColor(MISSING_BG.r, MISSING_BG.g, MISSING_BG.b, 1)
-end
-
-local function createTimedColumn(row, column)
-    local timeText = row:CreateFontString(nil, "ARTWORK")
-    timeText:SetPoint("LEFT", row, "LEFT", column.timeX, 0)
-    timeText:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
-    timeText:SetWidth(TIME_WIDTH)
-    timeText:SetJustifyH("RIGHT")
-    row[column.timeField] = timeText
-
-    local icon = row:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
-    icon:SetSize(ICON_SIZE, ICON_SIZE)
-    icon:SetTexture(column.iconID)
-    createIconBg(row, icon)
-    row[column.iconField] = icon
-
-    local overlay = createOverlay(row, icon)
-    overlay.label = column.label
-    row[column.overlayField] = overlay
-end
-
-local function createIconColumn(row, column)
-    local icon = row:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
-    icon:SetSize(ICON_SIZE, ICON_SIZE)
-    icon:SetTexture(column.iconID)
-    createIconBg(row, icon)
-    row[column.iconField] = icon
-
-    local overlay = createOverlay(row, icon)
-    overlay.label = column.label
-    row[column.overlayField] = overlay
-end
-
-local function createRaidBuffColumn(row, column)
-    local icon = row:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
-    icon:SetSize(ICON_SIZE, ICON_SIZE)
-    icon:SetTexture(RAID_BUFF_ICONS[column.index])
-    createIconBg(row, icon)
-    row.raidBuffIcons[column.index] = icon
-
-    local overlay = createOverlay(row, icon)
-    overlay.spellID = column.spellID
-    row.raidBuffOverlays[column.index] = overlay
-end
-
---------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)
 --------------------------------------------------------------------------------
 
-frame.rows = {}
-
-local function createRow(index)
-    local row = CreateFrame("Frame", nil, frame)
-
-    row:SetSize(FRAME_WIDTH - FRAME_PAD * 2, ROW_HEIGHT)
-    row:Hide()
-
-    local x = LAYOUT.x
-
-    -- Ready check icon
-    row.rcIcon = row:CreateTexture(nil, "ARTWORK")
-    row.rcIcon:SetPoint("CENTER", row, "LEFT", x.readyIconCenter, 0)
-    row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
-    row.rcIcon:SetTexture(RC_TEXTURES[RC_PENDING])
-
-    -- Row background (class color)
-    row.bg = row:CreateTexture(nil, "BACKGROUND")
-    row.bg:SetAllPoints(row)
-    row.bg:SetTexture("Interface\\Buttons\\WHITE8x8")
-    row.bg:SetVertexColor(1, 1, 1, 0.25)
-
-    -- Player name
-    row.nameText = row:CreateFontString(nil, "ARTWORK")
-    row.nameText:SetPoint("LEFT", row, "LEFT", x.name, 0)
-    row.nameText:SetFont(FONT, FONT_SIZE_NAME, "OUTLINE")
-    row.nameText:SetWidth(NAME_WIDTH)
-    row.nameText:SetJustifyH("LEFT")
-    row.nameText:SetWordWrap(false)
-
-    for i = 1, #LAYOUT.timedColumns do
-        createTimedColumn(row, LAYOUT.timedColumns[i])
-    end
-
-    for i = 1, #LAYOUT.iconColumns do
-        createIconColumn(row, LAYOUT.iconColumns[i])
-    end
-
-    -- Raid buff icons
-    row.raidBuffIcons    = {}
-    row.raidBuffOverlays = {}
-
-    for k = 1, #LAYOUT.raidBuffColumns do
-        createRaidBuffColumn(row, LAYOUT.raidBuffColumns[k])
-    end
-
-    -- Durability percentage
-    row.durabilityText = row:CreateFontString(nil, "ARTWORK")
-    row.durabilityText:SetPoint("LEFT", row, "LEFT", x.durability, 0)
-    row.durabilityText:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
-    row.durabilityText:SetWidth(DURABILITY_WIDTH)
-    row.durabilityText:SetJustifyH("CENTER")
-    row.durabilityText:SetText("?")
-    row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
-
-    -- Anchor row in frame (row 1 sits below the title bar)
-    if index == 1 then
-        row:SetPoint("TOPLEFT", frame, "TOPLEFT", FRAME_PAD, -(FRAME_PAD + TITLE_HEIGHT + FRAME_PAD + V_PAD))
-    else
-        row:SetPoint("TOPLEFT", frame.rows[index - 1], "BOTTOMLEFT", 0, -V_PAD)
-    end
-
-    return row
-end
-
-for i = 1, MAX_ROWS do
-    frame.rows[i] = createRow(i)
-end
+frame.rows = Rows.Create(frame, LAYOUT, {
+    maxRows          = MAX_ROWS,
+    frameWidth       = FRAME_WIDTH,
+    framePad         = FRAME_PAD,
+    titleHeight      = TITLE_HEIGHT,
+    rowHeight        = ROW_HEIGHT,
+    vPad             = V_PAD,
+    iconSize         = ICON_SIZE,
+    rcIconWidth      = RC_ICON_WIDTH,
+    nameWidth        = NAME_WIDTH,
+    timeWidth        = TIME_WIDTH,
+    durabilityWidth  = DURABILITY_WIDTH,
+    font             = FONT,
+    fontSizeName     = FONT_SIZE_NAME,
+    fontSizeTime     = FONT_SIZE_TIME,
+    missingBg        = MISSING_BG,
+    rcPendingTexture = RC_TEXTURES[RC_PENDING],
+    raidBuffIcons    = RAID_BUFF_ICONS,
+})
 
 --------------------------------------------------------------------------------
 --- Member data storage
