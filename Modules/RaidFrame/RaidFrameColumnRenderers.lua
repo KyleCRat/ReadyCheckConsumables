@@ -259,7 +259,7 @@ local function renderOilCell(row, member, column, context)
     elseif oilTime == 0 then
         setOilMissing(cell, column, "Weapon Oil: Missing")
     elseif oilTime == -1 then
-        setOilMissing(cell, column, "Weapon Oil: N/A")
+        setOilMissing(cell, column, "Weapon Oil: No Weapon Equipped")
     else
         setOilMissing(cell, column, column.label)
         timeText:SetText("?")
