@@ -6,6 +6,7 @@ local db = RCC.db
 local Broadcast = RCC.RaidFrameBroadcast
 local Columns = RCC.RaidFrameColumns
 local Rows = RCC.RaidFrameRows
+local TitleBar = RCC.RaidFrameTitleBar
 
 local GetTime            = GetTime
 local ceil               = ceil
@@ -28,8 +29,6 @@ local DURABILITY_THRESHOLD = 50
 local MISSING_BG           = { r = 0,   g = 0,   b = 0   }
 local FONT_SIZE_NAME       = 16
 local FONT_SIZE_TIME       = 14
-local COLOR_TITLE_BG       = { r = 0, g = 0, b = 0, a = 0.2 }
-local COLOR_PROGRESS_BAR   = { r = 0, g = 209/255, b = 255/255, a = 0.6 }
 local SCALE_MIN            = 50
 local SCALE_MAX            = 150
 local SCALE_STEP           = 5
@@ -204,60 +203,12 @@ local function restorePosition()
     frame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
 end
 
---------------------------------------------------------------------------------
---- Title bar
---- Progress bar bg that drains left-to-right over the RC duration.
---- Left side: "X/N" ready count + "Xs" countdown.
---- Right side: per-column CHECK/X summary icons aligned with data rows.
---------------------------------------------------------------------------------
-
-local titleBar = CreateFrame("Frame", nil, frame)
-titleBar:SetPoint("TOPLEFT",  frame, "TOPLEFT",
-    LAYOUT.framePad, -LAYOUT.framePad)
-titleBar:SetPoint("TOPRIGHT", frame, "TOPRIGHT",
-    -LAYOUT.framePad, -LAYOUT.framePad)
-titleBar:SetHeight(TITLE_HEIGHT)
-
--- Plain black background
-titleBar.bg = titleBar:CreateTexture(nil, "BACKGROUND")
-titleBar.bg:SetAllPoints(titleBar)
-titleBar.bg:SetTexture("Interface\\Buttons\\WHITE8x8")
-titleBar.bg:SetVertexColor(COLOR_TITLE_BG.r, COLOR_TITLE_BG.g, COLOR_TITLE_BG.b, COLOR_TITLE_BG.a)
-
--- Progress bar (fills left-to-right, drawn over the bg)
-titleBar.progress = titleBar:CreateTexture(nil, "BORDER")
-titleBar.progress:SetPoint("TOPLEFT",  titleBar, "TOPLEFT")
-titleBar.progress:SetPoint("BOTTOMLEFT", titleBar, "BOTTOMLEFT")
-titleBar.progress:SetTexture("Interface\\Buttons\\WHITE8x8")
-titleBar.progress:SetVertexColor(COLOR_PROGRESS_BAR.r, COLOR_PROGRESS_BAR.g, COLOR_PROGRESS_BAR.b, COLOR_PROGRESS_BAR.a)
-titleBar.progress:SetWidth(1)
-titleBar.progress:Hide()
-
--- "X/N" ready count label
-titleBar.countText = titleBar:CreateFontString(nil, "ARTWORK")
-titleBar.countText:SetPoint("LEFT", titleBar, "LEFT", 2, 0)
-titleBar.countText:SetFont(FONT, FONT_SIZE_NAME, "OUTLINE")
-titleBar.countText:SetTextColor(1, 1, 1)
-titleBar.countText:SetText("")
-
--- Countdown timer label (e.g. "15s")
-titleBar.timerText = titleBar:CreateFontString(nil, "ARTWORK")
-titleBar.timerText:SetPoint("LEFT", titleBar.countText, "RIGHT", 6, 0)
-titleBar.timerText:SetFont(FONT, FONT_SIZE_NAME, "OUTLINE")
-titleBar.timerText:SetTextColor(1, 1, 1)
-titleBar.timerText:SetText("")
-
--- Per-column summary icons (CHECK or X), one per buff column
-local TITLE_COL_X = LAYOUT.titleX
-
-titleBar.colIcons = {}
-for i = 1, #TITLE_COL_X do
-    local icon = titleBar:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(LAYOUT.iconSize, LAYOUT.iconSize)
-    icon:SetPoint("LEFT", titleBar, "LEFT", TITLE_COL_X[i], 0)
-    icon:SetTexture(RC_TEXTURES[RC_PENDING])
-    titleBar.colIcons[i] = icon
-end
+local titleBar = TitleBar.Create(frame, LAYOUT, {
+    titleHeight    = TITLE_HEIGHT,
+    font           = FONT,
+    fontSizeName   = FONT_SIZE_NAME,
+    pendingTexture = RC_TEXTURES[RC_PENDING],
+})
 
 --------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)

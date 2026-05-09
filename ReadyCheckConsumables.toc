@@ -22,6 +22,7 @@ RaidFrameTest.lua
 RaidFrameBroadcast.lua
 RaidFrameColumns.lua
 RaidFrameRows.lua
+RaidFrameTitleBar.lua
 RaidFrame.lua
 Settings.lua
 ReadyCheckConsumables.lua
