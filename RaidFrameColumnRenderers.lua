@@ -3,8 +3,6 @@ local _, RCC = ...
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 local Renderers = RCC.RaidFrameColumnRenderers
 
-local F = RCC.F
-
 local ceil   = ceil
 local format = format
 
@@ -168,26 +166,26 @@ local function setTimeColor(timeText, time, context)
     end
 end
 
+local function getColumnData(member, column)
+    return member.columnData and member.columnData[column.key]
+end
+
 local function renderTimedAuraCell(row, member, column, context)
-    local auras = member.auras
+    local data = getColumnData(member, column)
     local icon = row[column.iconField]
     local timeText = row[column.timeField]
     local overlay = row[column.overlayField]
-    local hasAura = auras[column.auraHasField]
-    local time = auras[column.auraTimeField]
-    local auraIconID = auras[column.auraIconField]
-    local auraID = auras[column.auraIDField]
 
-    if hasAura then
+    if data and data.has then
         icon:SetDesaturated(false)
         icon:SetVertexColor(1, 1, 1, 1)
-        icon:SetTexture(auraIconID or column.iconID)
+        icon:SetTexture(data.iconID or column.iconID)
 
-        if time == context.noDuration then
+        if not data.time or data.time == context.noDuration then
             timeText:SetText("")
         else
-            timeText:SetText(formatDuration(time))
-            setTimeColor(timeText, time, context)
+            timeText:SetText(formatDuration(data.time))
+            setTimeColor(timeText, data.time, context)
         end
     else
         icon:SetTexture(column.iconID)
@@ -197,7 +195,7 @@ local function renderTimedAuraCell(row, member, column, context)
     end
 
     overlay.unit   = member.unit
-    overlay.auraID = auraID
+    overlay.auraID = data and data.auraID or nil
 end
 
 local function setOilMissing(row, column, label)
@@ -209,10 +207,9 @@ local function setOilMissing(row, column, label)
 end
 
 local function renderOilCell(row, member, column, context)
-    local playerKey = member.key or F.fullName(member.name)
-    local oil = context.oilData[playerKey]
-    local oilTime = oil and oil.time
-    local oilItemID = oil and oil.item or 0
+    local data = getColumnData(member, column)
+    local oilTime = data and data.time
+    local oilItemID = data and data.itemID or 0
     local icon = row[column.iconField]
     local timeText = row[column.timeField]
     local overlay = row[column.overlayField]
@@ -243,23 +240,22 @@ local function renderOilCell(row, member, column, context)
 end
 
 local function renderIconAuraCell(row, member, column)
-    local auras = member.auras
+    local data = getColumnData(member, column)
     local icon = row[column.iconField]
     local overlay = row[column.overlayField]
-    local hasAura = auras[column.auraHasField]
-    local auraIconID = auras[column.auraIconField]
-    local auraID = auras[column.auraIDField]
+    local hasAura = data and data.has
 
-    icon:SetTexture(auraIconID or column.iconID)
+    icon:SetTexture((data and data.iconID) or column.iconID)
     icon:SetDesaturated(not hasAura)
     icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
     overlay.unit   = member.unit
-    overlay.auraID = auraID
+    overlay.auraID = data and data.auraID or nil
 end
 
 local function renderRaidBuffCell(row, member, column)
-    local auraID = member.auras.raidBuff[column.index]
-    local hasAura = auraID and auraID ~= false
+    local data = getColumnData(member, column)
+    local auraID = data and data.auraID
+    local hasAura = data and data.has
     local icon = row.raidBuffIcons[column.index]
     local overlay = row.raidBuffOverlays[column.index]
 
@@ -267,7 +263,10 @@ local function renderRaidBuffCell(row, member, column)
     icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
     overlay.unit = member.unit
 
-    if hasAura and not issecretvalue(auraID) then
+    if hasAura
+        and type(auraID) == "number"
+        and not issecretvalue(auraID)
+    then
         overlay.auraID = auraID
     else
         overlay.auraID = nil
@@ -275,8 +274,8 @@ local function renderRaidBuffCell(row, member, column)
 end
 
 local function renderDurabilityCell(row, member, column, context)
-    local playerKey = member.key or F.fullName(member.name)
-    local durPct = context.durabilityData[playerKey]
+    local data = getColumnData(member, column)
+    local durPct = data and data.percent
     local text = row[column.textField]
 
     if durPct then

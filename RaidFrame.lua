@@ -229,7 +229,7 @@ frame.rows = Rows.Create(frame, LAYOUT, {
 --------------------------------------------------------------------------------
 
 local state = {
-    members        = {},  -- [i] = { name, unit, class, online, isDead, auras }
+    members        = {},  -- [i] = { name, unit, class, online, isDead, columnData }
     unitToIndex    = {},  -- [unit] = i
     rcStatus       = {},  -- [unit] = RC_PENDING | RC_READY | RC_NOT
     activeCount    = 0,
@@ -251,87 +251,15 @@ local renderContext = {
 }
 
 --------------------------------------------------------------------------------
---- Aura scanning
+--- Member data scanning
 --------------------------------------------------------------------------------
 
-local function scanMemberAuras(unit, now)
-    local result = {
-        hasFood    = false, foodTime  = 0, foodAuraID  = nil, foodIconID  = nil,
-        hasFlask   = false, flaskTime = 0, flaskAuraID = nil, flaskIconID = nil,
-        hasAugment = false, augmentAuraID  = nil, augmentIconID  = nil,
-        hasVantus  = false, vantusAuraID = nil, vantusIconID = nil,
-        raidBuff   = {},
-    }
+local function scanMemberColumnData(unit, now)
+    return Columns.ScanUnitData(unit, now, LAYOUT, renderContext)
+end
 
-    local buffsList = db.raidBuffDefs
-
-    for k = 1, #buffsList do
-        result.raidBuff[k] = false
-    end
-
-    for i = 1, 60 do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-
-        if not aura then
-            break
-        end
-
-        if not issecretvalue(aura.spellId) then
-            local sid = aura.spellId
-            local icon = aura.icon
-            local expiry = aura.expirationTime
-            local remaining = (expiry and expiry > 0) and (expiry - now) or NO_DURATION
-
-            if db.foodBuffIDs[sid] or db.foodIconIDs[icon] then
-                if db.eatingIconIDs[icon] then
-                    result.isEating   = true
-                    result.hasFood    = true
-                    result.foodTime   = remaining
-                    result.foodAuraID = aura.auraInstanceID
-                    result.foodIconID = icon
-                elseif not result.isEating then
-                    result.hasFood    = true
-                    result.foodTime   = remaining
-                    result.foodAuraID = aura.auraInstanceID
-                    result.foodIconID = icon
-                end
-            end
-
-            if not result.hasFlask and db.flaskBuffIDs[sid] then
-                result.hasFlask    = true
-                result.flaskTime   = remaining
-                result.flaskAuraID = aura.auraInstanceID
-                result.flaskIconID = icon
-            end
-
-            if not result.hasAugment and db.augmentBuffIDs[sid] then
-                result.hasAugment    = true
-                result.augmentAuraID = aura.auraInstanceID
-                result.augmentIconID = icon
-            end
-
-            if not result.hasVantus and db.vantusBuffIDs[sid] then
-                result.hasVantus    = true
-                result.vantusAuraID = aura.auraInstanceID
-                result.vantusIconID = icon
-            end
-
-            for k = 1, #buffsList do
-                if not result.raidBuff[k] then
-                    local b = buffsList[k]
-
-                    if sid == b[3]
-                        or (b[4] and sid == b[4])
-                        or (b[5] and b[5][sid])
-                    then
-                        result.raidBuff[k] = aura.auraInstanceID or true
-                    end
-                end
-            end
-        end
-    end
-
-    return result
+local function syncMemberExternalData(member)
+    Columns.SyncExternalData(member, LAYOUT, renderContext)
 end
 
 --------------------------------------------------------------------------------
@@ -361,13 +289,13 @@ local function scanAllMembers()
             local playerKey = F.fullName(name)
 
             state.members[count] = {
-                name   = name,
-                key    = playerKey,
-                unit   = unit,
-                class  = class,
-                online = online,
-                isDead = isDead,
-                auras  = scanMemberAuras(unit, now),
+                name       = name,
+                key        = playerKey,
+                unit       = unit,
+                class      = class,
+                online     = online,
+                isDead     = isDead,
+                columnData = scanMemberColumnData(unit, now),
             }
 
             state.unitToIndex[unit] = count
@@ -395,13 +323,13 @@ local function populateTestData()
     local _, playerClass = UnitClass("player")
 
     state.members[1] = {
-        name   = playerName,
-        key    = F.fullName(playerName),
-        unit   = "player",
-        class  = playerClass,
-        online = true,
-        isDead = false,
-        auras  = scanMemberAuras("player", GetTime()),
+        name       = playerName,
+        key        = F.fullName(playerName),
+        unit       = "player",
+        class      = playerClass,
+        online     = true,
+        isDead     = false,
+        columnData = scanMemberColumnData("player", GetTime()),
     }
     state.unitToIndex["player"] = 1
     state.rcStatus["player"] = RC_READY
@@ -416,13 +344,13 @@ local function populateTestData()
         local playerKey = F.fullName(fm.name)
 
         state.members[count] = {
-            name   = playerKey,
-            key    = playerKey,
-            unit   = fakeUnit,
-            class  = fm.class,
-            online = fm.online,
-            isDead = fm.isDead,
-            auras  = fm.auras,
+            name       = playerKey,
+            key        = playerKey,
+            unit       = fakeUnit,
+            class      = fm.class,
+            online     = fm.online,
+            isDead     = fm.isDead,
+            columnData = fm.columnData,
         }
 
         state.unitToIndex[fakeUnit] = count
@@ -534,12 +462,14 @@ local function refreshRow(index)
         return
     end
 
+    syncMemberExternalData(state.members[index])
     Rows.ApplyData(row, state.members[index], LAYOUT, renderContext)
     refreshTitleBar()
 end
 
 local function refreshAllRows()
     for i = 1, state.activeCount do
+        syncMemberExternalData(state.members[i])
         Rows.ApplyData(frame.rows[i], state.members[i], LAYOUT, renderContext)
     end
 
@@ -811,9 +741,9 @@ function frame:OnUnitAura(unit)
         return
     end
 
-    member.online = UnitIsConnected(unit)
-    member.isDead  = UnitIsDeadOrGhost(unit)
-    member.auras   = scanMemberAuras(unit, GetTime())
+    member.online     = UnitIsConnected(unit)
+    member.isDead     = UnitIsDeadOrGhost(unit)
+    member.columnData = scanMemberColumnData(unit, GetTime())
     refreshRow(index)
 end
 

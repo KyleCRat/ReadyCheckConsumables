@@ -3,7 +3,6 @@ local _, RCC = ...
 RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
-local F         = RCC.F
 local db        = RCC.db
 local Renderers = RCC.RaidFrameColumnRenderers
 
@@ -29,20 +28,27 @@ local DATA_SOURCE = {
     DURABILITY = "durability",
 }
 
-local function isTimedAuraBad(member, context, column)
-    local auras = member.auras
-    local time = auras[column.auraTimeField]
+local function getColumnData(member, column)
+    return member.columnData and member.columnData[column.key]
+end
 
-    return not auras[column.auraHasField]
-        or (time ~= context.noDuration
-            and time < context.expireWarnSeconds)
+local function isTimedAuraBad(member, context, column)
+    local data = getColumnData(member, column)
+
+    if not data or not data.has then
+        return true
+    end
+
+    if not data.time or data.time == context.noDuration then
+        return false
+    end
+
+    return data.time < context.expireWarnSeconds
 end
 
 local function isOilBad(member, context, column)
-    local playerKey = member.key or F.fullName(member.name)
-    local entries = context[column.contextField]
-    local entry = entries and entries[playerKey]
-    local time = entry and entry.time
+    local data = getColumnData(member, column)
+    local time = data and data.time
 
     if time == nil or time == -1 then
         return false
@@ -52,25 +58,260 @@ local function isOilBad(member, context, column)
 end
 
 local function isIconAuraBad(member, context, column)
-    return not member.auras[column.auraHasField]
+    local data = getColumnData(member, column)
+
+    return not data or not data.has
 end
 
 local function isRaidBuffBad(member, context, column)
-    local auraID = member.auras.raidBuff[column.index]
+    local data = getColumnData(member, column)
 
-    return not auraID or auraID == false
+    return not data or not data.has
 end
 
 local function isDurabilityBad(member, context, column)
-    local playerKey = member.key or F.fullName(member.name)
-    local entries = context[column.contextField]
-    local pct = entries and entries[playerKey]
+    local data = getColumnData(member, column)
+    local pct = data and data.percent
 
     if not pct then
         return false
     end
 
     return pct < context.durabilityThreshold
+end
+
+local function createTimedAuraData()
+    return {
+        has    = false,
+        time   = 0,
+        auraID = nil,
+        iconID = nil,
+    }
+end
+
+local function createIconAuraData()
+    return {
+        has    = false,
+        auraID = nil,
+        iconID = nil,
+    }
+end
+
+local function createRaidBuffData()
+    return {
+        has    = false,
+        auraID = nil,
+    }
+end
+
+local function createOilData()
+    return {
+        has    = false,
+        time   = nil,
+        itemID = nil,
+    }
+end
+
+local function createDurabilityData()
+    return {
+        has     = false,
+        percent = nil,
+    }
+end
+
+local function setTimedAuraData(data, aura, remaining)
+    data.has    = true
+    data.time   = remaining
+    data.auraID = aura.auraInstanceID
+    data.iconID = aura.icon
+end
+
+local function setIconAuraData(data, aura)
+    data.has    = true
+    data.auraID = aura.auraInstanceID
+    data.iconID = aura.icon
+end
+
+local function collectFoodAura(data, aura, scanContext)
+    local spellID = aura.spellId
+    local iconID = aura.icon
+
+    if not spellID and not iconID then
+        return
+    end
+
+    if not (spellID and db.foodBuffIDs[spellID])
+        and not (iconID and db.foodIconIDs[iconID])
+    then
+        return
+    end
+
+    if iconID and db.eatingIconIDs[iconID] then
+        data.isEating = true
+        setTimedAuraData(data, aura, scanContext.remaining)
+    elseif not data.isEating then
+        setTimedAuraData(data, aura, scanContext.remaining)
+    end
+end
+
+local function collectFlaskAura(data, aura, scanContext)
+    local spellID = aura.spellId
+
+    if not spellID or data.has or not db.flaskBuffIDs[spellID] then
+        return
+    end
+
+    setTimedAuraData(data, aura, scanContext.remaining)
+end
+
+local function collectAugmentAura(data, aura)
+    local spellID = aura.spellId
+
+    if not spellID or data.has or not db.augmentBuffIDs[spellID] then
+        return
+    end
+
+    setIconAuraData(data, aura)
+end
+
+local function collectVantusAura(data, aura)
+    local spellID = aura.spellId
+
+    if not spellID or data.has or not db.vantusBuffIDs[spellID] then
+        return
+    end
+
+    setIconAuraData(data, aura)
+end
+
+local function collectRaidBuffAura(data, aura, scanContext, column)
+    local spellID = aura.spellId
+
+    if not spellID or data.has then
+        return
+    end
+
+    if spellID == column.spellID
+        or (column.altSpellID and spellID == column.altSpellID)
+        or (column.equivalentSpellIDs and column.equivalentSpellIDs[spellID])
+    then
+        data.has = true
+        data.auraID = aura.auraInstanceID or true
+    end
+end
+
+local function syncOilData(data, member, context)
+    local playerKey = member.key
+
+    if not playerKey then
+        data.has    = false
+        data.time   = nil
+        data.itemID = nil
+
+        return
+    end
+
+    local entry = context.oilData[playerKey]
+    local time = entry and entry.time
+
+    data.has    = time and time > 0 or false
+    data.time   = time
+    data.itemID = entry and entry.item or nil
+end
+
+local function syncDurabilityData(data, member, context)
+    local playerKey = member.key
+
+    if not playerKey then
+        data.has     = false
+        data.percent = nil
+
+        return
+    end
+
+    local percent = context.durabilityData[playerKey]
+
+    data.has     = percent ~= nil
+    data.percent = percent
+end
+
+local function createColumnData(layout)
+    local columnData = {}
+
+    for columnIndex = 1, #layout.columns do
+        local column = layout.columns[columnIndex]
+
+        if column.CreateData then
+            columnData[column.key] = column.CreateData(column)
+        end
+    end
+
+    return columnData
+end
+
+function Columns.CreateColumnData(layout)
+    return createColumnData(layout)
+end
+
+function Columns.ScanUnitData(unit, now, layout, context)
+    local columnData = createColumnData(layout)
+    local scanContext = {
+        remaining = context.noDuration,
+    }
+
+    for auraIndex = 1, 60 do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
+
+        if not aura then
+            break
+        end
+
+        if not issecretvalue(aura.spellId) then
+            local expiry = aura.expirationTime
+
+            scanContext.remaining = (expiry and expiry > 0)
+                and (expiry - now)
+                or context.noDuration
+
+            for columnIndex = 1, #layout.columns do
+                local column = layout.columns[columnIndex]
+
+                if column.CollectAura then
+                    column.CollectAura(
+                        columnData[column.key],
+                        aura,
+                        scanContext,
+                        column
+                    )
+                end
+            end
+        end
+    end
+
+    return columnData
+end
+
+function Columns.SyncExternalData(member, layout, context)
+    if not member then
+        return
+    end
+
+    member.columnData = member.columnData or createColumnData(layout)
+
+    for columnIndex = 1, #layout.columns do
+        local column = layout.columns[columnIndex]
+
+        if column.SyncData then
+            local data = member.columnData[column.key]
+
+            if not data then
+                data = column.CreateData(column)
+                member.columnData[column.key] = data
+            end
+
+            column.SyncData(data, member, context, column)
+        end
+    end
 end
 
 function Columns.CreateLayout()
@@ -115,10 +356,6 @@ function Columns.CreateLayout()
             columnType    = COLUMN_TYPE.TIMED,
             dataSource    = DATA_SOURCE.AURA,
             key           = "food",
-            auraHasField  = "hasFood",
-            auraTimeField = "foodTime",
-            auraIconField = "foodIconID",
-            auraIDField   = "foodAuraID",
             timeField     = "foodTime",
             iconField     = "foodIcon",
             overlayField  = "foodOverlay",
@@ -127,6 +364,8 @@ function Columns.CreateLayout()
             titleX        = x.food,
             iconID        = db.food_icon_id,
             label         = "Food: Missing",
+            CreateData    = createTimedAuraData,
+            CollectAura   = collectFoodAura,
             CreateCell    = Renderers.TIMED.CreateCell,
             RenderCell    = Renderers.TIMED.RenderAuraCell,
             IsBad         = isTimedAuraBad,
@@ -135,10 +374,6 @@ function Columns.CreateLayout()
             columnType    = COLUMN_TYPE.TIMED,
             dataSource    = DATA_SOURCE.AURA,
             key           = "flask",
-            auraHasField  = "hasFlask",
-            auraTimeField = "flaskTime",
-            auraIconField = "flaskIconID",
-            auraIDField   = "flaskAuraID",
             timeField     = "flaskTime",
             iconField     = "flaskIcon",
             overlayField  = "flaskOverlay",
@@ -147,6 +382,8 @@ function Columns.CreateLayout()
             titleX        = x.flask,
             iconID        = db.flask_icon_id,
             label         = "Flask: Missing",
+            CreateData    = createTimedAuraData,
+            CollectAura   = collectFlaskAura,
             CreateCell    = Renderers.TIMED.CreateCell,
             RenderCell    = Renderers.TIMED.RenderAuraCell,
             IsBad         = isTimedAuraBad,
@@ -155,7 +392,6 @@ function Columns.CreateLayout()
             columnType   = COLUMN_TYPE.TIMED,
             dataSource   = DATA_SOURCE.OIL,
             key          = "oil",
-            contextField = "oilData",
             timeField    = "oilTime",
             iconField    = "oilIcon",
             overlayField = "oilOverlay",
@@ -164,6 +400,8 @@ function Columns.CreateLayout()
             titleX       = x.oil,
             iconID       = db.weapon_enchant_icon_id,
             label        = "Weapon Oil: Unknown",
+            CreateData   = createOilData,
+            SyncData     = syncOilData,
             CreateCell   = Renderers.TIMED.CreateCell,
             RenderCell   = Renderers.TIMED.RenderOilCell,
             IsBad        = isOilBad,
@@ -172,15 +410,14 @@ function Columns.CreateLayout()
             columnType    = COLUMN_TYPE.ICON,
             dataSource    = DATA_SOURCE.AURA,
             key           = "augment",
-            auraHasField  = "hasAugment",
-            auraIconField = "augmentIconID",
-            auraIDField   = "augmentAuraID",
             iconField     = "augmentIcon",
             overlayField  = "augmentOverlay",
             iconX         = x.augment,
             titleX        = x.augment,
             iconID        = db.augment_icon_id,
             label         = "Augment Rune: Missing",
+            CreateData    = createIconAuraData,
+            CollectAura   = collectAugmentAura,
             CreateCell    = Renderers.ICON.CreateCell,
             RenderCell    = Renderers.ICON.RenderAuraCell,
             IsBad         = isIconAuraBad,
@@ -189,15 +426,14 @@ function Columns.CreateLayout()
             columnType    = COLUMN_TYPE.ICON,
             dataSource    = DATA_SOURCE.AURA,
             key           = "vantus",
-            auraHasField  = "hasVantus",
-            auraIconField = "vantusIconID",
-            auraIDField   = "vantusAuraID",
             iconField     = "vantusIcon",
             overlayField  = "vantusOverlay",
             iconX         = x.vantus,
             titleX        = x.vantus,
             iconID        = db.vantus_icon_id,
             label         = "Vantus Rune: Missing",
+            CreateData    = createIconAuraData,
+            CollectAura   = collectVantusAura,
             CreateCell    = Renderers.ICON.CreateCell,
             RenderCell    = Renderers.ICON.RenderAuraCell,
             IsBad         = isIconAuraBad,
@@ -205,17 +441,23 @@ function Columns.CreateLayout()
     }
 
     for raidBuffIndex = 1, raidBuffCount do
+        local buffDef = db.raidBuffDefs[raidBuffIndex]
+
         columns[#columns + 1] = {
-            columnType = COLUMN_TYPE.RAID_BUFF,
-            dataSource = DATA_SOURCE.RAID_BUFF,
-            key        = "raidBuff" .. raidBuffIndex,
-            index      = raidBuffIndex,
-            iconX      = x.raidBuff[raidBuffIndex],
-            titleX     = x.raidBuff[raidBuffIndex],
-            spellID    = db.raidBuffDefs[raidBuffIndex][3],
-            CreateCell = Renderers.RAID_BUFF.CreateCell,
-            RenderCell = Renderers.RAID_BUFF.RenderCell,
-            IsBad      = isRaidBuffBad,
+            columnType         = COLUMN_TYPE.RAID_BUFF,
+            dataSource         = DATA_SOURCE.RAID_BUFF,
+            key                = "raidBuff" .. raidBuffIndex,
+            index              = raidBuffIndex,
+            iconX              = x.raidBuff[raidBuffIndex],
+            titleX             = x.raidBuff[raidBuffIndex],
+            spellID            = buffDef[3],
+            altSpellID         = buffDef[4],
+            equivalentSpellIDs = buffDef[5],
+            CreateData         = createRaidBuffData,
+            CollectAura        = collectRaidBuffAura,
+            CreateCell         = Renderers.RAID_BUFF.CreateCell,
+            RenderCell         = Renderers.RAID_BUFF.RenderCell,
+            IsBad              = isRaidBuffBad,
         }
     end
 
@@ -223,10 +465,11 @@ function Columns.CreateLayout()
         columnType   = COLUMN_TYPE.DURABILITY,
         dataSource   = DATA_SOURCE.DURABILITY,
         key          = "durability",
-        contextField = "durabilityData",
         textField    = "durabilityText",
         textX        = x.durability,
         titleX       = x.durability + (DURABILITY_WIDTH - ICON_SIZE) / 2,
+        CreateData   = createDurabilityData,
+        SyncData     = syncDurabilityData,
         CreateCell   = Renderers.DURABILITY.CreateCell,
         RenderCell   = Renderers.DURABILITY.RenderCell,
         IsBad        = isDurabilityBad,
