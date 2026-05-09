@@ -15,11 +15,17 @@ local FRAME_PAD        = 3
 local DURABILITY_WIDTH = 42
 
 local COLUMN_TYPE = {
-    TIMED_AURA     = "timedAura",
-    EXTERNAL_TIMED = "externalTimed",
-    ICON_AURA      = "iconAura",
-    RAID_BUFF      = "raidBuff",
-    DURABILITY     = "durability",
+    TIMED      = "timed",
+    ICON       = "icon",
+    RAID_BUFF  = "raidBuff",
+    DURABILITY = "durability",
+}
+
+local DATA_SOURCE = {
+    AURA       = "aura",
+    OIL        = "oil",
+    RAID_BUFF  = "raidBuff",
+    DURABILITY = "durability",
 }
 
 local function isTimedAuraBad(member, context, column)
@@ -31,7 +37,7 @@ local function isTimedAuraBad(member, context, column)
             and time < context.expireWarnSeconds)
 end
 
-local function isExternalTimedBad(member, context, column)
+local function isOilBad(member, context, column)
     local playerKey = member.key or F.fullName(member.name)
     local entries = context[column.contextField]
     local entry = entries and entries[playerKey]
@@ -74,11 +80,9 @@ local function deriveColumnBuckets(columns)
     for columnIndex = 1, #columns do
         local column = columns[columnIndex]
 
-        if column.columnType == COLUMN_TYPE.TIMED_AURA
-            or column.columnType == COLUMN_TYPE.EXTERNAL_TIMED
-        then
+        if column.columnType == COLUMN_TYPE.TIMED then
             timedColumns[#timedColumns + 1] = column
-        elseif column.columnType == COLUMN_TYPE.ICON_AURA then
+        elseif column.columnType == COLUMN_TYPE.ICON then
             iconColumns[#iconColumns + 1] = column
         elseif column.columnType == COLUMN_TYPE.RAID_BUFF then
             raidBuffColumns[#raidBuffColumns + 1] = column
@@ -127,7 +131,8 @@ function Columns.CreateLayout()
 
     local columns = {
         {
-            columnType    = COLUMN_TYPE.TIMED_AURA,
+            columnType    = COLUMN_TYPE.TIMED,
+            dataSource    = DATA_SOURCE.AURA,
             key           = "food",
             auraHasField  = "hasFood",
             auraTimeField = "foodTime",
@@ -144,7 +149,8 @@ function Columns.CreateLayout()
             IsBad         = isTimedAuraBad,
         },
         {
-            columnType    = COLUMN_TYPE.TIMED_AURA,
+            columnType    = COLUMN_TYPE.TIMED,
+            dataSource    = DATA_SOURCE.AURA,
             key           = "flask",
             auraHasField  = "hasFlask",
             auraTimeField = "flaskTime",
@@ -161,7 +167,8 @@ function Columns.CreateLayout()
             IsBad         = isTimedAuraBad,
         },
         {
-            columnType   = COLUMN_TYPE.EXTERNAL_TIMED,
+            columnType   = COLUMN_TYPE.TIMED,
+            dataSource   = DATA_SOURCE.OIL,
             key          = "oil",
             contextField = "oilData",
             timeField    = "oilTime",
@@ -172,10 +179,11 @@ function Columns.CreateLayout()
             titleX       = x.oil,
             iconID       = db.weapon_enchant_icon_id,
             label        = "Weapon Oil: Unknown",
-            IsBad        = isExternalTimedBad,
+            IsBad        = isOilBad,
         },
         {
-            columnType    = COLUMN_TYPE.ICON_AURA,
+            columnType    = COLUMN_TYPE.ICON,
+            dataSource    = DATA_SOURCE.AURA,
             key           = "augment",
             auraHasField  = "hasAugment",
             auraIconField = "augmentIconID",
@@ -189,7 +197,8 @@ function Columns.CreateLayout()
             IsBad         = isIconAuraBad,
         },
         {
-            columnType    = COLUMN_TYPE.ICON_AURA,
+            columnType    = COLUMN_TYPE.ICON,
+            dataSource    = DATA_SOURCE.AURA,
             key           = "vantus",
             auraHasField  = "hasVantus",
             auraIconField = "vantusIconID",
@@ -207,6 +216,7 @@ function Columns.CreateLayout()
     for raidBuffIndex = 1, raidBuffCount do
         columns[#columns + 1] = {
             columnType = COLUMN_TYPE.RAID_BUFF,
+            dataSource = DATA_SOURCE.RAID_BUFF,
             key        = "raidBuff" .. raidBuffIndex,
             index      = raidBuffIndex,
             iconX      = x.raidBuff[raidBuffIndex],
@@ -218,6 +228,7 @@ function Columns.CreateLayout()
 
     columns[#columns + 1] = {
         columnType   = COLUMN_TYPE.DURABILITY,
+        dataSource   = DATA_SOURCE.DURABILITY,
         key          = "durability",
         contextField = "durabilityData",
         titleX       = x.durability + (DURABILITY_WIDTH - ICON_SIZE) / 2,
