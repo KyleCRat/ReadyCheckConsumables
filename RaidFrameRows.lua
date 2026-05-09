@@ -257,19 +257,20 @@ local function applySimpleBuff(icon, overlay, unit, hasBuff, auraIconID, fallbac
 end
 
 local function applyRcIcon(row, unit, member, layout, context)
-    local status = context.state.rcStatus[unit] or context.rcPending
+    local readyCheck = context.readyCheck
+    local status = context.state.rcStatus[unit] or readyCheck.pending
 
-    if status == context.rcNot and not member.online then
+    if status == readyCheck.notReady and not member.online then
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
         row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
-    elseif status == context.rcPending and member.isDead then
+    elseif status == readyCheck.pending and member.isDead then
         row.rcIcon:SetSize(
             layout.rcIconWidth * 26 / 33, layout.rcIconWidth
         )
         row.rcIcon:SetAtlas(RC_ATLAS_DEAD)
     else
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
-        row.rcIcon:SetTexture(context.rcTextures[status])
+        row.rcIcon:SetTexture(readyCheck.textures[status])
     end
 end
 

@@ -62,22 +62,13 @@ function TitleBar.Create(parent, layout, options)
         titleBar.colIcons[i] = icon
     end
 
-    function titleBar:RefreshColumns(activeCount, members, isBad, readyTexture, notReadyTexture)
+    function titleBar:RefreshColumns(columnStates, readyTexture, notReadyTexture)
         local numCols = #self.colIcons
 
         for i = 1, numCols do
-            local anyBad = false
-
-            for j = 1, activeCount do
-                local member = members[j]
-
-                if member and member.online and isBad(member, i) then
-                    anyBad = true
-                    break
-                end
-            end
-
-            self.colIcons[i]:SetTexture(anyBad and notReadyTexture or readyTexture)
+            self.colIcons[i]:SetTexture(
+                columnStates[i] and notReadyTexture or readyTexture
+            )
         end
     end
 

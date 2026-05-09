@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
+local F = RCC.F
 local db = RCC.db
 
 local ICON_SIZE        = 26
@@ -88,6 +89,13 @@ function Columns.CreateLayout()
             iconX        = x.food,
             iconID       = db.food_icon_id,
             label        = "Food: Missing",
+            IsBad        = function(member, context)
+                local a = member.auras
+
+                return not a.hasFood
+                    or (a.foodTime ~= context.noDuration
+                        and a.foodTime < context.expireWarnSeconds)
+            end,
         },
         {
             key          = "flask",
@@ -98,6 +106,13 @@ function Columns.CreateLayout()
             iconX        = x.flask,
             iconID       = db.flask_icon_id,
             label        = "Flask: Missing",
+            IsBad        = function(member, context)
+                local a = member.auras
+
+                return not a.hasFlask
+                    or (a.flaskTime ~= context.noDuration
+                        and a.flaskTime < context.expireWarnSeconds)
+            end,
         },
         {
             key          = "oil",
@@ -108,6 +123,17 @@ function Columns.CreateLayout()
             iconX        = x.oil,
             iconID       = db.weapon_enchant_icon_id,
             label        = "Weapon Oil: Unknown",
+            IsBad        = function(member, context)
+                local playerKey = member.key or F.fullName(member.name)
+                local oil = context.oilData[playerKey]
+                local oilTime = oil and oil.time
+
+                if oilTime == nil or oilTime == -1 then
+                    return false
+                end
+
+                return oilTime == 0 or oilTime < context.expireWarnSeconds
+            end,
         },
     }
 
@@ -119,6 +145,9 @@ function Columns.CreateLayout()
             iconX        = x.augment,
             iconID       = db.augment_icon_id,
             label        = "Augment Rune: Missing",
+            IsBad        = function(member)
+                return not member.auras.hasAugment
+            end,
         },
         {
             key          = "vantus",
@@ -127,17 +156,54 @@ function Columns.CreateLayout()
             iconX        = x.vantus,
             iconID       = db.vantus_icon_id,
             label        = "Vantus Rune: Missing",
+            IsBad        = function(member)
+                return not member.auras.hasVantus
+            end,
         },
     }
 
     local raidBuffColumns = {}
     for k = 1, raidBuffCount do
+        local index = k
+
         raidBuffColumns[k] = {
             key       = "raidBuff" .. k,
-            index     = k,
-            iconX     = x.raidBuff[k],
-            spellID   = db.raidBuffDefs[k][3],
+            index     = index,
+            iconX     = x.raidBuff[index],
+            spellID   = db.raidBuffDefs[index][3],
+            IsBad     = function(member)
+                local auraID = member.auras.raidBuff[index]
+
+                return not auraID or auraID == false
+            end,
         }
+    end
+
+    local durabilityColumn = {
+        key   = "durability",
+        IsBad = function(member, context)
+            local playerKey = member.key or F.fullName(member.name)
+            local pct = context.durabilityData[playerKey]
+
+            if not pct then
+                return false
+            end
+
+            return pct < context.durabilityThreshold
+        end,
+    }
+
+    local titleColumns = {
+        [col.FOOD]       = timedColumns[1],
+        [col.FLASK]      = timedColumns[2],
+        [col.OIL]        = timedColumns[3],
+        [col.AUGMENT]    = iconColumns[1],
+        [col.VANTUS]     = iconColumns[2],
+        [col.DURABILITY] = durabilityColumn,
+    }
+
+    for k = 1, raidBuffCount do
+        titleColumns[col.VANTUS + k] = raidBuffColumns[k]
     end
 
     return {
@@ -152,6 +218,7 @@ function Columns.CreateLayout()
         col             = col,
         x               = x,
         titleX          = titleX,
+        titleColumns    = titleColumns,
         timedColumns    = timedColumns,
         iconColumns     = iconColumns,
         raidBuffColumns = raidBuffColumns,

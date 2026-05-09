@@ -47,14 +47,6 @@ local RC_TEXTURES = {
 
 local LAYOUT = Columns.CreateLayout()
 
--- Title bar column indices, used by isBad() and refreshTitleBar().
-local COL_FOOD       = LAYOUT.col.FOOD
-local COL_FLASK      = LAYOUT.col.FLASK
-local COL_OIL        = LAYOUT.col.OIL
-local COL_AUGMENT    = LAYOUT.col.AUGMENT
-local COL_VANTUS     = LAYOUT.col.VANTUS
-local COL_DURABILITY = LAYOUT.col.DURABILITY
-
 --------------------------------------------------------------------------------
 --- Raid buff default icons (spell texture IDs)
 --- Looked up via C_Spell.GetSpellInfo at load time
@@ -244,15 +236,18 @@ local state = {
     readyAnnounced = false,
 }
 
-local rowRenderContext = {
-    state             = state,
-    oilData           = oilData,
-    durabilityData    = durabilityData,
-    rcPending         = RC_PENDING,
-    rcNot             = RC_NOT,
-    rcTextures        = RC_TEXTURES,
-    expireWarnSeconds = EXPIRE_WARN_SECONDS,
-    noDuration        = NO_DURATION,
+local renderContext = {
+    state               = state,
+    oilData             = oilData,
+    durabilityData      = durabilityData,
+    readyCheck          = {
+        pending  = RC_PENDING,
+        notReady = RC_NOT,
+        textures = RC_TEXTURES,
+    },
+    expireWarnSeconds   = EXPIRE_WARN_SECONDS,
+    noDuration          = NO_DURATION,
+    durabilityThreshold = DURABILITY_THRESHOLD,
 }
 
 --------------------------------------------------------------------------------
@@ -447,59 +442,31 @@ end
 --- Title bar helpers
 --------------------------------------------------------------------------------
 
--- Returns true if the column buff is considered "bad" for a member.
--- bad = missing, or (food/flask) present but expiring soon.
-local function isBad(member, colIndex)
-    local a = member.auras
-
-    if colIndex == COL_FOOD then
-        return not a.hasFood
-            or (a.foodTime ~= NO_DURATION and a.foodTime < EXPIRE_WARN_SECONDS)
-    end
-
-    if colIndex == COL_FLASK then
-        return not a.hasFlask
-            or (a.flaskTime ~= NO_DURATION and a.flaskTime < EXPIRE_WARN_SECONDS)
-    end
-
-    if colIndex == COL_OIL then
-        local oil = oilData[member.key or F.fullName(member.name)]
-        local oilTime = oil and oil.time
-
-        if oilTime == nil or oilTime == -1 then
-            return false
-        end
-
-        return oilTime == 0 or oilTime < EXPIRE_WARN_SECONDS
-    end
-
-    if colIndex == COL_AUGMENT then
-        return not a.hasAugment
-    end
-
-    if colIndex == COL_VANTUS then
-        return not a.hasVantus
-    end
-
-    if colIndex == COL_DURABILITY then
-        local pct = durabilityData[member.key or F.fullName(member.name)]
-
-        if not pct then
-            return false
-        end
-
-        return pct < DURABILITY_THRESHOLD
-    end
-
-    local raidIdx = colIndex - COL_VANTUS
-    return not a.raidBuff[raidIdx] or a.raidBuff[raidIdx] == false
-end
-
 local function refreshTitleBar()
+    local columns = LAYOUT.titleColumns
+    local columnStates = {}
+
+    for columnIndex = 1, #columns do
+        local column = columns[columnIndex]
+        local anyBad = false
+
+        for memberIndex = 1, state.activeCount do
+            local member = state.members[memberIndex]
+
+            if member
+                and member.online
+                and column.IsBad(member, renderContext)
+            then
+                anyBad = true
+                break
+            end
+        end
+
+        columnStates[columnIndex] = anyBad
+    end
+
     titleBar:RefreshColumns(
-        state.activeCount,
-        state.members,
-        isBad,
+        columnStates,
         RC_TEXTURES[RC_READY],
         RC_TEXTURES[RC_NOT]
     )
@@ -567,13 +534,13 @@ local function refreshRow(index)
         return
     end
 
-    Rows.ApplyData(row, state.members[index], LAYOUT, rowRenderContext)
+    Rows.ApplyData(row, state.members[index], LAYOUT, renderContext)
     refreshTitleBar()
 end
 
 local function refreshAllRows()
     for i = 1, state.activeCount do
-        Rows.ApplyData(frame.rows[i], state.members[i], LAYOUT, rowRenderContext)
+        Rows.ApplyData(frame.rows[i], state.members[i], LAYOUT, renderContext)
     end
 
     for i = state.activeCount + 1, MAX_ROWS do
