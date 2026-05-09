@@ -108,7 +108,7 @@ frame:SetScript("OnDragStart", function(self)
 end)
 
 --------------------------------------------------------------------------------
---- Scale popup
+--- Scale Popup Button
 --------------------------------------------------------------------------------
 
 frame.scaleButton = UI.CreateControlButton(frame, SCALE_BUTTON_WIDTH, 20, "")
@@ -144,7 +144,10 @@ end
 frame.SyncScaleControl = syncScaleControl
 syncScaleControl()
 
---- Close button
+--------------------------------------------------------------------------------
+--- Close Button
+--------------------------------------------------------------------------------
+
 frame.close = UI.CreateControlButton(
     frame, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
 )
@@ -156,6 +159,9 @@ frame.close:SetAttribute("_onclick", [[
     self:GetFrameRef("CLLRaidFrame"):Hide()
 ]])
 
+--------------------------------------------------------------------------------
+--- Dragging and Positioning
+--------------------------------------------------------------------------------
 
 local function savePosition(self)
     self:StopMovingOrSizing()
@@ -197,6 +203,10 @@ local function restorePosition()
     frame:ClearAllPoints()
     frame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
 end
+
+--------------------------------------------------------------------------------
+--- Title Bar
+--------------------------------------------------------------------------------
 
 local titleBar = TitleBar.Create(frame, LAYOUT, {
     titleHeight    = TITLE_HEIGHT,
