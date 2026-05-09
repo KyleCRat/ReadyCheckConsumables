@@ -128,6 +128,7 @@ function Columns.CreateLayout()
             iconID        = db.food_icon_id,
             label         = "Food: Missing",
             CreateCell    = Renderers.TIMED.CreateCell,
+            RenderCell    = Renderers.TIMED.RenderAuraCell,
             IsBad         = isTimedAuraBad,
         },
         {
@@ -147,6 +148,7 @@ function Columns.CreateLayout()
             iconID        = db.flask_icon_id,
             label         = "Flask: Missing",
             CreateCell    = Renderers.TIMED.CreateCell,
+            RenderCell    = Renderers.TIMED.RenderAuraCell,
             IsBad         = isTimedAuraBad,
         },
         {
@@ -163,6 +165,7 @@ function Columns.CreateLayout()
             iconID       = db.weapon_enchant_icon_id,
             label        = "Weapon Oil: Unknown",
             CreateCell   = Renderers.TIMED.CreateCell,
+            RenderCell   = Renderers.TIMED.RenderOilCell,
             IsBad        = isOilBad,
         },
         {
@@ -179,6 +182,7 @@ function Columns.CreateLayout()
             iconID        = db.augment_icon_id,
             label         = "Augment Rune: Missing",
             CreateCell    = Renderers.ICON.CreateCell,
+            RenderCell    = Renderers.ICON.RenderAuraCell,
             IsBad         = isIconAuraBad,
         },
         {
@@ -195,6 +199,7 @@ function Columns.CreateLayout()
             iconID        = db.vantus_icon_id,
             label         = "Vantus Rune: Missing",
             CreateCell    = Renderers.ICON.CreateCell,
+            RenderCell    = Renderers.ICON.RenderAuraCell,
             IsBad         = isIconAuraBad,
         },
     }
@@ -209,6 +214,7 @@ function Columns.CreateLayout()
             titleX     = x.raidBuff[raidBuffIndex],
             spellID    = db.raidBuffDefs[raidBuffIndex][3],
             CreateCell = Renderers.RAID_BUFF.CreateCell,
+            RenderCell = Renderers.RAID_BUFF.RenderCell,
             IsBad      = isRaidBuffBad,
         }
     end
@@ -222,6 +228,7 @@ function Columns.CreateLayout()
         textX        = x.durability,
         titleX       = x.durability + (DURABILITY_WIDTH - ICON_SIZE) / 2,
         CreateCell   = Renderers.DURABILITY.CreateCell,
+        RenderCell   = Renderers.DURABILITY.RenderCell,
         IsBad        = isDurabilityBad,
     }
 

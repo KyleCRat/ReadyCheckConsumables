@@ -3,6 +3,18 @@ local _, RCC = ...
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 local Renderers = RCC.RaidFrameColumnRenderers
 
+local F = RCC.F
+
+local ceil   = ceil
+local format = format
+
+local MISSING_ALPHA     = 0.3
+local COLOR_DUR_GREEN   = { r = 0.2, g = 1,    b = 0.2 }
+local COLOR_DUR_YELLOW  = { r = 1,   g = 0.82, b = 0   }
+local COLOR_DUR_RED     = { r = 1,   g = 0.2,  b = 0.2 }
+local COLOR_TIME_NORMAL = { r = 1,   g = 1,    b = 1   }
+local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
+
 local function onOverlayEnter(self)
     local unit    = self.unit
     local auraID  = self.auraID
@@ -134,18 +146,175 @@ local function createDurabilityCell(row, column, layout, options)
     row[column.textField] = text
 end
 
+local function formatDuration(seconds)
+    local mins = ceil(seconds / 60)
+
+    if mins >= 60 then
+        return format("%dh", ceil(seconds / 3600))
+    end
+
+    return format("%dm", mins > 0 and mins or 0)
+end
+
+local function setTimeColor(timeText, time, context)
+    if time < context.expireWarnSeconds then
+        timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
+    else
+        timeText:SetTextColor(
+            COLOR_TIME_NORMAL.r,
+            COLOR_TIME_NORMAL.g,
+            COLOR_TIME_NORMAL.b
+        )
+    end
+end
+
+local function renderTimedAuraCell(row, member, column, context)
+    local auras = member.auras
+    local icon = row[column.iconField]
+    local timeText = row[column.timeField]
+    local overlay = row[column.overlayField]
+    local hasAura = auras[column.auraHasField]
+    local time = auras[column.auraTimeField]
+    local auraIconID = auras[column.auraIconField]
+    local auraID = auras[column.auraIDField]
+
+    if hasAura then
+        icon:SetDesaturated(false)
+        icon:SetVertexColor(1, 1, 1, 1)
+        icon:SetTexture(auraIconID or column.iconID)
+
+        if time == context.noDuration then
+            timeText:SetText("")
+        else
+            timeText:SetText(formatDuration(time))
+            setTimeColor(timeText, time, context)
+        end
+    else
+        icon:SetTexture(column.iconID)
+        icon:SetDesaturated(true)
+        icon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+        timeText:SetText("")
+    end
+
+    overlay.unit   = member.unit
+    overlay.auraID = auraID
+end
+
+local function setOilMissing(row, column, label)
+    row[column.iconField]:SetTexture(column.iconID)
+    row[column.iconField]:SetDesaturated(true)
+    row[column.iconField]:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+    row[column.timeField]:SetText("")
+    row[column.overlayField].label = label
+end
+
+local function renderOilCell(row, member, column, context)
+    local playerKey = member.key or F.fullName(member.name)
+    local oil = context.oilData[playerKey]
+    local oilTime = oil and oil.time
+    local oilItemID = oil and oil.item or 0
+    local icon = row[column.iconField]
+    local timeText = row[column.timeField]
+    local overlay = row[column.overlayField]
+
+    overlay.itemID = nil
+    overlay.label  = nil
+
+    if oilTime and oilTime > 0 then
+        icon:SetDesaturated(false)
+        icon:SetVertexColor(1, 1, 1, 1)
+        timeText:SetText(formatDuration(oilTime))
+        setTimeColor(timeText, oilTime, context)
+
+        if oilItemID > 0 then
+            overlay.itemID = oilItemID
+        else
+            overlay.label = "Weapon Oil"
+        end
+    elseif oilTime == 0 then
+        setOilMissing(row, column, "Weapon Oil: Missing")
+    elseif oilTime == -1 then
+        setOilMissing(row, column, "Weapon Oil: N/A")
+    else
+        setOilMissing(row, column, column.label)
+        timeText:SetText("?")
+        timeText:SetTextColor(0.5, 0.5, 0.5)
+    end
+end
+
+local function renderIconAuraCell(row, member, column)
+    local auras = member.auras
+    local icon = row[column.iconField]
+    local overlay = row[column.overlayField]
+    local hasAura = auras[column.auraHasField]
+    local auraIconID = auras[column.auraIconField]
+    local auraID = auras[column.auraIDField]
+
+    icon:SetTexture(auraIconID or column.iconID)
+    icon:SetDesaturated(not hasAura)
+    icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
+    overlay.unit   = member.unit
+    overlay.auraID = auraID
+end
+
+local function renderRaidBuffCell(row, member, column)
+    local auraID = member.auras.raidBuff[column.index]
+    local hasAura = auraID and auraID ~= false
+    local icon = row.raidBuffIcons[column.index]
+    local overlay = row.raidBuffOverlays[column.index]
+
+    icon:SetDesaturated(not hasAura)
+    icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
+    overlay.unit = member.unit
+
+    if hasAura and not issecretvalue(auraID) then
+        overlay.auraID = auraID
+    else
+        overlay.auraID = nil
+    end
+end
+
+local function renderDurabilityCell(row, member, column, context)
+    local playerKey = member.key or F.fullName(member.name)
+    local durPct = context.durabilityData[playerKey]
+    local text = row[column.textField]
+
+    if durPct then
+        text:SetText(durPct .. "%")
+
+        local color
+        if durPct <= 20 then
+            color = COLOR_DUR_RED
+        elseif durPct <= 50 then
+            color = COLOR_DUR_YELLOW
+        else
+            color = COLOR_DUR_GREEN
+        end
+
+        text:SetTextColor(color.r, color.g, color.b)
+    else
+        text:SetText("?")
+        text:SetTextColor(0.5, 0.5, 0.5)
+    end
+end
+
 Renderers.TIMED = {
-    CreateCell = createTimedCell,
+    CreateCell     = createTimedCell,
+    RenderAuraCell = renderTimedAuraCell,
+    RenderOilCell  = renderOilCell,
 }
 
 Renderers.ICON = {
-    CreateCell = createIconCell,
+    CreateCell     = createIconCell,
+    RenderAuraCell = renderIconAuraCell,
 }
 
 Renderers.RAID_BUFF = {
     CreateCell = createRaidBuffCell,
+    RenderCell = renderRaidBuffCell,
 }
 
 Renderers.DURABILITY = {
     CreateCell = createDurabilityCell,
+    RenderCell = renderDurabilityCell,
 }
