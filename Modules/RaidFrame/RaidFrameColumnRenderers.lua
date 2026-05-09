@@ -86,24 +86,41 @@ local function createIconBg(row, icon, color)
     bg:SetVertexColor(color.r, color.g, color.b, 1)
 end
 
+local function setCell(row, column, cell)
+    row.cells[column.key] = cell
+end
+
+local function getCell(row, column)
+    local cell = row.cells and row.cells[column.key]
+
+    if not cell then
+        error("Raid frame row has no cell for column: " .. tostring(column.key), 2)
+    end
+
+    return cell
+end
+
 local function createTimedCell(row, column, layout, options)
     local timeText = row:CreateFontString(nil, "ARTWORK")
     timeText:SetPoint("LEFT", row, "LEFT", column.timeX, 0)
     timeText:SetFont(options.font, options.fontSizeTime, "OUTLINE")
     timeText:SetWidth(layout.timeWidth)
     timeText:SetJustifyH("RIGHT")
-    row[column.timeField] = timeText
 
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
     createIconBg(row, icon, options.missingBg)
-    row[column.iconField] = icon
 
     local overlay = createOverlay(row, icon)
     overlay.label = column.label
-    row[column.overlayField] = overlay
+
+    setCell(row, column, {
+        timeText = timeText,
+        icon     = icon,
+        overlay  = overlay,
+    })
 end
 
 local function createIconCell(row, column, layout, options)
@@ -112,11 +129,14 @@ local function createIconCell(row, column, layout, options)
     icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
     createIconBg(row, icon, options.missingBg)
-    row[column.iconField] = icon
 
     local overlay = createOverlay(row, icon)
     overlay.label = column.label
-    row[column.overlayField] = overlay
+
+    setCell(row, column, {
+        icon    = icon,
+        overlay = overlay,
+    })
 end
 
 local function createRaidBuffCell(row, column, layout, options)
@@ -125,11 +145,14 @@ local function createRaidBuffCell(row, column, layout, options)
     icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(options.raidBuffIcons[column.index])
     createIconBg(row, icon, options.missingBg)
-    row.raidBuffIcons[column.index] = icon
 
     local overlay = createOverlay(row, icon)
     overlay.spellID = column.spellID
-    row.raidBuffOverlays[column.index] = overlay
+
+    setCell(row, column, {
+        icon    = icon,
+        overlay = overlay,
+    })
 end
 
 local function createDurabilityCell(row, column, layout, options)
@@ -141,7 +164,10 @@ local function createDurabilityCell(row, column, layout, options)
     text:SetJustifyH("CENTER")
     text:SetText("?")
     text:SetTextColor(0.5, 0.5, 0.5)
-    row[column.textField] = text
+
+    setCell(row, column, {
+        text = text,
+    })
 end
 
 local function formatDuration(seconds)
@@ -172,9 +198,10 @@ end
 
 local function renderTimedAuraCell(row, member, column, context)
     local data = getColumnData(member, column)
-    local icon = row[column.iconField]
-    local timeText = row[column.timeField]
-    local overlay = row[column.overlayField]
+    local cell = getCell(row, column)
+    local icon = cell.icon
+    local timeText = cell.timeText
+    local overlay = cell.overlay
 
     if data and data.has then
         icon:SetDesaturated(false)
@@ -198,21 +225,22 @@ local function renderTimedAuraCell(row, member, column, context)
     overlay.auraID = data and data.auraID or nil
 end
 
-local function setOilMissing(row, column, label)
-    row[column.iconField]:SetTexture(column.iconID)
-    row[column.iconField]:SetDesaturated(true)
-    row[column.iconField]:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-    row[column.timeField]:SetText("")
-    row[column.overlayField].label = label
+local function setOilMissing(cell, column, label)
+    cell.icon:SetTexture(column.iconID)
+    cell.icon:SetDesaturated(true)
+    cell.icon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
+    cell.timeText:SetText("")
+    cell.overlay.label = label
 end
 
 local function renderOilCell(row, member, column, context)
     local data = getColumnData(member, column)
     local oilTime = data and data.time
     local oilItemID = data and data.itemID or 0
-    local icon = row[column.iconField]
-    local timeText = row[column.timeField]
-    local overlay = row[column.overlayField]
+    local cell = getCell(row, column)
+    local icon = cell.icon
+    local timeText = cell.timeText
+    local overlay = cell.overlay
 
     overlay.itemID = nil
     overlay.label  = nil
@@ -229,11 +257,11 @@ local function renderOilCell(row, member, column, context)
             overlay.label = "Weapon Oil"
         end
     elseif oilTime == 0 then
-        setOilMissing(row, column, "Weapon Oil: Missing")
+        setOilMissing(cell, column, "Weapon Oil: Missing")
     elseif oilTime == -1 then
-        setOilMissing(row, column, "Weapon Oil: N/A")
+        setOilMissing(cell, column, "Weapon Oil: N/A")
     else
-        setOilMissing(row, column, column.label)
+        setOilMissing(cell, column, column.label)
         timeText:SetText("?")
         timeText:SetTextColor(0.5, 0.5, 0.5)
     end
@@ -241,8 +269,9 @@ end
 
 local function renderIconAuraCell(row, member, column)
     local data = getColumnData(member, column)
-    local icon = row[column.iconField]
-    local overlay = row[column.overlayField]
+    local cell = getCell(row, column)
+    local icon = cell.icon
+    local overlay = cell.overlay
     local hasAura = data and data.has
 
     icon:SetTexture((data and data.iconID) or column.iconID)
@@ -256,8 +285,9 @@ local function renderRaidBuffCell(row, member, column)
     local data = getColumnData(member, column)
     local auraID = data and data.auraID
     local hasAura = data and data.has
-    local icon = row.raidBuffIcons[column.index]
-    local overlay = row.raidBuffOverlays[column.index]
+    local cell = getCell(row, column)
+    local icon = cell.icon
+    local overlay = cell.overlay
 
     icon:SetDesaturated(not hasAura)
     icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
@@ -276,7 +306,8 @@ end
 local function renderDurabilityCell(row, member, column, context)
     local data = getColumnData(member, column)
     local durPct = data and data.percent
-    local text = row[column.textField]
+    local cell = getCell(row, column)
+    local text = cell.text
 
     if durPct then
         text:SetText(durPct .. "%")

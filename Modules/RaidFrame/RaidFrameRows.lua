@@ -36,8 +36,7 @@ local function createRow(parent, rows, index, layout, options)
     row.nameText:SetJustifyH("LEFT")
     row.nameText:SetWordWrap(false)
 
-    row.raidBuffIcons    = {}
-    row.raidBuffOverlays = {}
+    row.cells = {}
 
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
