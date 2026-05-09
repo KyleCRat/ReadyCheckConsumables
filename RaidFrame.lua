@@ -491,6 +491,19 @@ local function createTimedColumn(row, column)
     row[column.overlayField] = overlay
 end
 
+local function createIconColumn(row, column)
+    local icon = row:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
+    icon:SetSize(ICON_SIZE, ICON_SIZE)
+    icon:SetTexture(column.iconID)
+    createIconBg(row, icon)
+    row[column.iconField] = icon
+
+    local overlay = createOverlay(row, icon)
+    overlay.label = column.label
+    row[column.overlayField] = overlay
+end
+
 --------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)
 --------------------------------------------------------------------------------
@@ -529,23 +542,9 @@ local function createRow(index)
         createTimedColumn(row, LAYOUT.timedColumns[i])
     end
 
-    -- Augment Rune icon
-    row.augmentIcon = row:CreateTexture(nil, "ARTWORK")
-    row.augmentIcon:SetPoint("LEFT", row, "LEFT", x.augment, 0)
-    row.augmentIcon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.augmentIcon:SetTexture(db.augment_icon_id)
-    createIconBg(row, row.augmentIcon)
-    row.augmentOverlay = createOverlay(row, row.augmentIcon)
-    row.augmentOverlay.label = "Augment Rune: Missing"
-
-    -- Vantus Rune icon
-    row.vantusIcon = row:CreateTexture(nil, "ARTWORK")
-    row.vantusIcon:SetPoint("LEFT", row, "LEFT", x.vantus, 0)
-    row.vantusIcon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.vantusIcon:SetTexture(db.vantus_icon_id)
-    createIconBg(row, row.vantusIcon)
-    row.vantusOverlay = createOverlay(row, row.vantusIcon)
-    row.vantusOverlay.label = "Vantus Rune: Missing"
+    for i = 1, #LAYOUT.iconColumns do
+        createIconColumn(row, LAYOUT.iconColumns[i])
+    end
 
     -- Raid buff icons
     row.raidBuffIcons    = {}

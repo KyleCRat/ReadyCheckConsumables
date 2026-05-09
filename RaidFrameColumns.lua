@@ -103,6 +103,25 @@ function Columns.CreateLayout(options)
         },
     }
 
+    local iconColumns = {
+        {
+            key          = "augment",
+            iconField    = "augmentIcon",
+            overlayField = "augmentOverlay",
+            iconX        = x.augment,
+            iconID       = db.augment_icon_id,
+            label        = "Augment Rune: Missing",
+        },
+        {
+            key          = "vantus",
+            iconField    = "vantusIcon",
+            overlayField = "vantusOverlay",
+            iconX        = x.vantus,
+            iconID       = db.vantus_icon_id,
+            label        = "Vantus Rune: Missing",
+        },
+    }
+
     return {
         raidBuffCount = raidBuffCount,
         frameWidth    = frameWidth,
@@ -110,5 +129,6 @@ function Columns.CreateLayout(options)
         x             = x,
         titleX        = titleX,
         timedColumns  = timedColumns,
+        iconColumns   = iconColumns,
     }
 end
