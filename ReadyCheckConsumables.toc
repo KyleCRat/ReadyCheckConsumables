@@ -20,6 +20,7 @@ data/Settings.lua
 ConsumablesFrame.lua
 RaidFrameTest.lua
 RaidFrameBroadcast.lua
+RaidFrameColumnRenderers.lua
 RaidFrameColumns.lua
 RaidFrameRows.lua
 RaidFrameTitleBar.lua

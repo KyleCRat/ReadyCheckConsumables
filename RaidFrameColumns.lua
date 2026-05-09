@@ -3,8 +3,9 @@ local _, RCC = ...
 RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
-local F = RCC.F
-local db = RCC.db
+local F         = RCC.F
+local db        = RCC.db
+local Renderers = RCC.RaidFrameColumnRenderers
 
 local ICON_SIZE        = 26
 local NAME_WIDTH       = 150
@@ -126,6 +127,7 @@ function Columns.CreateLayout()
             titleX        = x.food,
             iconID        = db.food_icon_id,
             label         = "Food: Missing",
+            CreateCell    = Renderers.TIMED.CreateCell,
             IsBad         = isTimedAuraBad,
         },
         {
@@ -144,6 +146,7 @@ function Columns.CreateLayout()
             titleX        = x.flask,
             iconID        = db.flask_icon_id,
             label         = "Flask: Missing",
+            CreateCell    = Renderers.TIMED.CreateCell,
             IsBad         = isTimedAuraBad,
         },
         {
@@ -159,6 +162,7 @@ function Columns.CreateLayout()
             titleX       = x.oil,
             iconID       = db.weapon_enchant_icon_id,
             label        = "Weapon Oil: Unknown",
+            CreateCell   = Renderers.TIMED.CreateCell,
             IsBad        = isOilBad,
         },
         {
@@ -174,6 +178,7 @@ function Columns.CreateLayout()
             titleX        = x.augment,
             iconID        = db.augment_icon_id,
             label         = "Augment Rune: Missing",
+            CreateCell    = Renderers.ICON.CreateCell,
             IsBad         = isIconAuraBad,
         },
         {
@@ -189,6 +194,7 @@ function Columns.CreateLayout()
             titleX        = x.vantus,
             iconID        = db.vantus_icon_id,
             label         = "Vantus Rune: Missing",
+            CreateCell    = Renderers.ICON.CreateCell,
             IsBad         = isIconAuraBad,
         },
     }
@@ -202,6 +208,7 @@ function Columns.CreateLayout()
             iconX      = x.raidBuff[raidBuffIndex],
             titleX     = x.raidBuff[raidBuffIndex],
             spellID    = db.raidBuffDefs[raidBuffIndex][3],
+            CreateCell = Renderers.RAID_BUFF.CreateCell,
             IsBad      = isRaidBuffBad,
         }
     end
@@ -214,6 +221,7 @@ function Columns.CreateLayout()
         textField    = "durabilityText",
         textX        = x.durability,
         titleX       = x.durability + (DURABILITY_WIDTH - ICON_SIZE) / 2,
+        CreateCell   = Renderers.DURABILITY.CreateCell,
         IsBad        = isDurabilityBad,
     }
 
