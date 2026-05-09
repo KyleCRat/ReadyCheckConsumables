@@ -72,26 +72,6 @@ local function isDurabilityBad(member, context, column)
     return pct < context.durabilityThreshold
 end
 
-local function deriveColumnBuckets(columns)
-    local timedColumns = {}
-    local iconColumns = {}
-    local raidBuffColumns = {}
-
-    for columnIndex = 1, #columns do
-        local column = columns[columnIndex]
-
-        if column.columnType == COLUMN_TYPE.TIMED then
-            timedColumns[#timedColumns + 1] = column
-        elseif column.columnType == COLUMN_TYPE.ICON then
-            iconColumns[#iconColumns + 1] = column
-        elseif column.columnType == COLUMN_TYPE.RAID_BUFF then
-            raidBuffColumns[#raidBuffColumns + 1] = column
-        end
-    end
-
-    return timedColumns, iconColumns, raidBuffColumns
-end
-
 function Columns.CreateLayout()
     local raidBuffCount = #db.raidBuffDefs
 
@@ -231,11 +211,11 @@ function Columns.CreateLayout()
         dataSource   = DATA_SOURCE.DURABILITY,
         key          = "durability",
         contextField = "durabilityData",
+        textField    = "durabilityText",
+        textX        = x.durability,
         titleX       = x.durability + (DURABILITY_WIDTH - ICON_SIZE) / 2,
         IsBad        = isDurabilityBad,
     }
-
-    local timedColumns, iconColumns, raidBuffColumns = deriveColumnBuckets(columns)
 
     return {
         raidBuffCount   = raidBuffCount,
@@ -248,8 +228,5 @@ function Columns.CreateLayout()
         durabilityWidth = DURABILITY_WIDTH,
         x               = x,
         columns         = columns,
-        timedColumns    = timedColumns,
-        iconColumns     = iconColumns,
-        raidBuffColumns = raidBuffColumns,
     }
 end

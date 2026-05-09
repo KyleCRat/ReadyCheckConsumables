@@ -141,6 +141,25 @@ local function createRaidBuffColumn(row, column, layout, options)
     row.raidBuffOverlays[column.index] = overlay
 end
 
+local function createDurabilityColumn(row, column, layout, options)
+    local text = row:CreateFontString(nil, "ARTWORK")
+
+    text:SetPoint("LEFT", row, "LEFT", column.textX, 0)
+    text:SetFont(options.font, options.fontSizeTime, "OUTLINE")
+    text:SetWidth(layout.durabilityWidth)
+    text:SetJustifyH("CENTER")
+    text:SetText("?")
+    text:SetTextColor(0.5, 0.5, 0.5)
+    row[column.textField] = text
+end
+
+local COLUMN_CREATORS = {
+    timed      = createTimedColumn,
+    icon       = createIconColumn,
+    raidBuff   = createRaidBuffColumn,
+    durability = createDurabilityColumn,
+}
+
 local function createRow(parent, rows, index, layout, options)
     local row = CreateFrame("Frame", nil, parent)
     local x = layout.x
@@ -165,28 +184,19 @@ local function createRow(parent, rows, index, layout, options)
     row.nameText:SetJustifyH("LEFT")
     row.nameText:SetWordWrap(false)
 
-    for i = 1, #layout.timedColumns do
-        createTimedColumn(row, layout.timedColumns[i], layout, options)
-    end
-
-    for i = 1, #layout.iconColumns do
-        createIconColumn(row, layout.iconColumns[i], layout, options)
-    end
-
     row.raidBuffIcons    = {}
     row.raidBuffOverlays = {}
 
-    for k = 1, #layout.raidBuffColumns do
-        createRaidBuffColumn(row, layout.raidBuffColumns[k], layout, options)
-    end
+    for columnIndex = 1, #layout.columns do
+        local column = layout.columns[columnIndex]
+        local createColumn = COLUMN_CREATORS[column.columnType]
 
-    row.durabilityText = row:CreateFontString(nil, "ARTWORK")
-    row.durabilityText:SetPoint("LEFT", row, "LEFT", x.durability, 0)
-    row.durabilityText:SetFont(options.font, options.fontSizeTime, "OUTLINE")
-    row.durabilityText:SetWidth(layout.durabilityWidth)
-    row.durabilityText:SetJustifyH("CENTER")
-    row.durabilityText:SetText("?")
-    row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
+        if not createColumn then
+            error("Unknown raid frame column type: " .. tostring(column.columnType), 2)
+        end
+
+        createColumn(row, column, layout, options)
+    end
 
     if index == 1 then
         row:SetPoint("TOPLEFT", parent, "TOPLEFT", layout.framePad,
