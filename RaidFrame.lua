@@ -455,7 +455,7 @@ local function refreshTitleBar()
 
             if member
                 and member.online
-                and column.IsBad(member, renderContext)
+                and column.IsBad(member, renderContext, column)
             then
                 anyBad = true
                 break
