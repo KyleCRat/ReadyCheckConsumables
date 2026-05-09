@@ -43,6 +43,11 @@ local RC_TEXTURES = {
     [RC_NOT]     = "Interface\\RaidFrame\\ReadyCheck-NotReady",
 }
 
+local TITLE_COLUMN_TEXTURES = {
+    ready    = RC_TEXTURES[RC_READY],
+    notReady = RC_TEXTURES[RC_NOT],
+}
+
 local LAYOUT = Columns.CreateLayout()
 
 local broadcast = Broadcast.Create()
@@ -234,38 +239,8 @@ local renderContext = {
 }
 
 --------------------------------------------------------------------------------
---- Title bar helpers
+--- Ready check summary helpers
 --------------------------------------------------------------------------------
-
-local function refreshTitleBar()
-    local columns = LAYOUT.columns
-    local columnStates = {}
-
-    for columnIndex = 1, #columns do
-        local column = columns[columnIndex]
-        local anyBad = false
-
-        for memberIndex = 1, state.activeCount do
-            local member = state.members[memberIndex]
-
-            if member
-                and member.online
-                and column.IsBad(member, renderContext, column)
-            then
-                anyBad = true
-                break
-            end
-        end
-
-        columnStates[columnIndex] = anyBad
-    end
-
-    titleBar:RefreshColumns(
-        columnStates,
-        RC_TEXTURES[RC_READY],
-        RC_TEXTURES[RC_NOT]
-    )
-end
 
 local function updateTitleCount()
     local readyCount = 0
@@ -322,35 +297,26 @@ local function showFinishedSummary()
     end
 end
 
-local function refreshRow(index)
-    local row = frame.rows[index]
-
-    if not row then
-        return
-    end
-
-    Columns.SyncExternalData(state.members[index], LAYOUT, renderContext)
-    Rows.ApplyData(row, state.members[index], LAYOUT, renderContext)
-    refreshTitleBar()
+local function refreshRowAndTitle(index)
+    Rows.RefreshRow(frame.rows[index], state.members[index], LAYOUT, renderContext)
+    titleBar:RefreshFromMembers(
+        state.members,
+        state.activeCount,
+        LAYOUT,
+        renderContext,
+        TITLE_COLUMN_TEXTURES
+    )
 end
 
-local function refreshAllRows()
-    for i = 1, state.activeCount do
-        Columns.SyncExternalData(state.members[i], LAYOUT, renderContext)
-        Rows.ApplyData(frame.rows[i], state.members[i], LAYOUT, renderContext)
-    end
-
-    for i = state.activeCount + 1, MAX_ROWS do
-        frame.rows[i]:Hide()
-    end
-
-    local height = LAYOUT.framePad * 2
-        + TITLE_HEIGHT + LAYOUT.framePad
-        + state.activeCount * ROW_HEIGHT
-        + (state.activeCount > 1 and (state.activeCount - 1) * V_PAD or 0)
-
-    frame:SetHeight(height)
-    refreshTitleBar()
+local function refreshAllRowsAndTitle()
+    frame:SetHeight(Rows.RefreshAll(frame.rows, state, LAYOUT, renderContext))
+    titleBar:RefreshFromMembers(
+        state.members,
+        state.activeCount,
+        LAYOUT,
+        renderContext,
+        TITLE_COLUMN_TEXTURES
+    )
 end
 
 --------------------------------------------------------------------------------
@@ -387,7 +353,7 @@ local function scheduleAddonRefresh()
         addonRefreshTimer = nil
 
         if frame:IsShown() then
-            refreshAllRows()
+            refreshAllRowsAndTitle()
         end
     end)
 end
@@ -474,7 +440,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
         end
     end
 
-    refreshAllRows()
+    refreshAllRowsAndTitle()
     updateTitleCount()
 
     if not self.manualShow then
@@ -502,7 +468,7 @@ function frame:OnTestReadyCheck(permanent)
     broadcast:SendDurability()
     broadcast:SendOilStatus()
 
-    refreshAllRows()
+    refreshAllRowsAndTitle()
     updateTitleCount()
 
     startProgressBar(TEST_DURATION)
@@ -549,7 +515,7 @@ function frame:OnReadyCheckConfirm(unit, ready)
     end
 
     state.rcStatus[unit] = ready and RC_READY or RC_NOT
-    refreshRow(index)
+    refreshRowAndTitle(index)
 
     local responded = updateTitleCount()
 
@@ -602,7 +568,7 @@ function frame:OnUnitAura(unit)
         return
     end
 
-    refreshRow(index)
+    refreshRowAndTitle(index)
 end
 
 function frame:OnHide()
@@ -653,7 +619,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
     if event == "UPDATE_INVENTORY_DURABILITY" then
         broadcast:SendDurability()
-        refreshAllRows()
+        refreshAllRowsAndTitle()
 
         return
     end
@@ -664,7 +630,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
                 broadcast:SendOilStatus()
 
                 if self:IsShown() then
-                    refreshAllRows()
+                    refreshAllRowsAndTitle()
                 end
             end)
         end

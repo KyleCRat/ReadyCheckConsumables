@@ -73,6 +73,36 @@ function TitleBar.Create(parent, layout, options)
         end
     end
 
+    function titleBar:RefreshFromMembers(members, activeCount, layout, context, textures)
+        local columns = layout.columns
+        local columnStates = {}
+
+        for columnIndex = 1, #columns do
+            local column = columns[columnIndex]
+            local anyBad = false
+
+            for memberIndex = 1, activeCount do
+                local member = members[memberIndex]
+
+                if member
+                    and member.online
+                    and column.IsBad(member, context, column)
+                then
+                    anyBad = true
+                    break
+                end
+            end
+
+            columnStates[columnIndex] = anyBad
+        end
+
+        self:RefreshColumns(
+            columnStates,
+            textures.ready,
+            textures.notReady
+        )
+    end
+
     function titleBar:SetReadyCount(readyCount, activeCount)
         self.countText:SetTextColor(1, 1, 1)
         self.countText:SetText(readyCount .. "/" .. activeCount)

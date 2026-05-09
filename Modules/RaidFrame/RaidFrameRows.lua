@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.RaidFrameRows = RCC.RaidFrameRows or {}
 local Rows = RCC.RaidFrameRows
 
+local Columns = RCC.RaidFrameColumns
 local F = RCC.F
 
 local COLOR_NAME_NORMAL  = { r = 1,   g = 1,   b = 1   }
@@ -60,7 +61,12 @@ local function createRow(parent, rows, index, layout, options)
 end
 
 function Rows.Create(parent, layout, options)
-    local rows = {}
+    local rows = {
+        maxRows     = options.maxRows,
+        rowHeight   = options.rowHeight,
+        titleHeight = options.titleHeight,
+        vPad        = options.vPad,
+    }
 
     for i = 1, options.maxRows do
         rows[i] = createRow(parent, rows, i, layout, options)
@@ -133,4 +139,30 @@ function Rows.ApplyData(row, member, layout, context)
     end
 
     row:Show()
+end
+
+function Rows.RefreshRow(row, member, layout, context)
+    if not row then
+        return
+    end
+
+    Columns.SyncExternalData(member, layout, context)
+    Rows.ApplyData(row, member, layout, context)
+end
+
+function Rows.RefreshAll(rows, state, layout, context)
+    local activeCount = state.activeCount
+
+    for i = 1, activeCount do
+        Rows.RefreshRow(rows[i], state.members[i], layout, context)
+    end
+
+    for i = activeCount + 1, rows.maxRows do
+        rows[i]:Hide()
+    end
+
+    return layout.framePad * 2
+        + rows.titleHeight + layout.framePad
+        + activeCount * rows.rowHeight
+        + (activeCount > 1 and (activeCount - 1) * rows.vPad or 0)
 end
