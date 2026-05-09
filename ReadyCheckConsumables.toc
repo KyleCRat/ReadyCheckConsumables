@@ -19,6 +19,7 @@ data/WeaponEnchants.lua
 data/Settings.lua
 ConsumablesFrame.lua
 RaidFrameTest.lua
+RaidFrameColumns.lua
 RaidFrame.lua
 Settings.lua
 ReadyCheckConsumables.lua
