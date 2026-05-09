@@ -22,6 +22,7 @@ Modules/RaidFrame/RaidFrameTest.lua
 Modules/RaidFrame/RaidFrameBroadcast.lua
 Modules/RaidFrame/RaidFrameColumnRenderers.lua
 Modules/RaidFrame/RaidFrameColumns.lua
+Modules/RaidFrame/RaidFrameMembers.lua
 Modules/RaidFrame/RaidFrameRows.lua
 Modules/RaidFrame/RaidFrameTitleBar.lua
 Modules/RaidFrame/RaidFrame.lua

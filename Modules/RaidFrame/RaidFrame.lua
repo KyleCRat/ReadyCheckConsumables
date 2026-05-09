@@ -1,15 +1,14 @@
 local _, RCC = ...
 
-local F  = RCC.F
 local UI = RCC.UI
 local Broadcast = RCC.RaidFrameBroadcast
 local Columns = RCC.RaidFrameColumns
+local Members = RCC.RaidFrameMembers
 local Rows = RCC.RaidFrameRows
 local TitleBar = RCC.RaidFrameTitleBar
 
 local GetTime            = GetTime
 local floor              = floor
-local UnitName           = UnitName
 
 --------------------------------------------------------------------------------
 --- Constants
@@ -219,6 +218,7 @@ local renderContext = {
     state      = state,
     readyCheck = {
         pending  = RC_PENDING,
+        ready    = RC_READY,
         notReady = RC_NOT,
         textures = RC_TEXTURES,
     },
@@ -232,122 +232,6 @@ local renderContext = {
         durabilityThreshold = DURABILITY_THRESHOLD,
     },
 }
-
---------------------------------------------------------------------------------
---- Member data scanning
---------------------------------------------------------------------------------
-
-local function scanMemberColumnData(unit, now)
-    return Columns.ScanUnitData(unit, now, LAYOUT, renderContext)
-end
-
-local function syncMemberExternalData(member)
-    Columns.SyncExternalData(member, LAYOUT, renderContext)
-end
-
---------------------------------------------------------------------------------
---- Roster scanning
---------------------------------------------------------------------------------
-
-local function scanAllMembers()
-    local maxGroup = F.GetRaidDiffMaxGroup()
-    local now = GetTime()
-    local count = 0
-
-    wipe(state.members)
-    wipe(state.unitToIndex)
-
-    for j = 1, 40 do
-        local name, unit, subgroup, class = F.GetRosterInfo(j)
-
-        if not name then
-            if not IsInRaid() then
-                break
-            end
-        elseif subgroup <= maxGroup then
-            count = count + 1
-
-            local online    = UnitIsConnected(unit)
-            local isDead    = UnitIsDeadOrGhost(unit)
-            local playerKey = F.fullName(name)
-
-            state.members[count] = {
-                name       = name,
-                key        = playerKey,
-                unit       = unit,
-                class      = class,
-                online     = online,
-                isDead     = isDead,
-                columnData = scanMemberColumnData(unit, now),
-            }
-
-            state.unitToIndex[unit] = count
-
-            if not state.rcStatus[unit] then
-                state.rcStatus[unit] = RC_PENDING
-            end
-        end
-    end
-
-    state.activeCount = count
-end
-
---------------------------------------------------------------------------------
---- Test data population
---------------------------------------------------------------------------------
-
-local function populateTestData()
-    wipe(state.members)
-    wipe(state.unitToIndex)
-    wipe(state.rcStatus)
-    broadcast:Reset()
-
-    local playerName = F.unitFullName("player") or UnitName("player")
-    local _, playerClass = UnitClass("player")
-
-    state.members[1] = {
-        name       = playerName,
-        key        = F.fullName(playerName),
-        unit       = "player",
-        class      = playerClass,
-        online     = true,
-        isDead     = false,
-        columnData = scanMemberColumnData("player", GetTime()),
-    }
-    state.unitToIndex["player"] = 1
-    state.rcStatus["player"] = RC_READY
-
-    local fakeMembers = RCC.raidFrameTest.generateTestMembers(playerClass)
-    local count = 1
-
-    for i = 1, #fakeMembers do
-        count = count + 1
-        local fm = fakeMembers[i]
-        local fakeUnit = "raid" .. count
-        local playerKey = F.fullName(fm.name)
-
-        state.members[count] = {
-            name       = playerKey,
-            key        = playerKey,
-            unit       = fakeUnit,
-            class      = fm.class,
-            online     = fm.online,
-            isDead     = fm.isDead,
-            columnData = fm.columnData,
-        }
-
-        state.unitToIndex[fakeUnit] = count
-        state.rcStatus[fakeUnit] = RC_PENDING
-
-        broadcast:SetDurability(playerKey, fm.durability)
-
-        if fm.oil then
-            broadcast:SetOilStatus(playerKey, fm.oil)
-        end
-    end
-
-    state.activeCount = count
-end
 
 --------------------------------------------------------------------------------
 --- Title bar helpers
@@ -445,14 +329,14 @@ local function refreshRow(index)
         return
     end
 
-    syncMemberExternalData(state.members[index])
+    Columns.SyncExternalData(state.members[index], LAYOUT, renderContext)
     Rows.ApplyData(row, state.members[index], LAYOUT, renderContext)
     refreshTitleBar()
 end
 
 local function refreshAllRows()
     for i = 1, state.activeCount do
-        syncMemberExternalData(state.members[i])
+        Columns.SyncExternalData(state.members[i], LAYOUT, renderContext)
         Rows.ApplyData(frame.rows[i], state.members[i], LAYOUT, renderContext)
     end
 
@@ -577,7 +461,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     self.manualShow = (timeToHide == 0)
     showStartTime = GetTime()
 
-    scanAllMembers()
+    Members.ScanAll(state, LAYOUT, renderContext)
 
     -- The initiator never receives READY_CHECK_CONFIRM for themselves;
     -- auto-mark them as ready so their row shows a check immediately.
@@ -614,7 +498,7 @@ function frame:OnTestReadyCheck(permanent)
     self.manualShow = permanent or false
     showStartTime = GetTime()
 
-    populateTestData()
+    Members.PopulateTestData(state, LAYOUT, renderContext, broadcast)
     broadcast:SendDurability()
     broadcast:SendOilStatus()
 
@@ -712,21 +596,12 @@ function frame:OnCombat()
 end
 
 function frame:OnUnitAura(unit)
-    local index = state.unitToIndex[unit]
+    local index = Members.RefreshFromUnit(state, unit, LAYOUT, renderContext)
 
     if not index then
         return
     end
 
-    local member = state.members[index]
-
-    if not member then
-        return
-    end
-
-    member.online     = UnitIsConnected(unit)
-    member.isDead     = UnitIsDeadOrGhost(unit)
-    member.columnData = scanMemberColumnData(unit, GetTime())
     refreshRow(index)
 end
 
