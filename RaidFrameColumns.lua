@@ -38,11 +38,16 @@ function Columns.CreateLayout(options)
         raidBuff = {},
     }
 
-    x.food      = rcIconWidth + hPad + nameWidth + hPad + timeWidth
-    x.flask     = x.food + iconSize + hPad + timeWidth
-    x.oil       = x.flask + iconSize + hPad + timeWidth
-    x.augment   = x.oil + iconSize + hPad
-    x.vantus    = x.augment + iconSize + hPad
+    x.readyIconCenter = rcIconWidth / 2
+    x.name            = rcIconWidth + hPad
+    x.food            = rcIconWidth + hPad + nameWidth + hPad + timeWidth
+    x.foodTime        = x.food - timeWidth
+    x.flask           = x.food + iconSize + hPad + timeWidth
+    x.flaskTime       = x.flask - timeWidth
+    x.oil             = x.flask + iconSize + hPad + timeWidth
+    x.oilTime         = x.oil - timeWidth
+    x.augment         = x.oil + iconSize + hPad
+    x.vantus          = x.augment + iconSize + hPad
 
     for k = 1, raidBuffCount do
         x.raidBuff[k] = x.vantus + k * (iconSize + hPad)

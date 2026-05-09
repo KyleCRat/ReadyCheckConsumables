@@ -483,14 +483,13 @@ local function createRow(index)
     row:SetSize(FRAME_WIDTH - FRAME_PAD * 2, ROW_HEIGHT)
     row:Hide()
 
-    local x = 0
+    local x = LAYOUT.x
 
     -- Ready check icon
     row.rcIcon = row:CreateTexture(nil, "ARTWORK")
-    row.rcIcon:SetPoint("CENTER", row, "LEFT", x + RC_ICON_WIDTH / 2, 0)
+    row.rcIcon:SetPoint("CENTER", row, "LEFT", x.readyIconCenter, 0)
     row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
     row.rcIcon:SetTexture(RC_TEXTURES[RC_PENDING])
-    x = x + RC_ICON_WIDTH + H_PAD
 
     -- Row background (class color)
     row.bg = row:CreateTexture(nil, "BACKGROUND")
@@ -500,91 +499,82 @@ local function createRow(index)
 
     -- Player name
     row.nameText = row:CreateFontString(nil, "ARTWORK")
-    row.nameText:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.nameText:SetPoint("LEFT", row, "LEFT", x.name, 0)
     row.nameText:SetFont(FONT, FONT_SIZE_NAME, "OUTLINE")
     row.nameText:SetWidth(NAME_WIDTH)
     row.nameText:SetJustifyH("LEFT")
     row.nameText:SetWordWrap(false)
-    x = x + NAME_WIDTH + H_PAD
 
     -- Food time + icon
     row.foodTime = row:CreateFontString(nil, "ARTWORK")
-    row.foodTime:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.foodTime:SetPoint("LEFT", row, "LEFT", x.foodTime, 0)
     row.foodTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
     row.foodTime:SetWidth(TIME_WIDTH)
     row.foodTime:SetJustifyH("RIGHT")
-    x = x + TIME_WIDTH
 
     row.foodIcon = row:CreateTexture(nil, "ARTWORK")
-    row.foodIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.foodIcon:SetPoint("LEFT", row, "LEFT", x.food, 0)
     row.foodIcon:SetSize(ICON_SIZE, ICON_SIZE)
     row.foodIcon:SetTexture(db.food_icon_id)
     createIconBg(row, row.foodIcon)
     row.foodOverlay = createOverlay(row, row.foodIcon)
     row.foodOverlay.label = "Food: Missing"
-    x = x + ICON_SIZE + H_PAD
 
     -- Flask time + icon
     row.flaskTime = row:CreateFontString(nil, "ARTWORK")
-    row.flaskTime:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.flaskTime:SetPoint("LEFT", row, "LEFT", x.flaskTime, 0)
     row.flaskTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
     row.flaskTime:SetWidth(TIME_WIDTH)
     row.flaskTime:SetJustifyH("RIGHT")
-    x = x + TIME_WIDTH
 
     row.flaskIcon = row:CreateTexture(nil, "ARTWORK")
-    row.flaskIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.flaskIcon:SetPoint("LEFT", row, "LEFT", x.flask, 0)
     row.flaskIcon:SetSize(ICON_SIZE, ICON_SIZE)
     row.flaskIcon:SetTexture(db.flask_icon_id)
     createIconBg(row, row.flaskIcon)
     row.flaskOverlay = createOverlay(row, row.flaskIcon)
     row.flaskOverlay.label = "Flask: Missing"
-    x = x + ICON_SIZE + H_PAD
 
     -- Oil time + icon
     row.oilTime = row:CreateFontString(nil, "ARTWORK")
-    row.oilTime:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.oilTime:SetPoint("LEFT", row, "LEFT", x.oilTime, 0)
     row.oilTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
     row.oilTime:SetWidth(TIME_WIDTH)
     row.oilTime:SetJustifyH("RIGHT")
-    x = x + TIME_WIDTH
 
     row.oilIcon = row:CreateTexture(nil, "ARTWORK")
-    row.oilIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.oilIcon:SetPoint("LEFT", row, "LEFT", x.oil, 0)
     row.oilIcon:SetSize(ICON_SIZE, ICON_SIZE)
     row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
     createIconBg(row, row.oilIcon)
     row.oilOverlay = createOverlay(row, row.oilIcon)
     row.oilOverlay.label = "Weapon Oil: Unknown"
-    x = x + ICON_SIZE + H_PAD
 
     -- Augment Rune icon
     row.augmentIcon = row:CreateTexture(nil, "ARTWORK")
-    row.augmentIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.augmentIcon:SetPoint("LEFT", row, "LEFT", x.augment, 0)
     row.augmentIcon:SetSize(ICON_SIZE, ICON_SIZE)
     row.augmentIcon:SetTexture(db.augment_icon_id)
     createIconBg(row, row.augmentIcon)
     row.augmentOverlay = createOverlay(row, row.augmentIcon)
     row.augmentOverlay.label = "Augment Rune: Missing"
-    x = x + ICON_SIZE + H_PAD
 
     -- Vantus Rune icon
     row.vantusIcon = row:CreateTexture(nil, "ARTWORK")
-    row.vantusIcon:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.vantusIcon:SetPoint("LEFT", row, "LEFT", x.vantus, 0)
     row.vantusIcon:SetSize(ICON_SIZE, ICON_SIZE)
     row.vantusIcon:SetTexture(db.vantus_icon_id)
     createIconBg(row, row.vantusIcon)
     row.vantusOverlay = createOverlay(row, row.vantusIcon)
     row.vantusOverlay.label = "Vantus Rune: Missing"
-    x = x + ICON_SIZE + H_PAD
 
-    -- 6 Raid buff icons
+    -- Raid buff icons
     row.raidBuffIcons    = {}
     row.raidBuffOverlays = {}
 
     for k = 1, #db.raidBuffDefs do
         local icon = row:CreateTexture(nil, "ARTWORK")
-        icon:SetPoint("LEFT", row, "LEFT", x, 0)
+        icon:SetPoint("LEFT", row, "LEFT", x.raidBuff[k], 0)
         icon:SetSize(ICON_SIZE, ICON_SIZE)
         icon:SetTexture(RAID_BUFF_ICONS[k])
         createIconBg(row, icon)
@@ -593,12 +583,11 @@ local function createRow(index)
         local overlay = createOverlay(row, icon)
         overlay.spellID = db.raidBuffDefs[k][3]
         row.raidBuffOverlays[k] = overlay
-        x = x + ICON_SIZE + H_PAD
     end
 
     -- Durability percentage
     row.durabilityText = row:CreateFontString(nil, "ARTWORK")
-    row.durabilityText:SetPoint("LEFT", row, "LEFT", x, 0)
+    row.durabilityText:SetPoint("LEFT", row, "LEFT", x.durability, 0)
     row.durabilityText:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
     row.durabilityText:SetWidth(DURABILITY_WIDTH)
     row.durabilityText:SetJustifyH("CENTER")
