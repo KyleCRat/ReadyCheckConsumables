@@ -647,11 +647,13 @@ end
 --- Member data storage
 --------------------------------------------------------------------------------
 
-local memberData     = {}  -- [i] = { name, unit, class, online, isDead, auras }
-local unitToIndex    = {}  -- [unit] = i
-local rcStatus       = {}  -- [unit] = RC_PENDING | RC_READY | RC_NOT
-local activeCount    = 0
-local readyAnnounced = false
+local state = {
+    members        = {},  -- [i] = { name, unit, class, online, isDead, auras }
+    unitToIndex    = {},  -- [unit] = i
+    rcStatus       = {},  -- [unit] = RC_PENDING | RC_READY | RC_NOT
+    activeCount    = 0,
+    readyAnnounced = false,
+}
 
 --------------------------------------------------------------------------------
 --- Aura scanning
@@ -746,8 +748,8 @@ local function scanAllMembers()
     local now = GetTime()
     local count = 0
 
-    wipe(memberData)
-    wipe(unitToIndex)
+    wipe(state.members)
+    wipe(state.unitToIndex)
 
     for j = 1, 40 do
         local name, unit, subgroup, class = F.GetRosterInfo(j)
@@ -763,7 +765,7 @@ local function scanAllMembers()
             local isDead    = UnitIsDeadOrGhost(unit)
             local playerKey = F.fullName(name)
 
-            memberData[count] = {
+            state.members[count] = {
                 name   = name,
                 key    = playerKey,
                 unit   = unit,
@@ -773,15 +775,15 @@ local function scanAllMembers()
                 auras  = scanMemberAuras(unit, now),
             }
 
-            unitToIndex[unit] = count
+            state.unitToIndex[unit] = count
 
-            if not rcStatus[unit] then
-                rcStatus[unit] = RC_PENDING
+            if not state.rcStatus[unit] then
+                state.rcStatus[unit] = RC_PENDING
             end
         end
     end
 
-    activeCount = count
+    state.activeCount = count
 end
 
 --------------------------------------------------------------------------------
@@ -789,16 +791,16 @@ end
 --------------------------------------------------------------------------------
 
 local function populateTestData()
-    wipe(memberData)
-    wipe(unitToIndex)
-    wipe(rcStatus)
+    wipe(state.members)
+    wipe(state.unitToIndex)
+    wipe(state.rcStatus)
     wipe(durabilityData)
     wipe(oilData)
 
     local playerName = F.unitFullName("player") or UnitName("player")
     local _, playerClass = UnitClass("player")
 
-    memberData[1] = {
+    state.members[1] = {
         name   = playerName,
         key    = F.fullName(playerName),
         unit   = "player",
@@ -807,8 +809,8 @@ local function populateTestData()
         isDead = false,
         auras  = scanMemberAuras("player", GetTime()),
     }
-    unitToIndex["player"] = 1
-    rcStatus["player"] = RC_READY
+    state.unitToIndex["player"] = 1
+    state.rcStatus["player"] = RC_READY
 
     local fakeMembers = RCC.raidFrameTest.generateTestMembers(playerClass)
     local count = 1
@@ -819,7 +821,7 @@ local function populateTestData()
         local fakeUnit = "raid" .. count
         local playerKey = F.fullName(fm.name)
 
-        memberData[count] = {
+        state.members[count] = {
             name   = playerKey,
             key    = playerKey,
             unit   = fakeUnit,
@@ -829,8 +831,8 @@ local function populateTestData()
             auras  = fm.auras,
         }
 
-        unitToIndex[fakeUnit] = count
-        rcStatus[fakeUnit] = RC_PENDING
+        state.unitToIndex[fakeUnit] = count
+        state.rcStatus[fakeUnit] = RC_PENDING
 
         durabilityData[playerKey] = fm.durability
 
@@ -839,7 +841,7 @@ local function populateTestData()
         end
     end
 
-    activeCount = count
+    state.activeCount = count
 end
 
 --------------------------------------------------------------------------------
@@ -898,7 +900,7 @@ local function applySimpleBuff(icon, overlay, unit, hasBuff, auraIconID, fallbac
 end
 
 local function applyRcIcon(row, unit, member)
-    local status = rcStatus[unit] or RC_PENDING
+    local status = state.rcStatus[unit] or RC_PENDING
 
     if status == RC_NOT and not member.online then
         row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
@@ -1112,8 +1114,8 @@ local function refreshTitleBar()
     for i = 1, numCols do
         local anyBad = false
 
-        for j = 1, activeCount do
-            local member = memberData[j]
+        for j = 1, state.activeCount do
+            local member = state.members[j]
 
             if member and member.online and isBad(member, i) then
                 anyBad = true
@@ -1128,8 +1130,8 @@ end
 local function updateTitleCount()
     local readyCount = 0
 
-    for unit in pairs(unitToIndex) do
-        local status = rcStatus[unit]
+    for unit in pairs(state.unitToIndex) do
+        local status = state.rcStatus[unit]
 
         if status == RC_READY or status == RC_NOT then
             readyCount = readyCount + 1
@@ -1137,7 +1139,7 @@ local function updateTitleCount()
     end
 
     titleBar.countText:SetTextColor(1, 1, 1)
-    titleBar.countText:SetText(readyCount .. "/" .. activeCount)
+    titleBar.countText:SetText(readyCount .. "/" .. state.activeCount)
 
     return readyCount
 end
@@ -1146,12 +1148,12 @@ local function showFinishedSummary()
     local notReadyCount = 0
     local afkCount      = 0
 
-    for i = 1, activeCount do
-        local member = memberData[i]
+    for i = 1, state.activeCount do
+        local member = state.members[i]
 
         if not member then break end
 
-        local status = rcStatus[member.unit]
+        local status = state.rcStatus[member.unit]
 
         if status == RC_PENDING then
             afkCount = afkCount + 1
@@ -1175,8 +1177,8 @@ local function showFinishedSummary()
         titleBar.countText:SetTextColor(c.r, c.g, c.b)
         titleBar.countText:SetText("Everyone is Ready!")
 
-        if not readyAnnounced and GetNumGroupMembers() > activeCount then
-            readyAnnounced = true
+        if not state.readyAnnounced and GetNumGroupMembers() > state.activeCount then
+            state.readyAnnounced = true
 
             if RCC.AnnounceAllReady then
                 RCC.AnnounceAllReady()
@@ -1192,23 +1194,23 @@ local function refreshRow(index)
         return
     end
 
-    applyRowData(row, memberData[index])
+    applyRowData(row, state.members[index])
     refreshTitleBar()
 end
 
 local function refreshAllRows()
-    for i = 1, activeCount do
-        applyRowData(frame.rows[i], memberData[i])
+    for i = 1, state.activeCount do
+        applyRowData(frame.rows[i], state.members[i])
     end
 
-    for i = activeCount + 1, MAX_ROWS do
+    for i = state.activeCount + 1, MAX_ROWS do
         frame.rows[i]:Hide()
     end
 
     local height = FRAME_PAD * 2
         + TITLE_HEIGHT + FRAME_PAD
-        + activeCount * ROW_HEIGHT
-        + (activeCount > 1 and (activeCount - 1) * V_PAD or 0)
+        + state.activeCount * ROW_HEIGHT
+        + (state.activeCount > 1 and (state.activeCount - 1) * V_PAD or 0)
 
     frame:SetHeight(height)
     refreshTitleBar()
@@ -1341,8 +1343,8 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelHideTimer()
     cancelAddonRefreshTimer()
     cancelFadeOut()
-    readyAnnounced = false
-    wipe(rcStatus)
+    state.readyAnnounced = false
+    wipe(state.rcStatus)
     wipe(durabilityData)
     wipe(oilData)
 
@@ -1368,9 +1370,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     -- The initiator never receives READY_CHECK_CONFIRM for themselves;
     -- auto-mark them as ready so their row shows a check immediately.
     if initiatorUnit then
-        for unit in pairs(unitToIndex) do
+        for unit in pairs(state.unitToIndex) do
             if UnitIsUnit(unit, initiatorUnit) then
-                rcStatus[unit] = RC_READY
+                state.rcStatus[unit] = RC_READY
                 break
             end
         end
@@ -1414,7 +1416,7 @@ function frame:OnTestReadyCheck(permanent)
     self:SyncScaleControl()
     self:Show()
 
-    for unit in pairs(unitToIndex) do
+    for unit in pairs(state.unitToIndex) do
         if unit ~= "player" then
             local roll = math.random()
 
@@ -1445,19 +1447,19 @@ function frame:OnTestReadyCheck(permanent)
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
-    local index = unitToIndex[unit]
+    local index = state.unitToIndex[unit]
 
     if not index then
         return
     end
 
-    rcStatus[unit] = ready and RC_READY or RC_NOT
+    state.rcStatus[unit] = ready and RC_READY or RC_NOT
 
     local row = self.rows[index]
 
     if row then
-        local member = memberData[index]
-        local newStatus = rcStatus[unit]
+        local member = state.members[index]
+        local newStatus = state.rcStatus[unit]
 
         row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
 
@@ -1470,7 +1472,7 @@ function frame:OnReadyCheckConfirm(unit, ready)
 
     local responded = updateTitleCount()
 
-    if responded >= activeCount then
+    if responded >= state.activeCount then
         stopProgressBar()
         showFinishedSummary()
     end
@@ -1513,13 +1515,13 @@ function frame:OnCombat()
 end
 
 function frame:OnUnitAura(unit)
-    local index = unitToIndex[unit]
+    local index = state.unitToIndex[unit]
 
     if not index then
         return
     end
 
-    local member = memberData[index]
+    local member = state.members[index]
 
     if not member then
         return
