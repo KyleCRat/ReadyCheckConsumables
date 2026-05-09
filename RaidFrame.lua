@@ -9,7 +9,6 @@ local Rows = RCC.RaidFrameRows
 local GetTime            = GetTime
 local ceil               = ceil
 local floor              = floor
-local format             = format
 local strsplit           = strsplit
 local UnitName           = UnitName
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
@@ -22,21 +21,12 @@ local ROW_HEIGHT           = 30
 local TITLE_HEIGHT         = 28
 local V_PAD                = 0
 local MAX_ROWS             = 40
-local MISSING_ALPHA        = 0.3
 local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
 local NO_DURATION          = 0
 local ADDON_REFRESH_DELAY  = 0.25
 local FADE_OUT_DURATION    = 0.5
 local DURABILITY_THRESHOLD = 50
-local COLOR_DUR_GREEN      = { r = 0.2, g = 1,   b = 0.2 }
-local COLOR_DUR_YELLOW     = { r = 1,   g = 0.82, b = 0  }
-local COLOR_DUR_RED        = { r = 1,   g = 0.2, b = 0.2 }
 local MISSING_BG           = { r = 0,   g = 0,   b = 0   }
-local COLOR_TIME_NORMAL    = { r = 1,   g = 1,   b = 1   }
-local COLOR_TIME_WARN      = { r = 1,   g = 0.2, b = 0.2 }
-local COLOR_NAME_NORMAL    = { r = 1,   g = 1,   b = 1   }
-local COLOR_NAME_OFFLINE   = { r = 0.5, g = 0.5, b = 0.5 }
-local COLOR_NAME_DEAD      = { r = 0.8, g = 0.2, b = 0.2 }
 local FONT_SIZE_NAME       = 16
 local FONT_SIZE_TIME       = 14
 local COLOR_TITLE_BG       = { r = 0, g = 0, b = 0, a = 0.2 }
@@ -57,9 +47,6 @@ local RC_TEXTURES = {
     [RC_READY]   = "Interface\\RaidFrame\\ReadyCheck-Ready",
     [RC_NOT]     = "Interface\\RaidFrame\\ReadyCheck-NotReady",
 }
-
-local RC_TEXTURE_OFFLINE = "Interface\\CharacterFrame\\Disconnect-Icon"
-local RC_ATLAS_DEAD      = "Navigation-Tombstone-Icon"
 
 local COLOR_SUMMARY_NOT_READY = { r = 1,   g = 0.2, b = 0.2 }
 local COLOR_SUMMARY_AFK       = { r = 1,   g = 0.82, b = 0  }
@@ -403,6 +390,17 @@ local state = {
     readyAnnounced = false,
 }
 
+local rowRenderContext = {
+    state             = state,
+    oilData           = oilData,
+    durabilityData    = durabilityData,
+    rcPending         = RC_PENDING,
+    rcNot             = RC_NOT,
+    rcTextures        = RC_TEXTURES,
+    expireWarnSeconds = EXPIRE_WARN_SECONDS,
+    noDuration        = NO_DURATION,
+}
+
 --------------------------------------------------------------------------------
 --- Aura scanning
 --------------------------------------------------------------------------------
@@ -593,220 +591,6 @@ local function populateTestData()
 end
 
 --------------------------------------------------------------------------------
---- Formatting helpers
---------------------------------------------------------------------------------
-
-local function formatDuration(seconds)
-    local mins = ceil(seconds / 60)
-
-    if mins >= 60 then
-        return format("%dh", ceil(seconds / 3600))
-    end
-
-    return format("%dm", mins > 0 and mins or 0)
-end
-
---------------------------------------------------------------------------------
---- Row rendering
---------------------------------------------------------------------------------
---- Row Functions
-
-local function applyTimedBuff(icon, timeText, overlay, unit, hasBuff, time, auraIconID, fallbackIcon, auraID)
-    if hasBuff then
-        icon:SetDesaturated(false)
-        icon:SetVertexColor(1, 1, 1, 1)
-        icon:SetTexture(auraIconID or fallbackIcon)
-
-        if time == NO_DURATION then
-            timeText:SetText("")
-        else
-            timeText:SetText(formatDuration(time))
-
-            if time < EXPIRE_WARN_SECONDS then
-                timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
-            else
-                timeText:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
-            end
-        end
-    else
-        icon:SetTexture(fallbackIcon)
-        icon:SetDesaturated(true)
-        icon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-        timeText:SetText("")
-    end
-
-    overlay.unit   = unit
-    overlay.auraID = auraID
-end
-
-local function applySimpleBuff(icon, overlay, unit, hasBuff, auraIconID, fallbackIcon, auraID)
-    icon:SetTexture(auraIconID or fallbackIcon)
-    icon:SetDesaturated(not hasBuff)
-    icon:SetVertexColor(1, 1, 1, hasBuff and 1 or MISSING_ALPHA)
-    overlay.unit   = unit
-    overlay.auraID = auraID
-end
-
-local function applyRcIcon(row, unit, member)
-    local status = state.rcStatus[unit] or RC_PENDING
-
-    if status == RC_NOT and not member.online then
-        row.rcIcon:SetSize(LAYOUT.rcIconWidth, LAYOUT.rcIconWidth)
-        row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
-    elseif status == RC_PENDING and member.isDead then
-        row.rcIcon:SetSize(
-            LAYOUT.rcIconWidth * 26 / 33, LAYOUT.rcIconWidth
-        )
-        row.rcIcon:SetAtlas(RC_ATLAS_DEAD)
-    else
-        row.rcIcon:SetSize(LAYOUT.rcIconWidth, LAYOUT.rcIconWidth)
-        row.rcIcon:SetTexture(RC_TEXTURES[status])
-    end
-end
-
-local function applyClassBackground(row, member)
-    local color = RAID_CLASS_COLORS[member.class]
-
-    if color then
-        row.bg:SetVertexColor(color.r, color.g, color.b, 0.25)
-    else
-        row.bg:SetVertexColor(0.5, 0.5, 0.5, 0.25)
-    end
-end
-
-local function applyName(row, member)
-    if not member.online then
-        row.nameText:SetTextColor(COLOR_NAME_OFFLINE.r, COLOR_NAME_OFFLINE.g, COLOR_NAME_OFFLINE.b)
-    elseif member.isDead then
-        row.nameText:SetTextColor(COLOR_NAME_DEAD.r, COLOR_NAME_DEAD.g, COLOR_NAME_DEAD.b)
-    else
-        row.nameText:SetTextColor(COLOR_NAME_NORMAL.r, COLOR_NAME_NORMAL.g, COLOR_NAME_NORMAL.b)
-    end
-
-    row.nameText:SetText(F.shortName(member.name))
-end
-
-local function setOilMissing(row, label)
-    row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
-    row.oilIcon:SetDesaturated(true)
-    row.oilIcon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-    row.oilTime:SetText("")
-    row.oilOverlay.label = label
-end
-
-local function applyOil(row, playerKey)
-    local oil = oilData[playerKey]
-    local oilTime = oil and oil.time
-    local oilItemID = oil and oil.item or 0
-
-    row.oilOverlay.itemID = nil
-    row.oilOverlay.label  = nil
-
-    if oilTime and oilTime > 0 then
-        row.oilIcon:SetDesaturated(false)
-        row.oilIcon:SetVertexColor(1, 1, 1, 1)
-        row.oilTime:SetText(formatDuration(oilTime))
-
-        if oilTime < EXPIRE_WARN_SECONDS then
-            row.oilTime:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
-        else
-            row.oilTime:SetTextColor(COLOR_TIME_NORMAL.r, COLOR_TIME_NORMAL.g, COLOR_TIME_NORMAL.b)
-        end
-
-        if oilItemID > 0 then
-            row.oilOverlay.itemID = oilItemID
-        else
-            row.oilOverlay.label = "Weapon Oil"
-        end
-    elseif oilTime == 0 then
-        setOilMissing(row, "Weapon Oil: Missing")
-    elseif oilTime == -1 then
-        setOilMissing(row, "Weapon Oil: N/A")
-    else
-        setOilMissing(row, "Weapon Oil: Unknown")
-        row.oilTime:SetText("?")
-        row.oilTime:SetTextColor(0.5, 0.5, 0.5)
-    end
-end
-
-local function applyRaidBuffs(row, unit, auras)
-    for k = 1, #db.raidBuffDefs do
-        local auraID = auras.raidBuff[k]
-        local has = auraID and auraID ~= false
-
-        row.raidBuffIcons[k]:SetDesaturated(not has)
-        row.raidBuffIcons[k]:SetVertexColor(1, 1, 1, has and 1 or MISSING_ALPHA)
-        row.raidBuffOverlays[k].unit = unit
-
-        if has and not issecretvalue(auraID) then
-            row.raidBuffOverlays[k].auraID = auraID
-        else
-            row.raidBuffOverlays[k].auraID = nil
-        end
-    end
-end
-
-local function applyDurability(row, playerKey)
-    local durPct = durabilityData[playerKey]
-
-    if durPct then
-        row.durabilityText:SetText(durPct .. "%")
-
-        local c
-        if durPct <= 20 then
-            c = COLOR_DUR_RED
-        elseif durPct <= 50 then
-            c = COLOR_DUR_YELLOW
-        else
-            c = COLOR_DUR_GREEN
-        end
-
-        row.durabilityText:SetTextColor(c.r, c.g, c.b)
-    else
-        row.durabilityText:SetText("?")
-        row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
-    end
-end
-
---------------------------------------------------------------------------------
---- Row Orchestrator
-
-local function applyRowData(row, member)
-    if not member then
-        row:Hide()
-
-        return
-    end
-
-    local unit      = member.unit
-    local auras     = member.auras
-    local playerKey = member.key or F.fullName(member.name)
-
-    applyRcIcon(row, unit, member)
-    applyClassBackground(row, member)
-    applyName(row, member)
-
-    applyTimedBuff(row.foodIcon, row.foodTime, row.foodOverlay,
-        unit, auras.hasFood, auras.foodTime, auras.foodIconID, db.food_icon_id, auras.foodAuraID)
-
-    applyTimedBuff(row.flaskIcon, row.flaskTime, row.flaskOverlay,
-        unit, auras.hasFlask, auras.flaskTime, auras.flaskIconID, db.flask_icon_id, auras.flaskAuraID)
-
-    applyOil(row, playerKey)
-
-    applySimpleBuff(row.augmentIcon, row.augmentOverlay,
-        unit, auras.hasAugment, auras.augmentIconID, db.augment_icon_id, auras.augmentAuraID)
-
-    applySimpleBuff(row.vantusIcon, row.vantusOverlay,
-        unit, auras.hasVantus, auras.vantusIconID, db.vantus_icon_id, auras.vantusAuraID)
-
-    applyRaidBuffs(row, unit, auras)
-    applyDurability(row, playerKey)
-
-    row:Show()
-end
-
---------------------------------------------------------------------------------
 --- Title bar helpers
 --------------------------------------------------------------------------------
 
@@ -944,13 +728,13 @@ local function refreshRow(index)
         return
     end
 
-    applyRowData(row, state.members[index])
+    Rows.ApplyData(row, state.members[index], LAYOUT, rowRenderContext)
     refreshTitleBar()
 end
 
 local function refreshAllRows()
     for i = 1, state.activeCount do
-        applyRowData(frame.rows[i], state.members[i])
+        Rows.ApplyData(frame.rows[i], state.members[i], LAYOUT, rowRenderContext)
     end
 
     for i = state.activeCount + 1, MAX_ROWS do
