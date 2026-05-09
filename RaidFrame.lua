@@ -1454,21 +1454,7 @@ function frame:OnReadyCheckConfirm(unit, ready)
     end
 
     state.rcStatus[unit] = ready and RC_READY or RC_NOT
-
-    local row = self.rows[index]
-
-    if row then
-        local member = state.members[index]
-        local newStatus = state.rcStatus[unit]
-
-        row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
-
-        if newStatus == RC_NOT and member and not member.online then
-            row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
-        else
-            row.rcIcon:SetTexture(RC_TEXTURES[newStatus])
-        end
-    end
+    refreshRow(index)
 
     local responded = updateTitleCount()
 
