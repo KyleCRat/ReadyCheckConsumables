@@ -70,11 +70,45 @@ function Columns.CreateLayout(options)
     titleX[col.DURABILITY] = x.durability
         + (durabilityWidth - iconSize) / 2
 
+    local timedColumns = {
+        {
+            key          = "food",
+            timeField    = "foodTime",
+            iconField    = "foodIcon",
+            overlayField = "foodOverlay",
+            timeX        = x.foodTime,
+            iconX        = x.food,
+            iconID       = db.food_icon_id,
+            label        = "Food: Missing",
+        },
+        {
+            key          = "flask",
+            timeField    = "flaskTime",
+            iconField    = "flaskIcon",
+            overlayField = "flaskOverlay",
+            timeX        = x.flaskTime,
+            iconX        = x.flask,
+            iconID       = db.flask_icon_id,
+            label        = "Flask: Missing",
+        },
+        {
+            key          = "oil",
+            timeField    = "oilTime",
+            iconField    = "oilIcon",
+            overlayField = "oilOverlay",
+            timeX        = x.oilTime,
+            iconX        = x.oil,
+            iconID       = db.weapon_enchant_icon_id,
+            label        = "Weapon Oil: Unknown",
+        },
+    }
+
     return {
         raidBuffCount = raidBuffCount,
         frameWidth    = frameWidth,
         col           = col,
         x             = x,
         titleX        = titleX,
+        timedColumns  = timedColumns,
     }
 end

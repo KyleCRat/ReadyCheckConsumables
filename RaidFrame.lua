@@ -471,6 +471,26 @@ local function createIconBg(row, icon)
     bg:SetVertexColor(MISSING_BG.r, MISSING_BG.g, MISSING_BG.b, 1)
 end
 
+local function createTimedColumn(row, column)
+    local timeText = row:CreateFontString(nil, "ARTWORK")
+    timeText:SetPoint("LEFT", row, "LEFT", column.timeX, 0)
+    timeText:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
+    timeText:SetWidth(TIME_WIDTH)
+    timeText:SetJustifyH("RIGHT")
+    row[column.timeField] = timeText
+
+    local icon = row:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
+    icon:SetSize(ICON_SIZE, ICON_SIZE)
+    icon:SetTexture(column.iconID)
+    createIconBg(row, icon)
+    row[column.iconField] = icon
+
+    local overlay = createOverlay(row, icon)
+    overlay.label = column.label
+    row[column.overlayField] = overlay
+end
+
 --------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)
 --------------------------------------------------------------------------------
@@ -505,50 +525,9 @@ local function createRow(index)
     row.nameText:SetJustifyH("LEFT")
     row.nameText:SetWordWrap(false)
 
-    -- Food time + icon
-    row.foodTime = row:CreateFontString(nil, "ARTWORK")
-    row.foodTime:SetPoint("LEFT", row, "LEFT", x.foodTime, 0)
-    row.foodTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
-    row.foodTime:SetWidth(TIME_WIDTH)
-    row.foodTime:SetJustifyH("RIGHT")
-
-    row.foodIcon = row:CreateTexture(nil, "ARTWORK")
-    row.foodIcon:SetPoint("LEFT", row, "LEFT", x.food, 0)
-    row.foodIcon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.foodIcon:SetTexture(db.food_icon_id)
-    createIconBg(row, row.foodIcon)
-    row.foodOverlay = createOverlay(row, row.foodIcon)
-    row.foodOverlay.label = "Food: Missing"
-
-    -- Flask time + icon
-    row.flaskTime = row:CreateFontString(nil, "ARTWORK")
-    row.flaskTime:SetPoint("LEFT", row, "LEFT", x.flaskTime, 0)
-    row.flaskTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
-    row.flaskTime:SetWidth(TIME_WIDTH)
-    row.flaskTime:SetJustifyH("RIGHT")
-
-    row.flaskIcon = row:CreateTexture(nil, "ARTWORK")
-    row.flaskIcon:SetPoint("LEFT", row, "LEFT", x.flask, 0)
-    row.flaskIcon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.flaskIcon:SetTexture(db.flask_icon_id)
-    createIconBg(row, row.flaskIcon)
-    row.flaskOverlay = createOverlay(row, row.flaskIcon)
-    row.flaskOverlay.label = "Flask: Missing"
-
-    -- Oil time + icon
-    row.oilTime = row:CreateFontString(nil, "ARTWORK")
-    row.oilTime:SetPoint("LEFT", row, "LEFT", x.oilTime, 0)
-    row.oilTime:SetFont(FONT, FONT_SIZE_TIME, "OUTLINE")
-    row.oilTime:SetWidth(TIME_WIDTH)
-    row.oilTime:SetJustifyH("RIGHT")
-
-    row.oilIcon = row:CreateTexture(nil, "ARTWORK")
-    row.oilIcon:SetPoint("LEFT", row, "LEFT", x.oil, 0)
-    row.oilIcon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.oilIcon:SetTexture(db.weapon_enchant_icon_id)
-    createIconBg(row, row.oilIcon)
-    row.oilOverlay = createOverlay(row, row.oilIcon)
-    row.oilOverlay.label = "Weapon Oil: Unknown"
+    for i = 1, #LAYOUT.timedColumns do
+        createTimedColumn(row, LAYOUT.timedColumns[i])
+    end
 
     -- Augment Rune icon
     row.augmentIcon = row:CreateTexture(nil, "ARTWORK")
