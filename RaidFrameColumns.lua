@@ -122,13 +122,24 @@ function Columns.CreateLayout(options)
         },
     }
 
+    local raidBuffColumns = {}
+    for k = 1, raidBuffCount do
+        raidBuffColumns[k] = {
+            key       = "raidBuff" .. k,
+            index     = k,
+            iconX     = x.raidBuff[k],
+            spellID   = db.raidBuffDefs[k][3],
+        }
+    end
+
     return {
-        raidBuffCount = raidBuffCount,
-        frameWidth    = frameWidth,
-        col           = col,
-        x             = x,
-        titleX        = titleX,
-        timedColumns  = timedColumns,
-        iconColumns   = iconColumns,
+        raidBuffCount   = raidBuffCount,
+        frameWidth      = frameWidth,
+        col             = col,
+        x               = x,
+        titleX          = titleX,
+        timedColumns    = timedColumns,
+        iconColumns     = iconColumns,
+        raidBuffColumns = raidBuffColumns,
     }
 end

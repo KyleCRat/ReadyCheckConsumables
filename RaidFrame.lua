@@ -504,6 +504,19 @@ local function createIconColumn(row, column)
     row[column.overlayField] = overlay
 end
 
+local function createRaidBuffColumn(row, column)
+    local icon = row:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
+    icon:SetSize(ICON_SIZE, ICON_SIZE)
+    icon:SetTexture(RAID_BUFF_ICONS[column.index])
+    createIconBg(row, icon)
+    row.raidBuffIcons[column.index] = icon
+
+    local overlay = createOverlay(row, icon)
+    overlay.spellID = column.spellID
+    row.raidBuffOverlays[column.index] = overlay
+end
+
 --------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)
 --------------------------------------------------------------------------------
@@ -550,17 +563,8 @@ local function createRow(index)
     row.raidBuffIcons    = {}
     row.raidBuffOverlays = {}
 
-    for k = 1, #db.raidBuffDefs do
-        local icon = row:CreateTexture(nil, "ARTWORK")
-        icon:SetPoint("LEFT", row, "LEFT", x.raidBuff[k], 0)
-        icon:SetSize(ICON_SIZE, ICON_SIZE)
-        icon:SetTexture(RAID_BUFF_ICONS[k])
-        createIconBg(row, icon)
-        row.raidBuffIcons[k] = icon
-
-        local overlay = createOverlay(row, icon)
-        overlay.spellID = db.raidBuffDefs[k][3]
-        row.raidBuffOverlays[k] = overlay
+    for k = 1, #LAYOUT.raidBuffColumns do
+        createRaidBuffColumn(row, LAYOUT.raidBuffColumns[k])
     end
 
     -- Durability percentage
