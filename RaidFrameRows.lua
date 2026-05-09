@@ -76,17 +76,17 @@ local function createIconBg(row, icon, color)
     bg:SetVertexColor(color.r, color.g, color.b, 1)
 end
 
-local function createTimedColumn(row, column, options)
+local function createTimedColumn(row, column, layout, options)
     local timeText = row:CreateFontString(nil, "ARTWORK")
     timeText:SetPoint("LEFT", row, "LEFT", column.timeX, 0)
     timeText:SetFont(options.font, options.fontSizeTime, "OUTLINE")
-    timeText:SetWidth(options.timeWidth)
+    timeText:SetWidth(layout.timeWidth)
     timeText:SetJustifyH("RIGHT")
     row[column.timeField] = timeText
 
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
-    icon:SetSize(options.iconSize, options.iconSize)
+    icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
     createIconBg(row, icon, options.missingBg)
     row[column.iconField] = icon
@@ -96,10 +96,10 @@ local function createTimedColumn(row, column, options)
     row[column.overlayField] = overlay
 end
 
-local function createIconColumn(row, column, options)
+local function createIconColumn(row, column, layout, options)
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
-    icon:SetSize(options.iconSize, options.iconSize)
+    icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
     createIconBg(row, icon, options.missingBg)
     row[column.iconField] = icon
@@ -109,10 +109,10 @@ local function createIconColumn(row, column, options)
     row[column.overlayField] = overlay
 end
 
-local function createRaidBuffColumn(row, column, options)
+local function createRaidBuffColumn(row, column, layout, options)
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
-    icon:SetSize(options.iconSize, options.iconSize)
+    icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(options.raidBuffIcons[column.index])
     createIconBg(row, icon, options.missingBg)
     row.raidBuffIcons[column.index] = icon
@@ -126,12 +126,12 @@ local function createRow(parent, rows, index, layout, options)
     local row = CreateFrame("Frame", nil, parent)
     local x = layout.x
 
-    row:SetSize(options.frameWidth - options.framePad * 2, options.rowHeight)
+    row:SetSize(layout.frameWidth - layout.framePad * 2, options.rowHeight)
     row:Hide()
 
     row.rcIcon = row:CreateTexture(nil, "ARTWORK")
     row.rcIcon:SetPoint("CENTER", row, "LEFT", x.readyIconCenter, 0)
-    row.rcIcon:SetSize(options.rcIconWidth, options.rcIconWidth)
+    row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
     row.rcIcon:SetTexture(options.rcPendingTexture)
 
     row.bg = row:CreateTexture(nil, "BACKGROUND")
@@ -142,36 +142,36 @@ local function createRow(parent, rows, index, layout, options)
     row.nameText = row:CreateFontString(nil, "ARTWORK")
     row.nameText:SetPoint("LEFT", row, "LEFT", x.name, 0)
     row.nameText:SetFont(options.font, options.fontSizeName, "OUTLINE")
-    row.nameText:SetWidth(options.nameWidth)
+    row.nameText:SetWidth(layout.nameWidth)
     row.nameText:SetJustifyH("LEFT")
     row.nameText:SetWordWrap(false)
 
     for i = 1, #layout.timedColumns do
-        createTimedColumn(row, layout.timedColumns[i], options)
+        createTimedColumn(row, layout.timedColumns[i], layout, options)
     end
 
     for i = 1, #layout.iconColumns do
-        createIconColumn(row, layout.iconColumns[i], options)
+        createIconColumn(row, layout.iconColumns[i], layout, options)
     end
 
     row.raidBuffIcons    = {}
     row.raidBuffOverlays = {}
 
     for k = 1, #layout.raidBuffColumns do
-        createRaidBuffColumn(row, layout.raidBuffColumns[k], options)
+        createRaidBuffColumn(row, layout.raidBuffColumns[k], layout, options)
     end
 
     row.durabilityText = row:CreateFontString(nil, "ARTWORK")
     row.durabilityText:SetPoint("LEFT", row, "LEFT", x.durability, 0)
     row.durabilityText:SetFont(options.font, options.fontSizeTime, "OUTLINE")
-    row.durabilityText:SetWidth(options.durabilityWidth)
+    row.durabilityText:SetWidth(layout.durabilityWidth)
     row.durabilityText:SetJustifyH("CENTER")
     row.durabilityText:SetText("?")
     row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
 
     if index == 1 then
-        row:SetPoint("TOPLEFT", parent, "TOPLEFT", options.framePad,
-            -(options.framePad + options.titleHeight + options.framePad
+        row:SetPoint("TOPLEFT", parent, "TOPLEFT", layout.framePad,
+            -(layout.framePad + options.titleHeight + layout.framePad
                 + options.vPad))
     else
         row:SetPoint("TOPLEFT", rows[index - 1], "BOTTOMLEFT", 0, -options.vPad)

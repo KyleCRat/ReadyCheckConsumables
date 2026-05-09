@@ -5,14 +5,22 @@ local Columns = RCC.RaidFrameColumns
 
 local db = RCC.db
 
-function Columns.CreateLayout(options)
-    local iconSize        = options.iconSize
-    local rcIconWidth     = options.rcIconWidth
-    local nameWidth       = options.nameWidth
-    local timeWidth       = options.timeWidth
-    local durabilityWidth = options.durabilityWidth
-    local hPad            = options.hPad
-    local framePad        = options.framePad
+local ICON_SIZE        = 26
+local NAME_WIDTH       = 150
+local RC_ICON_WIDTH    = 24
+local TIME_WIDTH       = 30
+local H_PAD            = 3
+local FRAME_PAD        = 3
+local DURABILITY_WIDTH = 42
+
+function Columns.CreateLayout()
+    local iconSize        = ICON_SIZE
+    local rcIconWidth     = RC_ICON_WIDTH
+    local nameWidth       = NAME_WIDTH
+    local timeWidth       = TIME_WIDTH
+    local durabilityWidth = DURABILITY_WIDTH
+    local hPad            = H_PAD
+    local framePad        = FRAME_PAD
     local raidBuffCount   = #db.raidBuffDefs
 
     local col = {
@@ -135,6 +143,12 @@ function Columns.CreateLayout(options)
     return {
         raidBuffCount   = raidBuffCount,
         frameWidth      = frameWidth,
+        framePad        = framePad,
+        iconSize        = iconSize,
+        rcIconWidth     = rcIconWidth,
+        nameWidth       = nameWidth,
+        timeWidth       = timeWidth,
+        durabilityWidth = durabilityWidth,
         col             = col,
         x               = x,
         titleX          = titleX,

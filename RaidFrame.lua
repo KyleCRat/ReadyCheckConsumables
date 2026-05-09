@@ -20,20 +20,13 @@ local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local ROW_HEIGHT           = 30
 local TITLE_HEIGHT         = 28
-local ICON_SIZE            = 26
-local NAME_WIDTH           = 150
-local RC_ICON_WIDTH        = 24
-local TIME_WIDTH           = 30
-local H_PAD                = 3
 local V_PAD                = 0
-local FRAME_PAD            = 3
 local MAX_ROWS             = 40
 local MISSING_ALPHA        = 0.3
 local EXPIRE_WARN_SECONDS  = 600  -- 10 minutes
 local NO_DURATION          = 0
 local ADDON_REFRESH_DELAY  = 0.25
 local FADE_OUT_DURATION    = 0.5
-local DURABILITY_WIDTH     = 42
 local DURABILITY_THRESHOLD = 50
 local COLOR_DUR_GREEN      = { r = 0.2, g = 1,   b = 0.2 }
 local COLOR_DUR_YELLOW     = { r = 1,   g = 0.82, b = 0  }
@@ -72,17 +65,7 @@ local COLOR_SUMMARY_NOT_READY = { r = 1,   g = 0.2, b = 0.2 }
 local COLOR_SUMMARY_AFK       = { r = 1,   g = 0.82, b = 0  }
 local COLOR_SUMMARY_READY     = { r = 0.2, g = 1,   b = 0.2 }
 
-local LAYOUT = Columns.CreateLayout({
-    iconSize        = ICON_SIZE,
-    rcIconWidth     = RC_ICON_WIDTH,
-    nameWidth       = NAME_WIDTH,
-    timeWidth       = TIME_WIDTH,
-    durabilityWidth = DURABILITY_WIDTH,
-    hPad            = H_PAD,
-    framePad        = FRAME_PAD,
-})
-
-local FRAME_WIDTH = LAYOUT.frameWidth
+local LAYOUT = Columns.CreateLayout()
 
 -- Title bar column indices, used by isBad() and refreshTitleBar().
 local COL_FOOD       = LAYOUT.col.FOOD
@@ -223,7 +206,7 @@ end
 local frame = CreateFrame("Frame", "RCRaidFrame", UIParent, "BackdropTemplate")
 RCC.raidFrame = frame
 
-frame:SetSize(FRAME_WIDTH, ROW_HEIGHT * 5 + FRAME_PAD * 2)
+frame:SetSize(LAYOUT.frameWidth, ROW_HEIGHT * 5 + LAYOUT.framePad * 2)
 frame:SetPoint("CENTER")
 frame:SetMovable(true)
 frame:SetClampedToScreen(true)
@@ -344,8 +327,10 @@ end
 --------------------------------------------------------------------------------
 
 local titleBar = CreateFrame("Frame", nil, frame)
-titleBar:SetPoint("TOPLEFT",  frame, "TOPLEFT",  FRAME_PAD, -FRAME_PAD)
-titleBar:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -FRAME_PAD, -FRAME_PAD)
+titleBar:SetPoint("TOPLEFT",  frame, "TOPLEFT",
+    LAYOUT.framePad, -LAYOUT.framePad)
+titleBar:SetPoint("TOPRIGHT", frame, "TOPRIGHT",
+    -LAYOUT.framePad, -LAYOUT.framePad)
 titleBar:SetHeight(TITLE_HEIGHT)
 
 -- Plain black background
@@ -383,7 +368,7 @@ local TITLE_COL_X = LAYOUT.titleX
 titleBar.colIcons = {}
 for i = 1, #TITLE_COL_X do
     local icon = titleBar:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(ICON_SIZE, ICON_SIZE)
+    icon:SetSize(LAYOUT.iconSize, LAYOUT.iconSize)
     icon:SetPoint("LEFT", titleBar, "LEFT", TITLE_COL_X[i], 0)
     icon:SetTexture(RC_TEXTURES[RC_PENDING])
     titleBar.colIcons[i] = icon
@@ -395,16 +380,9 @@ end
 
 frame.rows = Rows.Create(frame, LAYOUT, {
     maxRows          = MAX_ROWS,
-    frameWidth       = FRAME_WIDTH,
-    framePad         = FRAME_PAD,
     titleHeight      = TITLE_HEIGHT,
     rowHeight        = ROW_HEIGHT,
     vPad             = V_PAD,
-    iconSize         = ICON_SIZE,
-    rcIconWidth      = RC_ICON_WIDTH,
-    nameWidth        = NAME_WIDTH,
-    timeWidth        = TIME_WIDTH,
-    durabilityWidth  = DURABILITY_WIDTH,
     font             = FONT,
     fontSizeName     = FONT_SIZE_NAME,
     fontSizeTime     = FONT_SIZE_TIME,
@@ -673,13 +651,15 @@ local function applyRcIcon(row, unit, member)
     local status = state.rcStatus[unit] or RC_PENDING
 
     if status == RC_NOT and not member.online then
-        row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
+        row.rcIcon:SetSize(LAYOUT.rcIconWidth, LAYOUT.rcIconWidth)
         row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
     elseif status == RC_PENDING and member.isDead then
-        row.rcIcon:SetSize(RC_ICON_WIDTH * 26 / 33, RC_ICON_WIDTH)
+        row.rcIcon:SetSize(
+            LAYOUT.rcIconWidth * 26 / 33, LAYOUT.rcIconWidth
+        )
         row.rcIcon:SetAtlas(RC_ATLAS_DEAD)
     else
-        row.rcIcon:SetSize(RC_ICON_WIDTH, RC_ICON_WIDTH)
+        row.rcIcon:SetSize(LAYOUT.rcIconWidth, LAYOUT.rcIconWidth)
         row.rcIcon:SetTexture(RC_TEXTURES[status])
     end
 end
@@ -977,8 +957,8 @@ local function refreshAllRows()
         frame.rows[i]:Hide()
     end
 
-    local height = FRAME_PAD * 2
-        + TITLE_HEIGHT + FRAME_PAD
+    local height = LAYOUT.framePad * 2
+        + TITLE_HEIGHT + LAYOUT.framePad
         + state.activeCount * ROW_HEIGHT
         + (state.activeCount > 1 and (state.activeCount - 1) * V_PAD or 0)
 
@@ -1077,7 +1057,7 @@ local function stopProgressBar()
 end
 
 local function startProgressBar(duration)
-    local barWidth = FRAME_WIDTH - FRAME_PAD * 2
+    local barWidth = LAYOUT.frameWidth - LAYOUT.framePad * 2
     local endTime = GetTime() + duration
 
     titleBar.progress:SetWidth(barWidth)
