@@ -443,7 +443,7 @@ end
 --------------------------------------------------------------------------------
 
 local function refreshTitleBar()
-    local columns = LAYOUT.titleColumns
+    local columns = LAYOUT.columns
     local columnStates = {}
 
     for columnIndex = 1, #columns do

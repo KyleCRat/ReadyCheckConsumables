@@ -53,21 +53,22 @@ function TitleBar.Create(parent, layout, options)
 
     titleBar.colIcons = {}
 
-    for i = 1, #layout.titleX do
+    for columnIndex = 1, #layout.columns do
+        local column = layout.columns[columnIndex]
         local icon = titleBar:CreateTexture(nil, "ARTWORK")
 
         icon:SetSize(layout.iconSize, layout.iconSize)
-        icon:SetPoint("LEFT", titleBar, "LEFT", layout.titleX[i], 0)
+        icon:SetPoint("LEFT", titleBar, "LEFT", column.titleX, 0)
         icon:SetTexture(options.pendingTexture)
-        titleBar.colIcons[i] = icon
+        titleBar.colIcons[columnIndex] = icon
     end
 
     function titleBar:RefreshColumns(columnStates, readyTexture, notReadyTexture)
         local numCols = #self.colIcons
 
-        for i = 1, numCols do
-            self.colIcons[i]:SetTexture(
-                columnStates[i] and notReadyTexture or readyTexture
+        for columnIndex = 1, numCols do
+            self.colIcons[columnIndex]:SetTexture(
+                columnStates[columnIndex] and notReadyTexture or readyTexture
             )
         end
     end

@@ -24,15 +24,6 @@ function Columns.CreateLayout()
     local framePad        = FRAME_PAD
     local raidBuffCount   = #db.raidBuffDefs
 
-    local col = {
-        FOOD       = 1,
-        FLASK      = 2,
-        OIL        = 3,
-        AUGMENT    = 4,
-        VANTUS     = 5,
-        DURABILITY = 5 + raidBuffCount + 1,
-    }
-
     local frameWidth = framePad
         + rcIconWidth + hPad
         + nameWidth + hPad
@@ -64,21 +55,6 @@ function Columns.CreateLayout()
 
     x.durability = x.raidBuff[raidBuffCount] + iconSize + hPad
 
-    local titleX = {
-        [col.FOOD]    = x.food,
-        [col.FLASK]   = x.flask,
-        [col.OIL]     = x.oil,
-        [col.AUGMENT] = x.augment,
-        [col.VANTUS]  = x.vantus,
-    }
-
-    for k = 1, raidBuffCount do
-        titleX[col.VANTUS + k] = x.raidBuff[k]
-    end
-
-    titleX[col.DURABILITY] = x.durability
-        + (durabilityWidth - iconSize) / 2
-
     local timedColumns = {
         {
             key          = "food",
@@ -87,6 +63,7 @@ function Columns.CreateLayout()
             overlayField = "foodOverlay",
             timeX        = x.foodTime,
             iconX        = x.food,
+            titleX       = x.food,
             iconID       = db.food_icon_id,
             label        = "Food: Missing",
             IsBad        = function(member, context)
@@ -104,6 +81,7 @@ function Columns.CreateLayout()
             overlayField = "flaskOverlay",
             timeX        = x.flaskTime,
             iconX        = x.flask,
+            titleX       = x.flask,
             iconID       = db.flask_icon_id,
             label        = "Flask: Missing",
             IsBad        = function(member, context)
@@ -121,6 +99,7 @@ function Columns.CreateLayout()
             overlayField = "oilOverlay",
             timeX        = x.oilTime,
             iconX        = x.oil,
+            titleX       = x.oil,
             iconID       = db.weapon_enchant_icon_id,
             label        = "Weapon Oil: Unknown",
             IsBad        = function(member, context)
@@ -143,6 +122,7 @@ function Columns.CreateLayout()
             iconField    = "augmentIcon",
             overlayField = "augmentOverlay",
             iconX        = x.augment,
+            titleX       = x.augment,
             iconID       = db.augment_icon_id,
             label        = "Augment Rune: Missing",
             IsBad        = function(member)
@@ -154,6 +134,7 @@ function Columns.CreateLayout()
             iconField    = "vantusIcon",
             overlayField = "vantusOverlay",
             iconX        = x.vantus,
+            titleX       = x.vantus,
             iconID       = db.vantus_icon_id,
             label        = "Vantus Rune: Missing",
             IsBad        = function(member)
@@ -170,6 +151,7 @@ function Columns.CreateLayout()
             key       = "raidBuff" .. k,
             index     = index,
             iconX     = x.raidBuff[index],
+            titleX    = x.raidBuff[index],
             spellID   = db.raidBuffDefs[index][3],
             IsBad     = function(member)
                 local auraID = member.auras.raidBuff[index]
@@ -180,8 +162,9 @@ function Columns.CreateLayout()
     end
 
     local durabilityColumn = {
-        key   = "durability",
-        IsBad = function(member, context)
+        key    = "durability",
+        titleX = x.durability + (durabilityWidth - iconSize) / 2,
+        IsBad  = function(member, context)
             local playerKey = member.key or F.fullName(member.name)
             local pct = context.durabilityData[playerKey]
 
@@ -193,18 +176,19 @@ function Columns.CreateLayout()
         end,
     }
 
-    local titleColumns = {
-        [col.FOOD]       = timedColumns[1],
-        [col.FLASK]      = timedColumns[2],
-        [col.OIL]        = timedColumns[3],
-        [col.AUGMENT]    = iconColumns[1],
-        [col.VANTUS]     = iconColumns[2],
-        [col.DURABILITY] = durabilityColumn,
+    local columns = {
+        timedColumns[1],
+        timedColumns[2],
+        timedColumns[3],
+        iconColumns[1],
+        iconColumns[2],
     }
 
     for k = 1, raidBuffCount do
-        titleColumns[col.VANTUS + k] = raidBuffColumns[k]
+        columns[#columns + 1] = raidBuffColumns[k]
     end
+
+    columns[#columns + 1] = durabilityColumn
 
     return {
         raidBuffCount   = raidBuffCount,
@@ -215,10 +199,8 @@ function Columns.CreateLayout()
         nameWidth       = nameWidth,
         timeWidth       = timeWidth,
         durabilityWidth = durabilityWidth,
-        col             = col,
         x               = x,
-        titleX          = titleX,
-        titleColumns    = titleColumns,
+        columns         = columns,
         timedColumns    = timedColumns,
         iconColumns     = iconColumns,
         raidBuffColumns = raidBuffColumns,
