@@ -6,6 +6,8 @@ local Columns = RCC.RaidFrameColumns
 local db        = RCC.db
 local Renderers = RCC.RaidFrameColumnRenderers
 
+local GetSpellInfo = C_Spell.GetSpellInfo
+
 local ICON_SIZE        = 26
 local NAME_WIDTH       = 150
 local RC_ICON_WIDTH    = 24
@@ -13,6 +15,7 @@ local TIME_WIDTH       = 30
 local H_PAD            = 3
 local FRAME_PAD        = 3
 local DURABILITY_WIDTH = 42
+local FALLBACK_SPELL_ICON = 134400  -- INV_Misc_QuestionMark
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -392,8 +395,15 @@ local function isRaidBuffBad(member, context, column)
     return not data or not data.has
 end
 
+local function getRaidBuffIconID(spellID)
+    local info = spellID and GetSpellInfo(spellID)
+
+    return info and info.iconID or FALLBACK_SPELL_ICON
+end
+
 local function createRaidBuffColumn(raidBuffIndex)
     local buffDef = db.raidBuffDefs[raidBuffIndex]
+    local spellID = buffDef[3]
 
     return {
         columnType         = COLUMN_TYPE.RAID_BUFF,
@@ -402,7 +412,8 @@ local function createRaidBuffColumn(raidBuffIndex)
         index              = raidBuffIndex,
         iconX              = RAID_BUFF_X[raidBuffIndex],
         titleX             = RAID_BUFF_X[raidBuffIndex],
-        spellID            = buffDef[3],
+        iconID             = getRaidBuffIconID(spellID),
+        spellID            = spellID,
         altSpellID         = buffDef[4],
         equivalentSpellIDs = buffDef[5],
         CreateData         = createRaidBuffData,

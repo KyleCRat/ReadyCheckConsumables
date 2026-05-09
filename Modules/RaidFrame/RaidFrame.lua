@@ -2,7 +2,6 @@ local _, RCC = ...
 
 local F  = RCC.F
 local UI = RCC.UI
-local db = RCC.db
 local Broadcast = RCC.RaidFrameBroadcast
 local Columns = RCC.RaidFrameColumns
 local Rows = RCC.RaidFrameRows
@@ -46,25 +45,6 @@ local RC_TEXTURES = {
 }
 
 local LAYOUT = Columns.CreateLayout()
-
---------------------------------------------------------------------------------
---- Raid buff default icons (spell texture IDs)
---- Looked up via C_Spell.GetSpellInfo at load time
---------------------------------------------------------------------------------
-
-local RAID_BUFF_ICONS = {}
-local FALLBACK_SPELL_ICON = 134400  -- INV_Misc_QuestionMark
-
-local function resolveRaidBuffIcons()
-    for k = 1, #db.raidBuffDefs do
-        local spellID = db.raidBuffDefs[k][3]
-        local info = C_Spell.GetSpellInfo(spellID)
-
-        RAID_BUFF_ICONS[k] = info and info.iconID or FALLBACK_SPELL_ICON
-    end
-end
-
-resolveRaidBuffIcons()
 
 local broadcast = Broadcast.Create()
 local durabilityData = broadcast:GetDurabilityData()
@@ -221,7 +201,6 @@ frame.rows = Rows.Create(frame, LAYOUT, {
     fontSizeTime     = FONT_SIZE_TIME,
     missingBg        = MISSING_BG,
     rcPendingTexture = RC_TEXTURES[RC_PENDING],
-    raidBuffIcons    = RAID_BUFF_ICONS,
 })
 
 --------------------------------------------------------------------------------

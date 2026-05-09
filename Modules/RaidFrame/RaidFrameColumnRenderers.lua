@@ -42,6 +42,7 @@ local function onOverlayEnter(self)
     if spellID then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetSpellByID(spellID)
+        -- TODO: Add red "Aura Missing" text line if the aura is missing
         GameTooltip:Show()
 
         return
@@ -143,7 +144,7 @@ local function createRaidBuffCell(row, column, layout, options)
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
-    icon:SetTexture(options.raidBuffIcons[column.index])
+    icon:SetTexture(column.iconID)
     createIconBg(row, icon, options.missingBg)
 
     local overlay = createOverlay(row, icon)
