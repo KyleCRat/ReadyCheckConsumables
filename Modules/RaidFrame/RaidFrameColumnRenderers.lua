@@ -2,6 +2,7 @@ local _, RCC = ...
 
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 local Renderers = RCC.RaidFrameColumnRenderers
+local UI = RCC.UI
 
 local ceil   = ceil
 local format = format
@@ -12,6 +13,8 @@ local COLOR_DUR_YELLOW  = { r = 1,   g = 0.82, b = 0   }
 local COLOR_DUR_RED     = { r = 1,   g = 0.2,  b = 0.2 }
 local COLOR_TIME_NORMAL = { r = 1,   g = 1,    b = 1   }
 local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
+local FONT_SIZE_TIME    = 14
+local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
 
 local function onOverlayEnter(self)
     local unit    = self.unit
@@ -80,6 +83,7 @@ end
 
 local function createIconBg(row, icon, color)
     local bg = row:CreateTexture(nil, "BACKGROUND")
+    color = color or MISSING_BG
 
     bg:SetPoint("TOPLEFT",     icon, "TOPLEFT")
     bg:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
@@ -102,9 +106,15 @@ local function getCell(row, column)
 end
 
 local function createTimedCell(row, column, layout, options)
+    options = options or {}
+
     local timeText = row:CreateFontString(nil, "ARTWORK")
     timeText:SetPoint("LEFT", row, "LEFT", column.timeX, 0)
-    timeText:SetFont(options.font, options.fontSizeTime, "OUTLINE")
+    timeText:SetFont(
+        options.font or UI.FONT,
+        options.fontSizeTime or FONT_SIZE_TIME,
+        "OUTLINE"
+    )
     timeText:SetWidth(layout.timeWidth)
     timeText:SetJustifyH("RIGHT")
 
@@ -125,6 +135,8 @@ local function createTimedCell(row, column, layout, options)
 end
 
 local function createIconCell(row, column, layout, options)
+    options = options or {}
+
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
@@ -141,6 +153,8 @@ local function createIconCell(row, column, layout, options)
 end
 
 local function createRaidBuffCell(row, column, layout, options)
+    options = options or {}
+
     local icon = row:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
@@ -157,10 +171,16 @@ local function createRaidBuffCell(row, column, layout, options)
 end
 
 local function createDurabilityCell(row, column, layout, options)
+    options = options or {}
+
     local text = row:CreateFontString(nil, "ARTWORK")
 
     text:SetPoint("LEFT", row, "LEFT", column.textX, 0)
-    text:SetFont(options.font, options.fontSizeTime, "OUTLINE")
+    text:SetFont(
+        options.font or UI.FONT,
+        options.fontSizeTime or FONT_SIZE_TIME,
+        "OUTLINE"
+    )
     text:SetWidth(layout.durabilityWidth)
     text:SetJustifyH("CENTER")
     text:SetText("?")

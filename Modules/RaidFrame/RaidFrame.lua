@@ -1,6 +1,5 @@
 local _, RCC = ...
 
-local UI = RCC.UI
 local Broadcast = RCC.RaidFrameBroadcast
 local Columns = RCC.RaidFrameColumns
 local Controls = RCC.RaidFrameControls
@@ -15,20 +14,8 @@ local GetTime            = GetTime
 --- Constants
 --------------------------------------------------------------------------------
 
-local ROW_HEIGHT           = 30
-local TITLE_HEIGHT         = 28
-local V_PAD                = 0
-local MAX_ROWS             = 40
-local EXPIRE_WARN_SECONDS  = 600 -- 10 minutes
-local NO_DURATION          = 0
 local ADDON_REFRESH_DELAY  = 0.25
 local FADE_OUT_DURATION    = 0.5
-local DURABILITY_THRESHOLD = 50
-local MISSING_BG           = { r = 0,   g = 0,   b = 0 }
-local FONT_SIZE_NAME       = 16
-local FONT_SIZE_TIME       = 14
-
-local FONT = UI.FONT
 
 local RC_PENDING = 0
 local RC_READY   = 1
@@ -58,7 +45,7 @@ local oilData = broadcast:GetOilData()
 local frame = CreateFrame("Frame", "RCRaidFrame", UIParent, "BackdropTemplate")
 RCC.raidFrame = frame
 
-frame:SetSize(LAYOUT.frameWidth, ROW_HEIGHT * 5 + LAYOUT.framePad * 2)
+frame:SetWidth(LAYOUT.frameWidth)
 frame:SetPoint("CENTER")
 frame:SetMovable(true)
 frame:SetClampedToScreen(true)
@@ -83,9 +70,6 @@ local controls = Controls.Create(frame)
 --------------------------------------------------------------------------------
 
 local titleBar = TitleBar.Create(frame, LAYOUT, {
-    titleHeight    = TITLE_HEIGHT,
-    font           = FONT,
-    fontSizeName   = FONT_SIZE_NAME,
     pendingTexture = RC_TEXTURES[RC_PENDING],
 })
 
@@ -93,17 +77,10 @@ local titleBar = TitleBar.Create(frame, LAYOUT, {
 --- Row creation (pre-allocate 40 rows)
 --------------------------------------------------------------------------------
 
-frame.rows = Rows.Create(frame, LAYOUT, {
-    maxRows          = MAX_ROWS,
-    titleHeight      = TITLE_HEIGHT,
-    rowHeight        = ROW_HEIGHT,
-    vPad             = V_PAD,
-    font             = FONT,
-    fontSizeName     = FONT_SIZE_NAME,
-    fontSizeTime     = FONT_SIZE_TIME,
-    missingBg        = MISSING_BG,
+frame.rows = Rows.Create(frame, titleBar, LAYOUT, {
     rcPendingTexture = RC_TEXTURES[RC_PENDING],
 })
+frame:SetHeight(frame.rows.initialFrameHeight)
 
 --------------------------------------------------------------------------------
 --- Member data storage
@@ -129,11 +106,7 @@ local renderContext = {
         oilData        = oilData,
         durabilityData = durabilityData,
     },
-    rules = {
-        expireWarnSeconds   = EXPIRE_WARN_SECONDS,
-        noDuration          = NO_DURATION,
-        durabilityThreshold = DURABILITY_THRESHOLD,
-    },
+    rules = Columns.RULES,
 }
 
 --------------------------------------------------------------------------------

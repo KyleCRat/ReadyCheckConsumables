@@ -4,7 +4,14 @@ RCC.RaidFrameRows = RCC.RaidFrameRows or {}
 local Rows = RCC.RaidFrameRows
 
 local Columns = RCC.RaidFrameColumns
+local UI = RCC.UI
 local F = RCC.F
+
+local ROW_HEIGHT           = 30
+local V_PAD                = 0
+local MAX_ROWS             = 40
+local DEFAULT_VISIBLE_ROWS = 5
+local FONT_SIZE_NAME       = 16
 
 local COLOR_NAME_NORMAL  = { r = 1,   g = 1,   b = 1   }
 local COLOR_NAME_OFFLINE = { r = 0.5, g = 0.5, b = 0.5 }
@@ -13,7 +20,14 @@ local COLOR_NAME_DEAD    = { r = 0.8, g = 0.2, b = 0.2 }
 local RC_TEXTURE_OFFLINE = "Interface\\CharacterFrame\\Disconnect-Icon"
 local RC_ATLAS_DEAD      = "Navigation-Tombstone-Icon"
 
-local function createRow(parent, rows, index, layout, options)
+local function getFrameHeight(rows, layout, activeCount)
+    return layout.framePad * 2
+        + rows.titleHeight + layout.framePad
+        + activeCount * rows.rowHeight
+        + (activeCount > 1 and (activeCount - 1) * rows.vPad or 0)
+end
+
+local function createRow(parent, titleBar, rows, index, layout, options)
     local row = CreateFrame("Frame", nil, parent)
     local x = layout.x
 
@@ -46,9 +60,8 @@ local function createRow(parent, rows, index, layout, options)
     end
 
     if index == 1 then
-        row:SetPoint("TOPLEFT", parent, "TOPLEFT", layout.framePad,
-            -(layout.framePad + options.titleHeight + layout.framePad
-                + options.vPad))
+        row:SetPoint("TOPLEFT", titleBar, "BOTTOMLEFT", 0,
+            -(layout.framePad + options.vPad))
     else
         row:SetPoint("TOPLEFT", rows[index - 1], "BOTTOMLEFT", 0, -options.vPad)
     end
@@ -56,16 +69,30 @@ local function createRow(parent, rows, index, layout, options)
     return row
 end
 
-function Rows.Create(parent, layout, options)
+function Rows.Create(parent, titleBar, layout, options)
+    options = options or {}
+
     local rows = {
-        maxRows     = options.maxRows,
-        rowHeight   = options.rowHeight,
-        titleHeight = options.titleHeight,
-        vPad        = options.vPad,
+        maxRows     = options.maxRows or MAX_ROWS,
+        rowHeight   = options.rowHeight or ROW_HEIGHT,
+        titleHeight = titleBar:GetHeight(),
+        vPad        = options.vPad or V_PAD,
     }
 
-    for i = 1, options.maxRows do
-        rows[i] = createRow(parent, rows, i, layout, options)
+    local rowOptions = {
+        rowHeight        = rows.rowHeight,
+        vPad             = rows.vPad,
+        font             = options.font or UI.FONT,
+        fontSizeName     = options.fontSizeName or FONT_SIZE_NAME,
+        fontSizeTime     = options.fontSizeTime,
+        missingBg        = options.missingBg,
+        rcPendingTexture = options.rcPendingTexture,
+    }
+
+    rows.initialFrameHeight = getFrameHeight(rows, layout, DEFAULT_VISIBLE_ROWS)
+
+    for i = 1, rows.maxRows do
+        rows[i] = createRow(parent, titleBar, rows, i, layout, rowOptions)
     end
 
     return rows
@@ -153,8 +180,5 @@ function Rows.RefreshAll(rows, state, layout, context)
         rows[i]:Hide()
     end
 
-    return layout.framePad * 2
-        + rows.titleHeight + layout.framePad
-        + activeCount * rows.rowHeight
-        + (activeCount > 1 and (activeCount - 1) * rows.vPad or 0)
+    return getFrameHeight(rows, layout, activeCount)
 end

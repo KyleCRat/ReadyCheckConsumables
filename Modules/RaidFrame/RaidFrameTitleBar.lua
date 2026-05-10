@@ -2,10 +2,13 @@ local _, RCC = ...
 
 RCC.RaidFrameTitleBar = RCC.RaidFrameTitleBar or {}
 local TitleBar = RCC.RaidFrameTitleBar
+local UI = RCC.UI
 
 local ceil    = ceil
 local GetTime = GetTime
 
+local HEIGHT               = 28
+local FONT_SIZE_NAME       = 16
 local COLOR_TITLE_BG     = { r = 0, g = 0,      b = 0,       a = 0.2 }
 local COLOR_PROGRESS_BAR = { r = 0, g = 209/255, b = 255/255, a = 0.6 }
 local COLOR_NOT_READY    = { r = 1,   g = 0.2,  b = 0.2 }
@@ -13,7 +16,11 @@ local COLOR_AFK          = { r = 1,   g = 0.82, b = 0   }
 local COLOR_READY        = { r = 0.2, g = 1,    b = 0.2 }
 
 function TitleBar.Create(parent, layout, options)
+    options = options or {}
+
     local titleBar = CreateFrame("Frame", nil, parent)
+    local font = options.font or UI.FONT
+    local fontSizeName = options.fontSizeName or FONT_SIZE_NAME
 
     titleBar.progressWidth = layout.frameWidth - layout.framePad * 2
 
@@ -21,7 +28,7 @@ function TitleBar.Create(parent, layout, options)
         layout.framePad, -layout.framePad)
     titleBar:SetPoint("TOPRIGHT", parent, "TOPRIGHT",
         -layout.framePad, -layout.framePad)
-    titleBar:SetHeight(options.titleHeight)
+    titleBar:SetHeight(options.titleHeight or HEIGHT)
 
     titleBar.bg = titleBar:CreateTexture(nil, "BACKGROUND")
     titleBar.bg:SetAllPoints(titleBar)
@@ -43,13 +50,13 @@ function TitleBar.Create(parent, layout, options)
 
     titleBar.countText = titleBar:CreateFontString(nil, "ARTWORK")
     titleBar.countText:SetPoint("LEFT", titleBar, "LEFT", 2, 0)
-    titleBar.countText:SetFont(options.font, options.fontSizeName, "OUTLINE")
+    titleBar.countText:SetFont(font, fontSizeName, "OUTLINE")
     titleBar.countText:SetTextColor(1, 1, 1)
     titleBar.countText:SetText("")
 
     titleBar.timerText = titleBar:CreateFontString(nil, "ARTWORK")
     titleBar.timerText:SetPoint("LEFT", titleBar.countText, "RIGHT", 6, 0)
-    titleBar.timerText:SetFont(options.font, options.fontSizeName, "OUTLINE")
+    titleBar.timerText:SetFont(font, fontSizeName, "OUTLINE")
     titleBar.timerText:SetTextColor(1, 1, 1)
     titleBar.timerText:SetText("")
 

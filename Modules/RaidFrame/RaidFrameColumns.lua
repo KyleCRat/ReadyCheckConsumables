@@ -33,6 +33,11 @@ local DATA_SOURCE = {
 
 Columns.COLUMN_TYPE = COLUMN_TYPE
 Columns.DATA_SOURCE = DATA_SOURCE
+Columns.RULES = {
+    expireWarnSeconds   = 600, -- 10 minutes
+    noDuration          = 0,
+    durabilityThreshold = 50,
+}
 
 local CREATE_CELL_BY_COLUMN_TYPE = {
     [COLUMN_TYPE.TIMED]      = Renderers.TIMED.CreateCell,
