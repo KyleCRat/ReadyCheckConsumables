@@ -31,6 +31,32 @@ local DATA_SOURCE = {
     DURABILITY = "durability",
 }
 
+Columns.COLUMN_TYPE = COLUMN_TYPE
+Columns.DATA_SOURCE = DATA_SOURCE
+
+local CREATE_CELL_BY_COLUMN_TYPE = {
+    [COLUMN_TYPE.TIMED]      = Renderers.TIMED.CreateCell,
+    [COLUMN_TYPE.ICON]       = Renderers.ICON.CreateCell,
+    [COLUMN_TYPE.RAID_BUFF]  = Renderers.RAID_BUFF.CreateCell,
+    [COLUMN_TYPE.DURABILITY] = Renderers.DURABILITY.CreateCell,
+}
+
+local RENDER_CELL_BY_DATA_SOURCE = {
+    [DATA_SOURCE.AURA] = {
+        [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderAuraCell,
+        [COLUMN_TYPE.ICON]  = Renderers.ICON.RenderAuraCell,
+    },
+    [DATA_SOURCE.OIL] = {
+        [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderOilCell,
+    },
+    [DATA_SOURCE.RAID_BUFF] = {
+        [COLUMN_TYPE.RAID_BUFF] = Renderers.RAID_BUFF.RenderCell,
+    },
+    [DATA_SOURCE.DURABILITY] = {
+        [COLUMN_TYPE.DURABILITY] = Renderers.DURABILITY.RenderCell,
+    },
+}
+
 local RAID_BUFF_COUNT = #db.raidBuffDefs
 local ICON_STEP       = ICON_SIZE + H_PAD
 
@@ -195,8 +221,6 @@ local foodColumn = {
     label        = "Food: Missing",
     CreateData   = createFoodData,
     CollectAura  = collectFoodAura,
-    CreateCell   = Renderers.TIMED.CreateCell,
-    RenderCell   = Renderers.TIMED.RenderAuraCell,
     IsBad        = isFoodBad,
 }
 
@@ -238,8 +262,6 @@ local flaskColumn = {
     label        = "Flask: Missing",
     CreateData   = createFlaskData,
     CollectAura  = collectFlaskAura,
-    CreateCell   = Renderers.TIMED.CreateCell,
-    RenderCell   = Renderers.TIMED.RenderAuraCell,
     IsBad        = isFlaskBad,
 }
 
@@ -296,8 +318,6 @@ local oilColumn = {
     label        = "Weapon Oil: Unknown",
     CreateData   = createOilData,
     SyncData     = syncOilData,
-    CreateCell   = Renderers.TIMED.CreateCell,
-    RenderCell   = Renderers.TIMED.RenderOilCell,
     IsBad        = isOilBad,
 }
 
@@ -339,8 +359,6 @@ local augmentColumn = {
     label        = "Augment Rune: Missing",
     CreateData   = createAugmentData,
     CollectAura  = collectAugmentAura,
-    CreateCell   = Renderers.ICON.CreateCell,
-    RenderCell   = Renderers.ICON.RenderAuraCell,
     IsBad        = isAugmentBad,
 }
 
@@ -382,8 +400,6 @@ local vantusColumn = {
     label        = "Vantus Rune: Missing",
     CreateData   = createVantusData,
     CollectAura  = collectVantusAura,
-    CreateCell   = Renderers.ICON.CreateCell,
-    RenderCell   = Renderers.ICON.RenderAuraCell,
     IsBad        = isVantusBad,
 }
 
@@ -443,8 +459,6 @@ local function createRaidBuffColumn(raidBuffIndex)
         equivalentSpellIDs = buffDef[5],
         CreateData         = createRaidBuffData,
         CollectAura        = collectRaidBuffAura,
-        CreateCell         = Renderers.RAID_BUFF.CreateCell,
-        RenderCell         = Renderers.RAID_BUFF.RenderCell,
         IsBad              = isRaidBuffBad,
     }
 end
@@ -495,8 +509,6 @@ local durabilityColumn = {
     titleX     = DURABILITY_TITLE_X,
     CreateData = createDurabilityData,
     SyncData   = syncDurabilityData,
-    CreateCell = Renderers.DURABILITY.CreateCell,
-    RenderCell = Renderers.DURABILITY.RenderCell,
     IsBad      = isDurabilityBad,
 }
 
@@ -520,6 +532,27 @@ end
 
 function Columns.CreateColumnData(layout)
     return createColumnData(layout)
+end
+
+function Columns.CreateCell(row, column, layout, options)
+    local createCell = CREATE_CELL_BY_COLUMN_TYPE[column.columnType]
+
+    if not createCell then
+        error("Raid frame column has no cell creator: " .. tostring(column.key), 2)
+    end
+
+    createCell(row, column, layout, options)
+end
+
+function Columns.RenderCell(row, member, column, context)
+    local renderers = RENDER_CELL_BY_DATA_SOURCE[column.dataSource]
+    local renderCell = renderers and renderers[column.columnType]
+
+    if not renderCell then
+        error("Raid frame column has no renderer: " .. tostring(column.key), 2)
+    end
+
+    renderCell(row, member, column, context)
 end
 
 function Columns.ScanUnitData(unit, now, layout, context)

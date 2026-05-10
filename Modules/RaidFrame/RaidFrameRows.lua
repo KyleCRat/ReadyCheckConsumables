@@ -42,11 +42,7 @@ local function createRow(parent, rows, index, layout, options)
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
 
-        if not column.CreateCell then
-            error("Raid frame column has no cell creator: " .. tostring(column.key), 2)
-        end
-
-        column.CreateCell(row, column, layout, options)
+        Columns.CreateCell(row, column, layout, options)
     end
 
     if index == 1 then
@@ -131,11 +127,7 @@ function Rows.ApplyData(row, member, layout, context)
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
 
-        if not column.RenderCell then
-            error("Raid frame column has no renderer: " .. tostring(column.key), 2)
-        end
-
-        column.RenderCell(row, member, column, context)
+        Columns.RenderCell(row, member, column, context)
     end
 
     row:Show()

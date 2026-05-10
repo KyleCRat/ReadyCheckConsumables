@@ -5,6 +5,7 @@ local Members = RCC.RaidFrameMembers
 
 local F       = RCC.F
 local Columns = RCC.RaidFrameColumns
+local DATA_SOURCE = Columns.DATA_SOURCE
 
 local GetTime = GetTime
 local UnitName = UnitName
@@ -113,9 +114,9 @@ local function createTestColumnData(layout)
         local data = columnData[column.key]
 
         if data then
-            if column.dataSource == "aura" then
+            if column.dataSource == DATA_SOURCE.AURA then
                 applyTestAuraData(data, column)
-            elseif column.dataSource == "raidBuff" then
+            elseif column.dataSource == DATA_SOURCE.RAID_BUFF then
                 applyTestRaidBuffData(data)
             end
         end
