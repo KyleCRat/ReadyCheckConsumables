@@ -91,17 +91,31 @@ RCC.db.foodItemIDs = {
     242291, -- [Uncm] Fried Bloomtail               | 22 Mastery, 22 Versatility
     242293, -- [Uncm] Sunwell Delight               | 22 Versatility, 22 Haste
 
+    242304, -- [Comm] Spiced Biscuits               | 16 Critical Strike, 16 Versatility
+    242307, -- [Comm] Quick Sandwich                | 16 Versatility, 16 Haste
+    242309, -- [Comm] Farstrider Rations            | 16 Mastery, 16 Haste
+    242305, -- [Comm] Silvermoon Standard           | 16 Mastery, 16 Versatility
+
     242294, -- [Uncm] Felberry Figs                 | 46 Versatility
     242276, -- [Rare] Braised Blood Hunter          | 59 Versatility
     242280, -- [Rare] Buttered Root Crab            | 59 Versatility
     242284, -- [Rare] Void-Kissed Fish Rolls        | 59 Versatility
+}
 
+RCC.db.manaItemIDs = {
     242297, -- [Uncm] Mana Lily Tea                 | Mana
     242298, -- [Uncm] Argentleaf Tea                | Mana
     242299, -- [Uncm] Sanguithorn Tea               | Mana
     242300, -- [Uncm] Tranquility Bloom Tea         | Mana
     242301, -- [Uncm] Azeroot Tea                   | Mana
     249689, -- [Uncm] Ghostflower Tea with Sunfruit | Mana
+
+    264982, -- [Comm] Wine Not                      | Mana
+    264984, -- [Comm] Darkwell Draft                | Mana
+    260259, -- [Comm] Everspring Water              | Mana
+    260283, -- [Comm] Grotto Gulp                   | Mana
+    260260, -- [Comm] Springrunner Sparkling        | Mana
+    260260, -- [Comm] Bloom Nectar                  | Mana
 }
 
 --------------------------------------------------------------------------------

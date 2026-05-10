@@ -9,6 +9,7 @@
 
 Functions.lua
 UI.lua
+FrameAnimations.lua
 data/Food.lua
 data/Flasks.lua
 data/Potions.lua
@@ -18,8 +19,16 @@ data/HealingItems.lua
 data/WeaponEnchants.lua
 data/Settings.lua
 ConsumablesFrame.lua
-RaidFrameTest.lua
-RaidFrame.lua
+Modules/RaidFrame/RaidFrameTest.lua
+Modules/RaidFrame/RaidFrameReadyCheck.lua
+Modules/RaidFrame/RaidFrameBroadcast.lua
+Modules/RaidFrame/RaidFrameColumnRenderers.lua
+Modules/RaidFrame/RaidFrameColumns.lua
+Modules/RaidFrame/RaidFrameMembers.lua
+Modules/RaidFrame/RaidFrameRows.lua
+Modules/RaidFrame/RaidFrameTitleBar.lua
+Modules/RaidFrame/RaidFrameControls.lua
+Modules/RaidFrame/RaidFrame.lua
 Settings.lua
 ReadyCheckConsumables.lua
 ChatReport.lua

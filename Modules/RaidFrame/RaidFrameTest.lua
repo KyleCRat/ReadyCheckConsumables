@@ -1,7 +1,5 @@
 local _, RCC = ...
 
-local db = RCC.db
-
 --------------------------------------------------------------------------------
 --- Test data
 --------------------------------------------------------------------------------
@@ -17,46 +15,6 @@ local TEST_NAMES = {
     "Frostmourne", "Tidecaller", "Frostbolt", "Felblood", "Mistwalker",
     "Moonfire", "Havocblade", "Scalewing",
 }
-
---------------------------------------------------------------------------------
---- Test aura generation
---------------------------------------------------------------------------------
-
-local function randomBool()
-    return math.random() > 0.35
-end
-
-local function generateTestAuras()
-    local numBuffs = #db.raidBuffDefs
-    local raidBuff = {}
-
-    for k = 1, numBuffs do
-        raidBuff[k] = randomBool() and true or false
-    end
-
-    local hasFood  = randomBool()
-    local hasFlask = randomBool()
-    local hasAugment  = randomBool()
-    local hasVantus = randomBool()
-
-    return {
-        hasFood     = hasFood,
-        foodTime    = hasFood and math.random(60, 3600) or 0,
-        foodAuraID  = nil,
-        foodIconID  = hasFood and db.food_icon_id or nil,
-        hasFlask    = hasFlask,
-        flaskTime   = hasFlask and math.random(60, 3600) or 0,
-        flaskAuraID = nil,
-        flaskIconID = hasFlask and db.flask_icon_id or nil,
-        hasAugment     = hasAugment,
-        augmentAuraID  = nil,
-        augmentIconID  = hasAugment and db.augment_icon_id or nil,
-        hasVantus   = hasVantus,
-        vantusAuraID = nil,
-        vantusIconID = hasVantus and db.vantus_icon_id or nil,
-        raidBuff    = raidBuff,
-    }
-end
 
 --------------------------------------------------------------------------------
 --- Test member generation
@@ -90,7 +48,6 @@ local function generateTestMembers(excludeClass)
                 class      = ALL_CLASSES[i],
                 online     = math.random() > 0.1,
                 isDead     = math.random() > 0.9,
-                auras      = generateTestAuras(),
                 durability = math.random(10, 100),
                 oil        = generateOilData(),
             }
