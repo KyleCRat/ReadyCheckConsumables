@@ -106,9 +106,7 @@ local function setIconAuraData(data, aura)
     data.iconID = aura.icon
 end
 
-local function isTimedDataBad(data, context)
-    local rules = context.rules
-
+local function isTimedDataBad(data, rules)
     if not data or not data.has then
         return true
     end
@@ -133,6 +131,23 @@ local function createFoodData()
     }
 end
 
+local function refreshFoodDisplayData(data, rules)
+    -- Show Eating/Drinking while the real Well Fed state still needs refresh.
+    local displayData = data.wellFed
+    local isEating = false
+
+    if data.eating.has and isTimedDataBad(data.wellFed, rules) then
+        displayData = data.eating
+        isEating = true
+    end
+
+    data.has      = displayData.has
+    data.time     = displayData.time
+    data.auraID   = displayData.auraID
+    data.iconID   = displayData.iconID
+    data.isEating = isEating
+end
+
 local function collectFoodAura(data, aura, scanContext)
     local spellID = aura.spellId
     local iconID = aura.icon
@@ -147,16 +162,26 @@ local function collectFoodAura(data, aura, scanContext)
         return
     end
 
+    data.wellFed = data.wellFed or createFoodData()
+    data.eating  = data.eating or createFoodData()
+
     if iconID and db.eatingIconIDs[iconID] then
-        data.isEating = true
-        setTimedAuraData(data, aura, scanContext.remaining)
-    elseif not data.isEating then
-        setTimedAuraData(data, aura, scanContext.remaining)
+        setTimedAuraData(data.eating, aura, scanContext.remaining)
+    else
+        setTimedAuraData(data.wellFed, aura, scanContext.remaining)
     end
+
+    refreshFoodDisplayData(data, scanContext.rules)
 end
 
 local function isFoodBad(member, context, column)
-    return isTimedDataBad(getColumnData(member, column), context)
+    local data = getColumnData(member, column)
+
+    if data and data.wellFed then
+        return isTimedDataBad(data.wellFed, context.rules)
+    end
+
+    return isTimedDataBad(data, context.rules)
 end
 
 local foodColumn = {
@@ -199,7 +224,7 @@ local function collectFlaskAura(data, aura, scanContext)
 end
 
 local function isFlaskBad(member, context, column)
-    return isTimedDataBad(getColumnData(member, column), context)
+    return isTimedDataBad(getColumnData(member, column), context.rules)
 end
 
 local flaskColumn = {
@@ -502,6 +527,7 @@ function Columns.ScanUnitData(unit, now, layout, context)
     local rules = context.rules
     local scanContext = {
         remaining = rules.noDuration,
+        rules     = rules,
     }
 
     for auraIndex = 1, 60 do
