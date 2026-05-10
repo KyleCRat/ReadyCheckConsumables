@@ -6,6 +6,7 @@ local Members = RCC.RaidFrameMembers
 local F       = RCC.F
 local Columns = RCC.RaidFrameColumns
 local DATA_SOURCE = Columns.DATA_SOURCE
+local ReadyCheck = RCC.RaidFrameReadyCheck
 
 local GetTime = GetTime
 local UnitName = UnitName
@@ -53,7 +54,7 @@ function Members.ScanAll(state, layout, context)
             state.unitToIndex[unit] = count
 
             if not state.rcStatus[unit] then
-                state.rcStatus[unit] = context.readyCheck.pending
+                state.rcStatus[unit] = ReadyCheck.PENDING
             end
         end
     end
@@ -144,7 +145,7 @@ function Members.PopulateTestData(state, layout, context, broadcast)
         columnData = scanMemberColumnData("player", GetTime(), layout, context),
     }
     state.unitToIndex["player"] = 1
-    state.rcStatus["player"] = context.readyCheck.ready
+    state.rcStatus["player"] = ReadyCheck.READY
 
     local fakeMembers = RCC.raidFrameTest.generateTestMembers(playerClass)
     local count = 1
@@ -167,7 +168,7 @@ function Members.PopulateTestData(state, layout, context, broadcast)
         }
 
         state.unitToIndex[fakeUnit] = count
-        state.rcStatus[fakeUnit] = context.readyCheck.pending
+        state.rcStatus[fakeUnit] = ReadyCheck.PENDING
 
         broadcast:SetDurability(playerKey, fm.durability)
 

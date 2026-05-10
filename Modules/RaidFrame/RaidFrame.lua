@@ -5,6 +5,7 @@ local Columns = RCC.RaidFrameColumns
 local Controls = RCC.RaidFrameControls
 local FrameAnimations = RCC.FrameAnimations
 local Members = RCC.RaidFrameMembers
+local ReadyCheck = RCC.RaidFrameReadyCheck
 local Rows = RCC.RaidFrameRows
 local TitleBar = RCC.RaidFrameTitleBar
 
@@ -16,21 +17,6 @@ local GetTime            = GetTime
 
 local ADDON_REFRESH_DELAY  = 0.25
 local FADE_OUT_DURATION    = 0.5
-
-local RC_PENDING = 0
-local RC_READY   = 1
-local RC_NOT     = 2
-
-local RC_TEXTURES = {
-    [RC_PENDING] = "Interface\\RaidFrame\\ReadyCheck-Waiting",
-    [RC_READY]   = "Interface\\RaidFrame\\ReadyCheck-Ready",
-    [RC_NOT]     = "Interface\\RaidFrame\\ReadyCheck-NotReady",
-}
-
-local TITLE_COLUMN_TEXTURES = {
-    ready    = RC_TEXTURES[RC_READY],
-    notReady = RC_TEXTURES[RC_NOT],
-}
 
 local LAYOUT = Columns.CreateLayout()
 
@@ -69,17 +55,13 @@ local controls = Controls.Create(frame)
 --- Title Bar
 --------------------------------------------------------------------------------
 
-local titleBar = TitleBar.Create(frame, LAYOUT, {
-    pendingTexture = RC_TEXTURES[RC_PENDING],
-})
+local titleBar = TitleBar.Create(frame, LAYOUT)
 
 --------------------------------------------------------------------------------
 --- Row creation (pre-allocate 40 rows)
 --------------------------------------------------------------------------------
 
-frame.rows = Rows.Create(frame, titleBar, LAYOUT, {
-    rcPendingTexture = RC_TEXTURES[RC_PENDING],
-})
+frame.rows = Rows.Create(frame, titleBar, LAYOUT)
 frame:SetHeight(frame.rows.initialFrameHeight)
 
 --------------------------------------------------------------------------------
@@ -89,19 +71,13 @@ frame:SetHeight(frame.rows.initialFrameHeight)
 local state = {
     members        = {},  -- [i] = { name, unit, class, online, isDead, columnData }
     unitToIndex    = {},  -- [unit] = i
-    rcStatus       = {},  -- [unit] = RC_PENDING | RC_READY | RC_NOT
+    rcStatus       = {},  -- [unit] = ReadyCheck status
     activeCount    = 0,
     readyAnnounced = false,
 }
 
 local renderContext = {
     state      = state,
-    readyCheck = {
-        pending  = RC_PENDING,
-        ready    = RC_READY,
-        notReady = RC_NOT,
-        textures = RC_TEXTURES,
-    },
     shared = {
         oilData        = oilData,
         durabilityData = durabilityData,
@@ -119,7 +95,7 @@ local function updateTitleCount()
     for unit in pairs(state.unitToIndex) do
         local status = state.rcStatus[unit]
 
-        if status == RC_READY or status == RC_NOT then
+        if status == ReadyCheck.READY or status == ReadyCheck.NOT_READY then
             readyCount = readyCount + 1
         end
     end
@@ -140,9 +116,9 @@ local function getFinishedCounts()
 
         local status = state.rcStatus[member.unit]
 
-        if status == RC_PENDING then
+        if status == ReadyCheck.PENDING then
             afkCount = afkCount + 1
-        elseif status == RC_NOT then
+        elseif status == ReadyCheck.NOT_READY then
             notReadyCount = notReadyCount + 1
         end
     end
@@ -174,8 +150,7 @@ local function refreshRowAndTitle(index)
         state.members,
         state.activeCount,
         LAYOUT,
-        renderContext,
-        TITLE_COLUMN_TEXTURES
+        renderContext
     )
 end
 
@@ -185,8 +160,7 @@ local function refreshAllRowsAndTitle()
         state.members,
         state.activeCount,
         LAYOUT,
-        renderContext,
-        TITLE_COLUMN_TEXTURES
+        renderContext
     )
 end
 
@@ -261,7 +235,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     if initiatorUnit then
         for unit in pairs(state.unitToIndex) do
             if UnitIsUnit(unit, initiatorUnit) then
-                state.rcStatus[unit] = RC_READY
+                state.rcStatus[unit] = ReadyCheck.READY
                 break
             end
         end
@@ -341,7 +315,7 @@ function frame:OnReadyCheckConfirm(unit, ready)
         return
     end
 
-    state.rcStatus[unit] = ready and RC_READY or RC_NOT
+    state.rcStatus[unit] = ready and ReadyCheck.READY or ReadyCheck.NOT_READY
     refreshRowAndTitle(index)
 
     local responded = updateTitleCount()

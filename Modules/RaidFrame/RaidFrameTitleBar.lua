@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.RaidFrameTitleBar = RCC.RaidFrameTitleBar or {}
 local TitleBar = RCC.RaidFrameTitleBar
 local UI = RCC.UI
+local ReadyCheck = RCC.RaidFrameReadyCheck
 
 local ceil    = ceil
 local GetTime = GetTime
@@ -68,21 +69,23 @@ function TitleBar.Create(parent, layout, options)
 
         icon:SetSize(layout.iconSize, layout.iconSize)
         icon:SetPoint("LEFT", titleBar, "LEFT", column.titleX, 0)
-        icon:SetTexture(options.pendingTexture)
+        icon:SetTexture(ReadyCheck.TEXTURES[ReadyCheck.PENDING])
         titleBar.colIcons[columnIndex] = icon
     end
 
-    function titleBar:RefreshColumns(columnStates, readyTexture, notReadyTexture)
+    function titleBar:RefreshColumns(columnStates)
         local numCols = #self.colIcons
 
         for columnIndex = 1, numCols do
             self.colIcons[columnIndex]:SetTexture(
-                columnStates[columnIndex] and notReadyTexture or readyTexture
+                columnStates[columnIndex]
+                    and ReadyCheck.TITLE_TEXTURES.notReady
+                    or ReadyCheck.TITLE_TEXTURES.ready
             )
         end
     end
 
-    function titleBar:RefreshFromMembers(members, activeCount, layout, context, textures)
+    function titleBar:RefreshFromMembers(members, activeCount, layout, context)
         local columns = layout.columns
         local columnStates = {}
 
@@ -105,11 +108,7 @@ function TitleBar.Create(parent, layout, options)
             columnStates[columnIndex] = anyBad
         end
 
-        self:RefreshColumns(
-            columnStates,
-            textures.ready,
-            textures.notReady
-        )
+        self:RefreshColumns(columnStates)
     end
 
     function titleBar:SetReadyCount(readyCount, activeCount)
