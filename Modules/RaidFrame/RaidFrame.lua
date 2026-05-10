@@ -1,34 +1,34 @@
 local _, RCC = ...
 
-local Broadcast = RCC.RaidFrameBroadcast
-local Columns = RCC.RaidFrameColumns
-local Controls = RCC.RaidFrameControls
+local Broadcast       = RCC.RaidFrameBroadcast
+local Columns         = RCC.RaidFrameColumns
+local Controls        = RCC.RaidFrameControls
 local FrameAnimations = RCC.FrameAnimations
-local Members = RCC.RaidFrameMembers
-local ReadyCheck = RCC.RaidFrameReadyCheck
-local Rows = RCC.RaidFrameRows
-local TitleBar = RCC.RaidFrameTitleBar
+local Members         = RCC.RaidFrameMembers
+local ReadyCheck      = RCC.RaidFrameReadyCheck
+local Rows            = RCC.RaidFrameRows
+local TitleBar        = RCC.RaidFrameTitleBar
 
-local GetTime            = GetTime
+local GetTime = GetTime
 
 --------------------------------------------------------------------------------
 --- Constants
 --------------------------------------------------------------------------------
 
-local ADDON_REFRESH_DELAY  = 0.25
-local FADE_OUT_DURATION    = 0.5
+local ADDON_REFRESH_DELAY = 0.25
+local FADE_OUT_DURATION   = 0.5
 
 local LAYOUT = Columns.CreateLayout()
 
-local broadcast = Broadcast.Create()
+local broadcast      = Broadcast.Create()
 local durabilityData = broadcast:GetDurabilityData()
-local oilData = broadcast:GetOilData()
+local oilData        = broadcast:GetOilData()
 
 --------------------------------------------------------------------------------
 --- Frame creation
 --------------------------------------------------------------------------------
 
-local frame = CreateFrame("Frame", "RCRaidFrame", UIParent, "BackdropTemplate")
+local frame   = CreateFrame("Frame", "RCRaidFrame", UIParent, "BackdropTemplate")
 RCC.raidFrame = frame
 
 frame:SetWidth(LAYOUT.frameWidth)
@@ -77,7 +77,7 @@ local state = {
 }
 
 local renderContext = {
-    state      = state,
+    state  = state,
     shared = {
         oilData        = oilData,
         durabilityData = durabilityData,
