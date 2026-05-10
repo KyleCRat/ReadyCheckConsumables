@@ -15,6 +15,8 @@ local COLOR_READY        = { r = 0.2, g = 1,    b = 0.2 }
 function TitleBar.Create(parent, layout, options)
     local titleBar = CreateFrame("Frame", nil, parent)
 
+    titleBar.progressWidth = layout.frameWidth - layout.framePad * 2
+
     titleBar:SetPoint("TOPLEFT",  parent, "TOPLEFT",
         layout.framePad, -layout.framePad)
     titleBar:SetPoint("TOPRIGHT", parent, "TOPRIGHT",
@@ -141,10 +143,11 @@ function TitleBar.Create(parent, layout, options)
         self.timerText:SetText("")
     end
 
-    function titleBar:StartProgress(duration, barWidth)
+    function titleBar:StartProgress(duration)
         self:StopProgress()
 
         local endTime = GetTime() + duration
+        local barWidth = self.progressWidth
 
         self.progress:SetWidth(barWidth)
         self.progress:Show()

@@ -256,12 +256,6 @@ local function cancelHideTimer()
     end
 end
 
-local function startProgressBar(duration)
-    local barWidth = LAYOUT.frameWidth - LAYOUT.framePad * 2
-
-    titleBar:StartProgress(duration, barWidth)
-end
-
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelHideTimer()
     cancelAddonRefreshTimer()
@@ -304,7 +298,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     updateTitleCount()
 
     if not self.manualShow then
-        startProgressBar(timeToHide or 30)
+        titleBar:StartProgress(timeToHide or 30)
     else
         titleBar:StopProgress()
     end
@@ -331,7 +325,7 @@ function frame:OnTestReadyCheck(permanent)
     refreshAllRowsAndTitle()
     updateTitleCount()
 
-    startProgressBar(TEST_DURATION)
+    titleBar:StartProgress(TEST_DURATION)
 
     controls:RestorePosition()
     controls:SyncScale()
