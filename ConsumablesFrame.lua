@@ -447,8 +447,7 @@ local function scanPlayerAuras(buttons, now)
             elseif RCC.db.flaskBuffIDs[sid] then
                 buttons.flask.statustexture:SetTexture(READY)
                 buttons.flask.texture:SetDesaturated(false)
-                buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                        ceil((expiry - now) / 60))
+                buttons.flask.timeleft:SetText(F.FormatDuration(expiry - now))
                 buttons.flask.texture:SetTexture(auraData.icon)
                 isFlask = true
 
@@ -460,8 +459,7 @@ local function scanPlayerAuras(buttons, now)
                 buttons.augment.statustexture:SetTexture(READY)
                 buttons.augment.texture:SetDesaturated(false)
                 buttons.augment.texture:SetTexture(auraData.icon)
-                buttons.augment.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                       ceil((expiry - now) / 60))
+                buttons.augment.timeleft:SetText(F.FormatDuration(expiry - now))
                 isAugment = true
 
             elseif RCC.db.vantusBuffIDs[sid] then
@@ -483,8 +481,7 @@ local function scanPlayerAuras(buttons, now)
         local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
         buttons.food.statustexture:SetTexture(READY)
         buttons.food.texture:SetDesaturated(false)
-        buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                               ceil((foodExpiry - now) / 60))
+        buttons.food.timeleft:SetText(F.FormatDuration(foodExpiry - now))
 
         if foodIcon then
             buttons.food.texture:SetTexture(foodIcon)
@@ -736,8 +733,9 @@ local function updateWeaponEnchants(buttons, LCG)
 
         buttons.oil.statustexture:SetTexture(READY)
         buttons.oil.texture:SetDesaturated(false)
-        buttons.oil.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-            ceil((mainHandExpiration or 0) / 1000 / 60))
+        buttons.oil.timeleft:SetText(
+            F.FormatDuration((mainHandExpiration or 0) / 1000)
+        )
 
         if appliedMainHandItem then
             lastWeaponEnchantItem = appliedMainHandItem
@@ -759,8 +757,9 @@ local function updateWeaponEnchants(buttons, LCG)
 
         buttons.oiloh.statustexture:SetTexture(READY)
         buttons.oiloh.texture:SetDesaturated(false)
-        buttons.oiloh.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-            ceil((offHandExpiration or 0) / 1000 / 60))
+        buttons.oiloh.timeleft:SetText(
+            F.FormatDuration((offHandExpiration or 0) / 1000)
+        )
 
         if appliedOffHandItem then
             buttons.oiloh.appliedItemID = appliedOffHandItem

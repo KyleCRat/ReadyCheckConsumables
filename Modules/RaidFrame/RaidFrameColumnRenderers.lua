@@ -1,11 +1,10 @@
 local _, RCC = ...
 
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
-local Renderers = RCC.RaidFrameColumnRenderers
-local UI = RCC.UI
 
-local ceil   = ceil
-local format = format
+local Renderers      = RCC.RaidFrameColumnRenderers
+local UI             = RCC.UI
+local formatDuration = RCC.F.FormatDuration
 
 local MISSING_ALPHA     = 0.3
 local COLOR_DUR_GREEN   = { r = 0.2, g = 1,    b = 0.2 }
@@ -189,16 +188,6 @@ local function createDurabilityCell(row, column, layout, options)
     setCell(row, column, {
         text = text,
     })
-end
-
-local function formatDuration(seconds)
-    local mins = ceil(seconds / 60)
-
-    if mins >= 60 then
-        return format("%dh", ceil(seconds / 3600))
-    end
-
-    return format("%dm", mins > 0 and mins or 0)
 end
 
 local function setTimeColor(timeText, time, context)

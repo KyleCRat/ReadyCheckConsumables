@@ -5,6 +5,19 @@ local F = RCC.F
 
 -- Fallback max group when difficulty is not in the lookup table
 local DEFAULT_RAID_GROUP_COUNT = 6
+local SECONDS_PER_MINUTE = 60
+
+local durationFormatter = CreateFromMixins(SecondsFormatterMixin)
+durationFormatter:Init(
+    SecondsFormatterConstants.ZeroApproximationThreshold,
+    SecondsFormatter.Abbreviation.OneLetter,
+    SecondsFormatterConstants.RoundUpLastUnit,
+    SecondsFormatterConstants.ConvertToLower,
+    SecondsFormatterConstants.DontRoundUpIntervals
+)
+durationFormatter:SetDesiredUnitCount(1)
+durationFormatter:SetMinInterval(SecondsFormatter.Interval.Minutes)
+durationFormatter:SetStripIntervalWhitespace(true)
 
 -- Maps WoW difficulty IDs to the highest raid group number that
 -- should be included when iterating the roster. Players in groups
@@ -58,6 +71,20 @@ end
 function F.IsMrtRaidCheckReportMessage(moduleName, msgType)
     return moduleName == "raidcheck"
         and MRT_RAIDCHECK_REPORT_TYPES[msgType] == true
+end
+
+function F.FormatDuration(seconds)
+    if not seconds then
+        return ""
+    end
+
+    if seconds < 0 then
+        seconds = 0
+    elseif seconds > 0 and seconds < SECONDS_PER_MINUTE then
+        seconds = SECONDS_PER_MINUTE
+    end
+
+    return durationFormatter:Format(seconds)
 end
 
 function F.GetRaidDiffMaxGroup()
