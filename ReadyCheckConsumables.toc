@@ -25,6 +25,7 @@ Modules/RaidFrame/RaidFrameColumns.lua
 Modules/RaidFrame/RaidFrameMembers.lua
 Modules/RaidFrame/RaidFrameRows.lua
 Modules/RaidFrame/RaidFrameTitleBar.lua
+Modules/RaidFrame/RaidFrameControls.lua
 Modules/RaidFrame/RaidFrame.lua
 Settings.lua
 ReadyCheckConsumables.lua
