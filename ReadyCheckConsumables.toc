@@ -9,6 +9,7 @@
 
 Functions.lua
 UI.lua
+FrameAnimations.lua
 data/Food.lua
 data/Flasks.lua
 data/Potions.lua

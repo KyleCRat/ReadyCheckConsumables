@@ -4,6 +4,7 @@ local UI = RCC.UI
 local Broadcast = RCC.RaidFrameBroadcast
 local Columns = RCC.RaidFrameColumns
 local Controls = RCC.RaidFrameControls
+local FrameAnimations = RCC.FrameAnimations
 local Members = RCC.RaidFrameMembers
 local Rows = RCC.RaidFrameRows
 local TitleBar = RCC.RaidFrameTitleBar
@@ -222,17 +223,10 @@ end
 
 local hideTimer
 local addonRefreshTimer
-local fadeOutGroup
+local fadeOut = FrameAnimations.CreateFadeOut(frame, {
+    duration = FADE_OUT_DURATION,
+})
 local showStartTime = 0
-
-local function cancelFadeOut()
-    if fadeOutGroup and fadeOutGroup:IsPlaying() then
-        fadeOutGroup:Stop()
-    end
-
-    frame.isFadingOut = false
-    frame:SetAlpha(1)
-end
 
 local function cancelAddonRefreshTimer()
     if addonRefreshTimer then
@@ -255,37 +249,6 @@ local function scheduleAddonRefresh()
     end)
 end
 
-fadeOutGroup = frame:CreateAnimationGroup()
-local fadeOutAlpha = fadeOutGroup:CreateAnimation("Alpha")
-fadeOutAlpha:SetFromAlpha(1)
-fadeOutAlpha:SetToAlpha(0)
-fadeOutAlpha:SetDuration(FADE_OUT_DURATION)
-fadeOutGroup:SetScript("OnFinished", function()
-    frame.isFadingOut = false
-    frame:Hide()
-    frame:SetAlpha(1)
-end)
-
-function frame:HideWithFade()
-    if not self:IsShown() then
-        return
-    end
-
-    if InCombatLockdown() then
-        self:Hide()
-
-        return
-    end
-
-    if self.isFadingOut then
-        return
-    end
-
-    self.isFadingOut = true
-    self:SetAlpha(1)
-    fadeOutGroup:Play()
-end
-
 local function cancelHideTimer()
     if hideTimer then
         hideTimer:Cancel()
@@ -302,7 +265,7 @@ end
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelHideTimer()
     cancelAddonRefreshTimer()
-    cancelFadeOut()
+    fadeOut:Cancel()
     state.readyAnnounced = false
     wipe(state.rcStatus)
     broadcast:Reset()
@@ -356,7 +319,7 @@ local TEST_DURATION = RCC.raidFrameTest.TEST_DURATION
 function frame:OnTestReadyCheck(permanent)
     cancelHideTimer()
     cancelAddonRefreshTimer()
-    cancelFadeOut()
+    fadeOut:Cancel()
 
     self.manualShow = permanent or false
     showStartTime = GetTime()
@@ -434,7 +397,7 @@ function frame:OnReadyCheckFinished()
 
     if not RCC.GetSetting("raidFrame_minShow") then
         if not InCombatLockdown() then
-            self:HideWithFade()
+            fadeOut:Hide()
         end
 
         return
@@ -446,7 +409,7 @@ function frame:OnReadyCheckFinished()
 
     hideTimer = C_Timer.NewTimer(delay, function()
         if not InCombatLockdown() then
-            frame:HideWithFade()
+            fadeOut:Hide()
         end
     end)
 end
@@ -454,7 +417,7 @@ end
 function frame:OnCombat()
     cancelHideTimer()
     cancelAddonRefreshTimer()
-    cancelFadeOut()
+    fadeOut:Cancel()
     self:Hide()
 end
 
@@ -474,7 +437,7 @@ function frame:OnHide()
     self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     cancelHideTimer()
-    cancelFadeOut()
+    fadeOut:Cancel()
     titleBar:StopProgress()
     self.manualShow = false
 end
