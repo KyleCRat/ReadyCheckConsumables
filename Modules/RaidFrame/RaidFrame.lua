@@ -7,6 +7,7 @@ local FrameAnimations = RCC.FrameAnimations
 local Members         = RCC.RaidFrameMembers
 local ReadyCheck      = RCC.RaidFrameReadyCheck
 local Rows            = RCC.RaidFrameRows
+local Test            = RCC.RaidFrameTest
 local TitleBar        = RCC.RaidFrameTitleBar
 
 local GetTime = GetTime
@@ -203,11 +204,58 @@ local function cancelHideTimer()
     end
 end
 
-function frame:OnReadyCheck(initiatorUnit, timeToHide)
+local function cancelSyntheticReadyCheck()
+    if RCC.ReadyCheckTest then
+        RCC.ReadyCheckTest:Cancel()
+    elseif Test then
+        Test:Cancel()
+    end
+end
+
+local function beginReadyCheckDisplay(manualShow)
     cancelHideTimer()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
     state.readyAnnounced = false
+
+    frame:RegisterEvent("UNIT_AURA")
+    frame:RegisterEvent("READY_CHECK_CONFIRM")
+    frame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
+    frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
+
+    frame.manualShow = manualShow or false
+    showStartTime = GetTime()
+end
+
+local function showReadyCheckDisplay(duration, showProgress)
+    refreshAllRowsAndTitle()
+    updateTitleCount()
+
+    if showProgress then
+        titleBar:StartProgress(duration or 30)
+    else
+        titleBar:StopProgress()
+    end
+
+    controls:RestorePosition()
+    controls:SyncScale()
+    frame:Show()
+end
+
+function frame:OnReadyCheck(initiatorUnit, timeToHide)
+    cancelSyntheticReadyCheck()
+
+    local enabled = RCC.GetSetting("raidFrame_enabled")
+
+    if enabled then
+        beginReadyCheckDisplay(timeToHide == 0)
+    else
+        cancelHideTimer()
+        cancelAddonRefreshTimer()
+        fadeOut:Cancel()
+        state.readyAnnounced = false
+    end
+
     wipe(state.rcStatus)
     broadcast:Reset()
 
@@ -216,17 +264,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     broadcast:SendDurability()
     broadcast:SendOilStatus()
 
-    if not RCC.GetSetting("raidFrame_enabled") then
+    if not enabled then
         return
     end
-
-    self:RegisterEvent("UNIT_AURA")
-    self:RegisterEvent("READY_CHECK_CONFIRM")
-    self:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
-    self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-
-    self.manualShow = (timeToHide == 0)
-    showStartTime = GetTime()
 
     Members.ScanAll(state, LAYOUT, renderContext)
 
@@ -241,71 +281,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
         end
     end
 
-    refreshAllRowsAndTitle()
-    updateTitleCount()
-
-    if not self.manualShow then
-        titleBar:StartProgress(timeToHide or 30)
-    else
-        titleBar:StopProgress()
-    end
-
-    controls:RestorePosition()
-    controls:SyncScale()
-    self:Show()
-end
-
-local TEST_DURATION = RCC.raidFrameTest.TEST_DURATION
-
-function frame:OnTestReadyCheck(permanent)
-    cancelHideTimer()
-    cancelAddonRefreshTimer()
-    fadeOut:Cancel()
-
-    self.manualShow = permanent or false
-    showStartTime = GetTime()
-
-    Members.PopulateTestData(state, LAYOUT, renderContext, broadcast)
-    broadcast:SendDurability()
-    broadcast:SendOilStatus()
-
-    refreshAllRowsAndTitle()
-    updateTitleCount()
-
-    titleBar:StartProgress(TEST_DURATION)
-
-    controls:RestorePosition()
-    controls:SyncScale()
-    self:Show()
-
-    for unit in pairs(state.unitToIndex) do
-        if unit ~= "player" then
-            local roll = math.random()
-
-            if roll > 0.25 then
-                local delay = math.random(1, TEST_DURATION)
-                local ready = roll > 0.5
-
-                C_Timer.After(delay, function()
-                    if not self:IsShown() then
-                        return
-                    end
-
-                    self:OnReadyCheckConfirm(unit, ready)
-                end)
-            end
-        end
-    end
-
-    if not permanent then
-        C_Timer.After(TEST_DURATION, function()
-            if not self:IsShown() then
-                return
-            end
-
-            self:OnReadyCheckFinished()
-        end)
-    end
+    showReadyCheckDisplay(timeToHide or 30, not self.manualShow)
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
@@ -356,6 +332,8 @@ function frame:OnReadyCheckFinished()
 end
 
 function frame:OnCombat()
+    cancelSyntheticReadyCheck()
+
     cancelHideTimer()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
@@ -363,6 +341,11 @@ function frame:OnCombat()
 end
 
 function frame:OnUnitAura(unit)
+    -- Synthetic rows are not live unit tokens; only the player row can update.
+    if Test and Test.active and unit ~= "player" then
+        return
+    end
+
     local index = Members.RefreshFromUnit(state, unit, LAYOUT, renderContext)
 
     if not index then
@@ -373,6 +356,8 @@ function frame:OnUnitAura(unit)
 end
 
 function frame:OnHide()
+    cancelSyntheticReadyCheck()
+
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
     self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
@@ -381,6 +366,18 @@ function frame:OnHide()
     fadeOut:Cancel()
     titleBar:StopProgress()
     self.manualShow = false
+end
+
+if Test then
+    Test:Attach({
+        frame            = frame,
+        state            = state,
+        layout           = LAYOUT,
+        context          = renderContext,
+        broadcast        = broadcast,
+        beginDisplay     = beginReadyCheckDisplay,
+        showDisplay      = showReadyCheckDisplay,
+    })
 end
 
 --------------------------------------------------------------------------------
