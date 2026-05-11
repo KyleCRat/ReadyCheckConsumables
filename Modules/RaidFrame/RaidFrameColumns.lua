@@ -313,17 +313,20 @@ local function isOilBad(member, context, column)
 end
 
 local oilColumn = {
-    columnType   = COLUMN_TYPE.TIMED,
-    dataSource   = DATA_SOURCE.OIL,
-    key          = "oil",
-    timeX        = OIL_TIME_X,
-    iconX        = OIL_ICON_X,
-    titleX       = OIL_ICON_X,
-    iconID       = db.weapon_enchant_icon_id,
-    label        = "Weapon Oil: Unknown",
-    CreateData   = createOilData,
-    SyncData     = syncOilData,
-    IsBad        = isOilBad,
+    columnType      = COLUMN_TYPE.TIMED,
+    dataSource      = DATA_SOURCE.OIL,
+    key             = "oil",
+    timeX           = OIL_TIME_X,
+    iconX           = OIL_ICON_X,
+    titleX          = OIL_ICON_X,
+    iconID          = db.weapon_enchant_icon_id,
+    label           = "Weapon Oil",
+    labelMissing    = "Weapon Oil: Missing",
+    labelNoWeapon   = "Weapon Oil: No Weapon Equipped",
+    labelUnknown    = "Weapon Oil: Unknown",
+    CreateData      = createOilData,
+    SyncData        = syncOilData,
+    IsBad           = isOilBad,
 }
 
 --------------------------------------------------------------------------------

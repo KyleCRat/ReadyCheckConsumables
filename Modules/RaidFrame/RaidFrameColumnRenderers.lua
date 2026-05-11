@@ -235,11 +235,16 @@ local function renderTimedAuraCell(row, member, column, context)
     overlay.auraID = data and data.auraID or nil
 end
 
-local function setOilMissing(cell, column, label)
+local function setOilState(cell, column, label, text, r, g, b)
     cell.icon:SetTexture(column.iconID)
     cell.icon:SetDesaturated(true)
     cell.icon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
-    cell.timeText:SetText("")
+    cell.timeText:SetText(text or "")
+
+    if r and g and b then
+        cell.timeText:SetTextColor(r, g, b)
+    end
+
     cell.overlay.label = label
 end
 
@@ -255,7 +260,12 @@ local function renderOilCell(row, member, column, context)
     overlay.itemID = nil
     overlay.label  = nil
 
-    if oilTime and oilTime > 0 then
+    local hasOil       = oilTime and oilTime > 0
+    local oilIsMissing = oilTime == 0
+    local hasNoWeapon  = oilTime == -1
+    local noOilInfo    = oilTime == nil
+
+    if hasOil then
         icon:SetDesaturated(false)
         icon:SetVertexColor(1, 1, 1, 1)
         timeText:SetText(formatDuration(oilTime))
@@ -266,14 +276,12 @@ local function renderOilCell(row, member, column, context)
         else
             overlay.label = "Weapon Oil"
         end
-    elseif oilTime == 0 then
-        setOilMissing(cell, column, "Weapon Oil: Missing")
-    elseif oilTime == -1 then
-        setOilMissing(cell, column, "Weapon Oil: No Weapon Equipped")
-    else
-        setOilMissing(cell, column, column.label)
-        timeText:SetText("?")
-        timeText:SetTextColor(0.5, 0.5, 0.5)
+    elseif oilIsMissing then
+        setOilState(cell, column, column.labelMissing)
+    elseif hasNoWeapon then
+        setOilState(cell, column, column.labelNoWeapon)
+    elseif noOilInfo then
+        setOilState(cell, column, column.labelUnknown, "?", 0.5, 0.5, 0.5)
     end
 end
 
