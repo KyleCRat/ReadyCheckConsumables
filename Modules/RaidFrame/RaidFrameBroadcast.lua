@@ -93,7 +93,7 @@ function Broadcast.Create()
     end
 
     function broadcast:SetDurability(playerKey, pct)
-        if playerKey and pct then
+        if playerKey and pct ~= nil then
             self.durabilityData[playerKey] = pct
         end
     end
