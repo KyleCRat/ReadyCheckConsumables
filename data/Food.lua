@@ -115,7 +115,6 @@ RCC.db.manaItemIDs = {
     260259, -- [Comm] Everspring Water              | Mana
     260283, -- [Comm] Grotto Gulp                   | Mana
     260260, -- [Comm] Springrunner Sparkling        | Mana
-    260260, -- [Comm] Bloom Nectar                  | Mana
 }
 
 --------------------------------------------------------------------------------
