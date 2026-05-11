@@ -99,7 +99,7 @@ function Broadcast.Create()
     end
 
     function broadcast:SetOilStatus(playerKey, oil)
-        if playerKey and oil then
+        if playerKey and oil ~= nil then
             self.oilData[playerKey] = oil
         end
     end
