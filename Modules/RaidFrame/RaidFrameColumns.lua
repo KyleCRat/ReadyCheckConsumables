@@ -503,7 +503,7 @@ local function isDurabilityBad(member, context, column)
         return false
     end
 
-    return pct < context.rules.durabilityThreshold
+    return pct <= context.rules.durabilityThreshold
 end
 
 local durabilityColumn = {
