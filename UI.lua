@@ -72,8 +72,8 @@ function UI.CreatePopupSlider(button, options)
     local minValue    = options.minValue or 0
     local maxValue    = options.maxValue or 100
     local step        = options.step or 1
-    local sliderH     = options.sliderHeight or 120
-    local sensitivity = options.sensitivity or 2
+    local sliderH     = options.sliderHeight or 180
+    local sensitivity = options.sensitivity or 1
     local popupW      = options.popupWidth or 44
     local padY        = options.paddingY or 20
     local labelGap    = options.labelGap or 4
@@ -151,6 +151,7 @@ function UI.CreatePopupSlider(button, options)
     end
 
     local dragStartY
+    local dragStartValue
 
     local function finishDrag()
         if not dragStartY then
@@ -158,6 +159,7 @@ function UI.CreatePopupSlider(button, options)
         end
 
         dragStartY = nil
+        dragStartValue = nil
         popup:SetScript("OnUpdate", nil)
         popup:Hide()
     end
@@ -170,6 +172,7 @@ function UI.CreatePopupSlider(button, options)
         local mouseX, mouseY = GetCursorPosition()
         local uiScale = UIParent:GetEffectiveScale()
         dragStartY = mouseY / uiScale
+        dragStartValue = currentValue or fromSlider(popup.slider:GetValue())
 
         popup:ClearAllPoints()
         popup:SetPoint("TOP", UIParent, "BOTTOMLEFT",
@@ -189,12 +192,8 @@ function UI.CreatePopupSlider(button, options)
             local delta = cursorY - dragStartY
             local pixelsPerUnit = sliderH * sensitivity
                 / (maxValue - minValue)
-            local newValue = (currentValue or fromSlider(popup.slider:GetValue()))
-                + delta / pixelsPerUnit
 
-            if setValue(newValue) then
-                dragStartY = cursorY
-            end
+            setValue(dragStartValue + delta / pixelsPerUnit)
         end)
     end)
 
