@@ -510,6 +510,19 @@ local function updateElvUIParent(self)
     isElvUIFix = true
 end
 
+local function getAuraRemaining(expiry, now)
+    if type(expiry) ~= "number" or issecretvalue(expiry) then return end
+    if expiry <= 0 then return end
+
+    return expiry - now
+end
+
+local function isPositiveAuraDuration(duration)
+    return type(duration) == "number"
+           and not issecretvalue(duration)
+           and duration > 0
+end
+
 local function scanPlayerAuras(buttons, now)
     local isFood, isFlask, isAugment, isVantus
     local isEating, eatingExpiry, eatingDuration, eatingIcon
@@ -527,6 +540,7 @@ local function scanPlayerAuras(buttons, now)
         if not issecretvalue(auraData.spellId) then
             local sid = auraData.spellId
             local expiry = auraData.expirationTime
+            local remaining = getAuraRemaining(expiry, now)
 
             if RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
                 if RCC.db.eatingIconIDs[auraData.icon] then
@@ -545,11 +559,14 @@ local function scanPlayerAuras(buttons, now)
                 buttons.flask.statustexture:SetTexture(READY)
                 buttons.flask.hasConsumableBuff = true
                 buttons.flask.texture:SetDesaturated(false)
-                buttons.flask.timeleft:SetText(F.FormatDuration(expiry - now))
                 buttons.flask.texture:SetTexture(auraData.icon)
                 isFlask = true
 
-                if expiry - now <= 600 then
+                if remaining then
+                    buttons.flask.timeleft:SetText(F.FormatDuration(remaining))
+                end
+
+                if remaining and remaining <= 600 then
                     isFlask = false
                 end
 
@@ -558,8 +575,11 @@ local function scanPlayerAuras(buttons, now)
                 buttons.augment.hasConsumableBuff = true
                 buttons.augment.texture:SetDesaturated(false)
                 buttons.augment.texture:SetTexture(auraData.icon)
-                buttons.augment.timeleft:SetText(F.FormatDuration(expiry - now))
                 isAugment = true
+
+                if remaining then
+                    buttons.augment.timeleft:SetText(F.FormatDuration(remaining))
+                end
 
             elseif RCC.db.vantusBuffIDs[sid] then
                 local name = auraData.name or ""
@@ -581,7 +601,12 @@ local function scanPlayerAuras(buttons, now)
         buttons.food.statustexture:SetTexture(READY)
         buttons.food.hasConsumableBuff = true
         buttons.food.texture:SetDesaturated(false)
-        buttons.food.timeleft:SetText(F.FormatDuration(foodExpiry - now))
+
+        local remaining = getAuraRemaining(foodExpiry, now)
+
+        if remaining then
+            buttons.food.timeleft:SetText(F.FormatDuration(remaining))
+        end
 
         if foodIcon then
             buttons.food.texture:SetTexture(foodIcon)
@@ -1408,8 +1433,11 @@ function RCC.consumables:Update()
     local isFood, isFlask, isAugment, isVantus,
           isEating, eatingExpiry, eatingDuration = scanPlayerAuras(buttons, now)
 
-    if isEating and eatingDuration and eatingDuration > 0 then
-        buttons.food.cooldown:SetCooldown(eatingExpiry - eatingDuration, eatingDuration)
+    local eatingRemaining = getAuraRemaining(eatingExpiry, now)
+
+    if isEating and eatingRemaining and isPositiveAuraDuration(eatingDuration) then
+        local cooldownStart = eatingExpiry - eatingDuration
+        buttons.food.cooldown:SetCooldown(cooldownStart, eatingDuration)
         buttons.food.cooldown:Show()
     else
         buttons.food.cooldown:Clear()
