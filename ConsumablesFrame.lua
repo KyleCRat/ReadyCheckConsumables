@@ -485,38 +485,13 @@ end
 --- Update helper functions
 --------------------------------------------------------------------------------
 
-local ITEM_INFO_RETRY_DELAY = 1
-RCC.consumables.itemInfoRetryTimer = nil
-
-local function cancelItemInfoRetry()
-    if RCC.consumables.itemInfoRetryTimer then
-        RCC.consumables.itemInfoRetryTimer:Cancel()
-        RCC.consumables.itemInfoRetryTimer = nil
-    end
-end
-
-local function scheduleItemInfoRetry()
-    if RCC.consumables.itemInfoRetryTimer then
-        return
+local function getItemUseMacro(itemID, targetSlot)
+    if targetSlot then
+        return format("/stopmacro [combat]\n/use item:%d\n/use %d",
+                      itemID, targetSlot)
     end
 
-    RCC.consumables.itemInfoRetryTimer = C_Timer.NewTimer(ITEM_INFO_RETRY_DELAY, function()
-        RCC.consumables.itemInfoRetryTimer = nil
-
-        if RCC.consumables:IsShown() and not InCombatLockdown() then
-            RCC.consumables:Update()
-        end
-    end)
-end
-
-local function getItemName(itemID)
-    local itemName = itemID and GetItemInfo(itemID)
-
-    if not itemName then
-        scheduleItemInfoRetry()
-    end
-
-    return itemName
+    return format("/stopmacro [combat]\n/use item:%d", itemID)
 end
 
 local isElvUIFix
@@ -649,18 +624,10 @@ local function updateFood(buttons, isFood)
         end
 
         if not InCombatLockdown() then
-            local itemName = getItemName(food_item_id)
-
-            if itemName then
-                buttons.food.click:SetAttribute("macrotext1",
-                    format("/stopmacro [combat]\n/use %s", itemName))
-
-                buttons.food.click:Show()
-                buttons.food.click.IsON = true
-            else
-                buttons.food.click:Hide()
-                buttons.food.click.IsON = false
-            end
+            buttons.food.click:SetAttribute("macrotext1",
+                getItemUseMacro(food_item_id))
+            buttons.food.click:Show()
+            buttons.food.click.IsON = true
         end
     else
         if not InCombatLockdown() then
@@ -734,18 +701,10 @@ local function updateFlasks(buttons, isFlask)
         end
 
         if not InCombatLockdown() then
-            local itemName = getItemName(flask_item_id)
-
-            if itemName then
-                buttons.flask.click:SetAttribute("macrotext1",
-                    format("/stopmacro [combat]\n/use %s", itemName))
-
-                buttons.flask.click:Show()
-                buttons.flask.click.IsON = true
-            else
-                buttons.flask.click:Hide()
-                buttons.flask.click.IsON = false
-            end
+            buttons.flask.click:SetAttribute("macrotext1",
+                getItemUseMacro(flask_item_id))
+            buttons.flask.click:Show()
+            buttons.flask.click.IsON = true
         end
     else
         if not InCombatLockdown() then
@@ -985,33 +944,27 @@ local function updateWeaponEnchants(buttons)
 
     if oilCount and oilCount > 0 then
         if not InCombatLockdown() then
-            local itemName = getItemName(usableOilItemID)
+            local itemRef = "item:" .. usableOilItemID
+            buttons.oil.click:SetAttribute("spell", nil)
+            buttons.oil.click:SetAttribute("item", itemRef)
+            buttons.oil.click:Show()
+            buttons.oil.click.IsON = true
 
-            if itemName then
-                local itemRef = "item:" .. usableOilItemID
-                buttons.oil.click:SetAttribute("spell", nil)
-                buttons.oil.click:SetAttribute("item", itemRef)
-                buttons.oil.click:Show()
-                buttons.oil.click.IsON = true
+            if mainHandExpiration
+                and (usableOilItemID == 171285 or usableOilItemID == 171286)
+                and offhandItemID
+                and not offhandCanBeEnchanted then
 
-                if mainHandExpiration
-                    and (usableOilItemID == 171285 or usableOilItemID == 171286)
-                    and offhandItemID
-                    and not offhandCanBeEnchanted then
-
-                    buttons.oil.click:SetAttribute("type", "cancelaura")
-                else
-                    buttons.oil.click:SetAttribute("type", "item")
-                end
-
-                buttons.oiloh.click:SetAttribute("spell", nil)
-                buttons.oiloh.click:SetAttribute("item", itemRef)
-                buttons.oiloh.click:SetAttribute("type", "item")
-                buttons.oiloh.click:Show()
-                buttons.oiloh.click.IsON = true
+                buttons.oil.click:SetAttribute("type", "cancelaura")
             else
-                hideWeaponEnchantClicks(buttons)
+                buttons.oil.click:SetAttribute("type", "item")
             end
+
+            buttons.oiloh.click:SetAttribute("spell", nil)
+            buttons.oiloh.click:SetAttribute("item", itemRef)
+            buttons.oiloh.click:SetAttribute("type", "item")
+            buttons.oiloh.click:Show()
+            buttons.oiloh.click.IsON = true
         end
     else
         hideWeaponEnchantClicks(buttons)
@@ -1097,17 +1050,10 @@ local function updateAugments(buttons, isAugment)
         end
 
         if not InCombatLockdown() then
-            local itemName = getItemName(augmentItemID)
-
-            if itemName then
-                buttons.augment.click:SetAttribute("macrotext1",
-                    format("/stopmacro [combat]\n/use %s", itemName))
-                buttons.augment.click:Show()
-                buttons.augment.click.IsON = true
-            else
-                buttons.augment.click:Hide()
-                buttons.augment.click.IsON = false
-            end
+            buttons.augment.click:SetAttribute("macrotext1",
+                getItemUseMacro(augmentItemID))
+            buttons.augment.click:Show()
+            buttons.augment.click.IsON = true
         end
     else
         buttons.augment.count:SetText("0")
@@ -1255,17 +1201,10 @@ local function updateVantusRune(buttons, isVantus)
         buttons.vantus.usableItemID = itemID
 
         if not InCombatLockdown() then
-            local itemName = getItemName(itemID)
-
-            if itemName then
-                buttons.vantus.click:SetAttribute("macrotext1",
-                    format("/stopmacro [combat]\n/use %s", itemName))
-                buttons.vantus.click:Show()
-                buttons.vantus.click.IsON = true
-            else
-                buttons.vantus.click:Hide()
-                buttons.vantus.click.IsON = false
-            end
+            buttons.vantus.click:SetAttribute("macrotext1",
+                getItemUseMacro(itemID))
+            buttons.vantus.click:Show()
+            buttons.vantus.click.IsON = true
         end
 
         return
@@ -1304,17 +1243,10 @@ local function updateArmorKits(buttons)
 
     if kitCount and kitCount > 0 then
         if not InCombatLockdown() then
-            local itemName = getItemName(172347)
-
-            if itemName then
-                buttons.kit.click:SetAttribute("macrotext1",
-                    format("/stopmacro [combat]\n" .. "/use %s\n/use 5", itemName))
-                buttons.kit.click:Show()
-                buttons.kit.click.IsON = true
-            else
-                buttons.kit.click:Hide()
-                buttons.kit.click.IsON = false
-            end
+            buttons.kit.click:SetAttribute("macrotext1",
+                getItemUseMacro(172347, 5))
+            buttons.kit.click:Show()
+            buttons.kit.click.IsON = true
         end
     else
         if not InCombatLockdown() then
@@ -1486,8 +1418,6 @@ function RCC.consumables:Repos(isInitiator)
 end
 
 function RCC.consumables:OnHide()
-    cancelItemInfoRetry()
-
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
