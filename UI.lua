@@ -9,7 +9,7 @@ UI.FONT = "Interface\\AddOns\\ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-
 
 local CONTROL_BG        = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
 local CONTROL_HIGHLIGHT = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 }
-local POPUP_TRACK       = { r = 0.5, g = 0.5, b = 0.5, a = 0.8 }
+local POPUP_TRACK       = { r = 0.5, g = 0.5, b = 0.5, a = 1 }
 
 local function clamp(value, minValue, maxValue)
     return max(minValue, min(maxValue, value))
@@ -92,13 +92,17 @@ function UI.CreatePopupSlider(button, options)
     popup:SetBackdropBorderColor(0, 0, 0, 1)
     popup:Hide()
 
-    popup.track = popup:CreateTexture(nil, "BACKGROUND")
-    popup.track:SetSize(2, sliderH)
+    local diamondSize = 8
+    local thumbH = 20
+    local diamondInset = thumbH / 2
+
+    popup.track = popup:CreateTexture(nil, "ARTWORK")
+    popup.track:SetSize(2, sliderH - diamondInset * 2)
     popup.track:SetPoint("CENTER")
     popup.track:SetColorTexture(POPUP_TRACK.r, POPUP_TRACK.g,
         POPUP_TRACK.b, POPUP_TRACK.a)
 
-    popup.slider = CreateFrame("Slider", nil, popup, "MinimalSliderTemplate")
+    popup.slider = CreateFrame("Slider", nil, popup)
     popup.slider:SetOrientation("VERTICAL")
     popup.slider:SetSize(20, sliderH)
     popup.slider:SetPoint("CENTER")
@@ -106,6 +110,32 @@ function UI.CreatePopupSlider(button, options)
     popup.slider:SetValueStep(step)
     popup.slider:SetObeyStepOnDrag(true)
     popup.slider:EnableMouse(false)
+
+    local thumb = popup.slider:CreateTexture(nil, "ARTWORK")
+    thumb:SetAtlas("Minimal_SliderBar_Button")
+    thumb:SetSize(20, 20)
+    popup.slider:SetThumbTexture(thumb)
+
+    local function createDiamond(anchor, relPoint)
+        local d = popup:CreateTexture(nil, "OVERLAY")
+        d:SetSize(diamondSize, diamondSize)
+        d:SetPoint("CENTER", anchor, relPoint)
+        d:SetColorTexture(POPUP_TRACK.r, POPUP_TRACK.g,
+            POPUP_TRACK.b, POPUP_TRACK.a)
+        d:SetRotation(math.rad(45))
+
+        return d
+    end
+
+    popup.diamondTop = createDiamond(popup.slider, "TOP")
+    popup.diamondTop:ClearAllPoints()
+    popup.diamondTop:SetPoint("CENTER", popup.slider, "TOP", 0, -diamondInset)
+
+    popup.diamondCenter = createDiamond(popup.slider, "CENTER")
+
+    popup.diamondBottom = createDiamond(popup.slider, "BOTTOM")
+    popup.diamondBottom:ClearAllPoints()
+    popup.diamondBottom:SetPoint("CENTER", popup.slider, "BOTTOM", 0, diamondInset)
 
     popup.label = popup:CreateFontString(nil, "OVERLAY")
     popup.label:SetPoint("BOTTOM", popup.slider, "TOP", 0, labelGap)
@@ -174,9 +204,20 @@ function UI.CreatePopupSlider(button, options)
         dragStartY = mouseY / uiScale
         dragStartValue = currentValue or fromSlider(popup.slider:GetValue())
 
+        local thumbFraction = (maxValue - dragStartValue) / (maxValue - minValue)
+        local thumbOffset = padY + thumbH / 2
+            + thumbFraction * (sliderH - thumbH)
+
+        local popupX = mouseX / uiScale
+        local popupY = dragStartY + thumbOffset
+        local screenW = UIParent:GetWidth()
+        local screenH = UIParent:GetHeight()
+
+        popupX = clamp(popupX, popupW / 2, screenW - popupW / 2)
+        popupY = clamp(popupY, popupH, screenH)
+
         popup:ClearAllPoints()
-        popup:SetPoint("TOP", UIParent, "BOTTOMLEFT",
-            mouseX / uiScale, dragStartY + popupH / 2)
+        popup:SetPoint("TOP", UIParent, "BOTTOMLEFT", popupX, popupY)
         popup:Show()
 
         popup:SetScript("OnUpdate", function()
@@ -193,7 +234,14 @@ function UI.CreatePopupSlider(button, options)
             local pixelsPerUnit = sliderH * sensitivity
                 / (maxValue - minValue)
 
-            setValue(dragStartValue + delta / pixelsPerUnit)
+            local rawValue = dragStartValue + delta / pixelsPerUnit
+
+            setValue(rawValue)
+
+            if rawValue > maxValue or rawValue < minValue then
+                dragStartY = cursorY
+                dragStartValue = currentValue
+            end
         end)
     end)
 
