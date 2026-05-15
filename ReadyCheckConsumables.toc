@@ -7,6 +7,7 @@
 ## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
 ## SavedVariables: ReadyCheckConsumablesDB
 
+embeds.xml
 Functions.lua
 UI.lua
 FrameAnimations.lua
