@@ -2,8 +2,9 @@ local ADDON_NAME, RCC = ...
 
 local F = RCC.F
 local UI = RCC.UI
-local GetTime            = GetTime
-local IsAddOnLoaded      = C_AddOns.IsAddOnLoaded
+
+local            GetTime = GetTime
+local      IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 local       GetSpellInfo = C_Spell.GetSpellInfo
 local        GetItemInfo = C_Item.GetItemInfo
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
@@ -15,7 +16,84 @@ local        GetItemIcon = C_Item.GetItemIconByID
 --------------------------------------------------------------------------------
 
 local consumables_size = 48
-local FONT = UI.FONT
+local BUTTON_SPACING = 2
+local CONTROL_BORDER_OVERHANG = 1
+
+local FONT           = UI.FONT
+local GLOW_KEY       = "rcc_consumable"
+local GLOW_COLOR     = { 0.0, 0.85, 1.0, 1 }
+local GLOW_AVAILABLE_COLOR = { 0.0, 1.0, 0.25, 1 }
+local GLOW_UNAVAILABLE_COLOR = { 1.0, 0.05, 0.05, 1 }
+local GLOW_PARTICLES = 5
+local GLOW_FREQUENCY = 0.15
+local GLOW_SCALE     = 1.4
+local GLOW_X_OFFSET  = 0
+local GLOW_Y_OFFSET  = 0
+
+local function getConsumablesWidth(buttonCount)
+    return consumables_size * buttonCount
+           + BUTTON_SPACING * math.max(buttonCount - 1, 0)
+end
+
+local function startButtonGlow(button, color)
+    local LCG = LibStub("LibCustomGlow-1.0", true)
+
+    if not LCG then
+        return
+    end
+
+    LCG.AutoCastGlow_Start(button, color, GLOW_PARTICLES,
+                           GLOW_FREQUENCY, GLOW_SCALE,
+                           GLOW_X_OFFSET, GLOW_Y_OFFSET, GLOW_KEY)
+end
+
+local function stopButtonGlow(button)
+    local LCG = LibStub("LibCustomGlow-1.0", true)
+
+    if not LCG then
+        return
+    end
+
+    LCG.AutoCastGlow_Stop(button, GLOW_KEY)
+end
+
+local isButtonClickable
+
+local function setButtonGlow(button, enabled)
+    button.rccGlowEnabled = enabled
+
+    if button.rccGlowHovered and button.click and not button.hasConsumableBuff then
+        if isButtonClickable(button) then
+            startButtonGlow(button, GLOW_AVAILABLE_COLOR)
+        else
+            startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
+        end
+    elseif enabled then
+        startButtonGlow(button, GLOW_COLOR)
+    else
+        stopButtonGlow(button)
+    end
+end
+
+function isButtonClickable(button)
+    return button.click and button.click.IsON and button.click:IsShown()
+end
+
+local function setButtonGlowHovered(button, hovered)
+    button.rccGlowHovered = hovered
+
+    if hovered and button.click and not button.hasConsumableBuff then
+        if isButtonClickable(button) then
+            startButtonGlow(button, GLOW_AVAILABLE_COLOR)
+        else
+            startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
+        end
+    elseif button.rccGlowEnabled then
+        startButtonGlow(button, GLOW_COLOR)
+    else
+        stopButtonGlow(button)
+    end
+end
 
 --------------------------------------------------------------------------------
 --- Construct the button frame
@@ -23,7 +101,7 @@ local FONT = UI.FONT
 
 RCC.consumables = CreateFrame("Frame", "RCConsumables", UIParent)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
-RCC.consumables:SetSize(consumables_size * 5, consumables_size)
+RCC.consumables:SetSize(getConsumablesWidth(5), consumables_size)
 RCC.consumables:Hide()
 RCC.consumables.buttons = {}
 
@@ -39,7 +117,9 @@ RCC.consumables:SetFrameStrata("HIGH")
 RCC.consumables:SetToplevel(true)
 
 RCC.consumables.drag = UI.CreateControlFrame(RCC.consumables, 20, 20)
-RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT", 1, -3)
+RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT",
+                              CONTROL_BORDER_OVERHANG,
+                              -(BUTTON_SPACING + CONTROL_BORDER_OVERHANG))
 RCC.consumables.drag:EnableMouse(true)
 RCC.consumables.drag:RegisterForDrag("LeftButton")
 RCC.consumables.drag:Hide()
@@ -61,8 +141,12 @@ end)
 RCC.consumables.close = UI.CreateControlButton(
     RCC.consumables, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
 )
-RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT", 3, 0)
-RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT", -1, -3)
+RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT",
+                               BUTTON_SPACING + CONTROL_BORDER_OVERHANG * 2,
+                               0)
+RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT",
+                               -CONTROL_BORDER_OVERHANG,
+                               -(BUTTON_SPACING + CONTROL_BORDER_OVERHANG))
 RCC.consumables.close:Hide()
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
@@ -141,6 +225,7 @@ end
 
 local function ClickButtonOnEnter(self)
     local button = self:GetParent()
+    setButtonGlowHovered(button, true)
 
     if showButtonTooltip(button, true) then
         addClickHint(button)
@@ -148,11 +233,14 @@ local function ClickButtonOnEnter(self)
 end
 
 local function ClickButtonOnLeave(self)
+    setButtonGlowHovered(self:GetParent(), false)
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
 
 local function InfoButtonOnEnter(self)
+    setButtonGlowHovered(self, true)
+
     if self.outOverlay and self.outOfItemsText then
         self.outOverlay:Show()
     end
@@ -172,6 +260,8 @@ local function InfoButtonOnEnter(self)
 end
 
 local function InfoButtonOnLeave(self)
+    setButtonGlowHovered(self, false)
+
     if self.outOverlay then
         self.outOverlay:Hide()
     end
@@ -260,7 +350,8 @@ for i = 1, 9 do
     if i == 1 then
         button:SetPoint("LEFT", 0, 0)
     else
-        button:SetPoint("LEFT", RCC.consumables.buttons[i - 1], "RIGHT", 0, 0)
+        button:SetPoint("LEFT", RCC.consumables.buttons[i - 1], "RIGHT",
+                        BUTTON_SPACING, 0)
     end
 
     button.texture = button:CreateTexture()
@@ -446,6 +537,7 @@ local function scanPlayerAuras(buttons, now)
 
             elseif RCC.db.flaskBuffIDs[sid] then
                 buttons.flask.statustexture:SetTexture(READY)
+                buttons.flask.hasConsumableBuff = true
                 buttons.flask.texture:SetDesaturated(false)
                 buttons.flask.timeleft:SetText(F.FormatDuration(expiry - now))
                 buttons.flask.texture:SetTexture(auraData.icon)
@@ -457,6 +549,7 @@ local function scanPlayerAuras(buttons, now)
 
             elseif RCC.db.augmentBuffIDs[sid] then
                 buttons.augment.statustexture:SetTexture(READY)
+                buttons.augment.hasConsumableBuff = true
                 buttons.augment.texture:SetDesaturated(false)
                 buttons.augment.texture:SetTexture(auraData.icon)
                 buttons.augment.timeleft:SetText(F.FormatDuration(expiry - now))
@@ -480,6 +573,7 @@ local function scanPlayerAuras(buttons, now)
     if isFood then
         local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
         buttons.food.statustexture:SetTexture(READY)
+        buttons.food.hasConsumableBuff = true
         buttons.food.texture:SetDesaturated(false)
         buttons.food.timeleft:SetText(F.FormatDuration(foodExpiry - now))
 
@@ -495,7 +589,7 @@ local function scanPlayerAuras(buttons, now)
     return isFood, isFlask, isAugment, isVantus, isEating, eatingExpiry, eatingDuration
 end
 
-local function updateFood(buttons, isFood, LCG)
+local function updateFood(buttons, isFood)
     local food_count = 0
     local food_item_id
 
@@ -551,12 +645,10 @@ local function updateFood(buttons, isFood, LCG)
     buttons.food.count:SetFormattedText(
         "%s", food_count > 0 and food_count or "")
 
-    if not LCG then return end
-
     if not isFood and food_count > 0 then
-        LCG.PixelGlow_Start(buttons.food)
+        setButtonGlow(buttons.food, true)
     else
-        LCG.PixelGlow_Stop(buttons.food)
+        setButtonGlow(buttons.food, false)
     end
 end
 
@@ -582,7 +674,7 @@ local function updateHealthstones(buttons)
     end
 end
 
-local function updateFlasks(buttons, isFlask, LCG)
+local function updateFlasks(buttons, isFlask)
     local flask_count = 0
     local flask_item_id
 
@@ -638,12 +730,10 @@ local function updateFlasks(buttons, isFlask, LCG)
     buttons.flask.count:SetFormattedText(
         "%s", flask_count > 0 and flask_count or "")
 
-    if not LCG then return end
-
     if not isFlask and flask_count > 0 then
-        LCG.PixelGlow_Start(buttons.flask)
+        setButtonGlow(buttons.flask, true)
     else
-        LCG.PixelGlow_Stop(buttons.flask)
+        setButtonGlow(buttons.flask, false)
     end
 end
 
@@ -699,7 +789,7 @@ local function hideWeaponEnchantClicks(buttons)
     buttons.oiloh.click.IsON = false
 end
 
-local function updateWeaponEnchants(buttons, LCG)
+local function updateWeaponEnchants(buttons)
     local offhandCanBeEnchanted
     local offhandItemID = GetInventoryItemID("player", 17)
 
@@ -732,6 +822,7 @@ local function updateWeaponEnchants(buttons, LCG)
         appliedMainHandItem = getWeaponEnchantItem(mainHandEnchantID)
 
         buttons.oil.statustexture:SetTexture(READY)
+        buttons.oil.hasConsumableBuff = true
         buttons.oil.texture:SetDesaturated(false)
         buttons.oil.timeleft:SetText(
             F.FormatDuration((mainHandExpiration or 0) / 1000)
@@ -756,6 +847,7 @@ local function updateWeaponEnchants(buttons, LCG)
         appliedOffHandItem = getWeaponEnchantItem(offHandEnchantID)
 
         buttons.oiloh.statustexture:SetTexture(READY)
+        buttons.oiloh.hasConsumableBuff = true
         buttons.oiloh.texture:SetDesaturated(false)
         buttons.oiloh.timeleft:SetText(
             F.FormatDuration((offHandExpiration or 0) / 1000)
@@ -804,10 +896,8 @@ local function updateWeaponEnchants(buttons, LCG)
         buttons.oil.count:SetText("")
         buttons.oiloh.count:SetText("")
 
-        if LCG then
-            LCG.PixelGlow_Stop(buttons.oil)
-            LCG.PixelGlow_Stop(buttons.oiloh)
-        end
+        setButtonGlow(buttons.oil, false)
+        setButtonGlow(buttons.oiloh, false)
 
         return
     end
@@ -840,10 +930,8 @@ local function updateWeaponEnchants(buttons, LCG)
 
         hideWeaponEnchantClicks(buttons)
 
-        if LCG then
-            LCG.PixelGlow_Stop(buttons.oil)
-            LCG.PixelGlow_Stop(buttons.oiloh)
-        end
+        setButtonGlow(buttons.oil, false)
+        setButtonGlow(buttons.oiloh, false)
 
         return
     end
@@ -898,28 +986,18 @@ local function updateWeaponEnchants(buttons, LCG)
         hideWeaponEnchantClicks(buttons)
     end
 
-    if not LCG then return end
-
     local needsMH = oilCount and oilCount > 0 and (not hasMainHandEnchant or
                     (mainHandExpiration and mainHandExpiration <= 300000))
 
-    if needsMH then
-        LCG.PixelGlow_Start(buttons.oil)
-    else
-        LCG.PixelGlow_Stop(buttons.oil)
-    end
+    setButtonGlow(buttons.oil, needsMH)
 
     local needsOH = oilCount and oilCount > 0 and (not hasOffHandEnchant
                     or (offHandExpiration and offHandExpiration <= 300000))
 
-    if needsOH then
-        LCG.PixelGlow_Start(buttons.oiloh)
-    else
-        LCG.PixelGlow_Stop(buttons.oiloh)
-    end
+    setButtonGlow(buttons.oiloh, needsOH)
 end
 
-local function updateAugments(buttons, isAugment, LCG)
+local function updateAugments(buttons, isAugment)
     local augment_item_count =
         GetItemCount(RCC.db.augment_item_id, false, true)
     local unlimited_augment_item_count =
@@ -984,17 +1062,13 @@ local function updateAugments(buttons, isAugment, LCG)
         end
     end
 
-    if not LCG then
-        return
-    end
-
     local hasAugments = (augment_item_count and augment_item_count > 0) or
         (unlimited_augment_item_count and unlimited_augment_item_count > 0)
 
     if hasAugments and not isAugment then
-        LCG.PixelGlow_Start(buttons.augment)
+        setButtonGlow(buttons.augment, true)
     else
-        LCG.PixelGlow_Stop(buttons.augment)
+        setButtonGlow(buttons.augment, false)
     end
 end
 
@@ -1103,6 +1177,7 @@ local function updateVantusRune(buttons, isVantus)
     if isVantus then
         buttons.vantus.timeleft:SetText(isVantus)
         buttons.vantus.statustexture:SetTexture(READY)
+        buttons.vantus.hasConsumableBuff = true
         buttons.vantus.texture:SetDesaturated(false)
 
         if count > 0 then
@@ -1156,7 +1231,7 @@ end
 --- Update().
 --------------------------------------------------------------------------------
 
-local function updateArmorKits(buttons, LCG)
+local function updateArmorKits(buttons)
     local kitCount = GetItemCount(172347, false, true)
     local kitNow, kitMax, kitTimeLeft = RCC:KitCheck()
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
@@ -1193,12 +1268,10 @@ local function updateArmorKits(buttons, LCG)
 
     buttons.kit.count:SetFormattedText("%d", kitCount)
 
-    if not LCG then return end
-
     if kitCount and kitCount > 0 and kitNow == 0 then
-        LCG.PixelGlow_Start(buttons.kit)
+        setButtonGlow(buttons.kit, true)
     else
-        LCG.PixelGlow_Stop(buttons.kit)
+        setButtonGlow(buttons.kit, false)
     end
 end
 
@@ -1254,7 +1327,7 @@ local function applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
 
         if shouldShow then
             if previous then
-                button:SetPoint("LEFT", previous, "RIGHT", 0, 0)
+                button:SetPoint("LEFT", previous, "RIGHT", BUTTON_SPACING, 0)
             else
                 button:SetPoint("LEFT", 0, 0)
             end
@@ -1267,7 +1340,7 @@ local function applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
         end
     end
 
-    self:SetWidth(consumables_size * visibleCount)
+    self:SetWidth(getConsumablesWidth(visibleCount))
 end
 
 function RCC.consumables:Update()
@@ -1288,6 +1361,7 @@ function RCC.consumables:Update()
 
     for i = 1, #buttons do
         buttons[i].statustexture:SetTexture(NOT_READY)
+        buttons[i].hasConsumableBuff = false
         buttons[i].timeleft:SetText("")
         buttons[i].count:SetText("")
         buttons[i].texture:SetDesaturated(true)
@@ -1299,7 +1373,6 @@ function RCC.consumables:Update()
         buttons[i].outOfItemsText = nil
     end
 
-    local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
     local isFood, isFlask, isAugment, isVantus,
@@ -1312,11 +1385,11 @@ function RCC.consumables:Update()
         buttons.food.cooldown:Clear()
     end
 
-    updateFood(buttons, isFood, LCG)
+    updateFood(buttons, isFood)
     updateHealthstones(buttons)
-    updateFlasks(buttons, isFlask, LCG)
-    updateWeaponEnchants(buttons, LCG)
-    updateAugments(buttons, isAugment, LCG)
+    updateFlasks(buttons, isFlask)
+    updateWeaponEnchants(buttons)
+    updateAugments(buttons, isAugment)
     updateDamagePotions(buttons)
     updateHealingPotions(buttons)
     updateVantusRune(buttons, isVantus)
