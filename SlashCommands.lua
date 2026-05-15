@@ -14,18 +14,14 @@ SlashCmdList["RCC"] = function(msg)
         RCC.ReadyCheckTest:Start(PERMANENT_TEST)
 
     elseif msg == "hide" or msg == "h" then
-        if not RCC.ReadyCheckTest:Stop() then
-            if RCC.consumables then
-                local onEvent = RCC.consumables:GetScript("OnEvent")
+        RCC.ReadyCheckTest:Cancel()
 
-                if onEvent then
-                    onEvent(RCC.consumables, "READY_CHECK_FINISHED", "")
-                end
-            end
+        if RCC.consumables then
+            RCC.consumables:HideImmediately()
+        end
 
-            if RCC.raidFrame then
-                RCC.raidFrame:Hide()
-            end
+        if RCC.raidFrame then
+            RCC.raidFrame:Hide()
         end
 
     elseif msg == "report" or msg == "r" then

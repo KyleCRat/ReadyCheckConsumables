@@ -243,6 +243,24 @@ local function onInventoryChanged(self, unit)
 end
 
 --------------------------------------------------------------------------------
+--- Immediate hide
+--------------------------------------------------------------------------------
+
+function RCC.consumables:HideImmediately()
+    instanceOpenPending = false
+    cancelDelay(self)
+    cancelInstanceHideDelay(self)
+    self.anchor:Hide()
+
+    if not InCombatLockdown() then
+        self.drag:Hide()
+        self.close:Hide()
+    end
+
+    self:Hide()
+end
+
+--------------------------------------------------------------------------------
 --- Dispatch
 --------------------------------------------------------------------------------
 
