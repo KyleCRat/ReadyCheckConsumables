@@ -114,9 +114,9 @@ RCC.db.weaponEnchants = {
 --- Built at load time from RCC.db.weaponEnchants.
 --------------------------------------------------------------------------------
 
-RCC.db.weaponEnchantItems = {}
+RCC.db.weaponEnchantItemIDs = {}
 for _, v in pairs(RCC.db.weaponEnchants) do
-    RCC.db.weaponEnchantItems[v.item] = v
+    RCC.db.weaponEnchantItemIDs[v.item] = v
 end
 
 --------------------------------------------------------------------------------

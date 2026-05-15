@@ -747,7 +747,7 @@ local function getWeaponEnchantItem(enchantID)
 end
 
 local function setWeaponEnchantIcon(button, itemID, isOffhand)
-    local enchantData = itemID and RCC.db.weaponEnchantItems[itemID]
+    local enchantData = itemID and RCC.db.weaponEnchantItemIDs[itemID]
 
     if enchantData then
         button.texture:SetTexture(isOffhand and
@@ -760,7 +760,7 @@ local function findWeaponEnchantItemInBags()
     local bestXpac = -1
     local bestRank = -1
 
-    for itemID, data in pairs(RCC.db.weaponEnchantItems) do
+    for itemID, data in pairs(RCC.db.weaponEnchantItemIDs) do
         if itemID > 0
             and GetItemCount(itemID, false, true) > 0
         then
@@ -864,7 +864,7 @@ local function updateWeaponEnchants(buttons)
     end
 
     if lastWeaponEnchantItem
-        and RCC.db.weaponEnchantItems[lastWeaponEnchantItem]
+        and RCC.db.weaponEnchantItemIDs[lastWeaponEnchantItem]
     then
         setWeaponEnchantIcon(buttons.oil, lastWeaponEnchantItem)
 
