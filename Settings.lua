@@ -18,6 +18,7 @@ local DEFAULTS = {
     consumables_instanceOpenArena = true,
     consumables_instanceHide = true,
     consumables_instanceHideTime = 15,
+    consumables_preferUnlimitedAugment = true,
     -- consumables_instanceOnlyIfMissing = false,
     icon_food                = true,
     icon_flask               = true,
@@ -265,6 +266,30 @@ local function registerPanel()
     )
     Settings.CreateSlider(cfCat, cfInstanceHideTime, instanceHideOptions,
         "How long the consumables frame stays open when Auto-Hide After Delay is enabled (5-120 seconds).")
+
+    cfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Augment Runes")
+    )
+
+    local cfPreferUnlimitedAugment = Settings.RegisterAddOnSetting(
+        cfCat, "consumables_preferUnlimitedAugment",
+        "consumables_preferUnlimitedAugment",
+        db, "boolean", "Prefer Unlimited Augment Runes",
+        db.consumables_preferUnlimitedAugment
+    )
+    Settings.CreateCheckbox(cfCat, cfPreferUnlimitedAugment,
+        "Use unlimited augment runes before higher-expansion consumable augment runes.")
+
+    Settings.SetOnValueChangedCallback(
+        "consumables_preferUnlimitedAugment",
+        function()
+            if RCC.consumables and RCC.consumables:IsShown()
+                and not InCombatLockdown()
+            then
+                RCC.consumables:Update()
+            end
+        end
+    )
 
     cfLayout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Icons")

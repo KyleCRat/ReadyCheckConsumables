@@ -997,47 +997,76 @@ local function updateWeaponEnchants(buttons)
     setButtonGlow(buttons.oiloh, needsOH)
 end
 
-local function updateAugments(buttons, isAugment)
-    local augment_item_count =
-        GetItemCount(RCC.db.augment_item_id, false, true)
-    local unlimited_augment_item_count =
-        GetItemCount(RCC.db.unlimited_augment_item_id, false, true)
+local function findAugmentItemInBags()
+    local bestItemID
+    local bestCount
+    local bestData
+    local bestXpac = -1
+    local bestPriority = -1
+    local preferUnlimited =
+        RCC.GetSetting("consumables_preferUnlimitedAugment")
 
-    if unlimited_augment_item_count
-        and unlimited_augment_item_count > 0
-    then
-        buttons.augment.count:SetText("")
-        buttons.augment.tooltipItemID = RCC.db.unlimited_augment_item_id
-        buttons.augment.usableItemID = RCC.db.unlimited_augment_item_id
+    for itemID, data in pairs(RCC.db.augmentItemIDs) do
+        local count = GetItemCount(itemID, false, true)
 
-        if not isAugment then
-            buttons.augment.texture:SetTexture(RCC.db.unlimited_augment_icon_id)
-        end
+        if count and count > 0 then
+            local xpac = data.xpac or 0
+            local priority = data.priority or 0
+            local unlimited = data.unlimited == true
+            local bestUnlimited = bestData
+                and bestData.unlimited == true
+                or false
 
-        if not InCombatLockdown() then
-            local itemName = getItemName(RCC.db.unlimited_augment_item_id)
-
-            if itemName then
-                buttons.augment.click:SetAttribute("macrotext1",
-                    format("/stopmacro [combat]\n/use %s", itemName))
-                buttons.augment.click:Show()
-                buttons.augment.click.IsON = true
-            else
-                buttons.augment.click:Hide()
-                buttons.augment.click.IsON = false
+            if preferUnlimited and unlimited ~= bestUnlimited
+                and unlimited
+            then
+                bestItemID = itemID
+                bestCount = count
+                bestData = data
+                bestXpac = xpac
+                bestPriority = priority
+            elseif not (preferUnlimited and unlimited ~= bestUnlimited)
+                and (xpac > bestXpac
+                    or (xpac == bestXpac and priority > bestPriority)
+                    or (xpac == bestXpac and priority == bestPriority
+                        and itemID > (bestItemID or 0)))
+            then
+                bestItemID = itemID
+                bestCount = count
+                bestData = data
+                bestXpac = xpac
+                bestPriority = priority
             end
         end
-    elseif augment_item_count and augment_item_count > 0 then
-        buttons.augment.count:SetFormattedText("%d", augment_item_count)
-        buttons.augment.tooltipItemID = RCC.db.augment_item_id
-        buttons.augment.usableItemID = RCC.db.augment_item_id
+    end
+
+    return bestItemID, bestCount, bestData
+end
+
+local function updateAugments(buttons, isAugment)
+    local augmentItemID, augmentItemCount, augmentItemData =
+        findAugmentItemInBags()
+
+    if augmentItemID and augmentItemCount and augmentItemCount > 0 then
+        if augmentItemData and augmentItemData.unlimited then
+            buttons.augment.count:SetText("")
+        else
+            buttons.augment.count:SetFormattedText("%d", augmentItemCount)
+        end
+
+        buttons.augment.tooltipItemID = augmentItemID
+        buttons.augment.usableItemID = augmentItemID
 
         if not isAugment then
-            buttons.augment.texture:SetTexture(RCC.db.augment_icon_id)
+            local icon = GetItemIcon(augmentItemID)
+
+            if icon then
+                buttons.augment.texture:SetTexture(icon)
+            end
         end
 
         if not InCombatLockdown() then
-            local itemName = getItemName(RCC.db.augment_item_id)
+            local itemName = getItemName(augmentItemID)
 
             if itemName then
                 buttons.augment.click:SetAttribute("macrotext1",
@@ -1062,10 +1091,7 @@ local function updateAugments(buttons, isAugment)
         end
     end
 
-    local hasAugments = (augment_item_count and augment_item_count > 0) or
-        (unlimited_augment_item_count and unlimited_augment_item_count > 0)
-
-    if hasAugments and not isAugment then
+    if augmentItemID and not isAugment then
         setButtonGlow(buttons.augment, true)
     else
         setButtonGlow(buttons.augment, false)

@@ -42,42 +42,42 @@ RCC.db.currentAugmentXpac = maxXpac
 
 --------------------------------------------------------------------------------
 --- Augment Rune Item IDs
---- Maps item ID -> { xpac, priority, permanent } for bag scanning.
+--- Maps item ID -> { xpac, priority, unlimited } for bag scanning.
 --- Higher xpac wins. Within same xpac, higher priority wins.
---- Permanent runes are not consumed on use.
+--- Unlimited runes are not consumed on use.
 --------------------------------------------------------------------------------
 
 RCC.db.augmentItemIDs = {
     -- Midnight
-    [259085] = { xpac = 12, priority = 1, permanent = false }, -- 12.0.0: Void-Touched Augment Rune
+    [259085] = { xpac = 12, priority = 1, unlimited = false }, -- 12.0.0: Void-Touched Augment Rune
 
     -- The War Within
-    [243191] = { xpac = 11, priority = 2, permanent = true  }, -- 11.2.0: Ethereal Augment Rune
-    [246492] = { xpac = 11, priority = 1, permanent = false }, -- 11.2.0: Soulgorged Augment Rune
-    [224572] = { xpac = 11, priority = 0, permanent = false }, -- 11.0.0: Crystallized Augment Rune
+    [243191] = { xpac = 11, priority = 2, unlimited = true  }, -- 11.2.0: Ethereal Augment Rune
+    [246492] = { xpac = 11, priority = 1, unlimited = false }, -- 11.2.0: Soulgorged Augment Rune
+    [224572] = { xpac = 11, priority = 0, unlimited = false }, -- 11.0.0: Crystallized Augment Rune
 
     -- Dragonflight
-    [211495] = { xpac = 10, priority = 1, permanent = true  }, -- 10.2.0: Dreambound Augment Rune
-    [201325] = { xpac = 10, priority = 0, permanent = false }, -- 10.0.0: Draconic Augment Rune
+    [211495] = { xpac = 10, priority = 1, unlimited = true  }, -- 10.2.0: Dreambound Augment Rune
+    [201325] = { xpac = 10, priority = 0, unlimited = false }, -- 10.0.0: Draconic Augment Rune
 
     -- Shadowlands
-    [190384] = { xpac = 9, priority = 1, permanent = false }, --  9.2.0: Eternal Augment Rune
-    [181468] = { xpac = 9, priority = 0, permanent = false }, --  9.0.1: Veiled Augment Rune
+    [190384] = { xpac = 9, priority = 1, unlimited = false }, --  9.2.0: Eternal Augment Rune
+    [181468] = { xpac = 9, priority = 0, unlimited = false }, --  9.0.1: Veiled Augment Rune
 
     -- Battle for Azeroth
-    [174906] = { xpac = 8, priority = 1, permanent = false }, --  8.3.0: Lightning-Forged Augment Rune
-    [160053] = { xpac = 8, priority = 0, permanent = false }, --  8.0.1: Battle-Scarred Augment Rune
+    [174906] = { xpac = 8, priority = 1, unlimited = false }, --  8.3.0: Lightning-Forged Augment Rune
+    [160053] = { xpac = 8, priority = 0, unlimited = false }, --  8.0.1: Battle-Scarred Augment Rune
 
     -- Legion
-    [153023] = { xpac = 7, priority = 1, permanent = false }, --  7.3.0: Lightforged Augment Rune
-    [140587] = { xpac = 7, priority = 0, permanent = false }, --  7.0.3: Defiled Augment Rune
+    [153023] = { xpac = 7, priority = 1, unlimited = false }, --  7.3.0: Lightforged Augment Rune
+    [140587] = { xpac = 7, priority = 0, unlimited = false }, --  7.0.3: Defiled Augment Rune
 
     -- Warlords of Draenor
-    [128482] = { xpac = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
-    [128475] = { xpac = 6, priority = 1, permanent = false }, --  6.2.0: Empowered Augment Rune
-    [118630] = { xpac = 6, priority = 0, permanent = false }, --  6.0.1: Hyper Augment Rune
-    [118631] = { xpac = 6, priority = 0, permanent = false }, --  6.0.1: Stout Augment Rune
-    [118632] = { xpac = 6, priority = 0, permanent = false }, --  6.0.1: Focus Augment Rune
+    [128482] = { xpac = 6, priority = 1, unlimited = false }, --  6.2.0: Empowered Augment Rune
+    [128475] = { xpac = 6, priority = 1, unlimited = false }, --  6.2.0: Empowered Augment Rune
+    [118630] = { xpac = 6, priority = 0, unlimited = false }, --  6.0.1: Hyper Augment Rune
+    [118631] = { xpac = 6, priority = 0, unlimited = false }, --  6.0.1: Stout Augment Rune
+    [118632] = { xpac = 6, priority = 0, unlimited = false }, --  6.0.1: Focus Augment Rune
 }
 
 --------------------------------------------------------------------------------

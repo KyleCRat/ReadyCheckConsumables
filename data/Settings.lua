@@ -13,25 +13,24 @@ local MIDNIGHT       = 12
 
 --------------------------------------------------------------------------------
 --- Per-Expansion Settings
---- Icon and item overrides per expansion. The resolution loop below
---- iterates oldest-to-newest so the most recent expansion wins.
+--- Default icon overrides per expansion. Item selection lives in the
+--- data-specific lookup tables. The resolution loop below iterates
+--- oldest-to-newest so the most recent expansion wins.
 --------------------------------------------------------------------------------
 
 RCC.settings = {
     [SHADOWLANDS] = {
-        augment        = { item_id = 181468, icon_id = 134078 },
-        unlimited_augment = { item_id = 190384, icon_id = 4224736 },
+        augment        = { icon_id = 134078 },
         armor_kit      = { item_id = 3528447 },
     },
     [DRAGONFLIGHT] = {},
     [THE_WAR_WITHIN] = {
-        augment        = { item_id = 224572, icon_id = 4549102 },
-        unlimited_augment = { item_id = 243191, icon_id = 3566863 },
+        augment        = { icon_id = 4549102 },
         flask          = { icon_id = 3566840 },
         vantus_rune    = { icon_id = 4638737 },
     },
     [MIDNIGHT] = {
-        augment        = { item_id = 259085, icon_id = 4549099 },
+        augment        = { icon_id = 4549099 },
         flask          = { icon_id = 7548902 },
         vantus_rune    = { icon_id = 5976918 },
         potion         = { icon_id = 7548911 },
@@ -64,6 +63,7 @@ RCC.db.healing_potion_icon_id  = 5931169  -- inv_flask_red
 RCC.db.vantus_icon_id          = 4638737  -- inv_10_inscription_glyphs_color5
 
 local icon_keys = {
+    { setting = "augment",        db_key = "augment_icon_id" },
     { setting = "food",           db_key = "food_icon_id" },
     { setting = "flask",          db_key = "flask_icon_id" },
     { setting = "potion",         db_key = "potion_icon_id" },
@@ -78,16 +78,6 @@ for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
     local xpac = RCC.settings[xpac_id]
 
     if xpac then
-        if xpac.augment then
-            RCC.db.augment_item_id = xpac.augment.item_id
-            RCC.db.augment_icon_id = xpac.augment.icon_id
-        end
-
-        if xpac.unlimited_augment then
-            RCC.db.unlimited_augment_item_id = xpac.unlimited_augment.item_id
-            RCC.db.unlimited_augment_icon_id = xpac.unlimited_augment.icon_id
-        end
-
         for _, key in ipairs(icon_keys) do
             local entry = xpac[key.setting]
 
