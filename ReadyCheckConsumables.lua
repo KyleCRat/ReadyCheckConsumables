@@ -8,12 +8,85 @@ RCC.db = RCC.db or {}
 --------------------------------------------------------------------------------
 
 local consumablesShowStart = 0
+local wasInInstance
+local instanceOpenPending
+
+local INSTANCE_OPEN_DELAY = 0.5
 
 local function cancelDelay(self)
     if self.cancelDelay then
         self.cancelDelay:Cancel()
         self.cancelDelay = nil
     end
+end
+
+local function cancelInstanceHideDelay(self)
+    if self.instanceHideDelay then
+        self.instanceHideDelay:Cancel()
+        self.instanceHideDelay = nil
+    end
+end
+
+local function startInstanceHideDelay(self)
+    cancelInstanceHideDelay(self)
+
+    if not RCC.GetSetting("consumables_instanceHide") then
+        return
+    end
+
+    local delay = RCC.GetSetting("consumables_instanceHideTime")
+
+    self.instanceHideDelay = C_Timer.NewTimer(delay, function()
+        if not InCombatLockdown() then
+            RCC.consumables:Hide()
+        end
+    end)
+end
+
+local function shouldOpenForInstanceType(instanceType)
+    if instanceType == "party" then
+        return RCC.GetSetting("consumables_instanceOpenParty")
+    elseif instanceType == "raid" then
+        return RCC.GetSetting("consumables_instanceOpenRaid")
+    elseif instanceType == "scenario" then
+        return RCC.GetSetting("consumables_instanceOpenScenario")
+    elseif instanceType == "pvp" then
+        return RCC.GetSetting("consumables_instanceOpenPvp")
+    elseif instanceType == "arena" then
+        return RCC.GetSetting("consumables_instanceOpenArena")
+    end
+
+    return false
+end
+
+local function showConsumablesFrame(self, isInitiator, registerConfirm)
+    if InCombatLockdown() then
+        return false
+    end
+
+    if not RCC.GetSetting("consumables_enabled") then
+        self:Hide()
+
+        return false
+    end
+
+    consumablesShowStart = GetTime()
+
+    self:SetScale(RCC.GetSetting("consumables_scale"))
+    self:Show()
+    self:Update()
+    self:RegisterEvent("UNIT_AURA")
+    self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+
+    if registerConfirm then
+        self:RegisterEvent("READY_CHECK_CONFIRM")
+    end
+
+    cancelDelay(self)
+    cancelInstanceHideDelay(self)
+    self:Repos(isInitiator)
+
+    return true
 end
 
 local function startMinShowDelay(self)
@@ -48,32 +121,9 @@ end
 --------------------------------------------------------------------------------
 
 local function onReadyCheck(self, initiatorUnit)
-    if InCombatLockdown() then
-        return
-    end
+    local isInitiator = initiatorUnit and UnitIsUnit(initiatorUnit, "player")
 
-    if not RCC.GetSetting("consumables_enabled") then
-        self:Hide()
-
-        return
-    end
-
-    consumablesShowStart = GetTime()
-
-    self:SetScale(RCC.GetSetting("consumables_scale"))
-    self:Show()
-    self:Update()
-    self:RegisterEvent("UNIT_AURA")
-    self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-    self:RegisterEvent("READY_CHECK_CONFIRM")
-
-    cancelDelay(self)
-
-    if initiatorUnit and UnitIsUnit(initiatorUnit, "player") then
-        self:Repos(true)
-    else
-        self:Repos()
-    end
+    showConsumablesFrame(self, isInitiator, true)
 end
 
 --------------------------------------------------------------------------------
@@ -123,6 +173,52 @@ local function onCombat(self)
 end
 
 --------------------------------------------------------------------------------
+--- PLAYER_ENTERING_WORLD
+--------------------------------------------------------------------------------
+
+local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
+    local inInstance, instanceType = IsInInstance()
+    local enteredInstance = inInstance and not wasInInstance
+        and not isInitialLogin and not isReloadingUi
+
+    wasInInstance = inInstance
+
+    if not enteredInstance then
+        return
+    end
+
+    if not RCC.GetSetting("consumables_instanceOpen") then
+        return
+    end
+
+    if not shouldOpenForInstanceType(instanceType) then
+        return
+    end
+
+    instanceOpenPending = true
+
+    C_Timer.After(INSTANCE_OPEN_DELAY, function()
+        if not instanceOpenPending then
+            return
+        end
+
+        instanceOpenPending = false
+
+        local stillInInstance, currentInstanceType = IsInInstance()
+
+        if InCombatLockdown() or not stillInInstance
+            or not shouldOpenForInstanceType(currentInstanceType)
+        then
+            return
+        end
+
+        if showConsumablesFrame(self, true, false) then
+            startInstanceHideDelay(self)
+        end
+    end)
+end
+
+--------------------------------------------------------------------------------
 --- UNIT_AURA
 --------------------------------------------------------------------------------
 
@@ -155,6 +251,7 @@ local eventHandlers = {
     READY_CHECK_FINISHED   = onReadyCheckFinished,
     READY_CHECK_CONFIRM    = onReadyCheckConfirm,
     PLAYER_REGEN_DISABLED  = onCombat,
+    PLAYER_ENTERING_WORLD   = onPlayerEnteringWorld,
     UNIT_AURA              = onUnitAura,
     UNIT_INVENTORY_CHANGED = onInventoryChanged,
 }
@@ -168,7 +265,9 @@ RCC.consumables:SetScript("OnEvent", function(self, event, ...)
 end)
 
 RCC.consumables:SetScript("OnHide", function(self)
+    instanceOpenPending = false
     RCC.consumables:OnHide()
+    cancelInstanceHideDelay(self)
 
     if not InCombatLockdown() then
         self.drag:Hide()
@@ -179,3 +278,4 @@ end)
 RCC.consumables:RegisterEvent("READY_CHECK")
 RCC.consumables:RegisterEvent("READY_CHECK_FINISHED")
 RCC.consumables:RegisterEvent("PLAYER_REGEN_DISABLED")
+RCC.consumables:RegisterEvent("PLAYER_ENTERING_WORLD")

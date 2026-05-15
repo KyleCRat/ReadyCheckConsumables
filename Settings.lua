@@ -10,6 +10,15 @@ local DEFAULTS = {
     consumables_scale        = 1.0,
     consumables_minShow      = false,
     consumables_minShowTime  = 15,
+    consumables_instanceOpen = false,
+    consumables_instanceOpenParty = true,
+    consumables_instanceOpenRaid = true,
+    consumables_instanceOpenScenario = true,
+    consumables_instanceOpenPvp = true,
+    consumables_instanceOpenArena = true,
+    consumables_instanceHide = true,
+    consumables_instanceHideTime = 15,
+    -- consumables_instanceOnlyIfMissing = false,
     icon_food                = true,
     icon_flask               = true,
     icon_mhOil               = true,
@@ -178,6 +187,84 @@ local function registerPanel()
     )
     Settings.CreateSlider(cfCat, cfMinShowTime, minShowOptions,
         "How long the consumables frame stays open after a ready check (1-40 seconds).")
+
+    cfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Open When Entering Instance")
+    )
+
+    local cfInstanceOpen = Settings.RegisterAddOnSetting(
+        cfCat, "consumables_instanceOpen", "consumables_instanceOpen",
+        db, "boolean", "Open When Entering Instance",
+        db.consumables_instanceOpen
+    )
+    Settings.CreateCheckbox(cfCat, cfInstanceOpen,
+        "Show the consumables frame when you enter instanced content.")
+
+    local instanceTypeSettings = {
+        {
+            "consumables_instanceOpenParty",
+            "Dungeons",
+            "Open when entering dungeon instances.",
+        },
+        {
+            "consumables_instanceOpenRaid",
+            "Raids",
+            "Open when entering raid instances.",
+        },
+        {
+            "consumables_instanceOpenScenario",
+            "Scenarios",
+            "Open when entering scenario instances.",
+        },
+        {
+            "consumables_instanceOpenPvp",
+            "Battlegrounds",
+            "Open when entering battleground instances.",
+        },
+        {
+            "consumables_instanceOpenArena",
+            "Arenas",
+            "Open when entering arena instances.",
+        },
+    }
+
+    for _, option in ipairs(instanceTypeSettings) do
+        local key, label, tooltip = option[1], option[2], option[3]
+        local setting = Settings.RegisterAddOnSetting(
+            cfCat, key, key, db, "boolean", label, db[key]
+        )
+        Settings.CreateCheckbox(cfCat, setting, tooltip)
+    end
+
+    -- Future option:
+    -- local cfInstanceOnlyIfMissing = Settings.RegisterAddOnSetting(
+    --     cfCat, "consumables_instanceOnlyIfMissing",
+    --     "consumables_instanceOnlyIfMissing",
+    --     db, "boolean", "Only Open When Consumables Are Complete",
+    --     db.consumables_instanceOnlyIfMissing
+    -- )
+    -- Settings.CreateCheckbox(cfCat, cfInstanceOnlyIfMissing,
+    --     "Only show on instance entry when all tracked buffs have 30 minutes or more remaining and all required items are in your inventory.")
+
+    local cfInstanceHide = Settings.RegisterAddOnSetting(
+        cfCat, "consumables_instanceHide", "consumables_instanceHide",
+        db, "boolean", "Auto-Hide After Delay", db.consumables_instanceHide
+    )
+    Settings.CreateCheckbox(cfCat, cfInstanceHide,
+        "Hide the consumables frame automatically after the auto-hide delay.")
+
+    local instanceHideOptions = Settings.CreateSliderOptions(5, 120, 5)
+    instanceHideOptions:SetLabelFormatter(
+        MinimalSliderWithSteppersMixin.Label.Right,
+        function(value) return string.format("%ds", value) end
+    )
+
+    local cfInstanceHideTime = Settings.RegisterAddOnSetting(
+        cfCat, "consumables_instanceHideTime", "consumables_instanceHideTime",
+        db, "number", "Auto-Hide Delay Duration", db.consumables_instanceHideTime
+    )
+    Settings.CreateSlider(cfCat, cfInstanceHideTime, instanceHideOptions,
+        "How long the consumables frame stays open when Auto-Hide After Delay is enabled (5-120 seconds).")
 
     cfLayout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Icons")
