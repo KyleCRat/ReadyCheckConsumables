@@ -780,6 +780,7 @@ local function hideWeaponEnchantClicks(buttons)
 end
 
 local function updateWeaponEnchants(buttons)
+    local mainHandItemID = GetInventoryItemID("player", 16)
     local offhandCanBeEnchanted
     local offhandItemID = GetInventoryItemID("player", 17)
 
@@ -792,6 +793,12 @@ local function updateWeaponEnchants(buttons)
     end
 
     if not InCombatLockdown() then
+        if mainHandItemID then
+            buttons.oil:Show()
+        else
+            buttons.oil:Hide()
+        end
+
         if offhandCanBeEnchanted then
             buttons.oiloh:Show()
         else
@@ -803,6 +810,12 @@ local function updateWeaponEnchants(buttons)
           mainHandCharges, mainHandEnchantID,
           hasOffHandEnchant, offHandExpiration,
           offHandCharges, offHandEnchantID = GetWeaponEnchantInfo()
+
+    if not mainHandItemID then
+        hasMainHandEnchant = false
+        mainHandExpiration = nil
+        mainHandEnchantID = nil
+    end
 
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
@@ -871,13 +884,25 @@ local function updateWeaponEnchants(buttons)
             if spellName then
                 buttons.oil.click:SetAttribute("spell", spellName)
                 buttons.oil.click:SetAttribute("type", "spell")
-                buttons.oil.click:Show()
-                buttons.oil.click.IsON = true
+
+                if mainHandItemID then
+                    buttons.oil.click:Show()
+                    buttons.oil.click.IsON = true
+                else
+                    buttons.oil.click:Hide()
+                    buttons.oil.click.IsON = false
+                end
 
                 buttons.oiloh.click:SetAttribute("spell", spellName)
                 buttons.oiloh.click:SetAttribute("type", "spell")
-                buttons.oiloh.click:Show()
-                buttons.oiloh.click.IsON = true
+
+                if offhandCanBeEnchanted then
+                    buttons.oiloh.click:Show()
+                    buttons.oiloh.click.IsON = true
+                else
+                    buttons.oiloh.click:Hide()
+                    buttons.oiloh.click.IsON = false
+                end
             else
                 hideWeaponEnchantClicks(buttons)
             end
@@ -947,10 +972,8 @@ local function updateWeaponEnchants(buttons)
             local itemRef = "item:" .. usableOilItemID
             buttons.oil.click:SetAttribute("spell", nil)
             buttons.oil.click:SetAttribute("item", itemRef)
-            buttons.oil.click:Show()
-            buttons.oil.click.IsON = true
 
-            if mainHandExpiration
+            if mainHandItemID and mainHandExpiration
                 and (usableOilItemID == 171285 or usableOilItemID == 171286)
                 and offhandItemID
                 and not offhandCanBeEnchanted then
@@ -960,23 +983,41 @@ local function updateWeaponEnchants(buttons)
                 buttons.oil.click:SetAttribute("type", "item")
             end
 
+            if mainHandItemID then
+                buttons.oil.click:Show()
+                buttons.oil.click.IsON = true
+            else
+                buttons.oil.click:Hide()
+                buttons.oil.click.IsON = false
+            end
+
             buttons.oiloh.click:SetAttribute("spell", nil)
             buttons.oiloh.click:SetAttribute("item", itemRef)
             buttons.oiloh.click:SetAttribute("type", "item")
-            buttons.oiloh.click:Show()
-            buttons.oiloh.click.IsON = true
+
+            if offhandCanBeEnchanted then
+                buttons.oiloh.click:Show()
+                buttons.oiloh.click.IsON = true
+            else
+                buttons.oiloh.click:Hide()
+                buttons.oiloh.click.IsON = false
+            end
         end
     else
         hideWeaponEnchantClicks(buttons)
     end
 
-    local needsMH = oilCount and oilCount > 0 and (not hasMainHandEnchant or
-                    (mainHandExpiration and mainHandExpiration <= 300000))
+    local needsMH = mainHandItemID and oilCount and oilCount > 0
+                    and (not hasMainHandEnchant
+                        or (mainHandExpiration
+                            and mainHandExpiration <= 300000))
 
     setButtonGlow(buttons.oil, needsMH)
 
-    local needsOH = oilCount and oilCount > 0 and (not hasOffHandEnchant
-                    or (offHandExpiration and offHandExpiration <= 300000))
+    local needsOH = offhandCanBeEnchanted and oilCount and oilCount > 0
+                    and (not hasOffHandEnchant
+                        or (offHandExpiration
+                            and offHandExpiration <= 300000))
 
     setButtonGlow(buttons.oiloh, needsOH)
 end
@@ -1296,7 +1337,7 @@ local function applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
     local available = {
         [i_food]     = true,
         [i_flask]    = true,
-        [i_mh_oil]   = true,
+        [i_mh_oil]   = buttons.oil:IsShown(),
         [i_oh_oil]   = buttons.oiloh:IsShown(),
         [i_augment]  = true,
         [i_hs]       = isWarlockInRaid,
