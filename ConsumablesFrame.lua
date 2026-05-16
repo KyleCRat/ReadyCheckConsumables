@@ -346,40 +346,97 @@ local function updateOutOverlay(button)
 end
 
 --------------------------------------------------------------------------------
---- Button creation (9 buttons)
---- 1=food  2=flask  3=mh_oil  4=augment  5=hs  6=oh_oil
---- 7=dmg_pot  8=heal_pot  9=vantus
+--- Button creation
 --------------------------------------------------------------------------------
 
-local     i_food = 1
-local    i_flask = 2
-local   i_mh_oil = 3
-local     i_augment = 4
-local       i_hs = 5
-local   i_oh_oil = 6
-local  i_dmg_pot = 7
-local i_heal_pot = 8
-local   i_vantus = 9
-
-local CLICKABLE_BUTTONS = {
-    [i_food]    = true,
-    [i_flask]   = true,
-    [i_mh_oil]  = true,
-    [i_augment] = true,
-    [i_oh_oil]  = true,
-    [i_vantus]  = true,
+local BUTTON_DEFS = {
+    {
+        key = "food",
+        settingKey = "icon_food",
+        defaultIcon = RCC.db.food_icon_id,
+        clickable = true,
+        tooltipAction = "eat",
+        hasCooldown = true,
+        layoutOrder = 1,
+    },
+    {
+        key = "flask",
+        settingKey = "icon_flask",
+        defaultIcon = RCC.db.flask_icon_id,
+        clickable = true,
+        tooltipAction = "use",
+        layoutOrder = 2,
+    },
+    {
+        key = "oil",
+        settingKey = "icon_mhOil",
+        defaultIcon = RCC.db.weapon_enchant_icon_id,
+        clickable = true,
+        tooltipAction = "apply",
+        targetSlot = 16,
+        layoutOrder = 3,
+    },
+    {
+        key = "augment",
+        settingKey = "icon_augment",
+        defaultIcon = RCC.db.augment_icon_id,
+        clickable = true,
+        tooltipAction = "use",
+        layoutOrder = 5,
+    },
+    {
+        key = "hs",
+        settingKey = "icon_healthstone",
+        defaultIcon = RCC.db.healthstone_icon_id,
+        layoutOrder = 6,
+    },
+    {
+        key = "oiloh",
+        settingKey = "icon_ohOil",
+        defaultIcon = RCC.db.weapon_enchant_icon_id,
+        clickable = true,
+        tooltipAction = "apply",
+        targetSlot = 17,
+        hiddenByDefault = true,
+        layoutOrder = 4,
+    },
+    {
+        key = "dmgpot",
+        settingKey = "icon_dmgPotion",
+        defaultIcon = RCC.db.potion_icon_id,
+        layoutOrder = 7,
+    },
+    {
+        key = "healpot",
+        settingKey = "icon_healPotion",
+        defaultIcon = RCC.db.healing_potion_icon_id,
+        layoutOrder = 8,
+    },
+    {
+        key = "vantus",
+        settingKey = "icon_vantus",
+        defaultIcon = RCC.db.vantus_icon_id,
+        clickable = true,
+        tooltipAction = "use",
+        hiddenByDefault = true,
+        layoutOrder = 9,
+    },
 }
 
-local TOOLTIP_ACTIONS = {
-    [i_food]    = "eat",
-    [i_flask]   = "use",
-    [i_mh_oil]  = "apply",
-    [i_oh_oil]  = "apply",
-    [i_augment] = "use",
-    [i_vantus]  = "use",
-}
+local BUTTON_LAYOUT_ORDER = {}
 
-for i = 1, 9 do
+for i = 1, #BUTTON_DEFS do
+    local def = BUTTON_DEFS[i]
+    def.index = i
+    BUTTON_LAYOUT_ORDER[#BUTTON_LAYOUT_ORDER + 1] = def
+end
+
+table.sort(BUTTON_LAYOUT_ORDER, function(a, b)
+    return a.layoutOrder < b.layoutOrder
+end)
+
+for i = 1, #BUTTON_DEFS do
+    local def = BUTTON_DEFS[i]
     local button = CreateFrame("Frame", nil, RCC.consumables)
     RCC.consumables.buttons[i] = button
     button:SetSize(consumables_size, consumables_size)
@@ -406,17 +463,16 @@ for i = 1, 9 do
     button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
     button.count:SetFont(FONT, 14, "OUTLINE")
 
-    if CLICKABLE_BUTTONS[i] then
+    if def.clickable then
         button.click = CreateFrame("Button", nil, button,
                                    "SecureActionButtonTemplate")
         button.click:SetAllPoints()
         button.click:Hide()
         button.click:RegisterForClicks("AnyUp", "AnyDown")
 
-        if i == i_mh_oil or i == i_oh_oil then
+        if def.targetSlot then
             button.click:SetAttribute("type", "item")
-            button.click:SetAttribute("target-slot",
-                                      i == i_mh_oil and "16" or "17")
+            button.click:SetAttribute("target-slot", tostring(def.targetSlot))
         else
             button.click:SetAttribute("type", "macro")
         end
@@ -434,53 +490,27 @@ for i = 1, 9 do
         button.outOverlay:SetColorTexture(0.6, 0, 0, 0.4)
         button.outOverlay:Hide()
 
-        button.tooltipAction = TOOLTIP_ACTIONS[i]
+        button.tooltipAction = def.tooltipAction
     end
 
     button:EnableMouse(true)
     button:SetScript("OnEnter", InfoButtonOnEnter)
     button:SetScript("OnLeave", InfoButtonOnLeave)
 
-    if i == i_food then
-        button.texture:SetTexture(RCC.db.food_icon_id)
+    if def.defaultIcon then
+        button.texture:SetTexture(def.defaultIcon)
+    end
+
+    if def.hasCooldown then
         button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
         button.cooldown:SetAllPoints()
         button.cooldown:SetDrawEdge(true)
         button.cooldown:SetDrawSwipe(true)
-        RCC.consumables.buttons.food = button
+    end
 
-    elseif i == i_flask then
-        button.texture:SetTexture(RCC.db.flask_icon_id)
-        RCC.consumables.buttons.flask = button
+    RCC.consumables.buttons[def.key] = button
 
-    elseif i == i_mh_oil then
-        button.texture:SetTexture(RCC.db.weapon_enchant_icon_id)
-        RCC.consumables.buttons.oil = button
-
-    elseif i == i_augment then
-        button.texture:SetTexture(RCC.db.augment_icon_id)
-        RCC.consumables.buttons.augment = button
-
-    elseif i == i_hs then
-        button.texture:SetTexture(RCC.db.healthstone_icon_id)
-        RCC.consumables.buttons.hs = button
-
-    elseif i == i_oh_oil then
-        button.texture:SetTexture(RCC.db.weapon_enchant_icon_id)
-        RCC.consumables.buttons.oiloh = button
-        button:Hide()
-
-    elseif i == i_dmg_pot then
-        button.texture:SetTexture(RCC.db.potion_icon_id)
-        RCC.consumables.buttons.dmgpot = button
-
-    elseif i == i_heal_pot then
-        button.texture:SetTexture(RCC.db.healing_potion_icon_id)
-        RCC.consumables.buttons.healpot = button
-
-    elseif i == i_vantus then
-        button.texture:SetTexture(RCC.db.vantus_icon_id)
-        RCC.consumables.buttons.vantus = button
+    if def.hiddenByDefault then
         button:Hide()
     end
 end
@@ -1281,38 +1311,14 @@ end
 --- Update() coordinator
 --------------------------------------------------------------------------------
 
-local ICON_SETTINGS = {
-    [i_food]     = "icon_food",
-    [i_flask]    = "icon_flask",
-    [i_mh_oil]   = "icon_mhOil",
-    [i_oh_oil]   = "icon_ohOil",
-    [i_hs]       = "icon_healthstone",
-    [i_dmg_pot]  = "icon_dmgPotion",
-    [i_heal_pot] = "icon_healPotion",
-    [i_augment]     = "icon_augment",
-    [i_vantus]   = "icon_vantus",
-}
-
-local BUTTON_LAYOUT_ORDER = {
-    i_food,
-    i_flask,
-    i_mh_oil,
-    i_oh_oil,
-    i_augment,
-    i_hs,
-    i_dmg_pot,
-    i_heal_pot,
-    i_vantus,
-}
-
 local function applyIconVisibilityAndLayout(self, buttons)
     local previous
     local visibleCount = 0
 
-    for _, idx in ipairs(BUTTON_LAYOUT_ORDER) do
-        local button = buttons[idx]
+    for _, def in ipairs(BUTTON_LAYOUT_ORDER) do
+        local button = buttons[def.index]
         local shouldShow = button.showInLayout
-            and RCC.GetSetting(ICON_SETTINGS[idx])
+            and RCC.GetSetting(def.settingKey)
 
         button:ClearAllPoints()
 
