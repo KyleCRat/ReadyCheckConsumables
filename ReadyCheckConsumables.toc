@@ -24,6 +24,8 @@ Modules/ConsumableFrame/ConsumableFrameTooltips.lua
 Modules/ConsumableFrame/ConsumableFrameButtons.lua
 Modules/ConsumableFrame/ConsumableFrameActions.lua
 Modules/ConsumableFrame/ConsumableFrameAuras.lua
+Modules/ConsumableFrame/Consumables/Food.lua
+Modules/ConsumableFrame/Consumables/Flask.lua
 Modules/ConsumableFrame/Consumables/Healthstone.lua
 Modules/ConsumableFrame/Consumables/DamagePotion.lua
 Modules/ConsumableFrame/Consumables/HealingPotion.lua

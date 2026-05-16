@@ -4,6 +4,8 @@ local Auras = RCC.ConsumableFrameAuras
 local F = RCC.F
 local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
+local Food = RCC.Consumables.Food
+local Flask = RCC.Consumables.Flask
 local Healthstone = RCC.Consumables.Healthstone
 local DamagePotion = RCC.Consumables.DamagePotion
 local HealingPotion = RCC.Consumables.HealingPotion
@@ -18,7 +20,6 @@ local        GetItemIcon = C_Item.GetItemIconByID
 local setButtonGlow = Glow.Set
 local setButtonShownInLayout = Buttons.SetShownInLayout
 local resetButtonState = Buttons.ResetState
-local isPositiveAuraDuration = Auras.IsPositiveDuration
 
 --------------------------------------------------------------------------------
 --- Update helper functions
@@ -26,35 +27,6 @@ local isPositiveAuraDuration = Auras.IsPositiveDuration
 
 local function applyAuraState(buttons, state)
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
-
-    if state.food and state.food.active then
-        buttons.food.statustexture:SetTexture(READY)
-        buttons.food.hasConsumableBuff = true
-        buttons.food.texture:SetDesaturated(false)
-
-        if state.food.remaining then
-            buttons.food.timeleft:SetText(F.FormatDuration(state.food.remaining))
-        end
-
-        if state.food.icon then
-            buttons.food.texture:SetTexture(state.food.icon)
-        end
-
-        if state.food.auraInstanceID then
-            buttons.food.tooltipAuraID = state.food.auraInstanceID
-        end
-    end
-
-    if state.flask and state.flask.active then
-        buttons.flask.statustexture:SetTexture(READY)
-        buttons.flask.hasConsumableBuff = true
-        buttons.flask.texture:SetDesaturated(false)
-        buttons.flask.texture:SetTexture(state.flask.icon)
-
-        if state.flask.remaining then
-            buttons.flask.timeleft:SetText(F.FormatDuration(state.flask.remaining))
-        end
-    end
 
     if state.augment and state.augment.active then
         buttons.augment.statustexture:SetTexture(READY)
@@ -66,100 +38,6 @@ local function applyAuraState(buttons, state)
             buttons.augment.timeleft:SetText(
                 F.FormatDuration(state.augment.remaining))
         end
-    end
-end
-
-local function updateFood(buttons, isFood)
-    local food_count = 0
-    local food_item_id
-
-    for food_index = 1, #RCC.db.foodItemIDs do
-        local fid = RCC.db.foodItemIDs[food_index]
-        local count = GetItemCount(fid, false, false)
-
-        if count and count > 0 then
-            food_item_id = fid
-            food_count = count
-
-            break
-        end
-    end
-
-    if food_count > 0 then
-        buttons.food.tooltipItemID = food_item_id
-        buttons.food.usableItemID = food_item_id
-
-        if not isFood then
-            local texture = select(5, GetItemInfoInstant(food_item_id))
-
-            if texture then
-                buttons.food.texture:SetTexture(texture)
-            end
-        end
-
-        Actions.SetItemMacro(buttons.food, food_item_id)
-    else
-        Actions.Disable(buttons.food)
-
-        if not isFood then
-            buttons.food.outOfItemsText = "No Food found in Bags"
-        end
-    end
-
-    buttons.food.count:SetFormattedText(
-        "%s", food_count > 0 and food_count or "")
-
-    if not isFood and food_count > 0 then
-        setButtonGlow(buttons.food, true)
-    else
-        setButtonGlow(buttons.food, false)
-    end
-end
-
-local function updateFlasks(buttons, isFlask)
-    local flask_count = 0
-    local flask_item_id
-
-    for flask_index = 1, #RCC.db.flaskItemIDs do
-        local fid = RCC.db.flaskItemIDs[flask_index]
-        local count = GetItemCount(fid, false, false)
-
-        if count and count > 0 then
-            flask_item_id = fid
-            flask_count = count
-
-            break
-        end
-    end
-
-    if flask_count > 0 then
-        buttons.flask.tooltipItemID = flask_item_id
-        buttons.flask.usableItemID = flask_item_id
-
-        if not isFlask then
-            local texture = select(5, GetItemInfoInstant(flask_item_id))
-
-            if texture then
-                buttons.flask.texture:SetTexture(texture)
-            end
-        end
-
-        Actions.SetItemMacro(buttons.flask, flask_item_id)
-    else
-        Actions.Disable(buttons.flask)
-
-        if not isFlask then
-            buttons.flask.outOfItemsText = "No Flasks found in Bags"
-        end
-    end
-
-    buttons.flask.count:SetFormattedText(
-        "%s", flask_count > 0 and flask_count or "")
-
-    if not isFlask and flask_count > 0 then
-        setButtonGlow(buttons.flask, true)
-    else
-        setButtonGlow(buttons.flask, false)
     end
 end
 
@@ -610,24 +488,9 @@ function RCC.consumables:Update()
 
     applyAuraState(buttons, auraState)
 
-    local eatingRemaining = auraState.eating and auraState.eating.remaining
-
-    if auraState.eating
-        and eatingRemaining
-        and isPositiveAuraDuration(auraState.eating.duration)
-    then
-        local cooldownStart = auraState.eating.expiry
-                              - auraState.eating.duration
-        buttons.food.cooldown:SetCooldown(cooldownStart,
-                                          auraState.eating.duration)
-        buttons.food.cooldown:Show()
-    else
-        buttons.food.cooldown:Clear()
-    end
-
-    updateFood(buttons, auraState.food and auraState.food.satisfied)
+    Food.Update(buttons.food, auraState)
     Healthstone.Update(buttons.hs)
-    updateFlasks(buttons, auraState.flask and auraState.flask.satisfied)
+    Flask.Update(buttons.flask, auraState)
     updateWeaponEnchants(buttons)
     updateAugments(buttons, auraState.augment and auraState.augment.satisfied)
     DamagePotion.Update(buttons.dmgpot)

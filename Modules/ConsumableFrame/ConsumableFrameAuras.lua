@@ -18,9 +18,9 @@ function Auras.IsPositiveDuration(duration)
 end
 
 function Auras.ScanPlayer(now)
-    local state = {}
-    local foodState
-    local eatingState
+    local state = {
+        auras = {},
+    }
 
     for i = 1, 60 do
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
@@ -33,68 +33,38 @@ function Auras.ScanPlayer(now)
             local sid = auraData.spellId
             local expiry = auraData.expirationTime
             local remaining = Auras.GetRemaining(expiry, now)
+            local aura = {
+                duration = auraData.duration,
+                expiry = expiry,
+                icon = auraData.icon,
+                name = auraData.name,
+                remaining = remaining,
+                spellID = sid,
+            }
 
-            if RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
-                if RCC.db.eatingIconIDs[auraData.icon] then
-                    eatingState = {
-                        active = true,
-                        duration = auraData.duration,
-                        expiry = expiry,
-                        icon = auraData.icon,
-                        remaining = remaining,
-                    }
-                else
-                    foodState = {
-                        active = true,
-                        expiry = expiry,
-                        icon = auraData.icon,
-                        remaining = remaining,
-                    }
+            if auraData.auraInstanceID
+                and not issecretvalue(auraData.auraInstanceID)
+            then
+                aura.auraInstanceID = auraData.auraInstanceID
+            end
 
-                    if auraData.auraInstanceID
-                        and not issecretvalue(auraData.auraInstanceID)
-                    then
-                        foodState.auraInstanceID = auraData.auraInstanceID
-                    end
-                end
+            state.auras[#state.auras + 1] = aura
 
-            elseif RCC.db.flaskBuffIDs[sid] then
-                state.flask = {
-                    active = true,
-                    icon = auraData.icon,
-                    remaining = remaining,
-                    satisfied = not (remaining and remaining <= 600),
-                }
-
-            elseif RCC.db.augmentBuffIDs[sid] then
+            if RCC.db.augmentBuffIDs[sid] then
                 state.augment = {
                     active = true,
-                    icon = auraData.icon,
+                    icon = aura.icon,
                     remaining = remaining,
                     satisfied = true,
                 }
 
             elseif RCC.db.vantusBuffIDs[sid] then
-                local name = auraData.name or ""
+                local name = aura.name or ""
                 state.vantus = {
                     bossName = name:gsub("^Vantus Rune: ", ""),
                 }
             end
         end
-    end
-
-    if foodState then
-        foodState.satisfied = true
-        state.food = foodState
-    elseif eatingState then
-        state.eating = eatingState
-        state.food = {
-            active = true,
-            expiry = eatingState.expiry,
-            icon = eatingState.icon,
-            remaining = eatingState.remaining,
-            satisfied = true,
-        }
     end
 
     return state
