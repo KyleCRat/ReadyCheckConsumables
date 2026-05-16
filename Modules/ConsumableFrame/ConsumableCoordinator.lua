@@ -4,6 +4,9 @@ local Auras = RCC.ConsumableFrameAuras
 local F = RCC.F
 local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
+local Healthstone = RCC.Consumables.Healthstone
+local DamagePotion = RCC.Consumables.DamagePotion
+local HealingPotion = RCC.Consumables.HealingPotion
 local Glow = RCC.ConsumableFrameGlow
 
 local            GetTime = GetTime
@@ -110,28 +113,6 @@ local function updateFood(buttons, isFood)
         setButtonGlow(buttons.food, true)
     else
         setButtonGlow(buttons.food, false)
-    end
-end
-
-local function updateHealthstones(buttons)
-    local totalCount = 0
-
-    for itemID in pairs(RCC.db.healthstoneItemIDs) do
-        local count = GetItemCount(itemID, false, true)
-
-        if count and count > 0 then
-            totalCount = totalCount + count
-        end
-    end
-
-    if totalCount > 0 then
-        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
-        buttons.hs.count:SetFormattedText("%d", totalCount)
-        buttons.hs.statustexture:SetTexture(READY)
-        buttons.hs.texture:SetDesaturated(false)
-        buttons.hs.tooltipItemID = RCC.db.healthstone_item_id
-    else
-        buttons.hs.count:SetText("0")
     end
 end
 
@@ -497,62 +478,6 @@ local function updateAugments(buttons, isAugment)
     end
 end
 
--- TODO: Update logic to only show most powerful found pot?
--- This will get weird if a healer has dmg pots and mana pots
-local function updateDamagePotions(buttons)
-    local inventoryItem,
-          inventoryItemCount
-
-    for i = 1, #RCC.db.potionItemIDs do
-        local item  = RCC.db.potionItemIDs[i]
-        local count = GetItemCount(item, false, true)
-
-        if count and count > 0 then
-            inventoryItem      = item
-            inventoryItemCount = count
-
-            break
-        end
-    end
-
-    if inventoryItem and inventoryItemCount > 0 then
-        buttons.dmgpot.count:SetFormattedText("%d", inventoryItemCount)
-        buttons.dmgpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        buttons.dmgpot.texture:SetTexture(GetItemIcon(inventoryItem))
-        buttons.dmgpot.texture:SetDesaturated(false)
-        buttons.dmgpot.tooltipItemID = inventoryItem
-    else
-        buttons.dmgpot.count:SetText("0")
-    end
-end
-
-local function updateHealingPotions(buttons)
-    local inventoryItem,
-          inventoryItemCount
-
-    for i = 1, #RCC.db.healingPotionItemIDs do
-        local item  = RCC.db.healingPotionItemIDs[i]
-        local count = GetItemCount(item, false, true)
-
-        if count and count > 0 then
-            inventoryItem      = item
-            inventoryItemCount = count
-
-            break
-        end
-    end
-
-    if inventoryItem and inventoryItemCount > 0 then
-        buttons.healpot.count:SetFormattedText("%d", inventoryItemCount)
-        buttons.healpot.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        buttons.healpot.texture:SetTexture(GetItemIcon(inventoryItem))
-        buttons.healpot.texture:SetDesaturated(false)
-        buttons.healpot.tooltipItemID = inventoryItem
-    else
-        buttons.healpot.count:SetText("0")
-    end
-end
-
 local function getVantusForCurrentRaid()
     local instanceID = select(8, GetInstanceInfo())
     local vantusRuneIDs = RCC.db.vantusItemsByRaid[instanceID]
@@ -701,12 +626,12 @@ function RCC.consumables:Update()
     end
 
     updateFood(buttons, auraState.food and auraState.food.satisfied)
-    updateHealthstones(buttons)
+    Healthstone.Update(buttons.hs)
     updateFlasks(buttons, auraState.flask and auraState.flask.satisfied)
     updateWeaponEnchants(buttons)
     updateAugments(buttons, auraState.augment and auraState.augment.satisfied)
-    updateDamagePotions(buttons)
-    updateHealingPotions(buttons)
+    DamagePotion.Update(buttons.dmgpot)
+    HealingPotion.Update(buttons.healpot)
     updateVantusRune(buttons, auraState.vantus and auraState.vantus.bossName)
 
     if not InCombatLockdown() then
