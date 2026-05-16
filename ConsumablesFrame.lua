@@ -811,19 +811,8 @@ local function updateWeaponEnchants(buttons)
         end
     end
 
-    if not InCombatLockdown() then
-        if mainHandItemID then
-            buttons.oil:Show()
-        else
-            buttons.oil:Hide()
-        end
-
-        if offhandCanBeEnchanted then
-            buttons.oiloh:Show()
-        else
-            buttons.oiloh:Hide()
-        end
-    end
+    setButtonShownInLayout(buttons.oil, mainHandItemID ~= nil)
+    setButtonShownInLayout(buttons.oiloh, offhandCanBeEnchanted == true)
 
     local hasMainHandEnchant, mainHandExpiration,
           mainHandCharges, mainHandEnchantID,
@@ -1193,21 +1182,17 @@ local function updateVantusRune(buttons, isVantus)
 
     -- db.vantusItemsByRaid does not have a entry for instance ID, hide
     if not vantusRuneIDs then
-        if not InCombatLockdown() then
-            buttons.vantus:Hide()
-            setClickEnabled(buttons.vantus, false)
-        end
+        setButtonShownInLayout(buttons.vantus, false)
+        setClickEnabled(buttons.vantus, false)
 
         return
     end
 
+    setButtonShownInLayout(buttons.vantus, true)
+
     if itemID then
         local icon_texture_id = GetItemIcon(itemID)
         buttons.vantus.texture:SetTexture(icon_texture_id)
-    end
-
-    if not InCombatLockdown() then
-        buttons.vantus:Show()
     end
 
     if isVantus then
@@ -1320,25 +1305,14 @@ local BUTTON_LAYOUT_ORDER = {
     i_vantus,
 }
 
-local function applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
-    local available = {
-        [i_food]     = true,
-        [i_flask]    = true,
-        [i_mh_oil]   = buttons.oil:IsShown(),
-        [i_oh_oil]   = buttons.oiloh:IsShown(),
-        [i_augment]  = true,
-        [i_hs]       = isWarlockInRaid,
-        [i_dmg_pot]  = true,
-        [i_heal_pot] = true,
-        [i_vantus]   = buttons.vantus:IsShown(),
-    }
-
+local function applyIconVisibilityAndLayout(self, buttons)
     local previous
     local visibleCount = 0
 
     for _, idx in ipairs(BUTTON_LAYOUT_ORDER) do
         local button = buttons[idx]
-        local shouldShow = available[idx] and RCC.GetSetting(ICON_SETTINGS[idx])
+        local shouldShow = button.showInLayout
+            and RCC.GetSetting(ICON_SETTINGS[idx])
 
         button:ClearAllPoints()
 
@@ -1366,19 +1340,13 @@ function RCC.consumables:Update()
 
     local isWarlockInRaid = F.hasClassInRoster("WARLOCK")
 
-    if not InCombatLockdown() then
-        if isWarlockInRaid then
-            buttons.hs:Show()
-        else
-            buttons.hs:Hide()
-        end
-    end
-
     local NOT_READY = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
     for i = 1, #buttons do
         resetButtonState(buttons[i], NOT_READY)
     end
+
+    setButtonShownInLayout(buttons.hs, isWarlockInRaid)
 
     local now = GetTime()
 
@@ -1405,7 +1373,7 @@ function RCC.consumables:Update()
     updateVantusRune(buttons, isVantus)
 
     if not InCombatLockdown() then
-        applyIconVisibilityAndLayout(self, buttons, isWarlockInRaid)
+        applyIconVisibilityAndLayout(self, buttons)
     end
 
     for i = 1, #buttons do
