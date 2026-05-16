@@ -109,18 +109,6 @@ function Buttons.SetShownInLayout(button, shown)
     button.showInLayout = shown == true
 end
 
-function Buttons.SetClickEnabled(button, enabled)
-    button.clickEnabled = enabled == true
-
-    if not button.click or InCombatLockdown() then return end
-
-    if button.clickEnabled then
-        button.click:Show()
-    else
-        button.click:Hide()
-    end
-end
-
 function Buttons.ResetState(button, notReadyTexture)
     button.statustexture:SetTexture(notReadyTexture)
     button.hasConsumableBuff = false

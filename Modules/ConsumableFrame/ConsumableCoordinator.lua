@@ -1,6 +1,7 @@
 local ADDON_NAME, RCC = ...
 
 local F = RCC.F
+local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
 local Glow = RCC.ConsumableFrameGlow
 
@@ -12,21 +13,11 @@ local        GetItemIcon = C_Item.GetItemIconByID
 
 local setButtonGlow = Glow.Set
 local setButtonShownInLayout = Buttons.SetShownInLayout
-local setClickEnabled = Buttons.SetClickEnabled
 local resetButtonState = Buttons.ResetState
 
 --------------------------------------------------------------------------------
 --- Update helper functions
 --------------------------------------------------------------------------------
-
-local function getItemUseMacro(itemID, targetSlot)
-    if targetSlot then
-        return format("/stopmacro [combat]\n/use item:%d\n/use %d",
-                      itemID, targetSlot)
-    end
-
-    return format("/stopmacro [combat]\n/use item:%d", itemID)
-end
 
 local function getAuraRemaining(expiry, now)
     if type(expiry) ~= "number" or issecretvalue(expiry) then return end
@@ -166,15 +157,9 @@ local function updateFood(buttons, isFood)
             end
         end
 
-        if not InCombatLockdown() then
-            buttons.food.click:SetAttribute("macrotext1",
-                getItemUseMacro(food_item_id))
-            setClickEnabled(buttons.food, true)
-        end
+        Actions.SetItemMacro(buttons.food, food_item_id)
     else
-        if not InCombatLockdown() then
-            setClickEnabled(buttons.food, false)
-        end
+        Actions.Disable(buttons.food)
 
         if not isFood then
             buttons.food.outOfItemsText = "No Food found in Bags"
@@ -241,15 +226,9 @@ local function updateFlasks(buttons, isFlask)
             end
         end
 
-        if not InCombatLockdown() then
-            buttons.flask.click:SetAttribute("macrotext1",
-                getItemUseMacro(flask_item_id))
-            setClickEnabled(buttons.flask, true)
-        end
+        Actions.SetItemMacro(buttons.flask, flask_item_id)
     else
-        if not InCombatLockdown() then
-            setClickEnabled(buttons.flask, false)
-        end
+        Actions.Disable(buttons.flask)
 
         if not isFlask then
             buttons.flask.outOfItemsText = "No Flasks found in Bags"
@@ -308,32 +287,35 @@ local function findWeaponEnchantItemInBags()
 end
 
 local function hideWeaponEnchantClicks(buttons)
-    setClickEnabled(buttons.oil, false)
-    setClickEnabled(buttons.oiloh, false)
+    Actions.Disable(buttons.oil)
+    Actions.Disable(buttons.oiloh)
+end
+
+local function getEnchantableWeaponSlot(slotID)
+    local itemID = GetInventoryItemID("player", slotID)
+
+    if not itemID then
+        return nil, false
+    end
+
+    local itemClassID = select(6, GetItemInfoInstant(itemID))
+
+    return itemID, itemClassID == 2
 end
 
 local function updateWeaponEnchants(buttons)
-    local mainHandItemID = GetInventoryItemID("player", 16)
-    local offhandCanBeEnchanted
-    local offhandItemID = GetInventoryItemID("player", 17)
+    local _, mainHandCanBeEnchanted = getEnchantableWeaponSlot(16)
+    local _, offhandCanBeEnchanted = getEnchantableWeaponSlot(17)
 
-    if offhandItemID then
-        local itemClassID = select(6, GetItemInfoInstant(offhandItemID))
-
-        if itemClassID == 2 then
-            offhandCanBeEnchanted = true
-        end
-    end
-
-    setButtonShownInLayout(buttons.oil, mainHandItemID ~= nil)
-    setButtonShownInLayout(buttons.oiloh, offhandCanBeEnchanted == true)
+    setButtonShownInLayout(buttons.oil, mainHandCanBeEnchanted)
+    setButtonShownInLayout(buttons.oiloh, offhandCanBeEnchanted)
 
     local hasMainHandEnchant, mainHandExpiration,
           mainHandCharges, mainHandEnchantID,
           hasOffHandEnchant, offHandExpiration,
           offHandCharges, offHandEnchantID = GetWeaponEnchantInfo()
 
-    if not mainHandItemID then
+    if not mainHandCanBeEnchanted then
         hasMainHandEnchant = false
         mainHandExpiration = nil
         mainHandEnchantID = nil
@@ -399,23 +381,14 @@ local function updateWeaponEnchants(buttons)
     end
 
     if type(lastWeaponEnchantItem) == "number" and lastWeaponEnchantItem < 0 then
-        if not InCombatLockdown() then
-            local spellInfo = GetSpellInfo(-lastWeaponEnchantItem)
-            local spellName = spellInfo and spellInfo.name
+        local spellInfo = GetSpellInfo(-lastWeaponEnchantItem)
+        local spellName = spellInfo and spellInfo.name
 
-            if spellName then
-                buttons.oil.click:SetAttribute("spell", spellName)
-                buttons.oil.click:SetAttribute("type", "spell")
-
-                setClickEnabled(buttons.oil, mainHandItemID ~= nil)
-
-                buttons.oiloh.click:SetAttribute("spell", spellName)
-                buttons.oiloh.click:SetAttribute("type", "spell")
-
-                setClickEnabled(buttons.oiloh, offhandCanBeEnchanted == true)
-            else
-                hideWeaponEnchantClicks(buttons)
-            end
+        if spellName then
+            Actions.SetSpell(buttons.oil, spellName, mainHandCanBeEnchanted)
+            Actions.SetSpell(buttons.oiloh, spellName, offhandCanBeEnchanted)
+        else
+            hideWeaponEnchantClicks(buttons)
         end
 
         buttons.oil.count:SetText("")
@@ -478,34 +451,15 @@ local function updateWeaponEnchants(buttons)
     end
 
     if oilCount and oilCount > 0 then
-        if not InCombatLockdown() then
-            local itemRef = "item:" .. usableOilItemID
-            buttons.oil.click:SetAttribute("spell", nil)
-            buttons.oil.click:SetAttribute("item", itemRef)
-
-            if mainHandItemID and mainHandExpiration
-                and (usableOilItemID == 171285 or usableOilItemID == 171286)
-                and offhandItemID
-                and not offhandCanBeEnchanted then
-
-                buttons.oil.click:SetAttribute("type", "cancelaura")
-            else
-                buttons.oil.click:SetAttribute("type", "item")
-            end
-
-            setClickEnabled(buttons.oil, mainHandItemID ~= nil)
-
-            buttons.oiloh.click:SetAttribute("spell", nil)
-            buttons.oiloh.click:SetAttribute("item", itemRef)
-            buttons.oiloh.click:SetAttribute("type", "item")
-
-            setClickEnabled(buttons.oiloh, offhandCanBeEnchanted == true)
-        end
+        Actions.SetWeaponEnchantItem(buttons.oil, usableOilItemID,
+                                     mainHandCanBeEnchanted)
+        Actions.SetWeaponEnchantItem(buttons.oiloh, usableOilItemID,
+                                     offhandCanBeEnchanted)
     else
         hideWeaponEnchantClicks(buttons)
     end
 
-    local needsMH = mainHandItemID and oilCount and oilCount > 0
+    local needsMH = mainHandCanBeEnchanted and oilCount and oilCount > 0
                     and (not hasMainHandEnchant
                         or (mainHandExpiration
                             and mainHandExpiration <= 300000))
@@ -588,17 +542,11 @@ local function updateAugments(buttons, isAugment)
             end
         end
 
-        if not InCombatLockdown() then
-            buttons.augment.click:SetAttribute("macrotext1",
-                getItemUseMacro(augmentItemID))
-            setClickEnabled(buttons.augment, true)
-        end
+        Actions.SetItemMacro(buttons.augment, augmentItemID)
     else
         buttons.augment.count:SetText("0")
 
-        if not InCombatLockdown() then
-            setClickEnabled(buttons.augment, false)
-        end
+        Actions.Disable(buttons.augment)
 
         if not isAugment then
             buttons.augment.outOfItemsText = "No Augment Runes found in Bags"
@@ -697,7 +645,7 @@ local function updateVantusRune(buttons, isVantus)
     -- db.vantusItemsByRaid does not have a entry for instance ID, hide
     if not vantusRuneIDs then
         setButtonShownInLayout(buttons.vantus, false)
-        setClickEnabled(buttons.vantus, false)
+        Actions.Disable(buttons.vantus)
 
         return
     end
@@ -719,9 +667,7 @@ local function updateVantusRune(buttons, isVantus)
             buttons.vantus.count:SetFormattedText("%d", count)
         end
 
-        if not InCombatLockdown() then
-            setClickEnabled(buttons.vantus, false)
-        end
+        Actions.Disable(buttons.vantus)
 
         return
     end
@@ -731,11 +677,7 @@ local function updateVantusRune(buttons, isVantus)
         buttons.vantus.tooltipItemID = itemID
         buttons.vantus.usableItemID = itemID
 
-        if not InCombatLockdown() then
-            buttons.vantus.click:SetAttribute("macrotext1",
-                getItemUseMacro(itemID))
-            setClickEnabled(buttons.vantus, true)
-        end
+        Actions.SetItemMacro(buttons.vantus, itemID)
 
         return
     end
@@ -744,9 +686,7 @@ local function updateVantusRune(buttons, isVantus)
     buttons.vantus.tooltipItemID = itemID
     buttons.vantus.outOfItemsText = "No Vantus Runes found in Bags"
 
-    if not InCombatLockdown() then
-        setClickEnabled(buttons.vantus, false)
-    end
+    Actions.Disable(buttons.vantus)
 end
 
 --------------------------------------------------------------------------------
@@ -771,15 +711,9 @@ local function updateArmorKits(buttons)
     end
 
     if kitCount and kitCount > 0 then
-        if not InCombatLockdown() then
-            buttons.kit.click:SetAttribute("macrotext1",
-                getItemUseMacro(172347, 5))
-            setClickEnabled(buttons.kit, true)
-        end
+        Actions.SetItemMacro(buttons.kit, 172347, 5)
     else
-        if not InCombatLockdown() then
-            setClickEnabled(buttons.kit, false)
-        end
+        Actions.Disable(buttons.kit)
     end
 
     buttons.kit.count:SetFormattedText("%d", kitCount)
