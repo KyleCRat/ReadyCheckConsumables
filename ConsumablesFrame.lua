@@ -135,9 +135,6 @@ local function setClickEnabled(button, enabled)
 
     if not button.click or InCombatLockdown() then return end
 
-    -- Compatibility for the current state driver; remove in Phase 1 Step 2.
-    button.click.IsON = button.clickEnabled
-
     if button.clickEnabled then
         button.click:Show()
     else
@@ -349,32 +346,6 @@ local function updateOutOverlay(button)
 end
 
 --------------------------------------------------------------------------------
---- Combat state driver
---------------------------------------------------------------------------------
-
-RCC.consumables.state = CreateFrame("Frame", nil, nil,
-                                    "SecureHandlerStateTemplate")
-
-RCC.consumables.state:SetAttribute("_onstate-combat", [=[
-    for i = 1, 9 do
-        if i ~= 5 and i ~= 7 and i ~= 8 then
-            if self:GetFrameRef("Button"..i) then
-                if newstate == "hide" then
-                    self:GetFrameRef("Button"..i):Hide()
-                elseif newstate == "show" then
-                    if self:GetFrameRef("Button"..i).IsON then
-                        self:GetFrameRef("Button"..i):Show()
-                    end
-                end
-            end
-        end
-    end
-]=])
-
-RegisterStateDriver(RCC.consumables.state, "combat",
-                    "[combat] hide; [nocombat] show")
-
---------------------------------------------------------------------------------
 --- Button creation (9 buttons)
 --- 1=food  2=flask  3=mh_oil  4=augment  5=hs  6=oh_oil
 --- 7=dmg_pot  8=heal_pot  9=vantus
@@ -464,8 +435,6 @@ for i = 1, 9 do
         button.outOverlay:Hide()
 
         button.tooltipAction = TOOLTIP_ACTIONS[i]
-
-        RCC.consumables.state:SetFrameRef("Button" .. i, button.click)
     end
 
     button:EnableMouse(true)
