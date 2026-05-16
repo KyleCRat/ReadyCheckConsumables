@@ -2,11 +2,12 @@ local ADDON_NAME, RCC = ...
 
 local F = RCC.F
 local UI = RCC.UI
+local Buttons = RCC.ConsumableFrameButtons
+local Glow = RCC.ConsumableFrameGlow
 
 local            GetTime = GetTime
 local      IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 local       GetSpellInfo = C_Spell.GetSpellInfo
-local        GetItemInfo = C_Item.GetItemInfo
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 local       GetItemCount = C_Item.GetItemCount
 local        GetItemIcon = C_Item.GetItemIconByID
@@ -15,148 +16,12 @@ local        GetItemIcon = C_Item.GetItemIconByID
 --- Constants
 --------------------------------------------------------------------------------
 
-local consumables_size = 48
-local BUTTON_SPACING = 2
 local CONTROL_BORDER_OVERHANG = 1
 
-local FONT           = UI.FONT
-local GLOW_KEY       = "rcc_consumable"
-local GLOW_COLOR     = { 0.0, 0.85, 1.0, 1 }
-local GLOW_AVAILABLE_COLOR = { 0.0, 1.0, 0.25, 1 }
-local GLOW_UNAVAILABLE_COLOR = { 1.0, 0.05, 0.05, 1 }
-local GLOW_PARTICLES = 5
-local GLOW_FREQUENCY = 0.15
-local GLOW_SCALE     = 1.4
-local GLOW_X_OFFSET  = 0
-local GLOW_Y_OFFSET  = 0
-
-local function getConsumablesWidth(buttonCount)
-    return consumables_size * buttonCount
-           + BUTTON_SPACING * math.max(buttonCount - 1, 0)
-end
-
-local function applyButtonGlowPhase(button, glowWasActive)
-    if glowWasActive then return end
-
-    local glow = button["_AutoCastGlow" .. GLOW_KEY]
-
-    if not glow or type(glow.timer) ~= "table" then return end
-
-    if not button.rccGlowPhases then
-        button.rccGlowPhases = {}
-
-        for i = 1, 4 do
-            button.rccGlowPhases[i] = math.random()
-        end
-    end
-
-    for i = 1, 4 do
-        glow.timer[i] = button.rccGlowPhases[i]
-    end
-
-    local onUpdate = glow:GetScript("OnUpdate")
-
-    if onUpdate then
-        onUpdate(glow, 0)
-    end
-end
-
-local function startButtonGlow(button, color)
-    if button.rccGlowActiveColor == color then return end
-
-    local LCG = LibStub("LibCustomGlow-1.0", true)
-
-    if not LCG then return end
-
-    local glowWasActive = button["_AutoCastGlow" .. GLOW_KEY] ~= nil
-
-    button.rccGlowActiveColor = color
-    LCG.AutoCastGlow_Start(button, color, GLOW_PARTICLES,
-                           GLOW_FREQUENCY, GLOW_SCALE,
-                           GLOW_X_OFFSET, GLOW_Y_OFFSET, GLOW_KEY)
-
-    applyButtonGlowPhase(button, glowWasActive)
-end
-
-local function stopButtonGlow(button)
-    button.rccGlowActiveColor = nil
-
-    local LCG = LibStub("LibCustomGlow-1.0", true)
-
-    if not LCG then return end
-
-    LCG.AutoCastGlow_Stop(button, GLOW_KEY)
-end
-
-local isButtonClickable
-
-local function setButtonGlow(button, enabled)
-    button.rccGlowEnabled = enabled
-
-    if button.rccGlowHovered and button.click and not button.hasConsumableBuff then
-        if isButtonClickable(button) then
-            startButtonGlow(button, GLOW_AVAILABLE_COLOR)
-        else
-            startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
-        end
-    elseif enabled then
-        startButtonGlow(button, GLOW_COLOR)
-    else
-        stopButtonGlow(button)
-    end
-end
-
-function isButtonClickable(button)
-    return button.click and button.clickEnabled and button.click:IsShown()
-end
-
-local function setButtonGlowHovered(button, hovered)
-    button.rccGlowHovered = hovered
-
-    if hovered and button.click and not button.hasConsumableBuff then
-        if isButtonClickable(button) then
-            startButtonGlow(button, GLOW_AVAILABLE_COLOR)
-        else
-            startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
-        end
-    elseif button.rccGlowEnabled then
-        startButtonGlow(button, GLOW_COLOR)
-    else
-        stopButtonGlow(button)
-    end
-end
-
-local function setButtonShownInLayout(button, shown)
-    button.showInLayout = shown == true
-end
-
-local function setClickEnabled(button, enabled)
-    button.clickEnabled = enabled == true
-
-    if not button.click or InCombatLockdown() then return end
-
-    if button.clickEnabled then
-        button.click:Show()
-    else
-        button.click:Hide()
-    end
-end
-
-local function resetButtonState(button, notReadyTexture)
-    button.statustexture:SetTexture(notReadyTexture)
-    button.hasConsumableBuff = false
-    button.timeleft:SetText("")
-    button.count:SetText("")
-    button.texture:SetDesaturated(true)
-    button.tooltipAuraID = nil
-    button.tooltipItemID = nil
-    button.usableItemID = nil
-    button.appliedItemID = nil
-    button.clickHintItemID = nil
-    button.outOfItemsText = nil
-    button.clickEnabled = false
-    setButtonShownInLayout(button, true)
-end
+local setButtonGlow = Glow.Set
+local setButtonShownInLayout = Buttons.SetShownInLayout
+local setClickEnabled = Buttons.SetClickEnabled
+local resetButtonState = Buttons.ResetState
 
 --------------------------------------------------------------------------------
 --- Construct the button frame
@@ -164,7 +29,7 @@ end
 
 RCC.consumables = CreateFrame("Frame", "RCConsumables", UIParent)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
-RCC.consumables:SetSize(getConsumablesWidth(5), consumables_size)
+RCC.consumables:SetSize(Buttons.GetWidth(5), Buttons.SIZE)
 RCC.consumables:Hide()
 RCC.consumables.buttons = {}
 
@@ -182,7 +47,7 @@ RCC.consumables:SetToplevel(true)
 RCC.consumables.drag = UI.CreateControlFrame(RCC.consumables, 20, 20)
 RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT",
                               CONTROL_BORDER_OVERHANG,
-                              -(BUTTON_SPACING + CONTROL_BORDER_OVERHANG))
+                              -(Buttons.SPACING + CONTROL_BORDER_OVERHANG))
 RCC.consumables.drag:EnableMouse(true)
 RCC.consumables.drag:RegisterForDrag("LeftButton")
 RCC.consumables.drag:Hide()
@@ -205,11 +70,11 @@ RCC.consumables.close = UI.CreateControlButton(
     RCC.consumables, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
 )
 RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT",
-                               BUTTON_SPACING + CONTROL_BORDER_OVERHANG * 2,
+                               Buttons.SPACING + CONTROL_BORDER_OVERHANG * 2,
                                0)
 RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT",
                                -CONTROL_BORDER_OVERHANG,
-                               -(BUTTON_SPACING + CONTROL_BORDER_OVERHANG))
+                               -(Buttons.SPACING + CONTROL_BORDER_OVERHANG))
 RCC.consumables.close:Hide()
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
@@ -219,301 +84,7 @@ RCC.consumables.close:SetAttribute("_onclick", [[
     self:GetFrameRef("anchor"):Hide()
 ]])
 
---------------------------------------------------------------------------------
---- Tooltip helpers
---------------------------------------------------------------------------------
-
-local function getItemLink(itemID)
-    if not itemID then
-        return nil
-    end
-
-    return select(2, GetItemInfo(itemID))
-end
-
-local function addClickHint(button)
-    if not button.tooltipAction then
-        return
-    end
-
-    local itemLink = getItemLink(button.clickHintItemID
-                                 or button.usableItemID
-                                 or button.tooltipItemID)
-
-    if not itemLink then
-        return
-    end
-
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("|cff00ff00Click to " .. button.tooltipAction .. "|r "
-                        .. itemLink)
-    GameTooltip:Show()
-end
-
-local function addOutOfHint(button)
-    if not button.outOfItemsText then
-        return
-    end
-
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("|cffff3333" .. button.outOfItemsText .. "|r")
-    GameTooltip:Show()
-end
-
-local function showButtonTooltip(button, shoppingTooltip)
-    local shownTooltip
-
-    if button.tooltipItemID then
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-        GameTooltip:SetItemByID(button.tooltipItemID)
-        GameTooltip:Show()
-        shownTooltip = true
-    end
-
-    if button.tooltipAuraID and shoppingTooltip and shownTooltip then
-        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
-        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
-        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
-        ShoppingTooltip1:Show()
-
-    elseif button.tooltipAuraID then
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-        GameTooltip:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
-        GameTooltip:Show()
-        shownTooltip = true
-    end
-
-    return shownTooltip
-end
-
-local function ClickButtonOnEnter(self)
-    local button = self:GetParent()
-    setButtonGlowHovered(button, true)
-
-    if showButtonTooltip(button, true) then
-        addClickHint(button)
-    end
-end
-
-local function ClickButtonOnLeave(self)
-    setButtonGlowHovered(self:GetParent(), false)
-    ShoppingTooltip1:Hide()
-    GameTooltip:Hide()
-end
-
-local function InfoButtonOnEnter(self)
-    setButtonGlowHovered(self, true)
-
-    if self.outOverlay and self.outOfItemsText then
-        self.outOverlay:Show()
-    end
-
-    if showButtonTooltip(self, true) then
-        addOutOfHint(self)
-
-        return
-    end
-
-    if self.outOfItemsText then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:ClearLines()
-        GameTooltip:AddLine(self.outOfItemsText)
-        GameTooltip:Show()
-    end
-end
-
-local function InfoButtonOnLeave(self)
-    setButtonGlowHovered(self, false)
-
-    if self.outOverlay then
-        self.outOverlay:Hide()
-    end
-
-    ShoppingTooltip1:Hide()
-    GameTooltip:Hide()
-end
-
-local function updateOutOverlay(button)
-    if not button.outOverlay then
-        return
-    end
-
-    if button.outOfItemsText and button:IsMouseOver() then
-        button.outOverlay:Show()
-    else
-        button.outOverlay:Hide()
-    end
-end
-
---------------------------------------------------------------------------------
---- Button creation
---------------------------------------------------------------------------------
-
-local BUTTON_DEFS = {
-    {
-        key = "food",
-        settingKey = "icon_food",
-        defaultIcon = RCC.db.food_icon_id,
-        clickable = true,
-        tooltipAction = "eat",
-        hasCooldown = true,
-        layoutOrder = 1,
-    },
-    {
-        key = "flask",
-        settingKey = "icon_flask",
-        defaultIcon = RCC.db.flask_icon_id,
-        clickable = true,
-        tooltipAction = "use",
-        layoutOrder = 2,
-    },
-    {
-        key = "oil",
-        settingKey = "icon_mhOil",
-        defaultIcon = RCC.db.weapon_enchant_icon_id,
-        clickable = true,
-        tooltipAction = "apply",
-        targetSlot = 16,
-        layoutOrder = 3,
-    },
-    {
-        key = "augment",
-        settingKey = "icon_augment",
-        defaultIcon = RCC.db.augment_icon_id,
-        clickable = true,
-        tooltipAction = "use",
-        layoutOrder = 5,
-    },
-    {
-        key = "hs",
-        settingKey = "icon_healthstone",
-        defaultIcon = RCC.db.healthstone_icon_id,
-        layoutOrder = 6,
-    },
-    {
-        key = "oiloh",
-        settingKey = "icon_ohOil",
-        defaultIcon = RCC.db.weapon_enchant_icon_id,
-        clickable = true,
-        tooltipAction = "apply",
-        targetSlot = 17,
-        hiddenByDefault = true,
-        layoutOrder = 4,
-    },
-    {
-        key = "dmgpot",
-        settingKey = "icon_dmgPotion",
-        defaultIcon = RCC.db.potion_icon_id,
-        layoutOrder = 7,
-    },
-    {
-        key = "healpot",
-        settingKey = "icon_healPotion",
-        defaultIcon = RCC.db.healing_potion_icon_id,
-        layoutOrder = 8,
-    },
-    {
-        key = "vantus",
-        settingKey = "icon_vantus",
-        defaultIcon = RCC.db.vantus_icon_id,
-        clickable = true,
-        tooltipAction = "use",
-        hiddenByDefault = true,
-        layoutOrder = 9,
-    },
-}
-
-local BUTTON_LAYOUT_ORDER = {}
-
-for i = 1, #BUTTON_DEFS do
-    local def = BUTTON_DEFS[i]
-    def.index = i
-    BUTTON_LAYOUT_ORDER[#BUTTON_LAYOUT_ORDER + 1] = def
-end
-
-table.sort(BUTTON_LAYOUT_ORDER, function(a, b)
-    return a.layoutOrder < b.layoutOrder
-end)
-
-for i = 1, #BUTTON_DEFS do
-    local def = BUTTON_DEFS[i]
-    local button = CreateFrame("Frame", nil, RCC.consumables)
-    RCC.consumables.buttons[i] = button
-    button:SetSize(consumables_size, consumables_size)
-
-    if i == 1 then
-        button:SetPoint("LEFT", 0, 0)
-    else
-        button:SetPoint("LEFT", RCC.consumables.buttons[i - 1], "RIGHT",
-                        BUTTON_SPACING, 0)
-    end
-
-    button.texture = button:CreateTexture()
-    button.texture:SetAllPoints()
-
-    button.statustexture = button:CreateTexture(nil, "OVERLAY")
-    button.statustexture:SetPoint("CENTER")
-    button.statustexture:SetSize(consumables_size / 2, consumables_size / 2)
-
-    button.timeleft = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
-    button.timeleft:SetPoint("BOTTOM", button, "TOP", 0, 1)
-    button.timeleft:SetFont(FONT, 12, "OUTLINE")
-
-    button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
-    button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-    button.count:SetFont(FONT, 14, "OUTLINE")
-
-    if def.clickable then
-        button.click = CreateFrame("Button", nil, button,
-                                   "SecureActionButtonTemplate")
-        button.click:SetAllPoints()
-        button.click:Hide()
-        button.click:RegisterForClicks("AnyUp", "AnyDown")
-
-        if def.targetSlot then
-            button.click:SetAttribute("type", "item")
-            button.click:SetAttribute("target-slot", tostring(def.targetSlot))
-        else
-            button.click:SetAttribute("type", "macro")
-        end
-
-        button.click:SetScript("OnEnter", ClickButtonOnEnter)
-        button.click:SetScript("OnLeave", ClickButtonOnLeave)
-
-        local highlight = button.click:CreateTexture(nil, "HIGHLIGHT")
-        highlight:SetAllPoints()
-        highlight:SetColorTexture(1, 1, 1, 0.15)
-        highlight:SetBlendMode("ADD")
-
-        button.outOverlay = button:CreateTexture(nil, "ARTWORK", nil, 1)
-        button.outOverlay:SetAllPoints()
-        button.outOverlay:SetColorTexture(0.6, 0, 0, 0.4)
-        button.outOverlay:Hide()
-
-        button.tooltipAction = def.tooltipAction
-    end
-
-    button:EnableMouse(true)
-    button:SetScript("OnEnter", InfoButtonOnEnter)
-    button:SetScript("OnLeave", InfoButtonOnLeave)
-
-    if def.defaultIcon then
-        button.texture:SetTexture(def.defaultIcon)
-    end
-
-    if def.hasCooldown then
-        button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
-        button.cooldown:SetAllPoints()
-        button.cooldown:SetDrawEdge(true)
-        button.cooldown:SetDrawSwipe(true)
-    end
-
-    RCC.consumables.buttons[def.key] = button
-
-    if def.hiddenByDefault then
-        button:Hide()
-    end
-end
+Buttons.CreateAll(RCC.consumables)
 
 --------------------------------------------------------------------------------
 --- Update helper functions
@@ -1311,35 +882,6 @@ end
 --- Update() coordinator
 --------------------------------------------------------------------------------
 
-local function applyIconVisibilityAndLayout(self, buttons)
-    local previous
-    local visibleCount = 0
-
-    for _, def in ipairs(BUTTON_LAYOUT_ORDER) do
-        local button = buttons[def.index]
-        local shouldShow = button.showInLayout
-            and RCC.GetSetting(def.settingKey)
-
-        button:ClearAllPoints()
-
-        if shouldShow then
-            if previous then
-                button:SetPoint("LEFT", previous, "RIGHT", BUTTON_SPACING, 0)
-            else
-                button:SetPoint("LEFT", 0, 0)
-            end
-
-            button:Show()
-            previous = button
-            visibleCount = visibleCount + 1
-        else
-            button:Hide()
-        end
-    end
-
-    self:SetWidth(getConsumablesWidth(visibleCount))
-end
-
 function RCC.consumables:Update()
     updateElvUIParent(self)
     local buttons = self.buttons
@@ -1379,12 +921,10 @@ function RCC.consumables:Update()
     updateVantusRune(buttons, isVantus)
 
     if not InCombatLockdown() then
-        applyIconVisibilityAndLayout(self, buttons)
+        Buttons.ApplyLayout(self, buttons)
     end
 
-    for i = 1, #buttons do
-        updateOutOverlay(buttons[i])
-    end
+    Buttons.UpdateOutOverlays(buttons)
 end
 
 --------------------------------------------------------------------------------
