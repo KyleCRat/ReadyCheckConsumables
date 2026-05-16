@@ -2,7 +2,7 @@
 
 ## Goal
 
-Reduce `ConsumablesFrame.lua` from a large all-in-one implementation into a
+Reduce `ConsumableCoordinator.lua` from a large all-in-one implementation into a
 smaller coordinator with focused helpers for consumable state, secure click
 actions, aura scanning, layout, and display rendering.
 
@@ -74,7 +74,7 @@ Refactor target:
 
 ## Holistic Review
 
-`ConsumablesFrame.lua` currently owns too many responsibilities at once:
+`ConsumableCoordinator.lua` currently owns too many responsibilities at once:
 
 - Top-level frame construction, drag controls, close controls, and positioning.
 - Button widget creation for all nine consumable slots.
@@ -105,7 +105,7 @@ The largest risk areas are:
 
 ## Phase 1: Stabilize State And Helpers
 
-Phase 1 should stay mostly inside `ConsumablesFrame.lua`. The goal is to reduce
+Phase 1 should stay mostly inside `ConsumableCoordinator.lua`. The goal is to reduce
 fragile state coupling before splitting modules. Avoid moving the large
 per-consumable update functions until button state and secure-click behavior are
 explicit.
@@ -250,3 +250,291 @@ stable.
   of combat.
 - Missing items still show the existing red unusable overlay behavior.
 - User icon settings still control final layout visibility.
+
+## Phase 2: Split Frame, Coordinator, And Consumable Logic
+
+Phase 2 should separate the remaining responsibilities in
+`Modules/ConsumableFrame/ConsumableCoordinator.lua`. After Phase 1, generic button
+widgets, tooltips, and glows are already extracted. The remaining file still
+does too much:
+
+- It creates the parent consumable frame, anchor, drag handle, close button, and
+  positioning behavior.
+- It coordinates the update cycle.
+- It scans player auras.
+- It owns all per-consumable update logic.
+- It configures secure click actions directly from each consumable update
+  function.
+
+Phase 2 should make `ConsumableCoordinator.lua` stop being an all-purpose module.
+The target is a small frame module, a small coordinator module, shared action
+and aura helpers, and focused consumable modules.
+
+### Design Direction
+
+The observation that button-specific logic still lives in the coordinator is
+correct, but the button widget itself should stay mostly dumb. A frame button
+should know how to display fields such as texture, count, timer, tooltip item,
+click overlay, and glow. It should not own game rules like "which flask is best"
+or "is this offhand enchantable".
+
+The better boundary is a module per consumable type. Each consumable module
+should understand how to update its own button state:
+
+- Select the item to display or use.
+- Interpret the relevant buff state.
+- Set status texture, icon, count, timer, tooltip fields, and out-of-items text.
+- Request click action changes through shared secure-action helpers.
+- Request glow state through the glow helper.
+
+Weapon enchants should remain one module, not separate main-hand and offhand
+modules. Main-hand and offhand share selected item state, cached enchant item,
+inventory count, weapon-slot eligibility, spell fallback behavior, and icon
+selection.
+
+The observation that frame creation does not belong in the coordinator is also
+correct. Frame creation and lifecycle can be extracted cleanly before moving
+the high-risk consumable update logic.
+
+### Target File Shape
+
+```text
+Modules/ConsumableFrame/
+  ConsumableFrame.lua          -- parent frame, anchor, drag, close, Repos, OnHide
+  ConsumableCoordinator.lua    -- update coordinator
+  ConsumableFrameAuras.lua     -- aura scan and normalized aura state
+  ConsumableFrameActions.lua   -- secure click and item-use macro helpers
+  ConsumableFrameButtons.lua   -- button descriptors, widgets, reset, layout
+  ConsumableFrameTooltips.lua
+  ConsumableFrameGlow.lua
+
+  Consumables/
+    Food.lua
+    Flask.lua
+    Healthstone.lua
+    WeaponEnchant.lua
+    Augment.lua
+    DamagePotion.lua
+    HealingPotion.lua
+    Vantus.lua
+```
+
+The final coordinator should ideally read close to:
+
+```lua
+function ConsumableCoordinator.Update(frame)
+    local buttons = frame.buttons
+    local state = Auras.ScanPlayer(GetTime())
+
+    Buttons.ResetAll(buttons)
+
+    Food.Update(buttons.food, state)
+    Healthstone.Update(buttons.hs, state)
+    Flask.Update(buttons.flask, state)
+    WeaponEnchant.Update(buttons, state)
+    Augment.Update(buttons.augment, state)
+    DamagePotion.Update(buttons.dmgpot, state)
+    HealingPotion.Update(buttons.healpot, state)
+    Vantus.Update(buttons.vantus, state)
+
+    if not InCombatLockdown() then
+        Buttons.ApplyLayout(frame, buttons)
+    end
+
+    Buttons.UpdateOutOverlays(buttons)
+end
+```
+
+The exact names can change, but the intent should stay: the coordinator orders
+work and passes shared state; it should not contain consumable-specific item,
+buff, or rendering rules.
+
+### Phase 2 Goals
+
+- Preserve current in-game behavior after every step.
+- Keep secure button creation preallocated at load time.
+- Keep secure `SetAttribute()`, secure `Show()`, and secure `Hide()` guarded by
+  `not InCombatLockdown()`.
+- Keep the consumable frame hidden in combat.
+- Keep the frame from reopening after combat unless a normal ingress path runs.
+- Make aura scanning return data instead of mutating buttons directly.
+- Move per-consumable update logic out of the coordinator.
+- Avoid making the raw button widgets responsible for game rules.
+- Keep weapon enchant extraction until the shared patterns are proven.
+
+### Step 1: Extract Frame Construction
+
+Create `Modules/ConsumableFrame/ConsumableFrame.lua`.
+
+Move these responsibilities out of the current coordinator:
+
+- `RCC.consumables = CreateFrame(...)`.
+- Default positioning against `ReadyCheckListenerFrame`.
+- Anchor frame creation.
+- Drag handle creation and scripts.
+- Secure close button creation and restricted `_onclick` snippet.
+- `Repos()`.
+- `OnHide()`.
+- ElvUI/ShestakUI re-anchor behavior.
+
+`ConsumableFrame.lua` should call `Buttons.CreateAll(frame)` after the parent
+frame exists. It should expose `RCC.consumables` as it does today so existing
+ingress paths do not need to change in the same step.
+
+After this step, `ConsumableCoordinator.lua` should no longer create UI. It
+should only attach update behavior.
+
+### Step 2: Extract Secure Action Helpers
+
+Create `Modules/ConsumableFrame/ConsumableFrameActions.lua`.
+
+Move shared secure-click behavior into one helper module:
+
+- `GetItemUseMacro(itemID, targetSlot)`.
+- Setting macro text for item use.
+- Setting direct item/spell/cancelaura attributes for weapon enchants.
+- Enabling/disabling click overlays via `Buttons.SetClickEnabled()`.
+
+The helper should centralize combat guards. Consumable modules should not need
+to repeat the full secure mutation pattern every time they update a button.
+
+Expected helper shape:
+
+```lua
+function Actions.SetItemMacro(button, itemID, targetSlot)
+    if not button.click or InCombatLockdown() then return end
+
+    button.click:SetAttribute("macrotext1",
+        Actions.GetItemUseMacro(itemID, targetSlot))
+    Buttons.SetClickEnabled(button, true)
+end
+```
+
+Weapon enchant helpers may need separate functions because they use secure
+`type = "item"`, `type = "spell"`, and `type = "cancelaura"` paths rather than
+only macro text.
+
+### Step 3: Extract Aura Scanning
+
+Create `Modules/ConsumableFrame/ConsumableFrameAuras.lua`.
+
+`scanPlayerAuras()` should stop mutating buttons. It should return a normalized
+state table, for example:
+
+```lua
+{
+    food = {
+        active = true,
+        icon = foodIcon,
+        auraInstanceID = foodAuraID,
+        remaining = remaining,
+    },
+    eating = {
+        active = true,
+        expiry = eatingExpiry,
+        duration = eatingDuration,
+        icon = eatingIcon,
+    },
+    flask = {
+        active = true,
+        expiringSoon = remaining and remaining <= 600,
+        icon = auraData.icon,
+        remaining = remaining,
+    },
+    augment = {
+        active = true,
+        icon = auraData.icon,
+        remaining = remaining,
+    },
+    vantus = {
+        bossName = bossName,
+    },
+}
+```
+
+Keep secret-value checks inside the aura module so callers receive safe,
+ordinary Lua values or nils.
+
+### Step 4: Extract Simple Consumables First
+
+Create the `Modules/ConsumableFrame/Consumables/` folder and move the lowest
+risk update functions first:
+
+- `Healthstone.lua`
+- `DamagePotion.lua`
+- `HealingPotion.lua`
+
+These do not currently configure secure click actions and mostly render count,
+ready status, icon, and tooltip item. They are good first examples for the
+module pattern.
+
+Each module should expose one update function:
+
+```lua
+function Healthstone.Update(button, state)
+    -- update button display fields
+end
+```
+
+### Step 5: Extract Food And Flask
+
+Move food and flask next because they follow the same basic pattern:
+
+- Find first available item in bags.
+- Use aura state to decide whether the player is already buffed.
+- Set icon, count, tooltip, click macro, out-of-items text, and glow.
+
+This step should establish shared item-in-bags helper behavior if useful, but
+avoid over-abstracting too early. Food and flask are similar enough to compare,
+but not every consumable will fit a single generic model.
+
+### Step 6: Extract Augment And Vantus
+
+Move augment after food/flask because it has a similar click-and-glow shape but
+has unique item selection rules:
+
+- `consumables_preferUnlimitedAugment`.
+- `data.unlimited == true`.
+- Expansion and priority ranking.
+
+Move Vantus after augment because it combines instance-specific availability,
+current buff state, click action setup, layout visibility, and out-of-items
+state.
+
+### Step 7: Extract Weapon Enchants Last
+
+Move weapon enchants only after the simple modules and shared action helpers
+are stable.
+
+`WeaponEnchant.lua` should own both `buttons.oil` and `buttons.oiloh` because
+the two buttons share:
+
+- Last selected enchant item cache.
+- Main-hand and offhand item checks.
+- Offhand enchant eligibility.
+- Applied enchant lookup.
+- Spell fallback behavior.
+- Usable item selection.
+- Shared inventory count.
+- Main-hand/offhand icon selection.
+- Glow rules.
+
+This module can be split internally into small local functions, but it should
+remain one public consumable module at first.
+
+### Phase 2 Acceptance Checks
+
+Run the same functional checks after each extraction step:
+
+- `/rcc test` shows the frame out of combat.
+- `/rcc hide` hides immediately.
+- Starting combat hides the entire consumable frame.
+- Ending combat does not reopen the consumable frame.
+- A ready check started during combat still does not show the frame.
+- Food, flask, augment, Vantus, and weapon-enchant click actions still work out
+  of combat.
+- Missing items still show the existing red unusable overlay behavior.
+- User icon settings still control final layout visibility.
+- Hover glow color changes do not restart particle positions.
+- Unlimited augment preference still prioritizes the unlimited rune when the
+  setting is enabled.

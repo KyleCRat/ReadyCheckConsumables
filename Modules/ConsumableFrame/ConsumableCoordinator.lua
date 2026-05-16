@@ -1,5 +1,6 @@
 local ADDON_NAME, RCC = ...
 
+local Auras = RCC.ConsumableFrameAuras
 local F = RCC.F
 local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
@@ -14,119 +15,55 @@ local        GetItemIcon = C_Item.GetItemIconByID
 local setButtonGlow = Glow.Set
 local setButtonShownInLayout = Buttons.SetShownInLayout
 local resetButtonState = Buttons.ResetState
+local isPositiveAuraDuration = Auras.IsPositiveDuration
 
 --------------------------------------------------------------------------------
 --- Update helper functions
 --------------------------------------------------------------------------------
 
-local function getAuraRemaining(expiry, now)
-    if type(expiry) ~= "number" or issecretvalue(expiry) then return end
-    if expiry <= 0 then return end
-
-    return expiry - now
-end
-
-local function isPositiveAuraDuration(duration)
-    return type(duration) == "number"
-           and not issecretvalue(duration)
-           and duration > 0
-end
-
-local function scanPlayerAuras(buttons, now)
-    local isFood, isFlask, isAugment, isVantus
-    local isEating, eatingExpiry, eatingDuration, eatingIcon
-    local foodExpiry, foodIcon, foodAuraID
-
+local function applyAuraState(buttons, state)
     local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
-    for i = 1, 60 do
-        local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-
-        if not auraData then
-            break
-        end
-
-        if not issecretvalue(auraData.spellId) then
-            local sid = auraData.spellId
-            local expiry = auraData.expirationTime
-            local remaining = getAuraRemaining(expiry, now)
-
-            if RCC.db.foodBuffIDs[sid] or RCC.db.foodIconIDs[auraData.icon] then
-                if RCC.db.eatingIconIDs[auraData.icon] then
-                    isEating = true
-                    eatingExpiry = expiry
-                    eatingDuration = auraData.duration
-                    eatingIcon = auraData.icon
-                else
-                    isFood = true
-                    foodExpiry = expiry
-                    foodIcon = auraData.icon
-                    foodAuraID = auraData.auraInstanceID
-                end
-
-            elseif RCC.db.flaskBuffIDs[sid] then
-                buttons.flask.statustexture:SetTexture(READY)
-                buttons.flask.hasConsumableBuff = true
-                buttons.flask.texture:SetDesaturated(false)
-                buttons.flask.texture:SetTexture(auraData.icon)
-                isFlask = true
-
-                if remaining then
-                    buttons.flask.timeleft:SetText(F.FormatDuration(remaining))
-                end
-
-                if remaining and remaining <= 600 then
-                    isFlask = false
-                end
-
-            elseif RCC.db.augmentBuffIDs[sid] then
-                buttons.augment.statustexture:SetTexture(READY)
-                buttons.augment.hasConsumableBuff = true
-                buttons.augment.texture:SetDesaturated(false)
-                buttons.augment.texture:SetTexture(auraData.icon)
-                isAugment = true
-
-                if remaining then
-                    buttons.augment.timeleft:SetText(F.FormatDuration(remaining))
-                end
-
-            elseif RCC.db.vantusBuffIDs[sid] then
-                local name = auraData.name or ""
-                isVantus = name:gsub("^Vantus Rune: ", "")
-            end
-        end
-    end
-
-    if isFood then
-        isEating = false
-    elseif isEating then
-        isFood = true
-        foodExpiry = eatingExpiry
-        foodIcon = eatingIcon
-    end
-
-    if isFood then
-        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+    if state.food and state.food.active then
         buttons.food.statustexture:SetTexture(READY)
         buttons.food.hasConsumableBuff = true
         buttons.food.texture:SetDesaturated(false)
 
-        local remaining = getAuraRemaining(foodExpiry, now)
-
-        if remaining then
-            buttons.food.timeleft:SetText(F.FormatDuration(remaining))
+        if state.food.remaining then
+            buttons.food.timeleft:SetText(F.FormatDuration(state.food.remaining))
         end
 
-        if foodIcon then
-            buttons.food.texture:SetTexture(foodIcon)
+        if state.food.icon then
+            buttons.food.texture:SetTexture(state.food.icon)
         end
 
-        if foodAuraID and not issecretvalue(foodAuraID) then
-            buttons.food.tooltipAuraID = foodAuraID
+        if state.food.auraInstanceID then
+            buttons.food.tooltipAuraID = state.food.auraInstanceID
         end
     end
 
-    return isFood, isFlask, isAugment, isVantus, isEating, eatingExpiry, eatingDuration
+    if state.flask and state.flask.active then
+        buttons.flask.statustexture:SetTexture(READY)
+        buttons.flask.hasConsumableBuff = true
+        buttons.flask.texture:SetDesaturated(false)
+        buttons.flask.texture:SetTexture(state.flask.icon)
+
+        if state.flask.remaining then
+            buttons.flask.timeleft:SetText(F.FormatDuration(state.flask.remaining))
+        end
+    end
+
+    if state.augment and state.augment.active then
+        buttons.augment.statustexture:SetTexture(READY)
+        buttons.augment.hasConsumableBuff = true
+        buttons.augment.texture:SetDesaturated(false)
+        buttons.augment.texture:SetTexture(state.augment.icon)
+
+        if state.augment.remaining then
+            buttons.augment.timeleft:SetText(
+                F.FormatDuration(state.augment.remaining))
+        end
+    end
 end
 
 local function updateFood(buttons, isFood)
@@ -744,28 +681,33 @@ function RCC.consumables:Update()
     setButtonShownInLayout(buttons.hs, isWarlockInRaid)
 
     local now = GetTime()
+    local auraState = Auras.ScanPlayer(now)
 
-    local isFood, isFlask, isAugment, isVantus,
-          isEating, eatingExpiry, eatingDuration = scanPlayerAuras(buttons, now)
+    applyAuraState(buttons, auraState)
 
-    local eatingRemaining = getAuraRemaining(eatingExpiry, now)
+    local eatingRemaining = auraState.eating and auraState.eating.remaining
 
-    if isEating and eatingRemaining and isPositiveAuraDuration(eatingDuration) then
-        local cooldownStart = eatingExpiry - eatingDuration
-        buttons.food.cooldown:SetCooldown(cooldownStart, eatingDuration)
+    if auraState.eating
+        and eatingRemaining
+        and isPositiveAuraDuration(auraState.eating.duration)
+    then
+        local cooldownStart = auraState.eating.expiry
+                              - auraState.eating.duration
+        buttons.food.cooldown:SetCooldown(cooldownStart,
+                                          auraState.eating.duration)
         buttons.food.cooldown:Show()
     else
         buttons.food.cooldown:Clear()
     end
 
-    updateFood(buttons, isFood)
+    updateFood(buttons, auraState.food and auraState.food.satisfied)
     updateHealthstones(buttons)
-    updateFlasks(buttons, isFlask)
+    updateFlasks(buttons, auraState.flask and auraState.flask.satisfied)
     updateWeaponEnchants(buttons)
-    updateAugments(buttons, isAugment)
+    updateAugments(buttons, auraState.augment and auraState.augment.satisfied)
     updateDamagePotions(buttons)
     updateHealingPotions(buttons)
-    updateVantusRune(buttons, isVantus)
+    updateVantusRune(buttons, auraState.vantus and auraState.vantus.bossName)
 
     if not InCombatLockdown() then
         Buttons.ApplyLayout(self, buttons)
