@@ -6,16 +6,17 @@ local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
 local Food = RCC.Consumables.Food
 local Flask = RCC.Consumables.Flask
+local Augment = RCC.Consumables.Augment
 local Healthstone = RCC.Consumables.Healthstone
 local DamagePotion = RCC.Consumables.DamagePotion
 local HealingPotion = RCC.Consumables.HealingPotion
+local Vantus = RCC.Consumables.Vantus
 local Glow = RCC.ConsumableFrameGlow
 
 local            GetTime = GetTime
 local       GetSpellInfo = C_Spell.GetSpellInfo
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 local       GetItemCount = C_Item.GetItemCount
-local        GetItemIcon = C_Item.GetItemIconByID
 
 local setButtonGlow = Glow.Set
 local setButtonShownInLayout = Buttons.SetShownInLayout
@@ -24,22 +25,6 @@ local resetButtonState = Buttons.ResetState
 --------------------------------------------------------------------------------
 --- Update helper functions
 --------------------------------------------------------------------------------
-
-local function applyAuraState(buttons, state)
-    local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
-
-    if state.augment and state.augment.active then
-        buttons.augment.statustexture:SetTexture(READY)
-        buttons.augment.hasConsumableBuff = true
-        buttons.augment.texture:SetDesaturated(false)
-        buttons.augment.texture:SetTexture(state.augment.icon)
-
-        if state.augment.remaining then
-            buttons.augment.timeleft:SetText(
-                F.FormatDuration(state.augment.remaining))
-        end
-    end
-end
 
 local lastWeaponEnchantItem
 local WEAPON_ENCHANT_OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
@@ -270,165 +255,6 @@ local function updateWeaponEnchants(buttons)
     setButtonGlow(buttons.oiloh, needsOH)
 end
 
-local function findAugmentItemInBags()
-    local bestItemID
-    local bestCount
-    local bestData
-    local bestXpac = -1
-    local bestPriority = -1
-    local preferUnlimited =
-        RCC.GetSetting("consumables_preferUnlimitedAugment")
-
-    for itemID, data in pairs(RCC.db.augmentItemIDs) do
-        local count = GetItemCount(itemID, false, true)
-
-        if count and count > 0 then
-            local xpac = data.xpac or 0
-            local priority = data.priority or 0
-            local unlimited = data.unlimited == true
-            local bestUnlimited = bestData
-                and bestData.unlimited == true
-                or false
-
-            if preferUnlimited and unlimited ~= bestUnlimited
-                and unlimited
-            then
-                bestItemID = itemID
-                bestCount = count
-                bestData = data
-                bestXpac = xpac
-                bestPriority = priority
-            elseif not (preferUnlimited and unlimited ~= bestUnlimited)
-                and (xpac > bestXpac
-                    or (xpac == bestXpac and priority > bestPriority)
-                    or (xpac == bestXpac and priority == bestPriority
-                        and itemID > (bestItemID or 0)))
-            then
-                bestItemID = itemID
-                bestCount = count
-                bestData = data
-                bestXpac = xpac
-                bestPriority = priority
-            end
-        end
-    end
-
-    return bestItemID, bestCount, bestData
-end
-
-local function updateAugments(buttons, isAugment)
-    local augmentItemID, augmentItemCount, augmentItemData =
-        findAugmentItemInBags()
-
-    if augmentItemID and augmentItemCount and augmentItemCount > 0 then
-        if augmentItemData and augmentItemData.unlimited then
-            buttons.augment.count:SetText("")
-        else
-            buttons.augment.count:SetFormattedText("%d", augmentItemCount)
-        end
-
-        buttons.augment.tooltipItemID = augmentItemID
-        buttons.augment.usableItemID = augmentItemID
-
-        if not isAugment then
-            local icon = GetItemIcon(augmentItemID)
-
-            if icon then
-                buttons.augment.texture:SetTexture(icon)
-            end
-        end
-
-        Actions.SetItemMacro(buttons.augment, augmentItemID)
-    else
-        buttons.augment.count:SetText("0")
-
-        Actions.Disable(buttons.augment)
-
-        if not isAugment then
-            buttons.augment.outOfItemsText = "No Augment Runes found in Bags"
-        end
-    end
-
-    if augmentItemID and not isAugment then
-        setButtonGlow(buttons.augment, true)
-    else
-        setButtonGlow(buttons.augment, false)
-    end
-end
-
-local function getVantusForCurrentRaid()
-    local instanceID = select(8, GetInstanceInfo())
-    local vantusRuneIDs = RCC.db.vantusItemsByRaid[instanceID]
-
-    -- db.vantusItemsByRaid does not have instance ID, return nils
-    if not vantusRuneIDs then
-        return nil, nil, 0
-    end
-
-    -- Return the first Vantus Rune we have in our inventory and the count
-    for i = 1, #vantusRuneIDs do
-        local count = GetItemCount(vantusRuneIDs[i], false, true)
-
-        if count and count > 0 then
-            return vantusRuneIDs, vantusRuneIDs[i], count
-        end
-    end
-
-    -- Return the first Vantus Rune in the list so we can use the icon
-    return vantusRuneIDs, vantusRuneIDs[1], 0
-end
-
-local function updateVantusRune(buttons, isVantus)
-    local vantusRuneIDs, itemID, count = getVantusForCurrentRaid()
-    local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
-
-    -- db.vantusItemsByRaid does not have a entry for instance ID, hide
-    if not vantusRuneIDs then
-        setButtonShownInLayout(buttons.vantus, false)
-        Actions.Disable(buttons.vantus)
-
-        return
-    end
-
-    setButtonShownInLayout(buttons.vantus, true)
-
-    if itemID then
-        local icon_texture_id = GetItemIcon(itemID)
-        buttons.vantus.texture:SetTexture(icon_texture_id)
-    end
-
-    if isVantus then
-        buttons.vantus.timeleft:SetText(isVantus)
-        buttons.vantus.statustexture:SetTexture(READY)
-        buttons.vantus.hasConsumableBuff = true
-        buttons.vantus.texture:SetDesaturated(false)
-
-        if count > 0 then
-            buttons.vantus.count:SetFormattedText("%d", count)
-        end
-
-        Actions.Disable(buttons.vantus)
-
-        return
-    end
-
-    if itemID and count > 0 then
-        buttons.vantus.count:SetFormattedText("%d", count)
-        buttons.vantus.tooltipItemID = itemID
-        buttons.vantus.usableItemID = itemID
-
-        Actions.SetItemMacro(buttons.vantus, itemID)
-
-        return
-    end
-
-    buttons.vantus.count:SetText("0")
-    buttons.vantus.tooltipItemID = itemID
-    buttons.vantus.outOfItemsText = "No Vantus Runes found in Bags"
-
-    Actions.Disable(buttons.vantus)
-end
-
 --------------------------------------------------------------------------------
 --- Dormant: Armor Kit handling
 --- Not currently called. Preserved for future re-use.
@@ -486,16 +312,14 @@ function RCC.consumables:Update()
     local now = GetTime()
     local auraState = Auras.ScanPlayer(now)
 
-    applyAuraState(buttons, auraState)
-
     Food.Update(buttons.food, auraState)
     Healthstone.Update(buttons.hs)
     Flask.Update(buttons.flask, auraState)
     updateWeaponEnchants(buttons)
-    updateAugments(buttons, auraState.augment and auraState.augment.satisfied)
+    Augment.Update(buttons.augment, auraState)
     DamagePotion.Update(buttons.dmgpot)
     HealingPotion.Update(buttons.healpot)
-    updateVantusRune(buttons, auraState.vantus and auraState.vantus.bossName)
+    Vantus.Update(buttons.vantus, auraState)
 
     if not InCombatLockdown() then
         Buttons.ApplyLayout(self, buttons)

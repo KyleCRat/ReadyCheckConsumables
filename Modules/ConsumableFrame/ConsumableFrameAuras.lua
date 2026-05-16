@@ -49,21 +49,6 @@ function Auras.ScanPlayer(now)
             end
 
             state.auras[#state.auras + 1] = aura
-
-            if RCC.db.augmentBuffIDs[sid] then
-                state.augment = {
-                    active = true,
-                    icon = aura.icon,
-                    remaining = remaining,
-                    satisfied = true,
-                }
-
-            elseif RCC.db.vantusBuffIDs[sid] then
-                local name = aura.name or ""
-                state.vantus = {
-                    bossName = name:gsub("^Vantus Rune: ", ""),
-                }
-            end
         end
     end
 
