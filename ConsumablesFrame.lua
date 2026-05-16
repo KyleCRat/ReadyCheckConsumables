@@ -107,7 +107,7 @@ local function setButtonGlow(button, enabled)
 end
 
 function isButtonClickable(button)
-    return button.click and button.click.IsON and button.click:IsShown()
+    return button.click and button.clickEnabled and button.click:IsShown()
 end
 
 local function setButtonGlowHovered(button, hovered)
@@ -124,6 +124,41 @@ local function setButtonGlowHovered(button, hovered)
     else
         stopButtonGlow(button)
     end
+end
+
+local function setButtonShownInLayout(button, shown)
+    button.showInLayout = shown == true
+end
+
+local function setClickEnabled(button, enabled)
+    button.clickEnabled = enabled == true
+
+    if not button.click or InCombatLockdown() then return end
+
+    -- Compatibility for the current state driver; remove in Phase 1 Step 2.
+    button.click.IsON = button.clickEnabled
+
+    if button.clickEnabled then
+        button.click:Show()
+    else
+        button.click:Hide()
+    end
+end
+
+local function resetButtonState(button, notReadyTexture)
+    button.statustexture:SetTexture(notReadyTexture)
+    button.hasConsumableBuff = false
+    button.timeleft:SetText("")
+    button.count:SetText("")
+    button.texture:SetDesaturated(true)
+    button.tooltipAuraID = nil
+    button.tooltipItemID = nil
+    button.usableItemID = nil
+    button.appliedItemID = nil
+    button.clickHintItemID = nil
+    button.outOfItemsText = nil
+    button.clickEnabled = false
+    setButtonShownInLayout(button, true)
 end
 
 --------------------------------------------------------------------------------
@@ -651,13 +686,11 @@ local function updateFood(buttons, isFood)
         if not InCombatLockdown() then
             buttons.food.click:SetAttribute("macrotext1",
                 getItemUseMacro(food_item_id))
-            buttons.food.click:Show()
-            buttons.food.click.IsON = true
+            setClickEnabled(buttons.food, true)
         end
     else
         if not InCombatLockdown() then
-            buttons.food.click:Hide()
-            buttons.food.click.IsON = false
+            setClickEnabled(buttons.food, false)
         end
 
         if not isFood then
@@ -728,13 +761,11 @@ local function updateFlasks(buttons, isFlask)
         if not InCombatLockdown() then
             buttons.flask.click:SetAttribute("macrotext1",
                 getItemUseMacro(flask_item_id))
-            buttons.flask.click:Show()
-            buttons.flask.click.IsON = true
+            setClickEnabled(buttons.flask, true)
         end
     else
         if not InCombatLockdown() then
-            buttons.flask.click:Hide()
-            buttons.flask.click.IsON = false
+            setClickEnabled(buttons.flask, false)
         end
 
         if not isFlask then
@@ -794,14 +825,8 @@ local function findWeaponEnchantItemInBags()
 end
 
 local function hideWeaponEnchantClicks(buttons)
-    if InCombatLockdown() then
-        return
-    end
-
-    buttons.oil.click:Hide()
-    buttons.oil.click.IsON = false
-    buttons.oiloh.click:Hide()
-    buttons.oiloh.click.IsON = false
+    setClickEnabled(buttons.oil, false)
+    setClickEnabled(buttons.oiloh, false)
 end
 
 local function updateWeaponEnchants(buttons)
@@ -910,24 +935,12 @@ local function updateWeaponEnchants(buttons)
                 buttons.oil.click:SetAttribute("spell", spellName)
                 buttons.oil.click:SetAttribute("type", "spell")
 
-                if mainHandItemID then
-                    buttons.oil.click:Show()
-                    buttons.oil.click.IsON = true
-                else
-                    buttons.oil.click:Hide()
-                    buttons.oil.click.IsON = false
-                end
+                setClickEnabled(buttons.oil, mainHandItemID ~= nil)
 
                 buttons.oiloh.click:SetAttribute("spell", spellName)
                 buttons.oiloh.click:SetAttribute("type", "spell")
 
-                if offhandCanBeEnchanted then
-                    buttons.oiloh.click:Show()
-                    buttons.oiloh.click.IsON = true
-                else
-                    buttons.oiloh.click:Hide()
-                    buttons.oiloh.click.IsON = false
-                end
+                setClickEnabled(buttons.oiloh, offhandCanBeEnchanted == true)
             else
                 hideWeaponEnchantClicks(buttons)
             end
@@ -1008,25 +1021,13 @@ local function updateWeaponEnchants(buttons)
                 buttons.oil.click:SetAttribute("type", "item")
             end
 
-            if mainHandItemID then
-                buttons.oil.click:Show()
-                buttons.oil.click.IsON = true
-            else
-                buttons.oil.click:Hide()
-                buttons.oil.click.IsON = false
-            end
+            setClickEnabled(buttons.oil, mainHandItemID ~= nil)
 
             buttons.oiloh.click:SetAttribute("spell", nil)
             buttons.oiloh.click:SetAttribute("item", itemRef)
             buttons.oiloh.click:SetAttribute("type", "item")
 
-            if offhandCanBeEnchanted then
-                buttons.oiloh.click:Show()
-                buttons.oiloh.click.IsON = true
-            else
-                buttons.oiloh.click:Hide()
-                buttons.oiloh.click.IsON = false
-            end
+            setClickEnabled(buttons.oiloh, offhandCanBeEnchanted == true)
         end
     else
         hideWeaponEnchantClicks(buttons)
@@ -1118,15 +1119,13 @@ local function updateAugments(buttons, isAugment)
         if not InCombatLockdown() then
             buttons.augment.click:SetAttribute("macrotext1",
                 getItemUseMacro(augmentItemID))
-            buttons.augment.click:Show()
-            buttons.augment.click.IsON = true
+            setClickEnabled(buttons.augment, true)
         end
     else
         buttons.augment.count:SetText("0")
 
         if not InCombatLockdown() then
-            buttons.augment.click:Hide()
-            buttons.augment.click.IsON = false
+            setClickEnabled(buttons.augment, false)
         end
 
         if not isAugment then
@@ -1227,8 +1226,7 @@ local function updateVantusRune(buttons, isVantus)
     if not vantusRuneIDs then
         if not InCombatLockdown() then
             buttons.vantus:Hide()
-            buttons.vantus.click:Hide()
-            buttons.vantus.click.IsON = false
+            setClickEnabled(buttons.vantus, false)
         end
 
         return
@@ -1254,8 +1252,7 @@ local function updateVantusRune(buttons, isVantus)
         end
 
         if not InCombatLockdown() then
-            buttons.vantus.click:Hide()
-            buttons.vantus.click.IsON = false
+            setClickEnabled(buttons.vantus, false)
         end
 
         return
@@ -1269,8 +1266,7 @@ local function updateVantusRune(buttons, isVantus)
         if not InCombatLockdown() then
             buttons.vantus.click:SetAttribute("macrotext1",
                 getItemUseMacro(itemID))
-            buttons.vantus.click:Show()
-            buttons.vantus.click.IsON = true
+            setClickEnabled(buttons.vantus, true)
         end
 
         return
@@ -1281,8 +1277,7 @@ local function updateVantusRune(buttons, isVantus)
     buttons.vantus.outOfItemsText = "No Vantus Runes found in Bags"
 
     if not InCombatLockdown() then
-        buttons.vantus.click:Hide()
-        buttons.vantus.click.IsON = false
+        setClickEnabled(buttons.vantus, false)
     end
 end
 
@@ -1311,13 +1306,11 @@ local function updateArmorKits(buttons)
         if not InCombatLockdown() then
             buttons.kit.click:SetAttribute("macrotext1",
                 getItemUseMacro(172347, 5))
-            buttons.kit.click:Show()
-            buttons.kit.click.IsON = true
+            setClickEnabled(buttons.kit, true)
         end
     else
         if not InCombatLockdown() then
-            buttons.kit.click:Hide()
-            buttons.kit.click.IsON = false
+            setClickEnabled(buttons.kit, false)
         end
     end
 
@@ -1415,17 +1408,7 @@ function RCC.consumables:Update()
     local NOT_READY = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
     for i = 1, #buttons do
-        buttons[i].statustexture:SetTexture(NOT_READY)
-        buttons[i].hasConsumableBuff = false
-        buttons[i].timeleft:SetText("")
-        buttons[i].count:SetText("")
-        buttons[i].texture:SetDesaturated(true)
-        buttons[i].tooltipAuraID = nil
-        buttons[i].tooltipItemID = nil
-        buttons[i].usableItemID = nil
-        buttons[i].appliedItemID = nil
-        buttons[i].clickHintItemID = nil
-        buttons[i].outOfItemsText = nil
+        resetButtonState(buttons[i], NOT_READY)
     end
 
     local now = GetTime()
