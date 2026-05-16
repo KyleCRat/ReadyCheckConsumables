@@ -59,7 +59,7 @@ local function shouldOpenForInstanceType(instanceType)
     return false
 end
 
-local function showConsumablesFrame(self, isInitiator, registerConfirm)
+local function showConsumableFrame(self, isInitiator, registerConfirm)
     if InCombatLockdown() then
         return false
     end
@@ -123,7 +123,7 @@ end
 local function onReadyCheck(self, initiatorUnit)
     local isInitiator = initiatorUnit and UnitIsUnit(initiatorUnit, "player")
 
-    showConsumablesFrame(self, isInitiator, true)
+    showConsumableFrame(self, isInitiator, true)
 end
 
 --------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
             return
         end
 
-        if showConsumablesFrame(self, true, false) then
+        if showConsumableFrame(self, true, false) then
             startInstanceHideDelay(self)
         end
     end)

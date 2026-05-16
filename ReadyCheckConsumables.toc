@@ -22,7 +22,8 @@ data/Settings.lua
 Modules/ConsumableFrame/ConsumableFrameGlow.lua
 Modules/ConsumableFrame/ConsumableFrameTooltips.lua
 Modules/ConsumableFrame/ConsumableFrameButtons.lua
-Modules/ConsumableFrame/ConsumablesFrame.lua
+Modules/ConsumableFrame/ConsumableFrame.lua
+Modules/ConsumableFrame/ConsumableCoordinator.lua
 Modules/RaidFrame/RaidFrameReadyCheck.lua
 Modules/RaidFrame/RaidFrameBroadcast.lua
 Modules/RaidFrame/RaidFrameColumnRenderers.lua
