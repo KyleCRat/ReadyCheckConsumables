@@ -64,6 +64,8 @@ local function findBestWeaponEnchantItemInBags()
 
         return xpac > bestXpac
             or (xpac == bestXpac and rank > bestRank)
+            or (xpac == bestXpac and rank == bestRank
+                and candidate.itemID > (best.itemID or 0))
     end)
 
     if best then

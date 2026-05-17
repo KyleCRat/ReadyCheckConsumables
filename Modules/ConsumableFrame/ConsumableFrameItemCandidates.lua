@@ -17,6 +17,10 @@ local function getOption(options, key, defaultValue)
     return defaultValue
 end
 
+local function higherItemID(candidate, best)
+    return (candidate.itemID or 0) > (best.itemID or 0)
+end
+
 function Candidates.GetCount(itemID, options)
     if not itemID then return 0 end
 
@@ -64,6 +68,8 @@ function Candidates.CollectAvailableFromMap(itemDataByID, options)
         end
     end
 
+    table.sort(candidates, higherItemID)
+
     return candidates
 end
 
@@ -87,7 +93,9 @@ end
 function Candidates.SelectBest(candidates, isBetter)
     local best
 
-    if not candidates or not isBetter then return best end
+    if not candidates then return best end
+
+    isBetter = isBetter or higherItemID
 
     for index = 1, #candidates do
         local candidate = candidates[index]
