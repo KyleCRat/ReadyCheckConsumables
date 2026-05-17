@@ -12,9 +12,9 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
-local function getFoodAuraState(state)
-    local foodState
-    local eatingState
+local function getFoodAuraStates(state)
+    local foodAuraState
+    local eatingAuraState
 
     if not state or not state.auras then
         return nil, nil
@@ -27,28 +27,16 @@ local function getFoodAuraState(state)
             or RCC.db.foodIconIDs[aura.icon]
         then
             if RCC.db.eatingIconIDs[aura.icon] then
-                eatingState = Auras.ToConsumableState(aura, {
+                eatingAuraState = Auras.ToConsumableState(aura, {
                     includeAuraInstanceID = false,
                 })
             else
-                foodState = Auras.ToConsumableState(aura, {
-                    satisfied = true,
-                })
+                foodAuraState = Auras.ToConsumableState(aura)
             end
         end
     end
 
-    if foodState then
-        return foodState, nil
-    end
-
-    if eatingState then
-        eatingState.satisfied = true
-
-        return eatingState, eatingState
-    end
-
-    return nil, nil
+    return foodAuraState, eatingAuraState
 end
 
 local function getEatingCooldown(state)
@@ -68,8 +56,9 @@ local function getEatingCooldown(state)
 end
 
 function Food.Update(button, state)
-    local foodState, eatingState = getFoodAuraState(state)
-    local isFood = foodState and foodState.satisfied
+    local foodAuraState, eatingAuraState = getFoodAuraStates(state)
+    local displayAuraState = foodAuraState or eatingAuraState
+    local foodSatisfied = displayAuraState ~= nil
     local foodCandidate = ItemCandidates.FindFirstAvailable(
         RCC.db.foodItemIDs,
         ItemCandidates.BAGS_ONLY
@@ -77,16 +66,16 @@ function Food.Update(button, state)
     local foodCount = foodCandidate and foodCandidate.count or 0
     local foodItemID = foodCandidate and foodCandidate.itemID
     local buttonState = ButtonState.Create({
-        cooldown = getEatingCooldown(eatingState),
+        cooldown = getEatingCooldown(eatingAuraState),
     })
 
-    ButtonState.ApplyActiveAura(buttonState, foodState)
+    ButtonState.ApplyActiveAura(buttonState, displayAuraState)
 
     if foodCount > 0 then
         buttonState.tooltipItemID = foodItemID
         buttonState.usableItemID = foodItemID
 
-        if not isFood then
+        if not foodSatisfied then
             local texture = select(5, GetItemInfoInstant(foodItemID))
 
             if texture then
@@ -103,13 +92,13 @@ function Food.Update(button, state)
             type = ButtonState.ACTION_DISABLE,
         }
 
-        if not isFood then
+        if not foodSatisfied then
             buttonState.outOfItemsText = "No Food found in Bags"
         end
     end
 
     buttonState.countText = foodCount > 0 and tostring(foodCount) or ""
-    buttonState.glow = not isFood and foodCount > 0
+    buttonState.glow = not foodSatisfied and foodCount > 0
 
     Renderer.Apply(button, buttonState)
 end
