@@ -87,6 +87,18 @@ function F.FormatDuration(seconds)
     return durationFormatter:Format(seconds)
 end
 
+function F.GetAuraRemaining(expiry, now)
+    if type(expiry) ~= "number" or issecretvalue(expiry) then
+        return nil
+    end
+
+    if expiry <= 0 then
+        return nil
+    end
+
+    return expiry - now
+end
+
 function F.GetRaidDiffMaxGroup()
     local _, instance_type, difficulty = GetInstanceInfo()
 

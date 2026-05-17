@@ -184,9 +184,12 @@ local function reportFlasks(toChat)
 
                     if db.flaskBuffIDs[sid] then
                         hasFlask = true
-                        local remaining = aura.expirationTime - now
+                        local remaining = F.GetAuraRemaining(
+                            aura.expirationTime,
+                            now
+                        )
 
-                        if remaining > 0 and remaining <= 600 then
+                        if remaining and remaining <= 600 then
                             local mins = floor(remaining / 60)
                             local label = mins == 0 and "<1" or tostring(mins)
                             expiring[#expiring + 1] = format("%s(%s)", colored, label)

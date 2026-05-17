@@ -3,12 +3,10 @@ local _, RCC = ...
 RCC.ConsumableFrameAuras = RCC.ConsumableFrameAuras or {}
 
 local Auras = RCC.ConsumableFrameAuras
+local F = RCC.F
 
 function Auras.GetRemaining(expiry, now)
-    if type(expiry) ~= "number" or issecretvalue(expiry) then return end
-    if expiry <= 0 then return end
-
-    return expiry - now
+    return F.GetAuraRemaining(expiry, now)
 end
 
 function Auras.IsPositiveDuration(duration)

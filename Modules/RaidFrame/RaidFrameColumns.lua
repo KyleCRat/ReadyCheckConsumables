@@ -4,6 +4,7 @@ RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
 local db             = RCC.db
+local F              = RCC.F
 local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
 
@@ -553,11 +554,10 @@ function Columns.ScanUnitData(unit, now, layout, context)
         end
 
         if not issecretvalue(aura.spellId) then
-            local expiry = aura.expirationTime
-
-            scanContext.remaining = (expiry and expiry > 0)
-                and (expiry - now)
-                or rules.noDuration
+            scanContext.remaining = F.GetAuraRemaining(
+                aura.expirationTime,
+                now
+            ) or rules.noDuration
 
             for columnIndex = 1, #layout.columns do
                 local column = layout.columns[columnIndex]
