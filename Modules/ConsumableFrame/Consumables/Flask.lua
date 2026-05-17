@@ -6,6 +6,7 @@ RCC.Consumables.Flask = RCC.Consumables.Flask or {}
 local Flask = RCC.Consumables.Flask
 
 local Actions = RCC.ConsumableFrameActions
+local Buttons = RCC.ConsumableFrameButtons
 local F = RCC.F
 local Glow = RCC.ConsumableFrameGlow
 
@@ -13,6 +14,7 @@ local GetItemCount = C_Item.GetItemCount
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local setButtonGlow = Glow.Set
+local setTimeTextBad = Buttons.SetTimeTextBad
 
 local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
@@ -46,6 +48,7 @@ local function applyAuraState(button, state)
 
     if state.remaining then
         button.timeleft:SetText(F.FormatDuration(state.remaining))
+        setTimeTextBad(button, not state.satisfied)
     end
 end
 

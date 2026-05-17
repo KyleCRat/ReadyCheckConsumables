@@ -17,6 +17,7 @@ local GetItemCount = C_Item.GetItemCount
 
 local setButtonGlow = Glow.Set
 local setButtonShownInLayout = Buttons.SetShownInLayout
+local setTimeTextBad = Buttons.SetTimeTextBad
 
 local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
@@ -106,6 +107,7 @@ local function renderActiveWeaponEnchant(button, hasEnchant, expiration,
     button.hasConsumableBuff = true
     button.texture:SetDesaturated(false)
     button.timeleft:SetText(F.FormatDuration((expiration or 0) / 1000))
+    setTimeTextBad(button, expiration and expiration <= EXPIRING_SOON_MS)
 
     if enchantData then
         setButtonIconForWeaponEnchant(button, enchantData)

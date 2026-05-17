@@ -71,10 +71,15 @@ local function isButtonClickable(button)
     return button.click and button.clickEnabled and button.click:IsShown()
 end
 
+local function shouldUseHoverGlow(button)
+    return button.click
+           and (button.rccGlowEnabled or not button.hasConsumableBuff)
+end
+
 function Glow.Set(button, enabled)
     button.rccGlowEnabled = enabled
 
-    if button.rccGlowHovered and button.click and not button.hasConsumableBuff then
+    if button.rccGlowHovered and shouldUseHoverGlow(button) then
         if isButtonClickable(button) then
             startButtonGlow(button, GLOW_AVAILABLE_COLOR)
         else
@@ -90,7 +95,7 @@ end
 function Glow.SetHovered(button, hovered)
     button.rccGlowHovered = hovered
 
-    if hovered and button.click and not button.hasConsumableBuff then
+    if hovered and shouldUseHoverGlow(button) then
         if isButtonClickable(button) then
             startButtonGlow(button, GLOW_AVAILABLE_COLOR)
         else

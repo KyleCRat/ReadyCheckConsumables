@@ -10,6 +10,8 @@ local Buttons = RCC.ConsumableFrameButtons
 local SIZE = 48
 local SPACING = 2
 local FONT = UI.FONT
+local TIME_TEXT_NORMAL_COLOR = { r = 1, g = 1, b = 1 }
+local TIME_TEXT_BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
 
@@ -111,10 +113,17 @@ function Buttons.SetShownInLayout(button, shown)
     button.showInLayout = shown == true
 end
 
+function Buttons.SetTimeTextBad(button, bad)
+    local color = bad and TIME_TEXT_BAD_COLOR or TIME_TEXT_NORMAL_COLOR
+
+    button.timeleft:SetTextColor(color.r, color.g, color.b)
+end
+
 function Buttons.ResetState(button, notReadyTexture)
     button.statustexture:SetTexture(notReadyTexture)
     button.hasConsumableBuff = false
     button.timeleft:SetText("")
+    Buttons.SetTimeTextBad(button, false)
     button.count:SetText("")
     button.texture:SetDesaturated(true)
     button.tooltipAuraID = nil
