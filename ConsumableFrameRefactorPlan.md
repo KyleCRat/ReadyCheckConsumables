@@ -538,3 +538,349 @@ Run the same functional checks after each extraction step:
 - Hover glow color changes do not restart particle positions.
 - Unlimited augment preference still prioritizes the unlimited rune when the
   setting is enabled.
+
+## Phase 3: Stabilize Boundaries For Future Features
+
+Phase 3 should not add new visible features. The goal is to turn the extracted
+modules into clearer state, selection, and rendering boundaries so future work
+does not re-couple the consumable frame.
+
+### Phase 3 Goals
+
+- Preserve current in-game behavior.
+- Keep the coordinator as orchestration only.
+- Keep secure frame mutation centralized and combat-guarded.
+- Make consumable modules produce normalized state instead of directly owning
+  every raw frame mutation.
+- Make item and bag selection reusable, including enough structure to support
+  multiple candidates later.
+- Make raid-buff status reusable without depending on raid-frame column code.
+- Remove dormant or obsolete coordinator code.
+
+### Step 1: Remove Dormant Armor Kit Logic
+
+Remove the inactive armor-kit update path from `ConsumableCoordinator.lua`.
+
+The coordinator should not keep unused consumable-specific logic, especially
+logic that references a `buttons.kit` shape that is not currently part of the
+active frame. If armor kits are expected to return later, move the code into a
+small dormant module or capture the idea in `TODO.md` instead of keeping it in
+the coordinator.
+
+Acceptance target:
+
+- `ConsumableCoordinator.lua` only imports helpers it actively uses.
+- No inactive armor-kit update function remains in the coordinator.
+- No visible behavior changes.
+
+### Step 2: Introduce A Button State Model
+
+Add a normalized state shape for consumable button updates. Consumable modules
+should describe what they want shown and used; the button/render layer should
+apply that state to the actual frame fields.
+
+Example target shape:
+
+```lua
+{
+    showInLayout = true,
+    statusTexture = READY_CHECK_READY_TEXTURE,
+    icon = iconID,
+    desaturated = false,
+    countText = "3",
+    timeText = "5m",
+    tooltipItemID = itemID,
+    tooltipSpellID = spellID,
+    tooltipAuraID = auraInstanceID,
+    outOfItemsText = nil,
+    glow = true,
+    action = {
+        type = "itemMacro",
+        itemID = itemID,
+        targetSlot = nil,
+    },
+}
+```
+
+The exact table can change during implementation, but it should make these
+concepts explicit:
+
+- Layout availability.
+- Display state.
+- Tooltip identity.
+- Glow state.
+- Secure click action.
+- Missing-item overlay text.
+
+This is the main cleanup needed before stacked buttons. The current modules
+often write directly to fields such as `tooltipItemID`, `usableItemID`,
+`clickHintItemID`, `outOfItemsText`, count text, glow, and secure actions.
+Those writes should move behind one state application boundary.
+
+### Step 3: Add A Renderer For Button State
+
+Add a renderer layer in `ConsumableFrameButtons.lua` or a new
+`ConsumableFrameRenderer.lua`.
+
+The renderer should own the raw frame mutations:
+
+- Status texture.
+- Icon texture and desaturation.
+- Count text.
+- Timer text.
+- Tooltip fields.
+- Out-of-items overlay fields.
+- Glow application.
+- Secure action dispatch through `ConsumableFrameActions.lua`.
+- Click enable/disable behavior.
+
+Consumable modules should stop calling glow helpers, secure action helpers, and
+raw frame setters directly where a returned state can express the same thing.
+The secure action helper should still centralize combat guards.
+
+Acceptance target:
+
+- At least the simple consumable modules return or build state that is applied
+  by the renderer.
+- Direct button mutation is reduced to the renderer and button construction
+  code.
+- Combat guards still protect secure frame mutation.
+
+### Step 4: Extract Shared Candidate Collection
+
+Extract reusable bag and item candidate helpers for consumables that scan an
+ordered list and choose an available item.
+
+Current modules repeat the same broad pattern:
+
+- Walk a data table or ordered item list.
+- Check count in bags.
+- Pick one preferred candidate.
+- Set icon, count, tooltip, and action from that candidate.
+
+Target helper responsibilities:
+
+- Collect available item candidates.
+- Preserve data-table order or accept a ranking callback.
+- Return the selected candidate for current single-button behavior.
+- Preserve the full candidate list for future stacked choice buttons.
+
+Potential helper shapes:
+
+```lua
+function Items.CollectAvailable(itemIDs)
+    -- returns { { itemID = itemID, count = count, icon = iconID }, ... }
+end
+
+function Items.SelectFirstAvailable(itemIDs)
+    -- returns candidate or nil
+end
+
+function Items.SelectBest(candidates, rankFn)
+    -- returns candidate or nil
+end
+```
+
+Do not add stacked buttons in this phase. The point is to stop each consumable
+from having its own slightly different bag-scan implementation.
+
+### Step 5: Normalize Aura-Derived Consumable Status
+
+Keep aura scanning separate from rendering. `ConsumableFrameAuras.lua` should
+remain responsible for safe aura reads and secret-value handling, but the
+per-consumable modules should receive ordinary state that is easy to render.
+
+Phase 3 cleanup should look for repeated local logic such as:
+
+- "active buff with icon and remaining time".
+- "expiring soon".
+- "currently eating or drinking".
+- "missing buff but usable item exists".
+
+Where the pattern is shared, move it into small helpers that produce normalized
+button state. Avoid forcing every consumable into one generic implementation;
+food, flask, augment, Vantus, and weapon enchants still have different rules.
+
+### Step 6: Extract Reusable Raid-Buff Status Logic
+
+Move the aura-matching logic currently embedded in raid-frame columns into a
+shared raid-buff status module. The raid frame should use that shared module,
+and the consumable frame can later use the same module for a raid-buff icon.
+
+Target responsibilities:
+
+- Load raid-buff definitions from `data/RaidBuffs.lua`.
+- Match equivalent buff spell IDs.
+- Return status for a unit without requiring raid-frame column state.
+- Keep the raid-frame rendering code focused on columns and display.
+
+This is a cleanup prerequisite for the future consumable-frame raid-buff
+indicator. The feature should not be implemented in Phase 3.
+
+### Step 7: Move Consumable Frame Event Ingress Out Of The Root Addon File
+
+Move consumable-frame lifecycle and event ingress from the root addon file into
+a focused controller module, such as `ConsumableFrameController.lua` or
+`ConsumableFrameEvents.lua`.
+
+The root file should delegate high-level addon events instead of owning the
+details of:
+
+- Ready-check entry.
+- `/rcc test` entry.
+- Instance-open entry.
+- Minimum show timing.
+- Hide behavior.
+- `UNIT_AURA` refreshes.
+- `UNIT_INVENTORY_CHANGED` refreshes.
+- Combat start hide behavior.
+
+Preserve the current product rule:
+
+- Do not show in combat.
+- Hide on combat start.
+- Do not reopen automatically after combat.
+
+### Step 8: Normalize Data Shapes Where It Reduces Coupling
+
+Clean up data structures that are currently hard to share safely.
+
+Candidate cleanup:
+
+- Convert positional raid-buff definitions into named fields if it makes the
+  shared raid-buff status module easier to read.
+- Centralize item icon lookup so modules do not mix different icon APIs without
+  a reason.
+- Keep weapon-enchant spell data in the weapon-enchant database with explicit
+  fields such as `spellID`, not implicit negative item IDs or duplicated lookup
+  tables.
+
+This step should remain behavior-preserving. Data reshaping is only worth doing
+when it removes coupling or avoids repeated interpretation logic.
+
+### Step 9: Consider A Dedicated Action Descriptor
+
+If the renderer still needs to know too much about individual consumables,
+introduce a small action descriptor model.
+
+Example:
+
+```lua
+{ type = "itemMacro", itemID = itemID, targetSlot = targetSlot }
+{ type = "weaponItem", itemID = itemID }
+{ type = "spell", spellName = spellName }
+{ type = "cancelAura", spellName = spellName }
+```
+
+The consumable module would return the desired action, and
+`ConsumableFrameActions.lua` would be the only module that knows how to apply it
+to secure buttons.
+
+### Phase 3 Acceptance Checks
+
+Run the Phase 2 checks after each boundary cleanup:
+
+- `/rcc test` shows the frame out of combat.
+- `/rcc hide` hides immediately.
+- Starting combat hides the entire consumable frame.
+- Ending combat does not reopen the consumable frame.
+- A ready check started during combat still does not show the frame.
+- Food, flask, augment, Vantus, and weapon-enchant click actions still work out
+  of combat.
+- Missing items still show the existing red unusable overlay behavior.
+- User icon settings still control final layout visibility.
+- Hover glow color changes do not restart particle positions.
+- Unlimited augment preference still prioritizes the unlimited rune when the
+  setting is enabled.
+- Shaman weapon enchant spells still take priority over items when known and no
+  item enchant is currently overriding them.
+- Main-hand and offhand weapon enchant caches remain independent.
+
+## After Refactor
+
+These items should wait until Phase 3 has created cleaner state, candidate, and
+rendering boundaries.
+
+### Stacked Consumable Choice Buttons
+
+Show multiple available choices for categories where picking one item for the
+player is too limiting, such as:
+
+- Food.
+- Weapon enchants.
+- Vantus runes.
+- Potions, if multiple tracked options become useful.
+
+Implementation notes:
+
+- Secure choice buttons must be preallocated out of combat.
+- The normal category button can keep showing the best/default choice.
+- Additional choices should come from the candidate lists produced by Phase 3
+  item helpers.
+- Weapon enchant choices need to respect main-hand and offhand eligibility.
+- The UI should not dynamically create protected click buttons during combat.
+
+### Consumable-Frame Raid-Buff Indicator
+
+Add a consumable-frame icon for missing raid buffs.
+
+Implementation notes:
+
+- Reuse the shared raid-buff status module from Phase 3.
+- Do not copy raid-frame column internals into the consumable frame.
+- Decide whether the icon represents "any missing raid buff" or a selectable
+  stack of missing raid buffs after the shared status model exists.
+
+### Rogue Poison Reminders
+
+Investigate Rogue poison support as a separate class-reminder path.
+
+Current testing with poisons applied returned:
+
+```text
+false nil nil nil false nil nil nil
+```
+
+That means retail Rogue poisons should not be treated as weapon-enchant table
+rows unless later testing proves another reliable weapon-enchant signal exists.
+This likely needs aura, known-spell, or class-specific reminder logic instead.
+
+### Paladin Lightsmith Weapon Enchant Follow-Up
+
+Verify Paladin Lightsmith rite behavior in game when a test character is
+available.
+
+Known test dumps:
+
+```text
+Rite of Sanctification: true 1580941 0 7143 false nil nil nil
+Rite of Adjuration:     true 3592051 0 7144 false nil nil nil
+```
+
+The weapon-enchant data can keep commented reference entries until the behavior
+is verified on a Paladin that can use the relevant hero talents.
+
+### Configurable Expiration Severity
+
+Add a shared idea of "bad soon" timing for consumables and show soon-to-expire
+timers in red.
+
+Implementation notes:
+
+- Dungeon and raid thresholds may need to differ.
+- Flask, food, weapon enchants, and raid buffs should not each invent their own
+  hardcoded threshold.
+- The Phase 3 button state model should carry severity instead of each module
+  directly choosing final text color.
+
+### Raid-Frame Weapon Enchant Identity Broadcast
+
+After the consumable-frame refactor, fix raid-frame weapon oil sharing so it can
+represent spell-based weapon enchants as well as item-based enchants.
+
+Implementation notes:
+
+- Broadcast enchant identity using the applied enchant ID, not only an item ID.
+- Resolve item or spell display data from the shared weapon-enchant database.
+- This should support Shaman and Paladin spell enchants without depending on
+  consumable-frame cache behavior.
