@@ -6,9 +6,9 @@ RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
 local Vantus = RCC.Consumables.Vantus
 
 local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraBossName(state)
@@ -33,12 +33,13 @@ local function getVantusForCurrentRaid()
         return nil, nil, 0
     end
 
-    for i = 1, #vantusRuneIDs do
-        local count = GetItemCount(vantusRuneIDs[i], false, true)
+    local candidate = ItemCandidates.FindFirstAvailable(
+        vantusRuneIDs,
+        ItemCandidates.BAGS_ONLY
+    )
 
-        if count and count > 0 then
-            return vantusRuneIDs, vantusRuneIDs[i], count
-        end
+    if candidate then
+        return vantusRuneIDs, candidate.itemID, candidate.count
     end
 
     return vantusRuneIDs, vantusRuneIDs[1], 0

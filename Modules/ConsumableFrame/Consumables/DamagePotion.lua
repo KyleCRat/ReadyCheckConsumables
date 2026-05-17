@@ -6,28 +6,22 @@ RCC.Consumables.DamagePotion = RCC.Consumables.DamagePotion or {}
 local DamagePotion = RCC.Consumables.DamagePotion
 
 local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
 
 -- TODO: Update logic to only show most powerful found pot?
 -- This will get weird if a healer has dmg pots and mana pots
 function DamagePotion.Update(button)
-    local inventoryItem
-    local inventoryItemCount
-
-    for i = 1, #RCC.db.potionItemIDs do
-        local item = RCC.db.potionItemIDs[i]
-        local count = GetItemCount(item, false, true)
-
-        if count and count > 0 then
-            inventoryItem = item
-            inventoryItemCount = count
-
-            break
-        end
-    end
+    local inventoryItemCandidate = ItemCandidates.FindFirstAvailable(
+        RCC.db.potionItemIDs,
+        ItemCandidates.BAGS_ONLY
+    )
+    local inventoryItem = inventoryItemCandidate
+        and inventoryItemCandidate.itemID
+    local inventoryItemCount = inventoryItemCandidate
+        and inventoryItemCandidate.count
 
     if inventoryItem and inventoryItemCount > 0 then
         Renderer.Apply(button, ButtonState.Create({

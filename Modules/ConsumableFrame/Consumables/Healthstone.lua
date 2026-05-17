@@ -6,20 +6,14 @@ RCC.Consumables.Healthstone = RCC.Consumables.Healthstone or {}
 local Healthstone = RCC.Consumables.Healthstone
 
 local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
-
 function Healthstone.Update(button)
-    local totalCount = 0
-
-    for itemID in pairs(RCC.db.healthstoneItemIDs) do
-        local count = GetItemCount(itemID, false, true)
-
-        if count and count > 0 then
-            totalCount = totalCount + count
-        end
-    end
+    local totalCount = ItemCandidates.SumCounts(
+        RCC.db.healthstoneItemIDs,
+        ItemCandidates.BAGS_WITH_USES
+    )
 
     if totalCount > 0 then
         Renderer.Apply(button, ButtonState.Create({

@@ -7,9 +7,9 @@ local Flask = RCC.Consumables.Flask
 
 local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local function getFlaskAuraState(state)
@@ -49,23 +49,15 @@ end
 function Flask.Update(button, state)
     local flaskState = getFlaskAuraState(state)
     local isFlask = flaskState and flaskState.satisfied
-    local flaskCount = 0
-    local flaskItemID
+    local flaskCandidate = ItemCandidates.FindFirstAvailable(
+        RCC.db.flaskItemIDs,
+        ItemCandidates.BAGS_ONLY
+    )
+    local flaskCount = flaskCandidate and flaskCandidate.count or 0
+    local flaskItemID = flaskCandidate and flaskCandidate.itemID
     local buttonState = ButtonState.Create()
 
     applyAuraState(buttonState, flaskState)
-
-    for flaskIndex = 1, #RCC.db.flaskItemIDs do
-        local itemID = RCC.db.flaskItemIDs[flaskIndex]
-        local count = GetItemCount(itemID, false, false)
-
-        if count and count > 0 then
-            flaskItemID = itemID
-            flaskCount = count
-
-            break
-        end
-    end
 
     if flaskCount > 0 then
         buttonState.tooltipItemID = flaskItemID

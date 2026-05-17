@@ -9,11 +9,11 @@ local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
 local F = RCC.F
 local Glow = RCC.ConsumableFrameGlow
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 
 local GetSpellInfo = C_Spell.GetSpellInfo
 local IsSpellKnown = C_SpellBook.IsSpellKnown
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
-local GetItemCount = C_Item.GetItemCount
 
 local setButtonGlow = Glow.Set
 local setButtonShownInLayout = Buttons.SetShownInLayout
@@ -26,6 +26,10 @@ local OFF_HAND_INVENTORY_SLOT = 17
 local EXPIRING_SOON_MS = 300000
 
 local cachedWeaponEnchantItemIDs = {}
+
+local function getWeaponEnchantItemCount(itemID)
+    return ItemCandidates.GetCount(itemID, ItemCandidates.BAGS_ONLY)
+end
 
 local function getWeaponEnchantDataByID(enchantID)
     return RCC.db.weaponEnchants[enchantID or 0]
@@ -52,24 +56,25 @@ local function setButtonIconForWeaponEnchant(button, enchantData)
 end
 
 local function findBestWeaponEnchantItemInBags()
-    local bestItem
-    local bestXpac = -1
-    local bestRank = -1
+    local candidates = ItemCandidates.CollectAvailableFromMap(
+        RCC.db.weaponEnchantItemIDs,
+        ItemCandidates.BAGS_ONLY
+    )
+    local best = ItemCandidates.SelectBest(candidates, function(candidate, best)
+        local data = candidate.data or {}
+        local bestData = best.data or {}
+        local xpac = data.xpac or 0
+        local rank = data.q or 0
+        local bestXpac = bestData.xpac or 0
+        local bestRank = bestData.q or 0
 
-    for itemID, data in pairs(RCC.db.weaponEnchantItemIDs) do
-        if GetItemCount(itemID, false, true) > 0 then
-            local xpac = data.xpac or 0
-            local rank = data.q or 0
+        return xpac > bestXpac
+            or (xpac == bestXpac and rank > bestRank)
+    end)
 
-            if xpac > bestXpac or (xpac == bestXpac and rank > bestRank) then
-                bestXpac = xpac
-                bestRank = rank
-                bestItem = itemID
-            end
-        end
+    if best then
+        return best.itemID
     end
-
-    return bestItem
 end
 
 local function getWeaponSlotEnchantability(slotID)
@@ -289,7 +294,7 @@ local function getUsableWeaponEnchantItemForSlot(slotID)
     local cachedItem = cachedWeaponEnchantItemIDs[slotID]
 
     if cachedItem
-        and GetItemCount(cachedItem, false, true) > 0
+        and getWeaponEnchantItemCount(cachedItem) > 0
     then
         return cachedItem
     end
@@ -310,8 +315,7 @@ local function configureItemEnchantSlot(button, slotID, canBeEnchanted,
 
     setCachedItemIconWhenNoEnchantActive(button, itemID, activeEnchantData)
 
-    configureItemEnchantButton(button, itemID,
-                               GetItemCount(itemID, false, true),
+    configureItemEnchantButton(button, itemID, getWeaponEnchantItemCount(itemID),
                                canBeEnchanted, hasEnchant, expiration)
 end
 

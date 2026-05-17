@@ -7,9 +7,9 @@ local Augment = RCC.Consumables.Augment
 
 local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraState(state)
@@ -43,49 +43,37 @@ local function applyAuraState(stateTable, state)
 end
 
 local function findItemInBags()
-    local bestItemID
-    local bestCount
-    local bestData
-    local bestXpac = -1
-    local bestPriority = -1
     local preferUnlimited =
         RCC.GetSetting("consumables_preferUnlimitedAugment")
+    local candidates = ItemCandidates.CollectAvailableFromMap(
+        RCC.db.augmentItemIDs,
+        ItemCandidates.BAGS_ONLY
+    )
 
-    for itemID, data in pairs(RCC.db.augmentItemIDs) do
-        local count = GetItemCount(itemID, false, true)
+    local best = ItemCandidates.SelectBest(candidates, function(candidate, best)
+        local data = candidate.data or {}
+        local bestData = best.data or {}
+        local unlimited = data.unlimited == true
+        local bestUnlimited = bestData.unlimited == true
 
-        if count and count > 0 then
-            local xpac = data.xpac or 0
-            local priority = data.priority or 0
-            local unlimited = data.unlimited == true
-            local bestUnlimited = bestData
-                and bestData.unlimited == true
-                or false
-
-            if preferUnlimited and unlimited ~= bestUnlimited
-                and unlimited
-            then
-                bestItemID = itemID
-                bestCount = count
-                bestData = data
-                bestXpac = xpac
-                bestPriority = priority
-            elseif not (preferUnlimited and unlimited ~= bestUnlimited)
-                and (xpac > bestXpac
-                    or (xpac == bestXpac and priority > bestPriority)
-                    or (xpac == bestXpac and priority == bestPriority
-                        and itemID > (bestItemID or 0)))
-            then
-                bestItemID = itemID
-                bestCount = count
-                bestData = data
-                bestXpac = xpac
-                bestPriority = priority
-            end
+        if preferUnlimited and unlimited ~= bestUnlimited then
+            return unlimited
         end
-    end
 
-    return bestItemID, bestCount, bestData
+        local xpac = data.xpac or 0
+        local priority = data.priority or 0
+        local bestXpac = bestData.xpac or 0
+        local bestPriority = bestData.priority or 0
+
+        return xpac > bestXpac
+            or (xpac == bestXpac and priority > bestPriority)
+            or (xpac == bestXpac and priority == bestPriority
+                and candidate.itemID > (best.itemID or 0))
+    end)
+
+    if best then
+        return best.itemID, best.count, best.data
+    end
 end
 
 function Augment.Update(button, state)

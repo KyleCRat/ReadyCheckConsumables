@@ -8,9 +8,9 @@ local Food = RCC.Consumables.Food
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local function getFoodAuraState(state)
@@ -104,25 +104,17 @@ end
 function Food.Update(button, state)
     local foodState, eatingState = getFoodAuraState(state)
     local isFood = foodState and foodState.satisfied
-    local foodCount = 0
-    local foodItemID
+    local foodCandidate = ItemCandidates.FindFirstAvailable(
+        RCC.db.foodItemIDs,
+        ItemCandidates.BAGS_ONLY
+    )
+    local foodCount = foodCandidate and foodCandidate.count or 0
+    local foodItemID = foodCandidate and foodCandidate.itemID
     local buttonState = ButtonState.Create({
         cooldown = getEatingCooldown(eatingState),
     })
 
     applyAuraState(buttonState, foodState)
-
-    for foodIndex = 1, #RCC.db.foodItemIDs do
-        local itemID = RCC.db.foodItemIDs[foodIndex]
-        local count = GetItemCount(itemID, false, false)
-
-        if count and count > 0 then
-            foodItemID = itemID
-            foodCount = count
-
-            break
-        end
-    end
 
     if foodCount > 0 then
         buttonState.tooltipItemID = foodItemID
