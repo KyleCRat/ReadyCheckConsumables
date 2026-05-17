@@ -7,21 +7,6 @@ local Renderer = RCC.ConsumableFrameRenderer
 local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
 local Glow = RCC.ConsumableFrameGlow
-local State = RCC.ConsumableFrameButtonState
-
-local function applyAction(button, action)
-    if not action or not action.type then return end
-
-    if action.type == State.ACTION_DISABLE then
-        Actions.Disable(button)
-    elseif action.type == State.ACTION_ITEM_MACRO and action.itemID then
-        Actions.SetItemMacro(button, action.itemID, action.targetSlot)
-    elseif action.type == State.ACTION_SPELL and action.spellName then
-        Actions.SetSpell(button, action.spellName, action.available)
-    elseif action.type == State.ACTION_WEAPON_ENCHANT_ITEM and action.itemID then
-        Actions.SetWeaponEnchantItem(button, action.itemID, action.available)
-    end
-end
 
 local function applyCooldown(button, cooldown)
     if not button.cooldown or not cooldown then return end
@@ -105,5 +90,5 @@ function Renderer.Apply(button, state)
         Glow.Set(button, state.glow == true)
     end
 
-    applyAction(button, state.action)
+    Actions.Apply(button, state.action)
 end

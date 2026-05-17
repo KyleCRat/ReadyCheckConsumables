@@ -4,6 +4,43 @@ RCC.ConsumableFrameActions = RCC.ConsumableFrameActions or {}
 
 local Actions = RCC.ConsumableFrameActions
 
+-- Action descriptors are plain data returned by consumable modules. This file
+-- is the only place that interprets them and mutates secure click buttons.
+local ACTION_DISABLE = "disable"
+local ACTION_ITEM_MACRO = "itemMacro"
+local ACTION_SPELL = "spell"
+local ACTION_WEAPON_ENCHANT_ITEM = "weaponEnchantItem"
+
+function Actions.CreateDisabled()
+    return {
+        type = ACTION_DISABLE,
+    }
+end
+
+function Actions.CreateItemMacro(itemID, targetSlot)
+    return {
+        type = ACTION_ITEM_MACRO,
+        itemID = itemID,
+        targetSlot = targetSlot,
+    }
+end
+
+function Actions.CreateSpell(spellName, available)
+    return {
+        type = ACTION_SPELL,
+        spellName = spellName,
+        available = available,
+    }
+end
+
+function Actions.CreateWeaponEnchantItem(itemID, available)
+    return {
+        type = ACTION_WEAPON_ENCHANT_ITEM,
+        itemID = itemID,
+        available = available,
+    }
+end
+
 local function enableClick(button)
     button.clickEnabled = true
 
@@ -28,7 +65,7 @@ local function setClickAvailability(button, available)
     end
 end
 
-function Actions.GetItemUseMacro(itemID, targetSlot)
+local function getItemUseMacro(itemID, targetSlot)
     if targetSlot then
         return format("/stopmacro [combat]\n/use item:%d\n/use %d",
                       itemID, targetSlot)
@@ -37,23 +74,23 @@ function Actions.GetItemUseMacro(itemID, targetSlot)
     return format("/stopmacro [combat]\n/use item:%d", itemID)
 end
 
-function Actions.Disable(button)
+local function disable(button)
     if not button or not button.click then return end
 
     disableClick(button)
 end
 
-function Actions.SetItemMacro(button, itemID, targetSlot)
+local function setItemMacro(button, itemID, targetSlot)
     if not button or not button.click or InCombatLockdown() then return end
 
     button.click:SetAttribute("type", "macro")
     button.click:SetAttribute("macrotext1",
-        Actions.GetItemUseMacro(itemID, targetSlot))
+        getItemUseMacro(itemID, targetSlot))
 
     enableClick(button)
 end
 
-function Actions.SetSpell(button, spellName, available)
+local function setSpell(button, spellName, available)
     if not button or not button.click or InCombatLockdown() then return end
 
     button.click:SetAttribute("spell", spellName)
@@ -62,7 +99,7 @@ function Actions.SetSpell(button, spellName, available)
     setClickAvailability(button, available == true)
 end
 
-function Actions.SetWeaponEnchantItem(button, itemID, available)
+local function setWeaponEnchantItem(button, itemID, available)
     if not button or not button.click or InCombatLockdown() then return end
 
     button.click:SetAttribute("spell", nil)
@@ -70,4 +107,18 @@ function Actions.SetWeaponEnchantItem(button, itemID, available)
     button.click:SetAttribute("type", "item")
 
     setClickAvailability(button, available == true)
+end
+
+function Actions.Apply(button, action)
+    if not action or not action.type then return end
+
+    if action.type == ACTION_DISABLE then
+        disable(button)
+    elseif action.type == ACTION_ITEM_MACRO and action.itemID then
+        setItemMacro(button, action.itemID, action.targetSlot)
+    elseif action.type == ACTION_SPELL and action.spellName then
+        setSpell(button, action.spellName, action.available)
+    elseif action.type == ACTION_WEAPON_ENCHANT_ITEM and action.itemID then
+        setWeaponEnchantItem(button, action.itemID, action.available)
+    end
 end

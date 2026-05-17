@@ -5,6 +5,7 @@ RCC.Consumables.ArmorKit = RCC.Consumables.ArmorKit or {}
 
 local ArmorKit = RCC.Consumables.ArmorKit
 
+local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
@@ -43,12 +44,12 @@ function ArmorKit.Update(button)
     if kitCount > 0 then
         buttonState.tooltipItemID = ARMOR_KIT_ITEM_ID
         buttonState.usableItemID = ARMOR_KIT_ITEM_ID
-        buttonState.action = ButtonState.ItemMacroAction(
+        buttonState.action = Actions.CreateItemMacro(
             ARMOR_KIT_ITEM_ID,
             CHEST_INVENTORY_SLOT
         )
     else
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
     end
 
     Renderer.Apply(button, buttonState)

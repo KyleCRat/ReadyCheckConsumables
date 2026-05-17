@@ -9,41 +9,6 @@ local F = RCC.F
 State.READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-Ready"
 State.NOT_READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
-State.ACTION_DISABLE = "disable"
-State.ACTION_ITEM_MACRO = "itemMacro"
-State.ACTION_SPELL = "spell"
-State.ACTION_WEAPON_ENCHANT_ITEM = "weaponEnchantItem"
-
-function State.DisableAction()
-    return {
-        type = State.ACTION_DISABLE,
-    }
-end
-
-function State.ItemMacroAction(itemID, targetSlot)
-    return {
-        type = State.ACTION_ITEM_MACRO,
-        itemID = itemID,
-        targetSlot = targetSlot,
-    }
-end
-
-function State.SpellAction(spellName, available)
-    return {
-        type = State.ACTION_SPELL,
-        spellName = spellName,
-        available = available,
-    }
-end
-
-function State.WeaponEnchantItemAction(itemID, available)
-    return {
-        type = State.ACTION_WEAPON_ENCHANT_ITEM,
-        itemID = itemID,
-        available = available,
-    }
-end
-
 -- Buttons are reset before module updates, so omitted fields keep the reset
 -- defaults for the current update pass.
 function State.Create(fields)

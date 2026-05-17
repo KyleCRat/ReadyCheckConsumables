@@ -5,6 +5,7 @@ RCC.Consumables.WeaponEnchant = RCC.Consumables.WeaponEnchant or {}
 
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
+local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
@@ -230,14 +231,14 @@ local function configureSpellEnchantState(buttonState, enchantData, slotState)
     local spellName = spellInfo and spellInfo.name
 
     if not spellName then
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
 
         return false
     end
 
     addEnchantIconToState(buttonState, enchantData)
 
-    buttonState.action = ButtonState.SpellAction(
+    buttonState.action = Actions.CreateSpell(
         spellName,
         slotState.canBeEnchanted
     )
@@ -256,7 +257,7 @@ local function configureMissingItemState(buttonState, showHint)
         buttonState.outOfItemsText = OUT_OF_ITEMS
     end
 
-    buttonState.action = ButtonState.DisableAction()
+    buttonState.action = Actions.CreateDisabled()
     buttonState.glow = false
 end
 
@@ -272,12 +273,12 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
     end
 
     if hasItem then
-        buttonState.action = ButtonState.WeaponEnchantItemAction(
+        buttonState.action = Actions.CreateWeaponEnchantItem(
             itemID,
             slotState.canBeEnchanted
         )
     else
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
     end
 
     buttonState.glow = slotState.canBeEnchanted
@@ -333,7 +334,7 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
     })
 
     if not slotState.canBeEnchanted then
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
         Renderer.Apply(button, buttonState)
 
         return

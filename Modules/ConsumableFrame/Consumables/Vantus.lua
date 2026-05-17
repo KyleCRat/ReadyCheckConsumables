@@ -6,6 +6,7 @@ RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
 local Vantus = RCC.Consumables.Vantus
 
 local Auras = RCC.ConsumableFrameAuras
+local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
@@ -49,7 +50,7 @@ function Vantus.Update(button, state)
 
     if not vantusRuneIDs then
         buttonState.showInLayout = false
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
 
         Renderer.Apply(button, buttonState)
 
@@ -72,7 +73,7 @@ function Vantus.Update(button, state)
             buttonState.countText = tostring(count)
         end
 
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
         Renderer.Apply(button, buttonState)
 
         return
@@ -82,7 +83,7 @@ function Vantus.Update(button, state)
         buttonState.countText = tostring(count)
         buttonState.tooltipItemID = itemID
         buttonState.usableItemID = itemID
-        buttonState.action = ButtonState.ItemMacroAction(itemID)
+        buttonState.action = Actions.CreateItemMacro(itemID)
 
         Renderer.Apply(button, buttonState)
 
@@ -92,7 +93,7 @@ function Vantus.Update(button, state)
     buttonState.countText = "0"
     buttonState.tooltipItemID = itemID
     buttonState.outOfItemsText = "No Vantus Runes found in Bags"
-    buttonState.action = ButtonState.DisableAction()
+    buttonState.action = Actions.CreateDisabled()
 
     Renderer.Apply(button, buttonState)
 end

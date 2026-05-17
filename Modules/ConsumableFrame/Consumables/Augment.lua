@@ -6,6 +6,7 @@ RCC.Consumables.Augment = RCC.Consumables.Augment or {}
 local Augment = RCC.Consumables.Augment
 
 local Auras = RCC.ConsumableFrameAuras
+local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
@@ -80,10 +81,10 @@ function Augment.Update(button, state)
             end
         end
 
-        buttonState.action = ButtonState.ItemMacroAction(augmentItemID)
+        buttonState.action = Actions.CreateItemMacro(augmentItemID)
     else
         buttonState.countText = "0"
-        buttonState.action = ButtonState.DisableAction()
+        buttonState.action = Actions.CreateDisabled()
 
         if not isAugment then
             buttonState.outOfItemsText = "No Augment Runes found in Bags"
