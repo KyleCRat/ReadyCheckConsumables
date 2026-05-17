@@ -12,27 +12,6 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
 
-local function buildFlyoutChoices(candidates, selectedItemID)
-    if not candidates or #candidates <= 1 then return end
-
-    local choices = {}
-
-    for i = 1, #candidates do
-        local candidate = candidates[i]
-
-        if candidate.itemID ~= selectedItemID then
-            choices[#choices + 1] = ButtonState.CreateItemChoice(
-                candidate,
-                ActionType.ITEM_MACRO
-            )
-        end
-    end
-
-    if #choices > 0 then
-        return choices
-    end
-end
-
 local function getFoodAuraStates(state, expireWarnSeconds)
     local foodAuraState
     local eatingAuraState
@@ -125,9 +104,10 @@ function Food.Update(button, state)
 
     buttonState.countText = foodCount > 0 and tostring(foodCount) or ""
     buttonState.glow = not foodSatisfied and foodCount > 0
-    buttonState.flyoutChoices = buildFlyoutChoices(
+    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         foodCandidates,
-        foodItemID
+        foodItemID,
+        ActionType.ITEM_MACRO
     )
 
     Renderer.Apply(button, buttonState)

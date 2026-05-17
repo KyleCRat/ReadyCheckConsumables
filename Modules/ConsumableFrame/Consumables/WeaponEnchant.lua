@@ -76,33 +76,6 @@ local function collectWeaponEnchantItemCandidatesInBags()
     return candidates
 end
 
-local function buildItemFlyoutChoices(candidates, selectedItemID, slotState,
-                                      includeSingleChoice)
-    if not candidates then return end
-    if not includeSingleChoice and #candidates <= 1 then return end
-
-    local choices = {}
-
-    for i = 1, #candidates do
-        local candidate = candidates[i]
-
-        if candidate.itemID ~= selectedItemID then
-            choices[#choices + 1] = ButtonState.CreateItemChoice(
-                candidate,
-                ActionType.WEAPON_ENCHANT_ITEM,
-                {
-                    targetSlot = slotState.slotID,
-                    available = slotState.canBeEnchanted,
-                }
-            )
-        end
-    end
-
-    if #choices > 0 then
-        return choices
-    end
-end
-
 local function canWeaponSlotBeEnchanted(slotID)
     local itemID = GetInventoryItemID("player", slotID)
 
@@ -283,11 +256,15 @@ local function configureSpellEnchantState(buttonState, enchantData, slotState,
     buttonState.glow = slotState.canBeEnchanted
                        and (not slotState.hasEnchant
                             or isExpiringSoon(slotState))
-    buttonState.flyoutChoices = buildItemFlyoutChoices(
+    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         itemCandidates,
         nil,
-        slotState,
-        true
+        ActionType.WEAPON_ENCHANT_ITEM,
+        {
+            targetSlot = slotState.slotID,
+            available = slotState.canBeEnchanted,
+            includeSingleChoice = true,
+        }
     )
 
     return true
@@ -359,11 +336,14 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
         slotState
     )
 
-    buttonState.flyoutChoices = buildItemFlyoutChoices(
+    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         itemCandidates,
         itemID,
-        slotState,
-        false
+        ActionType.WEAPON_ENCHANT_ITEM,
+        {
+            targetSlot = slotState.slotID,
+            available = slotState.canBeEnchanted,
+        }
     )
 end
 

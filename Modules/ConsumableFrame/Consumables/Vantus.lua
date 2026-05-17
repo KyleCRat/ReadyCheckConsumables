@@ -12,27 +12,6 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
 
-local function buildFlyoutChoices(candidates, selectedItemID)
-    if not candidates or #candidates <= 1 then return end
-
-    local choices = {}
-
-    for i = 1, #candidates do
-        local candidate = candidates[i]
-
-        if candidate.itemID ~= selectedItemID then
-            choices[#choices + 1] = ButtonState.CreateItemChoice(
-                candidate,
-                ActionType.ITEM_MACRO
-            )
-        end
-    end
-
-    if #choices > 0 then
-        return choices
-    end
-end
-
 local function getAuraBossName(state)
     local aura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
 
@@ -111,7 +90,11 @@ function Vantus.Update(button, state)
             type = ActionType.ITEM_MACRO,
             itemID = itemID,
         }
-        buttonState.flyoutChoices = buildFlyoutChoices(candidates, itemID)
+        buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
+            candidates,
+            itemID,
+            ActionType.ITEM_MACRO
+        )
 
         Renderer.Apply(button, buttonState)
 
