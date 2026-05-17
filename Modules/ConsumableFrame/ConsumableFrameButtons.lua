@@ -120,6 +120,7 @@ function Buttons.SetTimeTextBad(button, bad)
 end
 
 function Buttons.ResetState(button, notReadyTexture)
+    button.consumableState = nil
     button.statustexture:SetTexture(notReadyTexture)
     button.hasConsumableBuff = false
     button.timeleft:SetText("")

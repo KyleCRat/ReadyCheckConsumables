@@ -5,6 +5,8 @@ RCC.Consumables.Healthstone = RCC.Consumables.Healthstone or {}
 
 local Healthstone = RCC.Consumables.Healthstone
 
+local ButtonState = RCC.ConsumableFrameButtonState
+
 local GetItemCount = C_Item.GetItemCount
 
 function Healthstone.Update(button)
@@ -19,11 +21,15 @@ function Healthstone.Update(button)
     end
 
     if totalCount > 0 then
-        button.count:SetFormattedText("%d", totalCount)
-        button.statustexture:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        button.texture:SetDesaturated(false)
-        button.tooltipItemID = RCC.db.healthstone_item_id
+        ButtonState.Apply(button, ButtonState.Create({
+            countText = tostring(totalCount),
+            statusTexture = ButtonState.READY_TEXTURE,
+            desaturated = false,
+            tooltipItemID = RCC.db.healthstone_item_id,
+        }))
     else
-        button.count:SetText("0")
+        ButtonState.Apply(button, ButtonState.Create({
+            countText = "0",
+        }))
     end
 end
