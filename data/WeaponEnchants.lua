@@ -4,15 +4,35 @@ RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
 --- Weapon Enchant / Oil Lookup
---- Maps enchant ID -> { item, icon, [q], [xpac], [iconoh] }
+--- Maps enchant ID -> { item, spellID, icon, [q], [xpac] }
 --- Used by the consumable frame to detect and display weapon buffs.
 --- Detected via GetWeaponEnchantInfo() — only weapon-slot enchants belong here.
 --------------------------------------------------------------------------------
 
 RCC.db.weaponEnchants = {
-    -- Shaman Enchants (negative item = spell-based, not item-based)
-    [5401] = { item = -33757, icon = 462329, iconoh = 135814 }, -- Windfury Weapon
-    [5400] = { item = -318038, icon = 135814 },                 -- Flametongue Weapon
+    -- Shaman Enchants (spellID = spell-based, not item-based)
+    [5401] = { -- Windfury Weapon
+        spellID = 33757,
+        icon = 462329,
+        spellSlots = {
+            [16] = { priority = 1 },
+        },
+    },
+    [5400] = { -- Flametongue Weapon
+        spellID = 318038,
+        icon = 135814,
+        spellSlots = {
+            [16] = { priority = 3, blockedByKnownEnchants = { 5401 } },
+            [17] = { priority = 1, requiresKnownEnchants = { 5401 } },
+        },
+    },
+    [6498] = { -- Earthliving Weapon
+        spellID = 382021,
+        icon = 237578,
+        spellSlots = {
+            [16] = { priority = 2 },
+        },
+    },
 
     ----------------------------------------------------------------------------
     -- 12.0.0 - Midnight: Oils
@@ -116,7 +136,9 @@ RCC.db.weaponEnchants = {
 
 RCC.db.weaponEnchantItemIDs = {}
 for _, v in pairs(RCC.db.weaponEnchants) do
-    RCC.db.weaponEnchantItemIDs[v.item] = v
+    if v.item then
+        RCC.db.weaponEnchantItemIDs[v.item] = v
+    end
 end
 
 --------------------------------------------------------------------------------

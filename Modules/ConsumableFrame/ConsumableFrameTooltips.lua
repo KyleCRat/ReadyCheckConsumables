@@ -2,6 +2,8 @@ local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
 local GetItemInfo = C_Item.GetItemInfo
+local GetSpellInfo = C_Spell.GetSpellInfo
+local GetSpellLink = C_Spell.GetSpellLink
 
 RCC.ConsumableFrameTooltips = RCC.ConsumableFrameTooltips or {}
 
@@ -13,18 +15,34 @@ local function getItemLink(itemID)
     return select(2, GetItemInfo(itemID))
 end
 
+local function getSpellDisplay(spellID)
+    if not spellID then return end
+
+    local spellLink = GetSpellLink and GetSpellLink(spellID)
+
+    if spellLink then
+        return spellLink
+    end
+
+    local spellInfo = GetSpellInfo(spellID)
+
+    return spellInfo and spellInfo.name
+end
+
 local function addClickHint(button)
     if not button.tooltipAction then return end
 
-    local itemLink = getItemLink(button.clickHintItemID
-                                 or button.usableItemID
-                                 or button.tooltipItemID)
+    local targetText = getItemLink(button.clickHintItemID
+                                   or button.usableItemID
+                                   or button.tooltipItemID)
+        or getSpellDisplay(button.clickHintSpellID
+                           or button.tooltipSpellID)
 
-    if not itemLink then return end
+    if not targetText then return end
 
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("|cff00ff00Click to " .. button.tooltipAction .. "|r "
-                        .. itemLink)
+                        .. targetText)
     GameTooltip:Show()
 end
 
@@ -42,6 +60,13 @@ local function showButtonTooltip(button, shoppingTooltip)
     if button.tooltipItemID then
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(button.tooltipItemID)
+        GameTooltip:Show()
+        shownTooltip = true
+    end
+
+    if button.tooltipSpellID then
+        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        GameTooltip:SetSpellByID(button.tooltipSpellID)
         GameTooltip:Show()
         shownTooltip = true
     end

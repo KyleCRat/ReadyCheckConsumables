@@ -31,6 +31,7 @@ Modules/ConsumableFrame/Consumables/Healthstone.lua
 Modules/ConsumableFrame/Consumables/DamagePotion.lua
 Modules/ConsumableFrame/Consumables/HealingPotion.lua
 Modules/ConsumableFrame/Consumables/Vantus.lua
+Modules/ConsumableFrame/Consumables/WeaponEnchant.lua
 Modules/ConsumableFrame/ConsumableFrame.lua
 Modules/ConsumableFrame/ConsumableCoordinator.lua
 Modules/RaidFrame/RaidFrameReadyCheck.lua

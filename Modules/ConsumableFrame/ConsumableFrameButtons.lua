@@ -117,9 +117,10 @@ function Buttons.ResetState(button, notReadyTexture)
     button.texture:SetDesaturated(true)
     button.tooltipAuraID = nil
     button.tooltipItemID = nil
+    button.tooltipSpellID = nil
     button.usableItemID = nil
-    button.appliedItemID = nil
     button.clickHintItemID = nil
+    button.clickHintSpellID = nil
     button.outOfItemsText = nil
     button.clickEnabled = false
     Buttons.SetShownInLayout(button, true)
