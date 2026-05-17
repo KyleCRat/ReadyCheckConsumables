@@ -35,11 +35,11 @@ function State.ApplyActiveAura(state, auraState)
     end
 
     if auraState.remaining then
-        state.timeText = F.FormatDuration(auraState.remaining)
+        state.detailText = F.FormatDuration(auraState.remaining)
     end
 
     if auraState.timeIsBad ~= nil then
-        state.timeIsBad = auraState.timeIsBad
+        state.detailTextIsBad = auraState.timeIsBad
     end
 
     if auraState.auraInstanceID then

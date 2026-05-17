@@ -64,7 +64,7 @@ function Vantus.Update(button, state)
     end
 
     if bossName then
-        buttonState.timeText = bossName
+        buttonState.detailText = bossName
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.hasConsumableBuff = true
         buttonState.desaturated = false

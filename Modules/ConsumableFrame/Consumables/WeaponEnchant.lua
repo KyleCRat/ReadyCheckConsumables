@@ -95,6 +95,7 @@ local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID,
         expiration = canBeEnchanted and expiration or nil,
         enchantID = canBeEnchanted and enchantID or nil,
         expireWarnSeconds = expireWarnSeconds,
+        slotID = slotID,
     }
 end
 
@@ -112,10 +113,12 @@ local function addActiveEnchantToState(buttonState, slotID, slotState)
     buttonState.statusTexture = ButtonState.READY_TEXTURE
     buttonState.hasConsumableBuff = true
     buttonState.desaturated = false
-    buttonState.timeText = F.FormatDuration((slotState.expiration or 0) / 1000)
+    buttonState.detailText = F.FormatDuration(
+        (slotState.expiration or 0) / 1000
+    )
 
     if slotState.expiration ~= nil then
-        buttonState.timeIsBad = isExpiringSoon(slotState)
+        buttonState.detailTextIsBad = isExpiringSoon(slotState)
     end
 
     if enchantData then
@@ -278,6 +281,7 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
         buttonState.action = {
             type = ActionType.WEAPON_ENCHANT_ITEM,
             itemID = itemID,
+            targetSlot = slotState.slotID,
             available = slotState.canBeEnchanted,
         }
     end
@@ -366,23 +370,35 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
     Renderer.Apply(button, buttonState)
 end
 
+local function updateWeaponEnchantButton(button, hasEnchant, expiration,
+                                         enchantID, showMissingHint)
+    if not button or not button.weaponSlot then return end
+
+    updateWeaponEnchantSlot(
+        button,
+        button.weaponSlot,
+        hasEnchant,
+        expiration,
+        enchantID,
+        showMissingHint
+    )
+end
+
 function WeaponEnchant.Update(buttons)
     local hasMainHandEnchant, mainHandExpiration, _, mainHandEnchantID,
           hasOffHandEnchant, offHandExpiration, _, offHandEnchantID =
           GetWeaponEnchantInfo()
 
-    updateWeaponEnchantSlot(
-        buttons.oil,
-        MAIN_HAND_INVENTORY_SLOT,
+    updateWeaponEnchantButton(
+        buttons.mainHandTempWeaponEnchant,
         hasMainHandEnchant,
         mainHandExpiration,
         mainHandEnchantID,
         true
     )
 
-    updateWeaponEnchantSlot(
-        buttons.oiloh,
-        OFF_HAND_INVENTORY_SLOT,
+    updateWeaponEnchantButton(
+        buttons.offHandTempWeaponEnchant,
         hasOffHandEnchant,
         offHandExpiration,
         offHandEnchantID,

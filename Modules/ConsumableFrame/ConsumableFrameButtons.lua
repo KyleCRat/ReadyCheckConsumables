@@ -1,6 +1,7 @@
 local _, RCC = ...
 
 local UI = RCC.UI
+local Glow = RCC.ConsumableFrameGlow
 local Tooltips = RCC.ConsumableFrameTooltips
 
 RCC.ConsumableFrameButtons = RCC.ConsumableFrameButtons or {}
@@ -39,12 +40,12 @@ local BUTTON_DEFS = {
         layoutOrder = 2,
     },
     {
-        key = "oil",
+        key = "mainHandTempWeaponEnchant",
+        weaponSlot = MAIN_HAND_INVENTORY_SLOT,
         settingKey = "icon_mhOil",
         defaultIcon = RCC.db.weapon_enchant_icon_id,
         clickable = true,
         tooltipAction = "apply",
-        targetSlot = MAIN_HAND_INVENTORY_SLOT,
         expireWarnSeconds = 60 * 10,
         layoutOrder = 3,
     },
@@ -64,12 +65,12 @@ local BUTTON_DEFS = {
         layoutOrder = 6,
     },
     {
-        key = "oiloh",
+        key = "offHandTempWeaponEnchant",
+        weaponSlot = OFF_HAND_INVENTORY_SLOT,
         settingKey = "icon_ohOil",
         defaultIcon = RCC.db.weapon_enchant_icon_id,
         clickable = true,
         tooltipAction = "apply",
-        targetSlot = OFF_HAND_INVENTORY_SLOT,
         expireWarnSeconds = 60 * 10,
         hiddenByDefault = true,
         layoutOrder = 4,
@@ -118,20 +119,26 @@ function Buttons.SetShownInLayout(button, shown)
     button.showInLayout = shown == true
 end
 
-function Buttons.SetTimeTextBad(button, bad)
+function Buttons.SetDetailTextBad(button, bad)
     local color = bad and TIME_TEXT_BAD_COLOR or TIME_TEXT_NORMAL_COLOR
 
-    button.timeleft:SetTextColor(color.r, color.g, color.b)
+    button.detailText:SetTextColor(color.r, color.g, color.b)
 end
 
 function Buttons.ResetState(button, notReadyTexture)
     button.consumableState = nil
     button.statustexture:SetTexture(notReadyTexture)
     button.hasConsumableBuff = false
-    button.timeleft:SetText("")
-    Buttons.SetTimeTextBad(button, false)
+    button.detailText:SetText("")
+    Buttons.SetDetailTextBad(button, false)
     button.count:SetText("")
+    button.texture:SetTexture(button.defaultIcon)
     button.texture:SetDesaturated(true)
+    if button.cooldown then
+        button.cooldown:Clear()
+        button.cooldown:Hide()
+    end
+    Glow.Stop(button)
     button.tooltipAuraID = nil
     button.tooltipItemID = nil
     button.tooltipSpellID = nil
@@ -152,7 +159,9 @@ function Buttons.CreateAll(parent)
         local def = BUTTON_DEFS[i]
         local button = CreateFrame("Frame", nil, parent)
         buttons[i] = button
+        button.defaultIcon = def.defaultIcon
         button.expireWarnSeconds = def.expireWarnSeconds
+        button.weaponSlot = def.weaponSlot
         button:SetSize(SIZE, SIZE)
 
         if i == 1 then
@@ -168,10 +177,10 @@ function Buttons.CreateAll(parent)
         button.statustexture:SetPoint("CENTER")
         button.statustexture:SetSize(SIZE / 2, SIZE / 2)
 
-        button.timeleft = button:CreateFontString(nil, "ARTWORK",
-                                                  "GameFontWhite")
-        button.timeleft:SetPoint("BOTTOM", button, "TOP", 0, 1)
-        button.timeleft:SetFont(FONT, 12, "OUTLINE")
+        button.detailText = button:CreateFontString(nil, "ARTWORK",
+                                                    "GameFontWhite")
+        button.detailText:SetPoint("BOTTOM", button, "TOP", 0, 1)
+        button.detailText:SetFont(FONT, 12, "OUTLINE")
 
         button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
         button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
@@ -183,14 +192,7 @@ function Buttons.CreateAll(parent)
             button.click:SetAllPoints()
             button.click:Hide()
             button.click:RegisterForClicks("AnyUp", "AnyDown")
-
-            if def.targetSlot then
-                button.click:SetAttribute("type", "item")
-                button.click:SetAttribute("target-slot",
-                                          tostring(def.targetSlot))
-            else
-                button.click:SetAttribute("type", "macro")
-            end
+            button.click:SetAttribute("type", "macro")
 
             button.click:SetScript("OnEnter", Tooltips.ClickButtonOnEnter)
             button.click:SetScript("OnLeave", Tooltips.ClickButtonOnLeave)

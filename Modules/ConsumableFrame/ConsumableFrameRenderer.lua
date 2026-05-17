@@ -46,12 +46,12 @@ function Renderer.Apply(button, state)
         button.count:SetText(state.countText)
     end
 
-    if state.timeText ~= nil then
-        button.timeleft:SetText(state.timeText)
+    if state.detailText ~= nil then
+        button.detailText:SetText(state.detailText)
     end
 
-    if state.timeIsBad ~= nil then
-        Buttons.SetTimeTextBad(button, state.timeIsBad)
+    if state.detailTextIsBad ~= nil then
+        Buttons.SetDetailTextBad(button, state.detailTextIsBad)
     end
 
     if state.hasConsumableBuff ~= nil then
@@ -88,9 +88,9 @@ function Renderer.Apply(button, state)
 
     applyCooldown(button, state.cooldown)
 
+    Actions.Apply(button, state.action)
+
     if state.glow ~= nil then
         Glow.Set(button, state.glow == true)
     end
-
-    Actions.Apply(button, state.action)
 end

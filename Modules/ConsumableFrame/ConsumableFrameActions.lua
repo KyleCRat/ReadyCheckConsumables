@@ -72,12 +72,21 @@ local function setSpell(button, spellName, available)
     setClickAvailability(button, available == true)
 end
 
-local function setWeaponEnchantItem(button, itemID, available)
+local function setWeaponEnchantItem(button, itemID, targetSlot, available)
     if not button or not button.click or InCombatLockdown() then return end
 
+    if not targetSlot then
+        disableClick(button)
+
+        return
+    end
+
     button.click:SetAttribute("spell", nil)
-    button.click:SetAttribute("item", "item:" .. itemID)
-    button.click:SetAttribute("type", "item")
+    button.click:SetAttribute("item", nil)
+    button.click:SetAttribute("target-slot", nil)
+    button.click:SetAttribute("type", "macro")
+    button.click:SetAttribute("macrotext1",
+        getItemUseMacro(itemID, targetSlot))
 
     setClickAvailability(button, available == true)
 end
@@ -95,8 +104,15 @@ function Actions.Apply(button, action)
         setItemMacro(button, action.itemID, action.targetSlot)
     elseif action.type == ActionType.SPELL and action.spellName then
         setSpell(button, action.spellName, action.available)
-    elseif action.type == ActionType.WEAPON_ENCHANT_ITEM and action.itemID then
-        setWeaponEnchantItem(button, action.itemID, action.available)
+    elseif action.type == ActionType.WEAPON_ENCHANT_ITEM
+        and action.itemID and action.targetSlot
+    then
+        setWeaponEnchantItem(
+            button,
+            action.itemID,
+            action.targetSlot,
+            action.available
+        )
     else
         disable(button)
     end

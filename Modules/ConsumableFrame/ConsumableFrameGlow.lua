@@ -109,5 +109,6 @@ function Glow.SetHovered(button, hovered)
 end
 
 function Glow.Stop(button)
+    button.rccGlowEnabled = false
     stopButtonGlow(button)
 end

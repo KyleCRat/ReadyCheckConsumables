@@ -45,7 +45,7 @@ function ArmorKit.Update(button)
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.hasConsumableBuff = true
         buttonState.desaturated = false
-        buttonState.timeText = kitTimeLeft
+        buttonState.detailText = kitTimeLeft
     end
 
     if kitCount > 0 then
