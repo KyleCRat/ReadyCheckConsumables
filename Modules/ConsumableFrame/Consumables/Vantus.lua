@@ -6,11 +6,11 @@ RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
 local Vantus = RCC.Consumables.Vantus
 
 local Auras = RCC.ConsumableFrameAuras
-local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
+local ActionType = RCC.ConsumableActionType
 local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraBossName(state)
@@ -81,7 +81,10 @@ function Vantus.Update(button, state)
         buttonState.countText = tostring(count)
         buttonState.tooltipItemID = itemID
         buttonState.usableItemID = itemID
-        buttonState.action = Actions.CreateItemMacro(itemID)
+        buttonState.action = {
+            type = ActionType.ITEM_MACRO,
+            itemID = itemID,
+        }
 
         Renderer.Apply(button, buttonState)
 

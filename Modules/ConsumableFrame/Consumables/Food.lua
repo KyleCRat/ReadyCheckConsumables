@@ -6,11 +6,11 @@ RCC.Consumables.Food = RCC.Consumables.Food or {}
 local Food = RCC.Consumables.Food
 
 local Auras = RCC.ConsumableFrameAuras
-local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
+local ActionType = RCC.ConsumableActionType
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local function getFoodAuraStates(state, expireWarnSeconds)
@@ -94,7 +94,10 @@ function Food.Update(button, state)
             end
         end
 
-        buttonState.action = Actions.CreateItemMacro(foodItemID)
+        buttonState.action = {
+            type = ActionType.ITEM_MACRO,
+            itemID = foodItemID,
+        }
     else
         if not foodSatisfied then
             buttonState.outOfItemsText = "No Food found in Bags"

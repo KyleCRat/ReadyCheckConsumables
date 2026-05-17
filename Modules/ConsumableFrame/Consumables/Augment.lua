@@ -6,11 +6,11 @@ RCC.Consumables.Augment = RCC.Consumables.Augment or {}
 local Augment = RCC.Consumables.Augment
 
 local Auras = RCC.ConsumableFrameAuras
-local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
+local ActionType = RCC.ConsumableActionType
 local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraState(state, expireWarnSeconds)
@@ -81,7 +81,10 @@ function Augment.Update(button, state)
             end
         end
 
-        buttonState.action = Actions.CreateItemMacro(augmentItemID)
+        buttonState.action = {
+            type = ActionType.ITEM_MACRO,
+            itemID = augmentItemID,
+        }
     else
         buttonState.countText = "0"
 

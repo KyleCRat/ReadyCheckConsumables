@@ -6,11 +6,11 @@ RCC.Consumables.Flask = RCC.Consumables.Flask or {}
 local Flask = RCC.Consumables.Flask
 
 local Auras = RCC.ConsumableFrameAuras
-local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
+local ActionType = RCC.ConsumableActionType
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local function getFlaskAuraState(state, expireWarnSeconds)
@@ -46,7 +46,10 @@ function Flask.Update(button, state)
             end
         end
 
-        buttonState.action = Actions.CreateItemMacro(flaskItemID)
+        buttonState.action = {
+            type = ActionType.ITEM_MACRO,
+            itemID = flaskItemID,
+        }
     else
         if not isFlask then
             buttonState.outOfItemsText = "No Flasks found in Bags"

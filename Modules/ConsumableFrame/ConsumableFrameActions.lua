@@ -6,33 +6,13 @@ local Actions = RCC.ConsumableFrameActions
 
 -- Action descriptors are plain data returned by consumable modules. Missing or
 -- malformed actions disable clickable overlays by default.
-local ACTION_ITEM_MACRO = "itemMacro"
-local ACTION_SPELL = "spell"
-local ACTION_WEAPON_ENCHANT_ITEM = "weaponEnchantItem"
+RCC.ConsumableActionType = RCC.ConsumableActionType or {
+    ITEM_MACRO          = "itemMacro",
+    SPELL               = "spell",
+    WEAPON_ENCHANT_ITEM = "weaponEnchantItem",
+}
 
-function Actions.CreateItemMacro(itemID, targetSlot)
-    return {
-        type = ACTION_ITEM_MACRO,
-        itemID = itemID,
-        targetSlot = targetSlot,
-    }
-end
-
-function Actions.CreateSpell(spellName, available)
-    return {
-        type = ACTION_SPELL,
-        spellName = spellName,
-        available = available,
-    }
-end
-
-function Actions.CreateWeaponEnchantItem(itemID, available)
-    return {
-        type = ACTION_WEAPON_ENCHANT_ITEM,
-        itemID = itemID,
-        available = available,
-    }
-end
+local ActionType = RCC.ConsumableActionType
 
 local function enableClick(button)
     button.clickEnabled = true
@@ -111,11 +91,11 @@ function Actions.Apply(button, action)
         return
     end
 
-    if action.type == ACTION_ITEM_MACRO and action.itemID then
+    if action.type == ActionType.ITEM_MACRO and action.itemID then
         setItemMacro(button, action.itemID, action.targetSlot)
-    elseif action.type == ACTION_SPELL and action.spellName then
+    elseif action.type == ActionType.SPELL and action.spellName then
         setSpell(button, action.spellName, action.available)
-    elseif action.type == ACTION_WEAPON_ENCHANT_ITEM and action.itemID then
+    elseif action.type == ActionType.WEAPON_ENCHANT_ITEM and action.itemID then
         setWeaponEnchantItem(button, action.itemID, action.available)
     else
         disable(button)

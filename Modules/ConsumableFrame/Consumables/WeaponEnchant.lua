@@ -5,12 +5,12 @@ RCC.Consumables.WeaponEnchant = RCC.Consumables.WeaponEnchant or {}
 
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
-local Actions = RCC.ConsumableFrameActions
 local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
+local ActionType = RCC.ConsumableActionType
 local GetSpellInfo = C_Spell.GetSpellInfo
 local IsSpellKnown = C_SpellBook.IsSpellKnown
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
@@ -238,10 +238,11 @@ local function configureSpellEnchantState(buttonState, enchantData, slotState)
 
     addEnchantIconToState(buttonState, enchantData)
 
-    buttonState.action = Actions.CreateSpell(
-        spellName,
-        slotState.canBeEnchanted
-    )
+    buttonState.action = {
+        type = ActionType.SPELL,
+        spellName = spellName,
+        available = slotState.canBeEnchanted,
+    }
     buttonState.countText = ""
     buttonState.tooltipSpellID = enchantData.spellID
     buttonState.clickHintSpellID = enchantData.spellID
@@ -272,10 +273,11 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
     end
 
     if hasItem then
-        buttonState.action = Actions.CreateWeaponEnchantItem(
-            itemID,
-            slotState.canBeEnchanted
-        )
+        buttonState.action = {
+            type = ActionType.WEAPON_ENCHANT_ITEM,
+            itemID = itemID,
+            available = slotState.canBeEnchanted,
+        }
     end
 
     buttonState.glow = slotState.canBeEnchanted
