@@ -123,17 +123,27 @@ local function getColumnData(member, column)
     return member.columnData and member.columnData[column.key]
 end
 
+local function storeAuraID(data, aura)
+    local auraID = aura and aura.auraInstanceID
+
+    if auraID and not issecretvalue(auraID) then
+        data.auraID = auraID
+    else
+        data.auraID = true
+    end
+end
+
 local function setTimedAuraData(data, aura, remaining)
     data.has    = true
     data.time   = remaining
-    data.auraID = aura.auraInstanceID
     data.iconID = aura.icon
+    storeAuraID(data, aura)
 end
 
 local function setIconAuraData(data, aura)
     data.has    = true
-    data.auraID = aura.auraInstanceID
     data.iconID = aura.icon
+    storeAuraID(data, aura)
 end
 
 local function isTimedDataBad(data, rules)
