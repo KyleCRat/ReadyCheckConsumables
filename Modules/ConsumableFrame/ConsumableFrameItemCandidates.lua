@@ -37,6 +37,36 @@ function Candidates.GetIcon(itemID)
     return GetItemIcon(itemID)
 end
 
+function Candidates.CreateFromList(itemIDs, itemID, options)
+    if not itemIDs or not itemID then return end
+
+    for index = 1, #itemIDs do
+        if itemIDs[index] == itemID then
+            return {
+                itemID = itemID,
+                count = Candidates.GetCount(itemID, options),
+                icon = Candidates.GetIcon(itemID),
+                index = index,
+            }
+        end
+    end
+end
+
+function Candidates.CreateFromMap(itemDataByID, itemID, options)
+    if not itemDataByID or not itemID then return end
+
+    local data = itemDataByID[itemID]
+
+    if not data then return end
+
+    return {
+        itemID = itemID,
+        count = Candidates.GetCount(itemID, options),
+        icon = data.icon or Candidates.GetIcon(itemID),
+        data = data,
+    }
+end
+
 function Candidates.CollectAvailableFromList(itemIDs, options)
     local candidates = {}
 

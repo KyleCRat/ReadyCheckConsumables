@@ -91,6 +91,8 @@ RCC.db.foodItemIDs = {
     242291, -- [Uncm] Fried Bloomtail               | 22 Mastery, 22 Versatility
     242293, -- [Uncm] Sunwell Delight               | 22 Versatility, 22 Haste
 
+    242302, -- [Comm] Bloom Skewers                 | 25 Primary Stat
+
     242304, -- [Comm] Spiced Biscuits               | 16 Critical Strike, 16 Versatility
     242307, -- [Comm] Quick Sandwich                | 16 Versatility, 16 Haste
     242309, -- [Comm] Farstrider Rations            | 16 Mastery, 16 Haste

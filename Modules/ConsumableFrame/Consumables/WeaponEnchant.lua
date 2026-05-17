@@ -7,22 +7,35 @@ local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
 local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
+local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
+local CacheKey = RCC.ConsumableItemCacheKey
 local GetSpellInfo = C_Spell.GetSpellInfo
 local IsSpellKnown = C_SpellBook.IsSpellKnown
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
+local OUT_OF_SELECTED_ITEM = "Selected Weapon Enchant Item not found in Bags"
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
 
-local cachedWeaponEnchantItemIDs = {}
+local function getWeaponEnchantCacheKey(slotID)
+    if slotID == MAIN_HAND_INVENTORY_SLOT then
+        return CacheKey.MAIN_HAND_TEMP_WEAPON_ENCHANT
+    elseif slotID == OFF_HAND_INVENTORY_SLOT then
+        return CacheKey.OFF_HAND_TEMP_WEAPON_ENCHANT
+    end
+end
 
-local function getWeaponEnchantItemCount(itemID)
-    return ItemCandidates.GetCount(itemID, ItemCandidates.BAGS_ONLY)
+local function getCachedWeaponEnchantCandidate(slotID)
+    return ItemCandidates.CreateFromMap(
+        RCC.db.weaponEnchantItemIDs,
+        ItemCache.Get(getWeaponEnchantCacheKey(slotID)),
+        ItemCandidates.BAGS_ONLY
+    )
 end
 
 local function getWeaponEnchantData(enchantID)
@@ -126,7 +139,7 @@ local function addActiveEnchantToState(buttonState, slotID, slotState)
         addEnchantIconToState(buttonState, enchantData)
 
         if enchantData.item then
-            cachedWeaponEnchantItemIDs[slotID] = enchantData.item
+            ItemCache.Set(getWeaponEnchantCacheKey(slotID), enchantData.item)
             buttonState.tooltipItemID = enchantData.item
         elseif enchantData.spellID then
             buttonState.tooltipSpellID = enchantData.spellID
@@ -264,6 +277,7 @@ local function configureSpellEnchantState(buttonState, enchantData, slotState,
             targetSlot = slotState.slotID,
             available = slotState.canBeEnchanted,
             includeSingleChoice = true,
+            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
         }
     )
 
@@ -295,6 +309,7 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
             itemID = itemID,
             targetSlot = slotState.slotID,
             available = slotState.canBeEnchanted,
+            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
         }
     end
 
@@ -304,25 +319,28 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
                             or isExpiringSoon(slotState))
 end
 
-local function getUsableWeaponEnchantItemForSlot(slotID, candidates)
-    local cachedItem = cachedWeaponEnchantItemIDs[slotID]
-
-    if cachedItem
-        and getWeaponEnchantItemCount(cachedItem) > 0
-    then
-        return cachedItem
-    end
-
-    return candidates and candidates[1] and candidates[1].itemID
+local function selectWeaponEnchantItemForSlot(slotID, candidates)
+    return ItemCache.SelectCandidate(
+        getWeaponEnchantCacheKey(slotID),
+        candidates,
+        getCachedWeaponEnchantCandidate(slotID)
+    )
 end
 
 local function configureItemEnchantForSlot(buttonState, slotID, slotState,
                                            activeEnchantData, showMissingHint,
                                            itemCandidates)
-    local itemID = getUsableWeaponEnchantItemForSlot(slotID, itemCandidates)
+    local candidate = selectWeaponEnchantItemForSlot(slotID, itemCandidates)
+    local itemID = candidate and candidate.itemID
+    local outOfCachedItem = ItemCache.IsUnavailableCachedCandidate(
+        getWeaponEnchantCacheKey(slotID),
+        candidate
+    )
 
     if not itemID then
-        configureMissingItemState(buttonState, showMissingHint)
+        if not slotState.hasEnchant then
+            configureMissingItemState(buttonState, showMissingHint)
+        end
 
         return
     end
@@ -332,9 +350,13 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
     configureItemEnchantState(
         buttonState,
         itemID,
-        getWeaponEnchantItemCount(itemID),
+        candidate.count,
         slotState
     )
+
+    if outOfCachedItem and not slotState.hasEnchant then
+        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+    end
 
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         itemCandidates,
@@ -343,6 +365,8 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
         {
             targetSlot = slotState.slotID,
             available = slotState.canBeEnchanted,
+            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
+            includeSingleChoice = outOfCachedItem,
         }
     )
 end

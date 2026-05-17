@@ -33,6 +33,7 @@ function State.CreateItemChoice(candidate, actionType, options)
         itemID = candidate.itemID,
         targetSlot = options.targetSlot,
         available = options.available,
+        cacheKey = options.cacheKey,
     }
 
     return State.Create({
@@ -65,6 +66,7 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, actionType,
             local choiceOptions = {
                 targetSlot = options.targetSlot,
                 available = options.available,
+                cacheKey = options.cacheKey,
             }
 
             if options.getCountText then

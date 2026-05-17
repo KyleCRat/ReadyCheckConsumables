@@ -75,6 +75,7 @@ local function shouldUseHoverGlow(button)
     return button.click
            and (button.rccGlowEnabled
                 or button.clickEnabled
+                or button.outOfItemsText
                 or not button.hasConsumableBuff)
 end
 

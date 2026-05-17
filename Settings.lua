@@ -444,5 +444,7 @@ settingsFrame:SetScript("OnEvent", function(self, event, addonName)
 
     self:UnregisterEvent("ADDON_LOADED")
     ReadyCheckConsumablesDB = ReadyCheckConsumablesDB or {}
+    ReadyCheckConsumablesDB.consumableItemCache =
+        ReadyCheckConsumablesDB.consumableItemCache or {}
     registerPanel()
 end)

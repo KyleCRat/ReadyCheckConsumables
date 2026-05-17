@@ -7,10 +7,15 @@ local Augment = RCC.Consumables.Augment
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
+local CacheKey = RCC.ConsumableItemCacheKey
+
+local OUT_OF_ITEMS = "No Augment Runes found in Bags"
+local OUT_OF_SELECTED_ITEM = "Selected Augment Rune not found in Bags"
 
 local function isBetterAugmentCandidate(candidate, best, preferUnlimited)
     local data = candidate.data or {}
@@ -74,7 +79,20 @@ function Augment.Update(button, state)
     local augmentState = getAuraState(state, button.expireWarnSeconds)
     local isAugment = augmentState and augmentState.satisfied
     local augmentCandidates = collectItemsInBags()
-    local augmentCandidate = augmentCandidates[1]
+    local cachedAugmentCandidate = ItemCandidates.CreateFromMap(
+        RCC.db.augmentItemIDs,
+        ItemCache.Get(CacheKey.AUGMENT),
+        ItemCandidates.BAGS_ONLY
+    )
+    local augmentCandidate = ItemCache.SelectCandidate(
+        CacheKey.AUGMENT,
+        augmentCandidates,
+        cachedAugmentCandidate
+    )
+    local outOfCachedAugment = ItemCache.IsUnavailableCachedCandidate(
+        CacheKey.AUGMENT,
+        augmentCandidate
+    )
     local augmentItemID = augmentCandidate and augmentCandidate.itemID
     local augmentItemCount = augmentCandidate and augmentCandidate.count
     local augmentItemData = augmentCandidate and augmentCandidate.data
@@ -83,40 +101,50 @@ function Augment.Update(button, state)
 
     ButtonState.ApplyActiveAura(buttonState, augmentState)
 
-    if augmentItemID and augmentItemCount and augmentItemCount > 0 then
+    if augmentItemID then
         if augmentItemData and augmentItemData.unlimited then
             buttonState.countText = ""
         else
-            buttonState.countText = tostring(augmentItemCount)
+            buttonState.countText = tostring(augmentItemCount or 0)
         end
 
         buttonState.tooltipItemID = augmentItemID
         buttonState.usableItemID = augmentItemID
 
-        if not isAugment then
-            if augmentItemIcon then
-                buttonState.icon = augmentItemIcon
-            end
+        if augmentItemIcon then
+            buttonState.icon = augmentItemIcon
         end
+    else
+        buttonState.countText = "0"
+    end
 
+    if augmentItemID and augmentItemCount and augmentItemCount > 0 then
         buttonState.action = {
             type = ActionType.ITEM_MACRO,
             itemID = augmentItemID,
+            cacheKey = CacheKey.AUGMENT,
         }
-    else
+    elseif outOfCachedAugment and not augmentState then
         buttonState.countText = "0"
-
-        if not isAugment then
-            buttonState.outOfItemsText = "No Augment Runes found in Bags"
+        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+    else
+        if not augmentState then
+            buttonState.outOfItemsText = OUT_OF_ITEMS
         end
     end
 
-    buttonState.glow = augmentItemID ~= nil and not isAugment
+    buttonState.glow = augmentItemCount ~= nil
+                       and augmentItemCount > 0
+                       and not isAugment
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         augmentCandidates,
         augmentItemID,
         ActionType.ITEM_MACRO,
-        { getCountText = getCountText }
+        {
+            getCountText = getCountText,
+            cacheKey = CacheKey.AUGMENT,
+            includeSingleChoice = outOfCachedAugment,
+        }
     )
 
     Renderer.Apply(button, buttonState)

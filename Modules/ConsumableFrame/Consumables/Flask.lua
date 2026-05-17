@@ -7,10 +7,15 @@ local Flask = RCC.Consumables.Flask
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
+local CacheKey = RCC.ConsumableItemCacheKey
+
+local OUT_OF_ITEMS = "No Flasks found in Bags"
+local OUT_OF_SELECTED_ITEM = "Selected Flask not found in Bags"
 
 local function getFlaskAuraState(state, expireWarnSeconds)
     local aura = Auras.FindBySpellID(state, RCC.db.flaskBuffIDs)
@@ -27,39 +32,59 @@ function Flask.Update(button, state)
         RCC.db.flaskItemIDs,
         ItemCandidates.BAGS_ONLY
     )
-    local flaskCandidate = flaskCandidates[1]
+    local cachedFlaskCandidate = ItemCandidates.CreateFromList(
+        RCC.db.flaskItemIDs,
+        ItemCache.Get(CacheKey.FLASK),
+        ItemCandidates.BAGS_ONLY
+    )
+    local flaskCandidate = ItemCache.SelectCandidate(
+        CacheKey.FLASK,
+        flaskCandidates,
+        cachedFlaskCandidate
+    )
+    local outOfCachedFlask = ItemCache.IsUnavailableCachedCandidate(
+        CacheKey.FLASK,
+        flaskCandidate
+    )
     local flaskCount = flaskCandidate and flaskCandidate.count or 0
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
     local buttonState = ButtonState.Create()
 
     ButtonState.ApplyActiveAura(buttonState, flaskState)
 
-    if flaskCount > 0 then
+    if flaskItemID then
         buttonState.tooltipItemID = flaskItemID
         buttonState.usableItemID = flaskItemID
 
-        if not isFlask then
-            if flaskCandidate.icon then
-                buttonState.icon = flaskCandidate.icon
-            end
-        end
-
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = flaskItemID,
-        }
-    else
-        if not isFlask then
-            buttonState.outOfItemsText = "No Flasks found in Bags"
+        if flaskCandidate.icon then
+            buttonState.icon = flaskCandidate.icon
         end
     end
 
-    buttonState.countText = flaskCount > 0 and tostring(flaskCount) or ""
+    if flaskCount > 0 then
+        buttonState.action = {
+            type = ActionType.ITEM_MACRO,
+            itemID = flaskItemID,
+            cacheKey = CacheKey.FLASK,
+        }
+    elseif outOfCachedFlask and not flaskState then
+        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+    else
+        if not flaskState then
+            buttonState.outOfItemsText = OUT_OF_ITEMS
+        end
+    end
+
+    buttonState.countText = flaskItemID and tostring(flaskCount) or ""
     buttonState.glow = not isFlask and flaskCount > 0
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         flaskCandidates,
         flaskItemID,
-        ActionType.ITEM_MACRO
+        ActionType.ITEM_MACRO,
+        {
+            cacheKey = CacheKey.FLASK,
+            includeSingleChoice = outOfCachedFlask,
+        }
     )
 
     Renderer.Apply(button, buttonState)

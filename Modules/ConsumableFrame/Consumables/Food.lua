@@ -7,10 +7,25 @@ local Food = RCC.Consumables.Food
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
+local CacheKey = RCC.ConsumableItemCacheKey
+
+local OUT_OF_ITEMS = "No Food found in Bags"
+local OUT_OF_SELECTED_ITEM = "Selected Food not found in Bags"
+
+local function getDisplayAuraState(foodAuraState, eatingAuraState)
+    if eatingAuraState
+        and (not foodAuraState or foodAuraState.timeIsBad)
+    then
+        return eatingAuraState
+    end
+
+    return foodAuraState
+end
 
 local function getFoodAuraStates(state, expireWarnSeconds)
     local foodAuraState
@@ -62,18 +77,34 @@ function Food.Update(button, state)
         state,
         button.expireWarnSeconds
     )
-    local displayAuraState = foodAuraState or eatingAuraState
+    local displayAuraState = getDisplayAuraState(
+        foodAuraState,
+        eatingAuraState
+    )
+    local displayingEating = displayAuraState
+        and displayAuraState == eatingAuraState
+    local hasFoodCoverage = foodAuraState ~= nil or eatingAuraState ~= nil
     local foodSatisfied = eatingAuraState ~= nil
-
-    if foodAuraState then
-        foodSatisfied = foodAuraState.satisfied == true
-    end
+        or (foodAuraState and foodAuraState.satisfied == true)
 
     local foodCandidates = ItemCandidates.CollectAvailableFromList(
         RCC.db.foodItemIDs,
         ItemCandidates.BAGS_ONLY
     )
-    local foodCandidate = foodCandidates[1]
+    local cachedFoodCandidate = ItemCandidates.CreateFromList(
+        RCC.db.foodItemIDs,
+        ItemCache.Get(CacheKey.FOOD),
+        ItemCandidates.BAGS_ONLY
+    )
+    local foodCandidate = ItemCache.SelectCandidate(
+        CacheKey.FOOD,
+        foodCandidates,
+        cachedFoodCandidate
+    )
+    local outOfCachedFood = ItemCache.IsUnavailableCachedCandidate(
+        CacheKey.FOOD,
+        foodCandidate
+    )
     local foodCount = foodCandidate and foodCandidate.count or 0
     local foodItemID = foodCandidate and foodCandidate.itemID
     local buttonState = ButtonState.Create({
@@ -82,32 +113,39 @@ function Food.Update(button, state)
 
     ButtonState.ApplyActiveAura(buttonState, displayAuraState)
 
-    if foodCount > 0 then
+    if foodItemID then
         buttonState.tooltipItemID = foodItemID
         buttonState.usableItemID = foodItemID
 
-        if not foodSatisfied then
-            if foodCandidate.icon then
-                buttonState.icon = foodCandidate.icon
-            end
-        end
-
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = foodItemID,
-        }
-    else
-        if not foodSatisfied then
-            buttonState.outOfItemsText = "No Food found in Bags"
+        if not displayingEating and foodCandidate.icon then
+            buttonState.icon = foodCandidate.icon
         end
     end
 
-    buttonState.countText = foodCount > 0 and tostring(foodCount) or ""
+    if foodCount > 0 then
+        buttonState.action = {
+            type = ActionType.ITEM_MACRO,
+            itemID = foodItemID,
+            cacheKey = CacheKey.FOOD,
+        }
+    elseif outOfCachedFood and not hasFoodCoverage then
+        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+    else
+        if not hasFoodCoverage then
+            buttonState.outOfItemsText = OUT_OF_ITEMS
+        end
+    end
+
+    buttonState.countText = foodItemID and tostring(foodCount) or ""
     buttonState.glow = not foodSatisfied and foodCount > 0
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         foodCandidates,
         foodItemID,
-        ActionType.ITEM_MACRO
+        ActionType.ITEM_MACRO,
+        {
+            cacheKey = CacheKey.FOOD,
+            includeSingleChoice = outOfCachedFood,
+        }
     )
 
     Renderer.Apply(button, buttonState)
