@@ -83,14 +83,9 @@ function Food.Update(button, state)
             end
         end
 
-        buttonState.action = {
-            type = ButtonState.ACTION_ITEM_MACRO,
-            itemID = foodItemID,
-        }
+        buttonState.action = ButtonState.ItemMacroAction(foodItemID)
     else
-        buttonState.action = {
-            type = ButtonState.ACTION_DISABLE,
-        }
+        buttonState.action = ButtonState.DisableAction()
 
         if not foodSatisfied then
             buttonState.outOfItemsText = "No Food found in Bags"

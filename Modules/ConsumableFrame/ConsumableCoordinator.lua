@@ -1,7 +1,6 @@
 local _, RCC = ...
 
 local Auras = RCC.ConsumableFrameAuras
-local F = RCC.F
 local Buttons = RCC.ConsumableFrameButtons
 local Food = RCC.Consumables.Food
 local Flask = RCC.Consumables.Flask
@@ -14,7 +13,6 @@ local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
 local GetTime = GetTime
 
-local setButtonShownInLayout = Buttons.SetShownInLayout
 local resetButtonState = Buttons.ResetState
 
 --------------------------------------------------------------------------------
@@ -25,15 +23,11 @@ function RCC.consumables:Update()
     self:UpdateReadyCheckAnchor()
     local buttons = self.buttons
 
-    local isWarlockInRaid = F.hasClassInRoster("WARLOCK")
-
     local NOT_READY = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
     for i = 1, #buttons do
         resetButtonState(buttons[i], NOT_READY)
     end
-
-    setButtonShownInLayout(buttons.hs, isWarlockInRaid)
 
     local now = GetTime()
     local auraState = Auras.ScanPlayer(now)

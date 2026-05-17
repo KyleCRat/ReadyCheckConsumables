@@ -49,9 +49,7 @@ function Vantus.Update(button, state)
 
     if not vantusRuneIDs then
         buttonState.showInLayout = false
-        buttonState.action = {
-            type = ButtonState.ACTION_DISABLE,
-        }
+        buttonState.action = ButtonState.DisableAction()
 
         Renderer.Apply(button, buttonState)
 
@@ -74,9 +72,7 @@ function Vantus.Update(button, state)
             buttonState.countText = tostring(count)
         end
 
-        buttonState.action = {
-            type = ButtonState.ACTION_DISABLE,
-        }
+        buttonState.action = ButtonState.DisableAction()
         Renderer.Apply(button, buttonState)
 
         return
@@ -86,10 +82,7 @@ function Vantus.Update(button, state)
         buttonState.countText = tostring(count)
         buttonState.tooltipItemID = itemID
         buttonState.usableItemID = itemID
-        buttonState.action = {
-            type = ButtonState.ACTION_ITEM_MACRO,
-            itemID = itemID,
-        }
+        buttonState.action = ButtonState.ItemMacroAction(itemID)
 
         Renderer.Apply(button, buttonState)
 
@@ -99,9 +92,7 @@ function Vantus.Update(button, state)
     buttonState.countText = "0"
     buttonState.tooltipItemID = itemID
     buttonState.outOfItemsText = "No Vantus Runes found in Bags"
-    buttonState.action = {
-        type = ButtonState.ACTION_DISABLE,
-    }
+    buttonState.action = ButtonState.DisableAction()
 
     Renderer.Apply(button, buttonState)
 end

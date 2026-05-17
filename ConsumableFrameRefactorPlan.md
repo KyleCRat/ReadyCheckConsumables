@@ -701,7 +701,48 @@ Where the pattern is shared, move it into small helpers that produce normalized
 button state. Avoid forcing every consumable into one generic implementation;
 food, flask, augment, Vantus, and weapon enchants still have different rules.
 
-### Step 6: Extract Reusable Raid-Buff Status Logic
+### Step 6: Finish Consumable Module Migration
+
+Finish moving active consumable modules onto the shared state, renderer,
+candidate, aura, and action-descriptor boundaries before starting unrelated
+raid-frame work.
+
+The goal is not to make every module identical. The goal is that modules express
+consumable rules in domain terms and stop directly owning raw button rendering,
+glow, tooltip field mutation, and secure action setup when a state/action
+descriptor can express the same behavior.
+
+Migration targets:
+
+- `Food.lua` should use shared item candidates, shared aura status helpers, and
+  renderer-applied button state while preserving the eating/drinking cooldown
+  behavior and the rule that a real food buff wins over transient eating state.
+- `Flask.lua` should use shared item candidates, shared aura status helpers,
+  renderer-applied button state, and a named expiration threshold.
+- `Augment.lua` should use shared item candidates and renderer-applied state
+  while preserving unlimited-rune preference and ranking behavior.
+- `Vantus.lua` should use shared item candidates, shared aura lookup, and
+  renderer-applied state while preserving current-raid layout gating.
+- `Healthstone.lua`, `DamagePotion.lua`, and `HealingPotion.lua` should remain
+  on renderer-applied state and should not reintroduce direct button mutation.
+- `WeaponEnchant.lua` should migrate last, after action descriptors can express
+  item enchants, spell enchants, disable states, tooltip hints, independent
+  main-hand/offhand caches, and slot eligibility clearly.
+- Dormant `ArmorKit.lua` can stay direct until it is reactivated; do not spend
+  effort migrating dormant code unless it blocks active cleanup.
+
+Acceptance target:
+
+- Every active consumable except weapon enchants uses renderer-applied state.
+- Weapon enchant uses shared candidate helpers and has an explicit remaining
+  migration note if it is not fully on renderer-applied state yet.
+- No active non-weapon module calls `ConsumableFrameActions` or
+  `ConsumableFrameGlow` directly.
+- No active non-weapon module directly mutates tooltip fields, count text,
+  timer text, status texture, icon texture, or desaturation outside a local
+  state table.
+
+### Step 7: Extract Reusable Raid-Buff Status Logic
 
 Move the aura-matching logic currently embedded in raid-frame columns into a
 shared raid-buff status module. The raid frame should use that shared module,
@@ -717,7 +758,7 @@ Target responsibilities:
 This is a cleanup prerequisite for the future consumable-frame raid-buff
 indicator. The feature should not be implemented in Phase 3.
 
-### Step 7: Move Consumable Frame Event Ingress Out Of The Root Addon File
+### Step 8: Move Consumable Frame Event Ingress Out Of The Root Addon File
 
 Move consumable-frame lifecycle and event ingress from the root addon file into
 a focused controller module, such as `ConsumableFrameController.lua` or
@@ -741,7 +782,7 @@ Preserve the current product rule:
 - Hide on combat start.
 - Do not reopen automatically after combat.
 
-### Step 8: Normalize Data Shapes Where It Reduces Coupling
+### Step 9: Normalize Data Shapes Where It Reduces Coupling
 
 Clean up data structures that are currently hard to share safely.
 
@@ -758,7 +799,7 @@ Candidate cleanup:
 This step should remain behavior-preserving. Data reshaping is only worth doing
 when it removes coupling or avoids repeated interpretation logic.
 
-### Step 9: Consider A Dedicated Action Descriptor
+### Step 10: Consider A Dedicated Action Descriptor
 
 If the renderer still needs to know too much about individual consumables,
 introduce a small action descriptor model.

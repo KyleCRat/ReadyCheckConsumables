@@ -5,14 +5,10 @@ RCC.Consumables.ArmorKit = RCC.Consumables.ArmorKit or {}
 
 local ArmorKit = RCC.Consumables.ArmorKit
 
-local Actions = RCC.ConsumableFrameActions
-local Glow = RCC.ConsumableFrameGlow
+local ButtonState = RCC.ConsumableFrameButtonState
+local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemCount = C_Item.GetItemCount
-
-local setButtonGlow = Glow.Set
-
-local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local ARMOR_KIT_ITEM_ID = 172347
 local CHEST_INVENTORY_SLOT = 5
 
@@ -26,29 +22,34 @@ local CHEST_INVENTORY_SLOT = 5
 function ArmorKit.Update(button)
     if not button then return end
 
-    local kitCount = GetItemCount(ARMOR_KIT_ITEM_ID, false, true) or 0
+    local kitCount = ItemCandidates.GetCount(
+        ARMOR_KIT_ITEM_ID,
+        ItemCandidates.BAGS_ONLY
+    )
     local kitNow, _, kitTimeLeft = RCC:KitCheck()
+    kitNow = kitNow or 0
+    local buttonState = ButtonState.Create({
+        countText = tostring(kitCount),
+        glow = kitCount > 0 and kitNow == 0,
+    })
 
     if kitNow > 0 then
-        button.statustexture:SetTexture(READY)
-        button.texture:SetDesaturated(false)
-
-        if kitTimeLeft then
-            button.timeleft:SetText(kitTimeLeft)
-        end
+        buttonState.statusTexture = ButtonState.READY_TEXTURE
+        buttonState.hasConsumableBuff = true
+        buttonState.desaturated = false
+        buttonState.timeText = kitTimeLeft
     end
 
     if kitCount > 0 then
-        Actions.SetItemMacro(button, ARMOR_KIT_ITEM_ID, CHEST_INVENTORY_SLOT)
+        buttonState.tooltipItemID = ARMOR_KIT_ITEM_ID
+        buttonState.usableItemID = ARMOR_KIT_ITEM_ID
+        buttonState.action = ButtonState.ItemMacroAction(
+            ARMOR_KIT_ITEM_ID,
+            CHEST_INVENTORY_SLOT
+        )
     else
-        Actions.Disable(button)
+        buttonState.action = ButtonState.DisableAction()
     end
 
-    button.count:SetFormattedText("%d", kitCount)
-
-    if kitCount > 0 and kitNow == 0 then
-        setButtonGlow(button, true)
-    else
-        setButtonGlow(button, false)
-    end
+    Renderer.Apply(button, buttonState)
 end

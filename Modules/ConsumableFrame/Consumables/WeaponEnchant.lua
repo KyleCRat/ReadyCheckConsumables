@@ -5,21 +5,15 @@ RCC.Consumables.WeaponEnchant = RCC.Consumables.WeaponEnchant or {}
 
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
-local Actions = RCC.ConsumableFrameActions
-local Buttons = RCC.ConsumableFrameButtons
+local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
-local Glow = RCC.ConsumableFrameGlow
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetSpellInfo = C_Spell.GetSpellInfo
 local IsSpellKnown = C_SpellBook.IsSpellKnown
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
-local setButtonGlow = Glow.Set
-local setButtonShownInLayout = Buttons.SetShownInLayout
-local setTimeTextBad = Buttons.SetTimeTextBad
-
-local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
@@ -31,11 +25,11 @@ local function getWeaponEnchantItemCount(itemID)
     return ItemCandidates.GetCount(itemID, ItemCandidates.BAGS_ONLY)
 end
 
-local function getWeaponEnchantDataByID(enchantID)
+local function getWeaponEnchantData(enchantID)
     return RCC.db.weaponEnchants[enchantID or 0]
 end
 
-local function getIconForWeaponEnchant(enchantData)
+local function getWeaponEnchantIcon(enchantData)
     if not enchantData then return end
 
     if enchantData.icon then
@@ -47,11 +41,11 @@ local function getIconForWeaponEnchant(enchantData)
     return spellInfo and spellInfo.iconID
 end
 
-local function setButtonIconForWeaponEnchant(button, enchantData)
-    local icon = getIconForWeaponEnchant(enchantData)
+local function addEnchantIconToState(buttonState, enchantData)
+    local icon = getWeaponEnchantIcon(enchantData)
 
     if icon then
-        button.texture:SetTexture(icon)
+        buttonState.icon = icon
     end
 end
 
@@ -77,66 +71,61 @@ local function findBestWeaponEnchantItemInBags()
     end
 end
 
-local function getWeaponSlotEnchantability(slotID)
+local function canWeaponSlotBeEnchanted(slotID)
     local itemID = GetInventoryItemID("player", slotID)
 
-    if not itemID then
-        return nil, false
-    end
+    if not itemID then return false end
 
     local itemClassID = select(6, GetItemInfoInstant(itemID))
 
-    return itemID, itemClassID == 2
+    return itemClassID == 2
 end
 
-local function normalizeWeaponSlotEnchantState(button, slotID, hasEnchant,
-                                               expiration, enchantID)
-    local _, canBeEnchanted = getWeaponSlotEnchantability(slotID)
+local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID)
+    local canBeEnchanted = canWeaponSlotBeEnchanted(slotID)
 
-    setButtonShownInLayout(button, canBeEnchanted)
+    return {
+        canBeEnchanted = canBeEnchanted,
+        hasEnchant = canBeEnchanted and hasEnchant == true,
+        expiration = canBeEnchanted and expiration or nil,
+        enchantID = canBeEnchanted and enchantID or nil,
+    }
+end
 
-    if not canBeEnchanted then
-        return false, false, nil, nil
+local function addActiveEnchantToState(buttonState, slotID, slotState)
+    if not slotState.hasEnchant then return end
+
+    local enchantData = getWeaponEnchantData(slotState.enchantID)
+
+    buttonState.statusTexture = ButtonState.READY_TEXTURE
+    buttonState.hasConsumableBuff = true
+    buttonState.desaturated = false
+    buttonState.timeText = F.FormatDuration((slotState.expiration or 0) / 1000)
+
+    if slotState.expiration ~= nil then
+        buttonState.timeIsBad = slotState.expiration <= EXPIRING_SOON_MS
     end
 
-    return true, hasEnchant, expiration, enchantID
-end
-
-local function renderActiveWeaponEnchant(button, hasEnchant, expiration,
-                                         enchantID, slotID)
-    if not hasEnchant then return end
-
-    local enchantData = getWeaponEnchantDataByID(enchantID)
-
-    button.statustexture:SetTexture(READY)
-    button.hasConsumableBuff = true
-    button.texture:SetDesaturated(false)
-    button.timeleft:SetText(F.FormatDuration((expiration or 0) / 1000))
-    setTimeTextBad(button, expiration and expiration <= EXPIRING_SOON_MS)
-
     if enchantData then
-        setButtonIconForWeaponEnchant(button, enchantData)
+        addEnchantIconToState(buttonState, enchantData)
 
         if enchantData.item then
             cachedWeaponEnchantItemIDs[slotID] = enchantData.item
-            button.tooltipItemID = enchantData.item
+            buttonState.tooltipItemID = enchantData.item
         elseif enchantData.spellID then
-            button.tooltipSpellID = enchantData.spellID
+            buttonState.tooltipSpellID = enchantData.spellID
         end
     end
 
     return enchantData
 end
 
-local function setCachedItemIconWhenNoEnchantActive(button, itemID,
-                                                    activeEnchantData)
+local function addCachedItemIconToState(buttonState, itemID, activeEnchantData)
     local enchantData = itemID and RCC.db.weaponEnchantItemIDs[itemID]
 
-    if activeEnchantData or not enchantData then
-        return
-    end
+    if activeEnchantData or not enchantData then return end
 
-    setButtonIconForWeaponEnchant(button, enchantData)
+    addEnchantIconToState(buttonState, enchantData)
 end
 
 local function playerKnowsSpellEnchantData(enchantData)
@@ -212,8 +201,6 @@ local function selectKnownSpellEnchantForSlot(slotID)
     if candidates[1] then
         return candidates[1].enchantData
     end
-
-    return nil
 end
 
 local function selectSpellEnchantForSlot(slotID, activeEnchantData)
@@ -229,65 +216,72 @@ local function shouldPreferSpellEnchant(hasEnchant, activeEnchantData)
            or (activeEnchantData and activeEnchantData.spellID ~= nil)
 end
 
-local function configureSpellEnchantButton(button, enchantData, canBeEnchanted,
-                                           hasEnchant, expiration)
+local function isExpiringSoon(slotState)
+    return slotState.expiration ~= nil
+           and slotState.expiration <= EXPIRING_SOON_MS
+end
+
+local function configureSpellEnchantState(buttonState, enchantData, slotState)
     if not enchantData or not enchantData.spellID then return false end
 
     local spellInfo = GetSpellInfo(enchantData.spellID)
     local spellName = spellInfo and spellInfo.name
 
     if not spellName then
-        Actions.Disable(button)
+        buttonState.action = ButtonState.DisableAction()
 
         return false
     end
 
-    setButtonIconForWeaponEnchant(button, enchantData)
-    Actions.SetSpell(button, spellName, canBeEnchanted)
+    addEnchantIconToState(buttonState, enchantData)
 
-    button.count:SetText("")
-    button.tooltipSpellID = enchantData.spellID
-    button.clickHintSpellID = enchantData.spellID
-    setButtonGlow(button, canBeEnchanted
-                         and (not hasEnchant
-                             or (expiration
-                                 and expiration <= EXPIRING_SOON_MS)))
+    buttonState.action = ButtonState.SpellAction(
+        spellName,
+        slotState.canBeEnchanted
+    )
+    buttonState.countText = ""
+    buttonState.tooltipSpellID = enchantData.spellID
+    buttonState.clickHintSpellID = enchantData.spellID
+    buttonState.glow = slotState.canBeEnchanted
+                       and (not slotState.hasEnchant
+                            or isExpiringSoon(slotState))
 
     return true
 end
 
-local function showMissingWeaponEnchantItem(button, showHint)
+local function configureMissingItemState(buttonState, showHint)
     if showHint then
-        button.outOfItemsText = OUT_OF_ITEMS
+        buttonState.outOfItemsText = OUT_OF_ITEMS
     end
 
-    Actions.Disable(button)
-    setButtonGlow(button, false)
+    buttonState.action = ButtonState.DisableAction()
+    buttonState.glow = false
 end
 
-local function configureItemEnchantButton(button, itemID, count,
-                                          canBeEnchanted, hasEnchant,
-                                          expiration)
-    button.count:SetText(count)
-    button.usableItemID = itemID
-    button.clickHintItemID = itemID
+local function configureItemEnchantState(buttonState, itemID, count, slotState)
+    local hasItem = count ~= nil and count > 0
 
-    if not button.tooltipItemID then
-        button.tooltipItemID = itemID
+    buttonState.countText = tostring(count or 0)
+    buttonState.usableItemID = itemID
+    buttonState.clickHintItemID = itemID
+
+    if not buttonState.tooltipItemID then
+        buttonState.tooltipItemID = itemID
     end
 
-    if count and count > 0 then
-        Actions.SetWeaponEnchantItem(button, itemID, canBeEnchanted)
+    if hasItem then
+        buttonState.action = ButtonState.WeaponEnchantItemAction(
+            itemID,
+            slotState.canBeEnchanted
+        )
     else
-        Actions.Disable(button)
+        buttonState.action = ButtonState.DisableAction()
     end
 
-    local needsEnchant = canBeEnchanted and count and count > 0
-                         and (not hasEnchant
-                             or (expiration
-                                 and expiration <= EXPIRING_SOON_MS))
-
-    setButtonGlow(button, needsEnchant)
+    buttonState.glow = slotState.canBeEnchanted
+                       and hasItem
+                       and (not slotState.hasEnchant
+                            or isExpiringSoon(slotState))
 end
 
 local function getUsableWeaponEnchantItemForSlot(slotID)
@@ -302,111 +296,92 @@ local function getUsableWeaponEnchantItemForSlot(slotID)
     return findBestWeaponEnchantItemInBags()
 end
 
-local function configureItemEnchantSlot(button, slotID, canBeEnchanted,
-                                        hasEnchant, expiration,
-                                        activeEnchantData, showMissingHint)
+local function configureItemEnchantForSlot(buttonState, slotID, slotState,
+                                           activeEnchantData, showMissingHint)
     local itemID = getUsableWeaponEnchantItemForSlot(slotID)
 
     if not itemID then
-        showMissingWeaponEnchantItem(button, showMissingHint)
+        configureMissingItemState(buttonState, showMissingHint)
 
         return
     end
 
-    setCachedItemIconWhenNoEnchantActive(button, itemID, activeEnchantData)
+    addCachedItemIconToState(buttonState, itemID, activeEnchantData)
 
-    configureItemEnchantButton(button, itemID, getWeaponEnchantItemCount(itemID),
-                               canBeEnchanted, hasEnchant, expiration)
+    configureItemEnchantState(
+        buttonState,
+        itemID,
+        getWeaponEnchantItemCount(itemID),
+        slotState
+    )
+end
+
+local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
+                                       enchantID, showMissingHint)
+    local slotState = buildWeaponSlotState(
+        slotID,
+        hasEnchant,
+        expiration,
+        enchantID
+    )
+    local buttonState = ButtonState.Create({
+        showInLayout = slotState.canBeEnchanted,
+        glow = false,
+    })
+
+    if not slotState.canBeEnchanted then
+        buttonState.action = ButtonState.DisableAction()
+        Renderer.Apply(button, buttonState)
+
+        return
+    end
+
+    local activeEnchantData = addActiveEnchantToState(
+        buttonState,
+        slotID,
+        slotState
+    )
+    local spellEnchant = selectSpellEnchantForSlot(slotID, activeEnchantData)
+
+    if not shouldPreferSpellEnchant(slotState.hasEnchant, activeEnchantData)
+        or not configureSpellEnchantState(
+            buttonState,
+            spellEnchant,
+            slotState
+        )
+    then
+        configureItemEnchantForSlot(
+            buttonState,
+            slotID,
+            slotState,
+            activeEnchantData,
+            showMissingHint
+        )
+    end
+
+    Renderer.Apply(button, buttonState)
 end
 
 function WeaponEnchant.Update(buttons)
-    local mainHandCanBeEnchanted
-    local offHandCanBeEnchanted
-
     local hasMainHandEnchant, mainHandExpiration, _, mainHandEnchantID,
           hasOffHandEnchant, offHandExpiration, _, offHandEnchantID =
           GetWeaponEnchantInfo()
 
-    mainHandCanBeEnchanted, hasMainHandEnchant, mainHandExpiration,
-        mainHandEnchantID = normalizeWeaponSlotEnchantState(
-            buttons.oil, MAIN_HAND_INVENTORY_SLOT, hasMainHandEnchant,
-            mainHandExpiration, mainHandEnchantID
-        )
-
-    offHandCanBeEnchanted, hasOffHandEnchant, offHandExpiration,
-        offHandEnchantID = normalizeWeaponSlotEnchantState(
-            buttons.oiloh, OFF_HAND_INVENTORY_SLOT, hasOffHandEnchant,
-            offHandExpiration, offHandEnchantID
-        )
-
-    local activeMainHandEnchantData = renderActiveWeaponEnchant(
-        buttons.oil, hasMainHandEnchant, mainHandExpiration,
-        mainHandEnchantID, MAIN_HAND_INVENTORY_SLOT
-    )
-
-    local activeOffHandEnchantData = renderActiveWeaponEnchant(
-        buttons.oiloh, hasOffHandEnchant, offHandExpiration,
-        offHandEnchantID, OFF_HAND_INVENTORY_SLOT
-    )
-
-    setCachedItemIconWhenNoEnchantActive(
+    updateWeaponEnchantSlot(
         buttons.oil,
-        cachedWeaponEnchantItemIDs[MAIN_HAND_INVENTORY_SLOT],
-        activeMainHandEnchantData
+        MAIN_HAND_INVENTORY_SLOT,
+        hasMainHandEnchant,
+        mainHandExpiration,
+        mainHandEnchantID,
+        true
     )
-    setCachedItemIconWhenNoEnchantActive(
+
+    updateWeaponEnchantSlot(
         buttons.oiloh,
-        cachedWeaponEnchantItemIDs[OFF_HAND_INVENTORY_SLOT],
-        activeOffHandEnchantData
+        OFF_HAND_INVENTORY_SLOT,
+        hasOffHandEnchant,
+        offHandExpiration,
+        offHandEnchantID,
+        true
     )
-
-    local mainHandSpellEnchant = selectSpellEnchantForSlot(
-        MAIN_HAND_INVENTORY_SLOT, activeMainHandEnchantData
-    )
-
-    if not shouldPreferSpellEnchant(hasMainHandEnchant,
-                                    activeMainHandEnchantData)
-        or not configureSpellEnchantButton(
-            buttons.oil,
-            mainHandSpellEnchant,
-            mainHandCanBeEnchanted,
-            hasMainHandEnchant,
-            mainHandExpiration
-        )
-    then
-        configureItemEnchantSlot(
-            buttons.oil,
-            MAIN_HAND_INVENTORY_SLOT,
-            mainHandCanBeEnchanted,
-            hasMainHandEnchant,
-            mainHandExpiration,
-            activeMainHandEnchantData,
-            true
-        )
-    end
-
-    local offHandSpellEnchant = selectSpellEnchantForSlot(
-        OFF_HAND_INVENTORY_SLOT, activeOffHandEnchantData
-    )
-
-    if not shouldPreferSpellEnchant(hasOffHandEnchant,
-                                    activeOffHandEnchantData)
-        or not configureSpellEnchantButton(
-            buttons.oiloh,
-            offHandSpellEnchant,
-            offHandCanBeEnchanted,
-            hasOffHandEnchant,
-            offHandExpiration
-        )
-    then
-        configureItemEnchantSlot(
-            buttons.oiloh,
-            OFF_HAND_INVENTORY_SLOT,
-            offHandCanBeEnchanted,
-            hasOffHandEnchant,
-            offHandExpiration,
-            activeOffHandEnchantData,
-            offHandCanBeEnchanted
-        )
-    end
 end

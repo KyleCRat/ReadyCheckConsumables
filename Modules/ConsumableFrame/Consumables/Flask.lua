@@ -47,14 +47,9 @@ function Flask.Update(button, state)
             end
         end
 
-        buttonState.action = {
-            type = ButtonState.ACTION_ITEM_MACRO,
-            itemID = flaskItemID,
-        }
+        buttonState.action = ButtonState.ItemMacroAction(flaskItemID)
     else
-        buttonState.action = {
-            type = ButtonState.ACTION_DISABLE,
-        }
+        buttonState.action = ButtonState.DisableAction()
 
         if not isFlask then
             buttonState.outOfItemsText = "No Flasks found in Bags"
