@@ -11,6 +11,9 @@ local strsplit           = strsplit
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local ADDON_PREFIX = "RCC"
+local MAIN_HAND_INVENTORY_SLOT = 16
+local OFF_HAND_INVENTORY_SLOT = 17
+
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
 
 local function getPlayerMinDurability()
@@ -32,7 +35,8 @@ local function getPlayerMinDurability()
 end
 
 local function getPlayerOilStatus()
-    local mainHandItemID = GetInventoryItemID("player", 16)
+    local mainHandItemID = GetInventoryItemID("player",
+                                              MAIN_HAND_INVENTORY_SLOT)
 
     if not mainHandItemID then
         return -1, 0
@@ -50,7 +54,8 @@ local function getPlayerOilStatus()
     local enchData = db.weaponEnchants[mainHandEnchantID or 0]
     local itemID = enchData and enchData.item or 0
 
-    local offhandItemID = GetInventoryItemID("player", 17)
+    local offhandItemID = GetInventoryItemID("player",
+                                             OFF_HAND_INVENTORY_SLOT)
 
     if offhandItemID then
         local itemClassID = select(6, GetItemInfoInstant(offhandItemID))

@@ -9,28 +9,37 @@ RCC.db = RCC.db or {}
 --- Detected via GetWeaponEnchantInfo() — only weapon-slot enchants belong here.
 --------------------------------------------------------------------------------
 
+local MAIN_HAND_INVENTORY_SLOT = 16
+local OFF_HAND_INVENTORY_SLOT = 17
+
 RCC.db.weaponEnchants = {
     -- Shaman Enchants (spellID = spell-based, not item-based)
     [5401] = { -- Windfury Weapon
         spellID = 33757,
         icon = 462329,
         spellSlots = {
-            [16] = { priority = 1 },
+            [MAIN_HAND_INVENTORY_SLOT] = { priority = 1 },
         },
     },
     [5400] = { -- Flametongue Weapon
         spellID = 318038,
         icon = 135814,
         spellSlots = {
-            [16] = { priority = 3, blockedByKnownEnchants = { 5401 } },
-            [17] = { priority = 1, requiresKnownEnchants = { 5401 } },
+            [MAIN_HAND_INVENTORY_SLOT] = {
+                priority = 3,
+                blockedByKnownEnchants = { 5401 },
+            },
+            [OFF_HAND_INVENTORY_SLOT] = {
+                priority = 1,
+                requiresKnownEnchants = { 5401 },
+            },
         },
     },
     [6498] = { -- Earthliving Weapon
         spellID = 382021,
         icon = 237578,
         spellSlots = {
-            [16] = { priority = 2 },
+            [MAIN_HAND_INVENTORY_SLOT] = { priority = 2 },
         },
     },
 

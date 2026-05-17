@@ -20,8 +20,8 @@ local setButtonShownInLayout = Buttons.SetShownInLayout
 
 local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
-local MAIN_HAND_SLOT = 16
-local OFF_HAND_SLOT = 17
+local MAIN_HAND_INVENTORY_SLOT = 16
+local OFF_HAND_INVENTORY_SLOT = 17
 local EXPIRING_SOON_MS = 300000
 
 local cachedWeaponEnchantItemIDs = {}
@@ -306,33 +306,39 @@ function WeaponEnchant.Update(buttons)
 
     mainHandCanBeEnchanted, hasMainHandEnchant, mainHandExpiration,
         mainHandEnchantID = getWeaponSlotState(
-            buttons.oil, MAIN_HAND_SLOT, hasMainHandEnchant,
+            buttons.oil, MAIN_HAND_INVENTORY_SLOT, hasMainHandEnchant,
             mainHandExpiration, mainHandEnchantID
         )
 
     offhandCanBeEnchanted, hasOffHandEnchant, offHandExpiration,
         offHandEnchantID = getWeaponSlotState(
-            buttons.oiloh, OFF_HAND_SLOT, hasOffHandEnchant,
+            buttons.oiloh, OFF_HAND_INVENTORY_SLOT, hasOffHandEnchant,
             offHandExpiration, offHandEnchantID
         )
 
     local appliedMainHandEnchant = applyAppliedEnchant(
         buttons.oil, hasMainHandEnchant, mainHandExpiration,
-        mainHandEnchantID, MAIN_HAND_SLOT
+        mainHandEnchantID, MAIN_HAND_INVENTORY_SLOT
     )
 
     local appliedOffHandEnchant = applyAppliedEnchant(
         buttons.oiloh, hasOffHandEnchant, offHandExpiration,
-        offHandEnchantID, OFF_HAND_SLOT
+        offHandEnchantID, OFF_HAND_INVENTORY_SLOT
     )
 
-    setFallbackIcon(buttons.oil, cachedWeaponEnchantItemIDs[MAIN_HAND_SLOT],
-                    appliedMainHandEnchant)
-    setFallbackIcon(buttons.oiloh, cachedWeaponEnchantItemIDs[OFF_HAND_SLOT],
-                    appliedOffHandEnchant)
+    setFallbackIcon(
+        buttons.oil,
+        cachedWeaponEnchantItemIDs[MAIN_HAND_INVENTORY_SLOT],
+        appliedMainHandEnchant
+    )
+    setFallbackIcon(
+        buttons.oiloh,
+        cachedWeaponEnchantItemIDs[OFF_HAND_INVENTORY_SLOT],
+        appliedOffHandEnchant
+    )
 
     local mainHandSpellEnchant = getSpellEnchantForSlot(
-        MAIN_HAND_SLOT, appliedMainHandEnchant
+        MAIN_HAND_INVENTORY_SLOT, appliedMainHandEnchant
     )
 
     if not shouldUseSpellEnchant(hasMainHandEnchant, appliedMainHandEnchant)
@@ -340,13 +346,19 @@ function WeaponEnchant.Update(buttons)
                                mainHandCanBeEnchanted, hasMainHandEnchant,
                                mainHandExpiration)
     then
-        updateItemSlot(buttons.oil, MAIN_HAND_SLOT, mainHandCanBeEnchanted,
-                       hasMainHandEnchant, mainHandExpiration,
-                       appliedMainHandEnchant, true)
+        updateItemSlot(
+            buttons.oil,
+            MAIN_HAND_INVENTORY_SLOT,
+            mainHandCanBeEnchanted,
+            hasMainHandEnchant,
+            mainHandExpiration,
+            appliedMainHandEnchant,
+            true
+        )
     end
 
     local offHandSpellEnchant = getSpellEnchantForSlot(
-        OFF_HAND_SLOT, appliedOffHandEnchant
+        OFF_HAND_INVENTORY_SLOT, appliedOffHandEnchant
     )
 
     if not shouldUseSpellEnchant(hasOffHandEnchant, appliedOffHandEnchant)
@@ -354,8 +366,14 @@ function WeaponEnchant.Update(buttons)
                                offhandCanBeEnchanted, hasOffHandEnchant,
                                offHandExpiration)
     then
-        updateItemSlot(buttons.oiloh, OFF_HAND_SLOT, offhandCanBeEnchanted,
-                       hasOffHandEnchant, offHandExpiration,
-                       appliedOffHandEnchant, offhandCanBeEnchanted)
+        updateItemSlot(
+            buttons.oiloh,
+            OFF_HAND_INVENTORY_SLOT,
+            offhandCanBeEnchanted,
+            hasOffHandEnchant,
+            offHandExpiration,
+            appliedOffHandEnchant,
+            offhandCanBeEnchanted
+        )
     end
 end

@@ -10,6 +10,8 @@ local Buttons = RCC.ConsumableFrameButtons
 local SIZE = 48
 local SPACING = 2
 local FONT = UI.FONT
+local MAIN_HAND_INVENTORY_SLOT = 16
+local OFF_HAND_INVENTORY_SLOT = 17
 
 Buttons.SIZE = SIZE
 Buttons.SPACING = SPACING
@@ -38,7 +40,7 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.weapon_enchant_icon_id,
         clickable = true,
         tooltipAction = "apply",
-        targetSlot = 16,
+        targetSlot = MAIN_HAND_INVENTORY_SLOT,
         layoutOrder = 3,
     },
     {
@@ -61,7 +63,7 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.weapon_enchant_icon_id,
         clickable = true,
         tooltipAction = "apply",
-        targetSlot = 17,
+        targetSlot = OFF_HAND_INVENTORY_SLOT,
         hiddenByDefault = true,
         layoutOrder = 4,
     },
