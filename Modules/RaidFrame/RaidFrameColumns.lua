@@ -3,10 +3,9 @@ local _, RCC = ...
 RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
-local db        = RCC.db
-local Renderers = RCC.RaidFrameColumnRenderers
-
-local GetSpellInfo = C_Spell.GetSpellInfo
+local db             = RCC.db
+local Renderers      = RCC.RaidFrameColumnRenderers
+local RaidBuffStatus = RCC.RaidBuffStatus
 
 local ICON_SIZE        = 26
 local NAME_WIDTH       = 150
@@ -15,7 +14,6 @@ local TIME_WIDTH       = 30
 local H_PAD            = 3
 local FRAME_PAD        = 3
 local DURABILITY_WIDTH = 42
-local FALLBACK_SPELL_ICON = 134400  -- INV_Misc_QuestionMark
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -62,7 +60,7 @@ local RENDER_CELL_BY_DATA_SOURCE = {
     },
 }
 
-local RAID_BUFF_COUNT = #db.raidBuffDefs
+local RAID_BUFF_COUNT = RaidBuffStatus.GetCount()
 local ICON_STEP       = ICON_SIZE + H_PAD
 
 local READY_ICON_CENTER_X = RC_ICON_WIDTH / 2
@@ -416,43 +414,21 @@ local vantusColumn = {
 --------------------------------------------------------------------------------
 
 local function createRaidBuffData()
-    return {
-        has    = false,
-        auraID = nil,
-    }
+    return RaidBuffStatus.CreateData()
 end
 
-local function collectRaidBuffAura(data, aura, scanContext, column)
-    local spellID = aura.spellId
-
-    if not spellID or data.has then
-        return
-    end
-
-    if spellID == column.spellID
-        or (column.altSpellID and spellID == column.altSpellID)
-        or (column.equivalentSpellIDs and column.equivalentSpellIDs[spellID])
-    then
-        data.has = true
-        data.auraID = aura.auraInstanceID or true
-    end
+local function collectRaidBuffAura(data, aura, _, column)
+    RaidBuffStatus.CollectAura(data, aura, column.index)
 end
 
 local function isRaidBuffBad(member, context, column)
     local data = getColumnData(member, column)
 
-    return not data or not data.has
-end
-
-local function getRaidBuffIconID(spellID)
-    local info = spellID and GetSpellInfo(spellID)
-
-    return info and info.iconID or FALLBACK_SPELL_ICON
+    return RaidBuffStatus.IsMissing(data)
 end
 
 local function createRaidBuffColumn(raidBuffIndex)
-    local buffDef = db.raidBuffDefs[raidBuffIndex]
-    local spellID = buffDef[3]
+    local buffInfo = RaidBuffStatus.GetInfo(raidBuffIndex)
 
     return {
         columnType         = COLUMN_TYPE.RAID_BUFF,
@@ -461,10 +437,8 @@ local function createRaidBuffColumn(raidBuffIndex)
         index              = raidBuffIndex,
         iconX              = RAID_BUFF_X[raidBuffIndex],
         titleX             = RAID_BUFF_X[raidBuffIndex],
-        iconID             = getRaidBuffIconID(spellID),
-        spellID            = spellID,
-        altSpellID         = buffDef[4],
-        equivalentSpellIDs = buffDef[5],
+        iconID             = buffInfo.iconID,
+        spellID            = buffInfo.spellID,
         CreateData         = createRaidBuffData,
         CollectAura        = collectRaidBuffAura,
         IsBad              = isRaidBuffBad,

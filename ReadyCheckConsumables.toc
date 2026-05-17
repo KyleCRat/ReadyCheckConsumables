@@ -19,6 +19,7 @@ data/RaidBuffs.lua
 data/HealingItems.lua
 data/WeaponEnchants.lua
 data/Settings.lua
+Modules/RaidBuffStatus.lua
 Modules/ConsumableFrame/ConsumableFrameGlow.lua
 Modules/ConsumableFrame/ConsumableFrameTooltips.lua
 Modules/ConsumableFrame/ConsumableFrameButtons.lua
