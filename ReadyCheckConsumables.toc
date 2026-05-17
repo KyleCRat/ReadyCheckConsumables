@@ -24,6 +24,7 @@ Modules/ConsumableFrame/ConsumableFrameTooltips.lua
 Modules/ConsumableFrame/ConsumableFrameButtons.lua
 Modules/ConsumableFrame/ConsumableFrameActions.lua
 Modules/ConsumableFrame/ConsumableFrameButtonState.lua
+Modules/ConsumableFrame/ConsumableFrameRenderer.lua
 Modules/ConsumableFrame/ConsumableFrameAuras.lua
 Modules/ConsumableFrame/Consumables/ArmorKit.lua
 Modules/ConsumableFrame/Consumables/Food.lua

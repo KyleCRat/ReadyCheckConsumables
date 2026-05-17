@@ -5,16 +5,12 @@ RCC.Consumables.Augment = RCC.Consumables.Augment or {}
 
 local Augment = RCC.Consumables.Augment
 
-local Actions = RCC.ConsumableFrameActions
+local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
-local Glow = RCC.ConsumableFrameGlow
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
-
-local setButtonGlow = Glow.Set
-
-local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
 local function getAuraState(state)
     if not state or not state.auras then return end
@@ -33,16 +29,16 @@ local function getAuraState(state)
     end
 end
 
-local function applyAuraState(button, state)
+local function applyAuraState(stateTable, state)
     if not state or not state.active then return end
 
-    button.statustexture:SetTexture(READY)
-    button.hasConsumableBuff = true
-    button.texture:SetDesaturated(false)
-    button.texture:SetTexture(state.icon)
+    stateTable.statusTexture = ButtonState.READY_TEXTURE
+    stateTable.hasConsumableBuff = true
+    stateTable.desaturated = false
+    stateTable.icon = state.icon
 
     if state.remaining then
-        button.timeleft:SetText(F.FormatDuration(state.remaining))
+        stateTable.timeText = F.FormatDuration(state.remaining)
     end
 end
 
@@ -96,41 +92,44 @@ function Augment.Update(button, state)
     local augmentState = getAuraState(state)
     local isAugment = augmentState and augmentState.satisfied
     local augmentItemID, augmentItemCount, augmentItemData = findItemInBags()
+    local buttonState = ButtonState.Create()
 
-    applyAuraState(button, augmentState)
+    applyAuraState(buttonState, augmentState)
 
     if augmentItemID and augmentItemCount and augmentItemCount > 0 then
         if augmentItemData and augmentItemData.unlimited then
-            button.count:SetText("")
+            buttonState.countText = ""
         else
-            button.count:SetFormattedText("%d", augmentItemCount)
+            buttonState.countText = tostring(augmentItemCount)
         end
 
-        button.tooltipItemID = augmentItemID
-        button.usableItemID = augmentItemID
+        buttonState.tooltipItemID = augmentItemID
+        buttonState.usableItemID = augmentItemID
 
         if not isAugment then
             local icon = GetItemIcon(augmentItemID)
 
             if icon then
-                button.texture:SetTexture(icon)
+                buttonState.icon = icon
             end
         end
 
-        Actions.SetItemMacro(button, augmentItemID)
+        buttonState.action = {
+            type = ButtonState.ACTION_ITEM_MACRO,
+            itemID = augmentItemID,
+        }
     else
-        button.count:SetText("0")
-
-        Actions.Disable(button)
+        buttonState.countText = "0"
+        buttonState.action = {
+            type = ButtonState.ACTION_DISABLE,
+        }
 
         if not isAugment then
-            button.outOfItemsText = "No Augment Runes found in Bags"
+            buttonState.outOfItemsText = "No Augment Runes found in Bags"
         end
     end
 
-    if augmentItemID and not isAugment then
-        setButtonGlow(button, true)
-    else
-        setButtonGlow(button, false)
-    end
+    buttonState.glow = augmentItemID ~= nil and not isAugment
+
+    Renderer.Apply(button, buttonState)
 end

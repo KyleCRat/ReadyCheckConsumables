@@ -6,6 +6,7 @@ RCC.Consumables.DamagePotion = RCC.Consumables.DamagePotion or {}
 local DamagePotion = RCC.Consumables.DamagePotion
 
 local ButtonState = RCC.ConsumableFrameButtonState
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
@@ -29,7 +30,7 @@ function DamagePotion.Update(button)
     end
 
     if inventoryItem and inventoryItemCount > 0 then
-        ButtonState.Apply(button, ButtonState.Create({
+        Renderer.Apply(button, ButtonState.Create({
             countText = tostring(inventoryItemCount),
             statusTexture = ButtonState.READY_TEXTURE,
             icon = GetItemIcon(inventoryItem),
@@ -37,7 +38,7 @@ function DamagePotion.Update(button)
             tooltipItemID = inventoryItem,
         }))
     else
-        ButtonState.Apply(button, ButtonState.Create({
+        Renderer.Apply(button, ButtonState.Create({
             countText = "0",
         }))
     end

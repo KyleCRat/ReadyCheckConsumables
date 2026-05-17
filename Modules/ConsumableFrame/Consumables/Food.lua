@@ -5,17 +5,13 @@ RCC.Consumables.Food = RCC.Consumables.Food or {}
 
 local Food = RCC.Consumables.Food
 
-local Actions = RCC.ConsumableFrameActions
 local Auras = RCC.ConsumableFrameAuras
+local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
-local Glow = RCC.ConsumableFrameGlow
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemCount = C_Item.GetItemCount
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
-
-local setButtonGlow = Glow.Set
-
-local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
 local function getFoodAuraState(state)
     local foodState
@@ -69,39 +65,40 @@ local function getFoodAuraState(state)
     return nil, nil
 end
 
-local function applyAuraState(button, state)
+local function applyAuraState(stateTable, state)
     if not state or not state.active then return end
 
-    button.statustexture:SetTexture(READY)
-    button.hasConsumableBuff = true
-    button.texture:SetDesaturated(false)
+    stateTable.statusTexture = ButtonState.READY_TEXTURE
+    stateTable.hasConsumableBuff = true
+    stateTable.desaturated = false
 
     if state.remaining then
-        button.timeleft:SetText(F.FormatDuration(state.remaining))
+        stateTable.timeText = F.FormatDuration(state.remaining)
     end
 
     if state.icon then
-        button.texture:SetTexture(state.icon)
+        stateTable.icon = state.icon
     end
 
     if state.auraInstanceID then
-        button.tooltipAuraID = state.auraInstanceID
+        stateTable.tooltipAuraID = state.auraInstanceID
     end
 end
 
-local function updateEatingCooldown(button, state)
+local function getEatingCooldown(state)
     if state
         and state.remaining
         and Auras.IsPositiveDuration(state.duration)
     then
         local cooldownStart = state.expiry - state.duration
-        button.cooldown:SetCooldown(cooldownStart, state.duration)
-        button.cooldown:Show()
 
-        return
+        return {
+            start = cooldownStart,
+            duration = state.duration,
+        }
     end
 
-    button.cooldown:Clear()
+    return { clear = true }
 end
 
 function Food.Update(button, state)
@@ -109,9 +106,11 @@ function Food.Update(button, state)
     local isFood = foodState and foodState.satisfied
     local foodCount = 0
     local foodItemID
+    local buttonState = ButtonState.Create({
+        cooldown = getEatingCooldown(eatingState),
+    })
 
-    applyAuraState(button, foodState)
-    updateEatingCooldown(button, eatingState)
+    applyAuraState(buttonState, foodState)
 
     for foodIndex = 1, #RCC.db.foodItemIDs do
         local itemID = RCC.db.foodItemIDs[foodIndex]
@@ -126,31 +125,33 @@ function Food.Update(button, state)
     end
 
     if foodCount > 0 then
-        button.tooltipItemID = foodItemID
-        button.usableItemID = foodItemID
+        buttonState.tooltipItemID = foodItemID
+        buttonState.usableItemID = foodItemID
 
         if not isFood then
             local texture = select(5, GetItemInfoInstant(foodItemID))
 
             if texture then
-                button.texture:SetTexture(texture)
+                buttonState.icon = texture
             end
         end
 
-        Actions.SetItemMacro(button, foodItemID)
+        buttonState.action = {
+            type = ButtonState.ACTION_ITEM_MACRO,
+            itemID = foodItemID,
+        }
     else
-        Actions.Disable(button)
+        buttonState.action = {
+            type = ButtonState.ACTION_DISABLE,
+        }
 
         if not isFood then
-            button.outOfItemsText = "No Food found in Bags"
+            buttonState.outOfItemsText = "No Food found in Bags"
         end
     end
 
-    button.count:SetFormattedText("%s", foodCount > 0 and foodCount or "")
+    buttonState.countText = foodCount > 0 and tostring(foodCount) or ""
+    buttonState.glow = not isFood and foodCount > 0
 
-    if not isFood and foodCount > 0 then
-        setButtonGlow(button, true)
-    else
-        setButtonGlow(button, false)
-    end
+    Renderer.Apply(button, buttonState)
 end

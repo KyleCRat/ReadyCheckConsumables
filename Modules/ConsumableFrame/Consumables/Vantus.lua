@@ -5,15 +5,11 @@ RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
 
 local Vantus = RCC.Consumables.Vantus
 
-local Actions = RCC.ConsumableFrameActions
-local Buttons = RCC.ConsumableFrameButtons
+local ButtonState = RCC.ConsumableFrameButtonState
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
-
-local setButtonShownInLayout = Buttons.SetShownInLayout
-
-local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
 local function getAuraBossName(state)
     if not state or not state.auras then return end
@@ -51,49 +47,63 @@ end
 function Vantus.Update(button, state)
     local bossName = getAuraBossName(state)
     local vantusRuneIDs, itemID, count = getVantusForCurrentRaid()
+    local buttonState = ButtonState.Create()
 
     if not vantusRuneIDs then
-        setButtonShownInLayout(button, false)
-        Actions.Disable(button)
+        buttonState.showInLayout = false
+        buttonState.action = {
+            type = ButtonState.ACTION_DISABLE,
+        }
+
+        Renderer.Apply(button, buttonState)
 
         return
     end
 
-    setButtonShownInLayout(button, true)
+    buttonState.showInLayout = true
 
     if itemID then
-        local iconTextureID = GetItemIcon(itemID)
-        button.texture:SetTexture(iconTextureID)
+        buttonState.icon = GetItemIcon(itemID)
     end
 
     if bossName then
-        button.timeleft:SetText(bossName)
-        button.statustexture:SetTexture(READY)
-        button.hasConsumableBuff = true
-        button.texture:SetDesaturated(false)
+        buttonState.timeText = bossName
+        buttonState.statusTexture = ButtonState.READY_TEXTURE
+        buttonState.hasConsumableBuff = true
+        buttonState.desaturated = false
 
         if count > 0 then
-            button.count:SetFormattedText("%d", count)
+            buttonState.countText = tostring(count)
         end
 
-        Actions.Disable(button)
+        buttonState.action = {
+            type = ButtonState.ACTION_DISABLE,
+        }
+        Renderer.Apply(button, buttonState)
 
         return
     end
 
     if itemID and count > 0 then
-        button.count:SetFormattedText("%d", count)
-        button.tooltipItemID = itemID
-        button.usableItemID = itemID
+        buttonState.countText = tostring(count)
+        buttonState.tooltipItemID = itemID
+        buttonState.usableItemID = itemID
+        buttonState.action = {
+            type = ButtonState.ACTION_ITEM_MACRO,
+            itemID = itemID,
+        }
 
-        Actions.SetItemMacro(button, itemID)
+        Renderer.Apply(button, buttonState)
 
         return
     end
 
-    button.count:SetText("0")
-    button.tooltipItemID = itemID
-    button.outOfItemsText = "No Vantus Runes found in Bags"
+    buttonState.countText = "0"
+    buttonState.tooltipItemID = itemID
+    buttonState.outOfItemsText = "No Vantus Runes found in Bags"
+    buttonState.action = {
+        type = ButtonState.ACTION_DISABLE,
+    }
 
-    Actions.Disable(button)
+    Renderer.Apply(button, buttonState)
 end

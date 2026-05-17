@@ -6,6 +6,7 @@ RCC.Consumables.HealingPotion = RCC.Consumables.HealingPotion or {}
 local HealingPotion = RCC.Consumables.HealingPotion
 
 local ButtonState = RCC.ConsumableFrameButtonState
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemCount = C_Item.GetItemCount
 local GetItemIcon = C_Item.GetItemIconByID
@@ -27,7 +28,7 @@ function HealingPotion.Update(button)
     end
 
     if inventoryItem and inventoryItemCount > 0 then
-        ButtonState.Apply(button, ButtonState.Create({
+        Renderer.Apply(button, ButtonState.Create({
             countText = tostring(inventoryItemCount),
             statusTexture = ButtonState.READY_TEXTURE,
             icon = GetItemIcon(inventoryItem),
@@ -35,7 +36,7 @@ function HealingPotion.Update(button)
             tooltipItemID = inventoryItem,
         }))
     else
-        ButtonState.Apply(button, ButtonState.Create({
+        Renderer.Apply(button, ButtonState.Create({
             countText = "0",
         }))
     end

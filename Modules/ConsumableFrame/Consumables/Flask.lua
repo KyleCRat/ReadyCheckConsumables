@@ -5,18 +5,12 @@ RCC.Consumables.Flask = RCC.Consumables.Flask or {}
 
 local Flask = RCC.Consumables.Flask
 
-local Actions = RCC.ConsumableFrameActions
-local Buttons = RCC.ConsumableFrameButtons
+local ButtonState = RCC.ConsumableFrameButtonState
 local F = RCC.F
-local Glow = RCC.ConsumableFrameGlow
+local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemCount = C_Item.GetItemCount
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
-
-local setButtonGlow = Glow.Set
-local setTimeTextBad = Buttons.SetTimeTextBad
-
-local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
 local function getFlaskAuraState(state)
     if not state or not state.auras then return end
@@ -35,20 +29,20 @@ local function getFlaskAuraState(state)
     end
 end
 
-local function applyAuraState(button, state)
+local function applyAuraState(stateTable, state)
     if not state or not state.active then return end
 
-    button.statustexture:SetTexture(READY)
-    button.hasConsumableBuff = true
-    button.texture:SetDesaturated(false)
+    stateTable.statusTexture = ButtonState.READY_TEXTURE
+    stateTable.hasConsumableBuff = true
+    stateTable.desaturated = false
 
     if state.icon then
-        button.texture:SetTexture(state.icon)
+        stateTable.icon = state.icon
     end
 
     if state.remaining then
-        button.timeleft:SetText(F.FormatDuration(state.remaining))
-        setTimeTextBad(button, not state.satisfied)
+        stateTable.timeText = F.FormatDuration(state.remaining)
+        stateTable.timeIsBad = not state.satisfied
     end
 end
 
@@ -57,8 +51,9 @@ function Flask.Update(button, state)
     local isFlask = flaskState and flaskState.satisfied
     local flaskCount = 0
     local flaskItemID
+    local buttonState = ButtonState.Create()
 
-    applyAuraState(button, flaskState)
+    applyAuraState(buttonState, flaskState)
 
     for flaskIndex = 1, #RCC.db.flaskItemIDs do
         local itemID = RCC.db.flaskItemIDs[flaskIndex]
@@ -73,31 +68,33 @@ function Flask.Update(button, state)
     end
 
     if flaskCount > 0 then
-        button.tooltipItemID = flaskItemID
-        button.usableItemID = flaskItemID
+        buttonState.tooltipItemID = flaskItemID
+        buttonState.usableItemID = flaskItemID
 
         if not isFlask then
             local texture = select(5, GetItemInfoInstant(flaskItemID))
 
             if texture then
-                button.texture:SetTexture(texture)
+                buttonState.icon = texture
             end
         end
 
-        Actions.SetItemMacro(button, flaskItemID)
+        buttonState.action = {
+            type = ButtonState.ACTION_ITEM_MACRO,
+            itemID = flaskItemID,
+        }
     else
-        Actions.Disable(button)
+        buttonState.action = {
+            type = ButtonState.ACTION_DISABLE,
+        }
 
         if not isFlask then
-            button.outOfItemsText = "No Flasks found in Bags"
+            buttonState.outOfItemsText = "No Flasks found in Bags"
         end
     end
 
-    button.count:SetFormattedText("%s", flaskCount > 0 and flaskCount or "")
+    buttonState.countText = flaskCount > 0 and tostring(flaskCount) or ""
+    buttonState.glow = not isFlask and flaskCount > 0
 
-    if not isFlask and flaskCount > 0 then
-        setButtonGlow(button, true)
-    else
-        setButtonGlow(button, false)
-    end
+    Renderer.Apply(button, buttonState)
 end
