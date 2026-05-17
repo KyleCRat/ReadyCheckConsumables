@@ -97,15 +97,3 @@ function RCC.consumables:Repos(isInitiator)
         self:SetPoint("BOTTOM", anchor, "TOP", 0, 5)
     end
 end
-
-function RCC.consumables:OnHide()
-    self:UnregisterEvent("UNIT_AURA")
-    self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
-    self:UnregisterEvent("READY_CHECK_CONFIRM")
-    self.anchor:Hide()
-
-    if self.cancelDelay then
-        self.cancelDelay:Cancel()
-        self.cancelDelay = nil
-    end
-end

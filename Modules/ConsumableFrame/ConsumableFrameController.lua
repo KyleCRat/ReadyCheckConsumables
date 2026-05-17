@@ -3,6 +3,22 @@ local _, RCC = ...
 RCC.ConsumableFrameController = RCC.ConsumableFrameController or {}
 
 local Controller = RCC.ConsumableFrameController
+local Auras = RCC.ConsumableFrameAuras
+local Buttons = RCC.ConsumableFrameButtons
+local Food = RCC.Consumables.Food
+local Flask = RCC.Consumables.Flask
+local Augment = RCC.Consumables.Augment
+local Healthstone = RCC.Consumables.Healthstone
+local DamagePotion = RCC.Consumables.DamagePotion
+local HealingPotion = RCC.Consumables.HealingPotion
+local Vantus = RCC.Consumables.Vantus
+local WeaponEnchant = RCC.Consumables.WeaponEnchant
+
+local GetTime = GetTime
+
+--------------------------------------------------------------------------------
+--- State
+--------------------------------------------------------------------------------
 
 local frame
 local consumablesShowStart = 0
@@ -10,6 +26,10 @@ local wasInInstance
 local instanceOpenPending
 
 local INSTANCE_OPEN_DELAY = 0.5
+
+--------------------------------------------------------------------------------
+--- Timer lifecycle
+--------------------------------------------------------------------------------
 
 local function cancelDelay(self)
     if self.cancelDelay then
@@ -41,21 +61,36 @@ local function startInstanceHideDelay(self)
     end)
 end
 
-local function shouldOpenForInstanceType(instanceType)
-    if instanceType == "party" then
-        return RCC.GetSetting("consumables_instanceOpenParty")
-    elseif instanceType == "raid" then
-        return RCC.GetSetting("consumables_instanceOpenRaid")
-    elseif instanceType == "scenario" then
-        return RCC.GetSetting("consumables_instanceOpenScenario")
-    elseif instanceType == "pvp" then
-        return RCC.GetSetting("consumables_instanceOpenPvp")
-    elseif instanceType == "arena" then
-        return RCC.GetSetting("consumables_instanceOpenArena")
+local function startMinShowDelay(self)
+    if not RCC.GetSetting("consumables_minShow") then
+        self:Hide()
+
+        return
     end
 
-    return false
+    local minShowTime = RCC.GetSetting("consumables_minShowTime")
+    local elapsed = GetTime() - consumablesShowStart
+    local delay = max(minShowTime - elapsed, 0)
+
+    if delay == 0 then
+        self:Hide()
+
+        return
+    end
+
+    self.drag:Show()
+    self.close:Show()
+
+    self.cancelDelay = C_Timer.NewTimer(delay, function()
+        if not InCombatLockdown() then
+            self:Hide()
+        end
+    end)
 end
+
+--------------------------------------------------------------------------------
+--- Frame visibility
+--------------------------------------------------------------------------------
 
 local function showConsumableFrame(self, isInitiator, registerConfirm)
     if InCombatLockdown() then
@@ -87,33 +122,6 @@ local function showConsumableFrame(self, isInitiator, registerConfirm)
     return true
 end
 
-local function startMinShowDelay(self)
-    if not RCC.GetSetting("consumables_minShow") then
-        self:Hide()
-
-        return
-    end
-
-    local minShowTime = RCC.GetSetting("consumables_minShowTime")
-    local elapsed = GetTime() - consumablesShowStart
-    local delay = max(minShowTime - elapsed, 0)
-
-    if delay == 0 then
-        self:Hide()
-
-        return
-    end
-
-    self.drag:Show()
-    self.close:Show()
-
-    self.cancelDelay = C_Timer.NewTimer(delay, function()
-        if not InCombatLockdown() then
-            self:Hide()
-        end
-    end)
-end
-
 local function hideImmediately(self)
     instanceOpenPending = false
     cancelDelay(self)
@@ -127,6 +135,43 @@ local function hideImmediately(self)
 
     self:Hide()
 end
+
+local function unregisterLiveEvents(self)
+    self:UnregisterEvent("UNIT_AURA")
+    self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+    self:UnregisterEvent("READY_CHECK_CONFIRM")
+end
+
+--------------------------------------------------------------------------------
+--- Update pipeline
+--------------------------------------------------------------------------------
+
+function RCC.consumables:Update()
+    self:UpdateReadyCheckAnchor()
+    local buttons = self.buttons
+
+    local now = GetTime()
+    local auraState = Auras.ScanPlayer(now)
+
+    Food.Update(buttons.food, auraState)
+    Healthstone.Update(buttons.hs)
+    Flask.Update(buttons.flask, auraState)
+    WeaponEnchant.Update(buttons)
+    Augment.Update(buttons.augment, auraState)
+    DamagePotion.Update(buttons.dmgpot)
+    HealingPotion.Update(buttons.healpot)
+    Vantus.Update(buttons.vantus, auraState)
+
+    if not InCombatLockdown() then
+        Buttons.ApplyLayout(self, buttons)
+    end
+
+    Buttons.UpdateOutOverlays(buttons)
+end
+
+--------------------------------------------------------------------------------
+--- Ready-check lifecycle
+--------------------------------------------------------------------------------
 
 local function onReadyCheck(self, initiatorUnit)
     local isInitiator = initiatorUnit and UnitIsUnit(initiatorUnit, "player")
@@ -165,6 +210,26 @@ end
 
 local function onCombat(self)
     hideImmediately(self)
+end
+
+--------------------------------------------------------------------------------
+--- Instance lifecycle
+--------------------------------------------------------------------------------
+
+local function shouldOpenForInstanceType(instanceType)
+    if instanceType == "party" then
+        return RCC.GetSetting("consumables_instanceOpenParty")
+    elseif instanceType == "raid" then
+        return RCC.GetSetting("consumables_instanceOpenRaid")
+    elseif instanceType == "scenario" then
+        return RCC.GetSetting("consumables_instanceOpenScenario")
+    elseif instanceType == "pvp" then
+        return RCC.GetSetting("consumables_instanceOpenPvp")
+    elseif instanceType == "arena" then
+        return RCC.GetSetting("consumables_instanceOpenArena")
+    end
+
+    return false
 end
 
 local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
@@ -209,6 +274,10 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
     end)
 end
 
+--------------------------------------------------------------------------------
+--- Live updates
+--------------------------------------------------------------------------------
+
 local function onUnitAura(self, unit)
     if unit == "player" then
         self:Update()
@@ -224,6 +293,10 @@ local function onInventoryChanged(self, unit)
         end)
     end
 end
+
+--------------------------------------------------------------------------------
+--- Event wiring
+--------------------------------------------------------------------------------
 
 local eventHandlers = {
     READY_CHECK            = onReadyCheck,
@@ -245,7 +318,9 @@ end
 
 local function onHide(self)
     instanceOpenPending = false
-    self:OnHide()
+    unregisterLiveEvents(self)
+    self.anchor:Hide()
+    cancelDelay(self)
     cancelInstanceHideDelay(self)
 
     if not InCombatLockdown() then
@@ -253,6 +328,10 @@ local function onHide(self)
         self.close:Hide()
     end
 end
+
+--------------------------------------------------------------------------------
+--- Public API
+--------------------------------------------------------------------------------
 
 function Controller.Attach(consumablesFrame)
     frame = consumablesFrame
