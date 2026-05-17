@@ -5,45 +5,21 @@ RCC.Consumables.Flask = RCC.Consumables.Flask or {}
 
 local Flask = RCC.Consumables.Flask
 
+local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
-local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
+local EXPIRING_SOON_SECONDS = 600
+
 local function getFlaskAuraState(state)
-    if not state or not state.auras then return end
+    local aura = Auras.FindBySpellID(state, RCC.db.flaskBuffIDs)
 
-    for i = 1, #state.auras do
-        local aura = state.auras[i]
-
-        if RCC.db.flaskBuffIDs[aura.spellID] then
-            return {
-                active = true,
-                icon = aura.icon,
-                remaining = aura.remaining,
-                satisfied = not (aura.remaining and aura.remaining <= 600),
-            }
-        end
-    end
-end
-
-local function applyAuraState(stateTable, state)
-    if not state or not state.active then return end
-
-    stateTable.statusTexture = ButtonState.READY_TEXTURE
-    stateTable.hasConsumableBuff = true
-    stateTable.desaturated = false
-
-    if state.icon then
-        stateTable.icon = state.icon
-    end
-
-    if state.remaining then
-        stateTable.timeText = F.FormatDuration(state.remaining)
-        stateTable.timeIsBad = not state.satisfied
-    end
+    return Auras.ToConsumableState(aura, {
+        expireWarnSeconds = EXPIRING_SOON_SECONDS,
+    })
 end
 
 function Flask.Update(button, state)
@@ -57,7 +33,7 @@ function Flask.Update(button, state)
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
     local buttonState = ButtonState.Create()
 
-    applyAuraState(buttonState, flaskState)
+    ButtonState.ApplyActiveAura(buttonState, flaskState)
 
     if flaskCount > 0 then
         buttonState.tooltipItemID = flaskItemID

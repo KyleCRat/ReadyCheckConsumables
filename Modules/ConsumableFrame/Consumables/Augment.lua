@@ -5,41 +5,19 @@ RCC.Consumables.Augment = RCC.Consumables.Augment or {}
 
 local Augment = RCC.Consumables.Augment
 
+local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
-local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraState(state)
-    if not state or not state.auras then return end
+    local aura = Auras.FindBySpellID(state, RCC.db.augmentBuffIDs)
 
-    for i = 1, #state.auras do
-        local aura = state.auras[i]
-
-        if RCC.db.augmentBuffIDs[aura.spellID] then
-            return {
-                active = true,
-                icon = aura.icon,
-                remaining = aura.remaining,
-                satisfied = true,
-            }
-        end
-    end
-end
-
-local function applyAuraState(stateTable, state)
-    if not state or not state.active then return end
-
-    stateTable.statusTexture = ButtonState.READY_TEXTURE
-    stateTable.hasConsumableBuff = true
-    stateTable.desaturated = false
-    stateTable.icon = state.icon
-
-    if state.remaining then
-        stateTable.timeText = F.FormatDuration(state.remaining)
-    end
+    return Auras.ToConsumableState(aura, {
+        satisfied = true,
+    })
 end
 
 local function findItemInBags()
@@ -82,7 +60,7 @@ function Augment.Update(button, state)
     local augmentItemID, augmentItemCount, augmentItemData = findItemInBags()
     local buttonState = ButtonState.Create()
 
-    applyAuraState(buttonState, augmentState)
+    ButtonState.ApplyActiveAura(buttonState, augmentState)
 
     if augmentItemID and augmentItemCount and augmentItemCount > 0 then
         if augmentItemData and augmentItemData.unlimited then

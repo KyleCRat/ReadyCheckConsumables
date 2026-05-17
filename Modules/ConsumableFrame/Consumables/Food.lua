@@ -7,7 +7,6 @@ local Food = RCC.Consumables.Food
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
-local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
@@ -28,22 +27,13 @@ local function getFoodAuraState(state)
             or RCC.db.foodIconIDs[aura.icon]
         then
             if RCC.db.eatingIconIDs[aura.icon] then
-                eatingState = {
-                    active = true,
-                    duration = aura.duration,
-                    expiry = aura.expiry,
-                    icon = aura.icon,
-                    remaining = aura.remaining,
-                }
+                eatingState = Auras.ToConsumableState(aura, {
+                    includeAuraInstanceID = false,
+                })
             else
-                foodState = {
-                    active = true,
-                    auraInstanceID = aura.auraInstanceID,
-                    expiry = aura.expiry,
-                    icon = aura.icon,
-                    remaining = aura.remaining,
+                foodState = Auras.ToConsumableState(aura, {
                     satisfied = true,
-                }
+                })
             end
         end
     end
@@ -53,36 +43,12 @@ local function getFoodAuraState(state)
     end
 
     if eatingState then
-        return {
-            active = true,
-            expiry = eatingState.expiry,
-            icon = eatingState.icon,
-            remaining = eatingState.remaining,
-            satisfied = true,
-        }, eatingState
+        eatingState.satisfied = true
+
+        return eatingState, eatingState
     end
 
     return nil, nil
-end
-
-local function applyAuraState(stateTable, state)
-    if not state or not state.active then return end
-
-    stateTable.statusTexture = ButtonState.READY_TEXTURE
-    stateTable.hasConsumableBuff = true
-    stateTable.desaturated = false
-
-    if state.remaining then
-        stateTable.timeText = F.FormatDuration(state.remaining)
-    end
-
-    if state.icon then
-        stateTable.icon = state.icon
-    end
-
-    if state.auraInstanceID then
-        stateTable.tooltipAuraID = state.auraInstanceID
-    end
 end
 
 local function getEatingCooldown(state)
@@ -114,7 +80,7 @@ function Food.Update(button, state)
         cooldown = getEatingCooldown(eatingState),
     })
 
-    applyAuraState(buttonState, foodState)
+    ButtonState.ApplyActiveAura(buttonState, foodState)
 
     if foodCount > 0 then
         buttonState.tooltipItemID = foodItemID

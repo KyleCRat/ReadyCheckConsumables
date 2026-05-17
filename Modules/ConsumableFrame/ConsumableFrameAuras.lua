@@ -17,6 +17,63 @@ function Auras.IsPositiveDuration(duration)
            and duration > 0
 end
 
+function Auras.FindBySpellID(state, spellIDs)
+    if not state or not state.auras or not spellIDs then return end
+
+    for i = 1, #state.auras do
+        local aura = state.auras[i]
+
+        if spellIDs[aura.spellID] then
+            return aura
+        end
+    end
+end
+
+function Auras.FindBySpellOrIconID(state, spellIDs, iconIDs)
+    if not state or not state.auras then return end
+
+    for i = 1, #state.auras do
+        local aura = state.auras[i]
+
+        if (spellIDs and spellIDs[aura.spellID])
+            or (iconIDs and iconIDs[aura.icon])
+        then
+            return aura
+        end
+    end
+end
+
+function Auras.ToConsumableState(aura, options)
+    if not aura then return end
+
+    options = options or {}
+
+    local auraState = {
+        active = true,
+        duration = aura.duration,
+        expiry = aura.expiry,
+        icon = aura.icon,
+        name = aura.name,
+        remaining = aura.remaining,
+    }
+
+    if options.includeAuraInstanceID ~= false then
+        auraState.auraInstanceID = aura.auraInstanceID
+    end
+
+    if options.expireWarnSeconds then
+        local expiringSoon = aura.remaining
+            and aura.remaining <= options.expireWarnSeconds
+
+        auraState.satisfied = not expiringSoon
+        auraState.timeIsBad = expiringSoon == true
+    elseif options.satisfied ~= nil then
+        auraState.satisfied = options.satisfied == true
+    end
+
+    return auraState
+end
+
 function Auras.ScanPlayer(now)
     local state = {
         auras = {},

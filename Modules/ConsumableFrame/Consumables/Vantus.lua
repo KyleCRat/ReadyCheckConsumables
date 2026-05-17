@@ -5,6 +5,7 @@ RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
 
 local Vantus = RCC.Consumables.Vantus
 
+local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
@@ -12,17 +13,13 @@ local Renderer = RCC.ConsumableFrameRenderer
 local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraBossName(state)
-    if not state or not state.auras then return end
+    local aura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
 
-    for i = 1, #state.auras do
-        local aura = state.auras[i]
+    if not aura then return end
 
-        if RCC.db.vantusBuffIDs[aura.spellID] then
-            local name = aura.name or ""
+    local name = aura.name or ""
 
-            return name:gsub("^Vantus Rune: ", "")
-        end
-    end
+    return name:gsub("^Vantus Rune: ", "")
 end
 
 local function getVantusForCurrentRaid()
