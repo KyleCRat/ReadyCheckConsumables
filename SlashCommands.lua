@@ -16,8 +16,8 @@ SlashCmdList["RCC"] = function(msg)
     elseif msg == "hide" or msg == "h" then
         RCC.ReadyCheckTest:Cancel()
 
-        if RCC.consumables then
-            RCC.consumables:HideImmediately()
+        if RCC.ConsumableFrameController then
+            RCC.ConsumableFrameController.HideImmediately()
         end
 
         if RCC.raidFrame then

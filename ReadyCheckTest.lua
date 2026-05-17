@@ -12,18 +12,6 @@ local function cancelFinishTimer(self)
     end
 end
 
-local function dispatchConsumablesEvent(event, ...)
-    if not RCC.consumables then
-        return
-    end
-
-    local onEvent = RCC.consumables:GetScript("OnEvent")
-
-    if onEvent then
-        onEvent(RCC.consumables, event, ...)
-    end
-end
-
 local function finish(self, runID)
     if self.runID ~= runID or not self.active then
         return
@@ -36,7 +24,9 @@ local function finish(self, runID)
         RCC.RaidFrameTest:Finish()
     end
 
-    dispatchConsumablesEvent("READY_CHECK_FINISHED", "")
+    if RCC.ConsumableFrameController then
+        RCC.ConsumableFrameController.FinishReadyCheck()
+    end
 end
 
 function Test:Cancel()
@@ -55,7 +45,9 @@ function Test:Stop()
     self:Cancel()
 
     if wasActive then
-        dispatchConsumablesEvent("READY_CHECK_FINISHED", "")
+        if RCC.ConsumableFrameController then
+            RCC.ConsumableFrameController.FinishReadyCheck()
+        end
 
         if RCC.RaidFrameTest then
             RCC.RaidFrameTest:Stop()
@@ -75,7 +67,9 @@ function Test:Start(permanent)
 
     local runID = self.runID
 
-    dispatchConsumablesEvent("READY_CHECK", "player", 0)
+    if RCC.ConsumableFrameController then
+        RCC.ConsumableFrameController.StartReadyCheck("player")
+    end
 
     if RCC.RaidFrameTest then
         RCC.RaidFrameTest:Start(permanent or false, TEST_DURATION)
