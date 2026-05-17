@@ -73,7 +73,9 @@ end
 
 local function shouldUseHoverGlow(button)
     return button.click
-           and (button.rccGlowEnabled or not button.hasConsumableBuff)
+           and (button.rccGlowEnabled
+                or button.clickEnabled
+                or not button.hasConsumableBuff)
 end
 
 function Glow.Set(button, enabled)

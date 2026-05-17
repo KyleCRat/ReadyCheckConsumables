@@ -12,6 +12,27 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
 
+local function buildFlyoutChoices(candidates, selectedItemID)
+    if not candidates or #candidates <= 1 then return end
+
+    local choices = {}
+
+    for i = 1, #candidates do
+        local candidate = candidates[i]
+
+        if candidate.itemID ~= selectedItemID then
+            choices[#choices + 1] = ButtonState.CreateItemChoice(
+                candidate,
+                ActionType.ITEM_MACRO
+            )
+        end
+    end
+
+    if #choices > 0 then
+        return choices
+    end
+end
+
 local function getAuraBossName(state)
     local aura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
 
@@ -30,23 +51,27 @@ local function getVantusForCurrentRaid()
         return nil, nil, 0
     end
 
-    local candidate = ItemCandidates.FindFirstAvailable(
+    local candidates = ItemCandidates.CollectAvailableFromList(
         vantusRuneIDs,
         ItemCandidates.BAGS_ONLY
     )
+    local candidate = candidates[1]
 
     if candidate then
-        return vantusRuneIDs, candidate.itemID, candidate.count, candidate.icon
+        return vantusRuneIDs, candidate.itemID, candidate.count,
+            candidate.icon, candidates
     end
 
     local itemID = vantusRuneIDs[1]
 
-    return vantusRuneIDs, itemID, 0, ItemCandidates.GetIcon(itemID)
+    return vantusRuneIDs, itemID, 0, ItemCandidates.GetIcon(itemID),
+        candidates
 end
 
 function Vantus.Update(button, state)
     local bossName = getAuraBossName(state)
-    local vantusRuneIDs, itemID, count, icon = getVantusForCurrentRaid()
+    local vantusRuneIDs, itemID, count, icon, candidates =
+        getVantusForCurrentRaid()
     local buttonState = ButtonState.Create()
 
     if not vantusRuneIDs then
@@ -86,6 +111,7 @@ function Vantus.Update(button, state)
             type = ActionType.ITEM_MACRO,
             itemID = itemID,
         }
+        buttonState.flyoutChoices = buildFlyoutChoices(candidates, itemID)
 
         Renderer.Apply(button, buttonState)
 

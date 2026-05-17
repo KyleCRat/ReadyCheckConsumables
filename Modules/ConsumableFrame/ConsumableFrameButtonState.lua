@@ -23,6 +23,29 @@ function State.Create(fields)
     return state
 end
 
+function State.CreateItemChoice(candidate, actionType, options)
+    if not candidate or not candidate.itemID then return end
+
+    options = options or {}
+
+    local action = {
+        type = actionType,
+        itemID = candidate.itemID,
+        targetSlot = options.targetSlot,
+        available = options.available,
+    }
+
+    return State.Create({
+        icon = candidate.icon,
+        desaturated = false,
+        countText = options.countText or tostring(candidate.count or 0),
+        tooltipItemID = candidate.itemID,
+        usableItemID = candidate.itemID,
+        clickHintItemID = candidate.itemID,
+        action = action,
+    })
+end
+
 function State.ApplyActiveAura(state, auraState)
     if not state or not auraState or not auraState.active then return end
 

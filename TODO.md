@@ -2,10 +2,6 @@
 
 ## Features
 
-- After the ConsumableFrame refactor, consider showing multiple available
-  consumable choices as stacked buttons, such as separate weapon enchants or
-  feast/personal food options, so players can pick the item they want instead
-  of relying on one selected best item.
 - Consumable frame should also have an idea of "isBad" timing and show timers
   are red if they are soon to expire.
 - Define shared expiration severity rules for consumables and reports. The
@@ -30,5 +26,5 @@
 - Simplify the consumable button registry so button identity does not depend on
   both numeric array indexes and keyed lookup aliases. The current `buttons[i]`
   plus `buttons[def.key]` shape works, but it makes layout order, definition
-  order, and consumer access harder to reason about before stacked consumable
-  choices are added.
+  order, and consumer access harder to reason about as flyout choice buttons
+  expand the button model.

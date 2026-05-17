@@ -126,9 +126,7 @@ end
 function Tooltips.InfoButtonOnLeave(self)
     Glow.SetHovered(self, false)
 
-    if self.outOverlay then
-        self.outOverlay:Hide()
-    end
+    Tooltips.UpdateOutOverlay(self)
 
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
@@ -137,7 +135,7 @@ end
 function Tooltips.UpdateOutOverlay(button)
     if not button.outOverlay then return end
 
-    if button.outOfItemsText and button:IsMouseOver() then
+    if button.outOfItemsText then
         button.outOverlay:Show()
     else
         button.outOverlay:Hide()

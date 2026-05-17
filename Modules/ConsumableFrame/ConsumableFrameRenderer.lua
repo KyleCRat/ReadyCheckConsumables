@@ -93,4 +93,6 @@ function Renderer.Apply(button, state)
     if state.glow ~= nil then
         Glow.Set(button, state.glow == true)
     end
+
+    Buttons.SetFlyoutChoices(button, state.flyoutChoices)
 end

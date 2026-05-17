@@ -51,27 +51,55 @@ local function addEnchantIconToState(buttonState, enchantData)
     end
 end
 
-local function findBestWeaponEnchantItemInBags()
+local function isBetterWeaponEnchantCandidate(candidate, best)
+    local data = candidate.data or {}
+    local bestData = best.data or {}
+    local xpac = data.xpac or 0
+    local rank = data.q or 0
+    local bestXpac = bestData.xpac or 0
+    local bestRank = bestData.q or 0
+
+    return xpac > bestXpac
+        or (xpac == bestXpac and rank > bestRank)
+        or (xpac == bestXpac and rank == bestRank
+            and candidate.itemID > (best.itemID or 0))
+end
+
+local function collectWeaponEnchantItemCandidatesInBags()
     local candidates = ItemCandidates.CollectAvailableFromMap(
         RCC.db.weaponEnchantItemIDs,
         ItemCandidates.BAGS_ONLY
     )
-    local best = ItemCandidates.SelectBest(candidates, function(candidate, best)
-        local data = candidate.data or {}
-        local bestData = best.data or {}
-        local xpac = data.xpac or 0
-        local rank = data.q or 0
-        local bestXpac = bestData.xpac or 0
-        local bestRank = bestData.q or 0
 
-        return xpac > bestXpac
-            or (xpac == bestXpac and rank > bestRank)
-            or (xpac == bestXpac and rank == bestRank
-                and candidate.itemID > (best.itemID or 0))
-    end)
+    table.sort(candidates, isBetterWeaponEnchantCandidate)
 
-    if best then
-        return best.itemID
+    return candidates
+end
+
+local function buildItemFlyoutChoices(candidates, selectedItemID, slotState,
+                                      includeSingleChoice)
+    if not candidates then return end
+    if not includeSingleChoice and #candidates <= 1 then return end
+
+    local choices = {}
+
+    for i = 1, #candidates do
+        local candidate = candidates[i]
+
+        if candidate.itemID ~= selectedItemID then
+            choices[#choices + 1] = ButtonState.CreateItemChoice(
+                candidate,
+                ActionType.WEAPON_ENCHANT_ITEM,
+                {
+                    targetSlot = slotState.slotID,
+                    available = slotState.canBeEnchanted,
+                }
+            )
+        end
+    end
+
+    if #choices > 0 then
+        return choices
     end
 end
 
@@ -231,7 +259,8 @@ local function shouldPreferSpellEnchant(hasEnchant, activeEnchantData)
            or (activeEnchantData and activeEnchantData.spellID ~= nil)
 end
 
-local function configureSpellEnchantState(buttonState, enchantData, slotState)
+local function configureSpellEnchantState(buttonState, enchantData, slotState,
+                                          itemCandidates)
     if not enchantData or not enchantData.spellID then return false end
 
     local spellInfo = GetSpellInfo(enchantData.spellID)
@@ -254,6 +283,12 @@ local function configureSpellEnchantState(buttonState, enchantData, slotState)
     buttonState.glow = slotState.canBeEnchanted
                        and (not slotState.hasEnchant
                             or isExpiringSoon(slotState))
+    buttonState.flyoutChoices = buildItemFlyoutChoices(
+        itemCandidates,
+        nil,
+        slotState,
+        true
+    )
 
     return true
 end
@@ -292,7 +327,7 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
                             or isExpiringSoon(slotState))
 end
 
-local function getUsableWeaponEnchantItemForSlot(slotID)
+local function getUsableWeaponEnchantItemForSlot(slotID, candidates)
     local cachedItem = cachedWeaponEnchantItemIDs[slotID]
 
     if cachedItem
@@ -301,12 +336,13 @@ local function getUsableWeaponEnchantItemForSlot(slotID)
         return cachedItem
     end
 
-    return findBestWeaponEnchantItemInBags()
+    return candidates and candidates[1] and candidates[1].itemID
 end
 
 local function configureItemEnchantForSlot(buttonState, slotID, slotState,
-                                           activeEnchantData, showMissingHint)
-    local itemID = getUsableWeaponEnchantItemForSlot(slotID)
+                                           activeEnchantData, showMissingHint,
+                                           itemCandidates)
+    local itemID = getUsableWeaponEnchantItemForSlot(slotID, itemCandidates)
 
     if not itemID then
         configureMissingItemState(buttonState, showMissingHint)
@@ -321,6 +357,13 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
         itemID,
         getWeaponEnchantItemCount(itemID),
         slotState
+    )
+
+    buttonState.flyoutChoices = buildItemFlyoutChoices(
+        itemCandidates,
+        itemID,
+        slotState,
+        false
     )
 end
 
@@ -350,12 +393,14 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
         slotState
     )
     local spellEnchant = selectSpellEnchantForSlot(slotID, activeEnchantData)
+    local itemCandidates = collectWeaponEnchantItemCandidatesInBags()
 
     if not shouldPreferSpellEnchant(slotState.hasEnchant, activeEnchantData)
         or not configureSpellEnchantState(
             buttonState,
             spellEnchant,
-            slotState
+            slotState,
+            itemCandidates
         )
     then
         configureItemEnchantForSlot(
@@ -363,7 +408,8 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
             slotID,
             slotState,
             activeEnchantData,
-            showMissingHint
+            showMissingHint,
+            itemCandidates
         )
     end
 

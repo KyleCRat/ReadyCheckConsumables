@@ -110,6 +110,7 @@ local function showConsumableFrame(self, isInitiator, registerConfirm)
     self:Update()
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    self:RegisterEvent("BAG_UPDATE_DELAYED")
 
     if registerConfirm then
         self:RegisterEvent("READY_CHECK_CONFIRM")
@@ -139,6 +140,7 @@ end
 local function unregisterLiveEvents(self)
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+    self:UnregisterEvent("BAG_UPDATE_DELAYED")
     self:UnregisterEvent("READY_CHECK_CONFIRM")
 end
 
@@ -284,14 +286,22 @@ local function onUnitAura(self, unit)
     end
 end
 
+local function scheduleLiveUpdate(self)
+    C_Timer.After(0.2, function()
+        if self:IsShown() and not InCombatLockdown() then
+            self:Update()
+        end
+    end)
+end
+
 local function onInventoryChanged(self, unit)
     if unit == "player" then
-        C_Timer.After(0.2, function()
-            if self:IsShown() and not InCombatLockdown() then
-                self:Update()
-            end
-        end)
+        scheduleLiveUpdate(self)
     end
+end
+
+local function onBagUpdateDelayed(self)
+    scheduleLiveUpdate(self)
 end
 
 --------------------------------------------------------------------------------
@@ -306,6 +316,7 @@ local eventHandlers = {
     PLAYER_ENTERING_WORLD   = onPlayerEnteringWorld,
     UNIT_AURA              = onUnitAura,
     UNIT_INVENTORY_CHANGED = onInventoryChanged,
+    BAG_UPDATE_DELAYED     = onBagUpdateDelayed,
 }
 
 local function onEvent(self, event, ...)
