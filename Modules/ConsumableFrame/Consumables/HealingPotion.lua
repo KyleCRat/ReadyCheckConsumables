@@ -9,8 +9,6 @@ local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemIcon = C_Item.GetItemIconByID
-
 function HealingPotion.Update(button)
     local inventoryItemCandidate = ItemCandidates.FindFirstAvailable(
         RCC.db.healingPotionItemIDs,
@@ -25,7 +23,7 @@ function HealingPotion.Update(button)
         Renderer.Apply(button, ButtonState.Create({
             countText = tostring(inventoryItemCount),
             statusTexture = ButtonState.READY_TEXTURE,
-            icon = GetItemIcon(inventoryItem),
+            icon = inventoryItemCandidate.icon,
             desaturated = false,
             tooltipItemID = inventoryItem,
         }))

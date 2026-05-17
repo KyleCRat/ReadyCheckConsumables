@@ -9,8 +9,6 @@ local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-local GetItemIcon = C_Item.GetItemIconByID
-
 -- TODO: Update logic to only show most powerful found pot?
 -- This will get weird if a healer has dmg pots and mana pots
 function DamagePotion.Update(button)
@@ -27,7 +25,7 @@ function DamagePotion.Update(button)
         Renderer.Apply(button, ButtonState.Create({
             countText = tostring(inventoryItemCount),
             statusTexture = ButtonState.READY_TEXTURE,
-            icon = GetItemIcon(inventoryItem),
+            icon = inventoryItemCandidate.icon,
             desaturated = false,
             tooltipItemID = inventoryItem,
         }))

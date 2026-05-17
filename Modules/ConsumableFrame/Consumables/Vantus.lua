@@ -11,7 +11,6 @@ local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
-local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraBossName(state)
     local aura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
@@ -37,15 +36,17 @@ local function getVantusForCurrentRaid()
     )
 
     if candidate then
-        return vantusRuneIDs, candidate.itemID, candidate.count
+        return vantusRuneIDs, candidate.itemID, candidate.count, candidate.icon
     end
 
-    return vantusRuneIDs, vantusRuneIDs[1], 0
+    local itemID = vantusRuneIDs[1]
+
+    return vantusRuneIDs, itemID, 0, ItemCandidates.GetIcon(itemID)
 end
 
 function Vantus.Update(button, state)
     local bossName = getAuraBossName(state)
-    local vantusRuneIDs, itemID, count = getVantusForCurrentRaid()
+    local vantusRuneIDs, itemID, count, icon = getVantusForCurrentRaid()
     local buttonState = ButtonState.Create()
 
     if not vantusRuneIDs then
@@ -59,7 +60,7 @@ function Vantus.Update(button, state)
     buttonState.showInLayout = true
 
     if itemID then
-        buttonState.icon = GetItemIcon(itemID)
+        buttonState.icon = icon
     end
 
     if bossName then

@@ -11,7 +11,6 @@ local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
-local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local function getFoodAuraStates(state, expireWarnSeconds)
     local foodAuraState
@@ -87,10 +86,8 @@ function Food.Update(button, state)
         buttonState.usableItemID = foodItemID
 
         if not foodSatisfied then
-            local texture = select(5, GetItemInfoInstant(foodItemID))
-
-            if texture then
-                buttonState.icon = texture
+            if foodCandidate.icon then
+                buttonState.icon = foodCandidate.icon
             end
         end
 

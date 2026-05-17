@@ -32,8 +32,10 @@ end
 local function getWeaponEnchantIcon(enchantData)
     if not enchantData then return end
 
-    if enchantData.icon then
-        return enchantData.icon
+    local icon = enchantData.icon or ItemCandidates.GetIcon(enchantData.item)
+
+    if icon then
+        return icon
     end
 
     local spellInfo = enchantData.spellID and GetSpellInfo(enchantData.spellID)

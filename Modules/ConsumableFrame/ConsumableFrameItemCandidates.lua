@@ -5,6 +5,7 @@ RCC.ConsumableFrameItemCandidates = RCC.ConsumableFrameItemCandidates or {}
 local Candidates = RCC.ConsumableFrameItemCandidates
 
 local GetItemCount = C_Item.GetItemCount
+local GetItemIcon = C_Item.GetItemIconByID
 
 Candidates.BAGS_ONLY = { includeBank = false, includeUses = false }
 Candidates.BAGS_WITH_USES = { includeBank = false, includeUses = true }
@@ -30,6 +31,12 @@ function Candidates.GetCount(itemID, options)
     return GetItemCount(itemID, includeBank, includeUses) or 0
 end
 
+function Candidates.GetIcon(itemID)
+    if not itemID then return end
+
+    return GetItemIcon(itemID)
+end
+
 function Candidates.CollectAvailableFromList(itemIDs, options)
     local candidates = {}
 
@@ -43,6 +50,7 @@ function Candidates.CollectAvailableFromList(itemIDs, options)
             candidates[#candidates + 1] = {
                 itemID = itemID,
                 count = count,
+                icon = Candidates.GetIcon(itemID),
                 index = index,
             }
         end
@@ -63,6 +71,7 @@ function Candidates.CollectAvailableFromMap(itemDataByID, options)
             candidates[#candidates + 1] = {
                 itemID = itemID,
                 count = count,
+                icon = data.icon or Candidates.GetIcon(itemID),
                 data = data,
             }
         end
@@ -84,6 +93,7 @@ function Candidates.FindFirstAvailable(itemIDs, options)
             return {
                 itemID = itemID,
                 count = count,
+                icon = Candidates.GetIcon(itemID),
                 index = index,
             }
         end

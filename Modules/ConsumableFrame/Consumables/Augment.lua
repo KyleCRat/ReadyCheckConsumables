@@ -11,7 +11,6 @@ local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
-local GetItemIcon = C_Item.GetItemIconByID
 
 local function getAuraState(state, expireWarnSeconds)
     local aura = Auras.FindBySpellID(state, RCC.db.augmentBuffIDs)
@@ -51,14 +50,15 @@ local function findItemInBags()
     end)
 
     if best then
-        return best.itemID, best.count, best.data
+        return best.itemID, best.count, best.data, best.icon
     end
 end
 
 function Augment.Update(button, state)
     local augmentState = getAuraState(state, button.expireWarnSeconds)
     local isAugment = augmentState and augmentState.satisfied
-    local augmentItemID, augmentItemCount, augmentItemData = findItemInBags()
+    local augmentItemID, augmentItemCount, augmentItemData, augmentItemIcon =
+        findItemInBags()
     local buttonState = ButtonState.Create()
 
     ButtonState.ApplyActiveAura(buttonState, augmentState)
@@ -74,10 +74,8 @@ function Augment.Update(button, state)
         buttonState.usableItemID = augmentItemID
 
         if not isAugment then
-            local icon = GetItemIcon(augmentItemID)
-
-            if icon then
-                buttonState.icon = icon
+            if augmentItemIcon then
+                buttonState.icon = augmentItemIcon
             end
         end
 

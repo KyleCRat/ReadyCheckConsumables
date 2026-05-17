@@ -11,7 +11,6 @@ local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
-local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
 local function getFlaskAuraState(state, expireWarnSeconds)
     local aura = Auras.FindBySpellID(state, RCC.db.flaskBuffIDs)
@@ -39,10 +38,8 @@ function Flask.Update(button, state)
         buttonState.usableItemID = flaskItemID
 
         if not isFlask then
-            local texture = select(5, GetItemInfoInstant(flaskItemID))
-
-            if texture then
-                buttonState.icon = texture
+            if flaskCandidate.icon then
+                buttonState.icon = flaskCandidate.icon
             end
         end
 
