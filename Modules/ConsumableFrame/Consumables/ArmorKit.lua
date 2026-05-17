@@ -1,5 +1,12 @@
 local _, RCC = ...
 
+--------------------------------------------------------------------------------
+--- Intentionally dormant
+--- Armor kits have appeared and disappeared across expansions. Keep this module
+--- loaded but unwired so the support path is easy to restore if Blizzard brings
+--- armor kits back as relevant consumables.
+--------------------------------------------------------------------------------
+
 RCC.Consumables = RCC.Consumables or {}
 RCC.Consumables.ArmorKit = RCC.Consumables.ArmorKit or {}
 
@@ -15,7 +22,7 @@ local CHEST_INVENTORY_SLOT = 5
 
 --------------------------------------------------------------------------------
 --- Dormant: Armor Kit handling
---- Not currently called. Preserved for future reuse.
+--- Not currently called.
 --- To re-enable: create a kit button, add it to layout, restore or verify
 --- RCC:KitCheck(), then call ArmorKit.Update(button).
 --------------------------------------------------------------------------------
