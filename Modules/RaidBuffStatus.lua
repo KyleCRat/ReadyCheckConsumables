@@ -41,16 +41,16 @@ function Status.GetInfo(index)
 
     if not def then return end
 
-    local spellID = def[3]
+    local spellID = def.spellID
     local spellInfo = spellID and GetSpellInfo(spellID)
 
     return {
         index = index,
-        label = def[1],
-        providerClass = def[2],
+        label = def.label,
+        providerClass = def.providerClass,
         spellID = spellID,
-        altSpellID = def[4],
-        equivalentSpellIDs = def[5],
+        altSpellID = def.altSpellID,
+        equivalentSpellIDs = def.equivalentSpellIDs,
         iconID = spellInfo and spellInfo.iconID or FALLBACK_SPELL_ICON,
     }
 end
@@ -73,9 +73,9 @@ function Status.AuraMatches(index, aura)
 
     if not def then return false end
 
-    local primarySpellID = def[3]
-    local altSpellID = def[4]
-    local equivalentSpellIDs = def[5]
+    local primarySpellID = def.spellID
+    local altSpellID = def.altSpellID
+    local equivalentSpellIDs = def.equivalentSpellIDs
 
     return spellID == primarySpellID
            or (altSpellID and spellID == altSpellID)

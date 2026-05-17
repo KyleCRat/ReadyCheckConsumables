@@ -1,5 +1,6 @@
 local _, RCC = ...
 local F = RCC.F
+local RaidBuffStatus = RCC.RaidBuffStatus
 local db = RCC.db
 
 local SendChatMessage = SendChatMessage
@@ -336,19 +337,20 @@ end
 
 --------------------------------------------------------------------------------
 --- Raid Buff Report
---- Uses RCC.db.raidBuffDefs. Only reports missing buffs when the
+--- Uses RCC.RaidBuffStatus. Only reports missing buffs when the
 --- providing class IS present in the raid.
 --- Output: "Buffs AP (2), Int (1)" or nothing if all present.
 --------------------------------------------------------------------------------
 
 local function reportBuffs(toChat)
-    local buffsList = db.raidBuffDefs
-    local buffsCount = #buffsList
+    local buffsCount = RaidBuffStatus.GetCount()
+    local buffInfos = {}
     local classPresent = {}
     local missingCount = {}
     local maxGroup = F.GetRaidDiffMaxGroup()
 
     for k = 1, buffsCount do
+        buffInfos[k] = RaidBuffStatus.GetInfo(k)
         missingCount[k] = 0
     end
 
@@ -361,7 +363,9 @@ local function reportBuffs(toChat)
             end
         elseif subgroup <= maxGroup then
             for k = 1, buffsCount do
-                if class == buffsList[k][2] then
+                local info = buffInfos[k]
+
+                if info and class == info.providerClass then
                     classPresent[k] = true
                 end
             end
@@ -376,14 +380,8 @@ local function reportBuffs(toChat)
                 end
 
                 if not issecretvalue(aura.spellId) then
-                    local sid = aura.spellId
-
                     for k = 1, buffsCount do
-                        if sid == buffsList[k][3] then
-                            hasBuff[k] = true
-                        elseif buffsList[k][4] and sid == buffsList[k][4] then
-                            hasBuff[k] = true
-                        elseif buffsList[k][5] and buffsList[k][5][sid] then
+                        if RaidBuffStatus.AuraMatches(k, aura) then
                             hasBuff[k] = true
                         end
                     end
@@ -401,8 +399,14 @@ local function reportBuffs(toChat)
     local parts = {}
 
     for k = 1, buffsCount do
-        if classPresent[k] and missingCount[k] > 0 then
-            parts[#parts + 1] = format("%s (%d)", buffsList[k][1], missingCount[k])
+        local info = buffInfos[k]
+
+        if info and classPresent[k] and missingCount[k] > 0 then
+            parts[#parts + 1] = format(
+                "%s (%d)",
+                info.label,
+                missingCount[k]
+            )
         end
     end
 

@@ -18,35 +18,50 @@ local blessing_of_the_bronze      = 381748
 
 --------------------------------------------------------------------------------
 --- Raid Buff Definitions
---- Each entry: { label, provider_class, primary_spell, scroll_spell,
----               [optional alternate_spells table] }
+--- Each entry:
+--- {
+---     label = display text,
+---     providerClass = class token expected in UnitClass/GetRaidRosterInfo,
+---     spellID = primary buff spell,
+---     altSpellID = optional scroll/equivalent spell,
+---     equivalentSpellIDs = optional map of equivalent aura spell IDs,
+--- }
 --------------------------------------------------------------------------------
 
 RCC.db.raidBuffDefs = {
     {
-        ATTACK_POWER_TOOLTIP or "AP", "WARRIOR",
-        battle_shout, battle_shout_scroll,
+        label = ATTACK_POWER_TOOLTIP or "AP",
+        providerClass = "WARRIOR",
+        spellID = battle_shout,
+        altSpellID = battle_shout_scroll,
     },
     {
-        SPELL_STAT3_NAME or "Stamina", "PRIEST",
-        power_word_fortitude, power_word_fortitude_scroll,
+        label = SPELL_STAT3_NAME or "Stamina",
+        providerClass = "PRIEST",
+        spellID = power_word_fortitude,
+        altSpellID = power_word_fortitude_scroll,
     },
     {
-        SPELL_STAT4_NAME or "Int", "MAGE",
-        arcane_intellect, arcane_intellect_scroll,
+        label = SPELL_STAT4_NAME or "Int",
+        providerClass = "MAGE",
+        spellID = arcane_intellect,
+        altSpellID = arcane_intellect_scroll,
     },
     {
-        STAT_VERSATILITY or "Vers", "DRUID",
-        mark_of_the_wild,
+        label = STAT_VERSATILITY or "Vers",
+        providerClass = "DRUID",
+        spellID = mark_of_the_wild,
     },
     {
-        STAT_MASTERY or "Mastery", "SHAMAN",
-        skyfury,
+        label = STAT_MASTERY or "Mastery",
+        providerClass = "SHAMAN",
+        spellID = skyfury,
     },
     {
-        TUTORIAL_TITLE2 or "Movement", "EVOKER",
-        blessing_of_the_bronze, nil,
-        {
+        label = TUTORIAL_TITLE2 or "Movement",
+        providerClass = "EVOKER",
+        spellID = blessing_of_the_bronze,
+        equivalentSpellIDs = {
             [381758] = true, -- Heroic Leap
             [381732] = true, -- Death's Advance
             [381741] = true, -- Fel Rush
