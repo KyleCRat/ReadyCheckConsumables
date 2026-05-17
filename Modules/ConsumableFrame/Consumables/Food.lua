@@ -96,8 +96,6 @@ function Food.Update(button, state)
 
         buttonState.action = Actions.CreateItemMacro(foodItemID)
     else
-        buttonState.action = Actions.CreateDisabled()
-
         if not foodSatisfied then
             buttonState.outOfItemsText = "No Food found in Bags"
         end

@@ -48,8 +48,6 @@ function Flask.Update(button, state)
 
         buttonState.action = Actions.CreateItemMacro(flaskItemID)
     else
-        buttonState.action = Actions.CreateDisabled()
-
         if not isFlask then
             buttonState.outOfItemsText = "No Flasks found in Bags"
         end

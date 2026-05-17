@@ -55,8 +55,6 @@ function ArmorKit.Update(button)
             ARMOR_KIT_ITEM_ID,
             CHEST_INVENTORY_SLOT
         )
-    else
-        buttonState.action = Actions.CreateDisabled()
     end
 
     Renderer.Apply(button, buttonState)

@@ -84,7 +84,6 @@ function Augment.Update(button, state)
         buttonState.action = Actions.CreateItemMacro(augmentItemID)
     else
         buttonState.countText = "0"
-        buttonState.action = Actions.CreateDisabled()
 
         if not isAugment then
             buttonState.outOfItemsText = "No Augment Runes found in Bags"

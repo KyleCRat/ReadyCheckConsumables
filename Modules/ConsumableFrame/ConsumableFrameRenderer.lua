@@ -6,6 +6,7 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local Actions = RCC.ConsumableFrameActions
 local Buttons = RCC.ConsumableFrameButtons
+local ButtonState = RCC.ConsumableFrameButtonState
 local Glow = RCC.ConsumableFrameGlow
 
 local function applyCooldown(button, cooldown)
@@ -22,6 +23,7 @@ end
 function Renderer.Apply(button, state)
     if not button or not state then return end
 
+    Buttons.ResetState(button, ButtonState.NOT_READY_TEXTURE)
     button.consumableState = state
 
     if state.showInLayout ~= nil then

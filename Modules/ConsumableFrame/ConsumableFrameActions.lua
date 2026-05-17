@@ -4,18 +4,11 @@ RCC.ConsumableFrameActions = RCC.ConsumableFrameActions or {}
 
 local Actions = RCC.ConsumableFrameActions
 
--- Action descriptors are plain data returned by consumable modules. This file
--- is the only place that interprets them and mutates secure click buttons.
-local ACTION_DISABLE = "disable"
+-- Action descriptors are plain data returned by consumable modules. Missing or
+-- malformed actions disable clickable overlays by default.
 local ACTION_ITEM_MACRO = "itemMacro"
 local ACTION_SPELL = "spell"
 local ACTION_WEAPON_ENCHANT_ITEM = "weaponEnchantItem"
-
-function Actions.CreateDisabled()
-    return {
-        type = ACTION_DISABLE,
-    }
-end
 
 function Actions.CreateItemMacro(itemID, targetSlot)
     return {
@@ -110,15 +103,21 @@ local function setWeaponEnchantItem(button, itemID, available)
 end
 
 function Actions.Apply(button, action)
-    if not action or not action.type then return end
+    if not button then return end
 
-    if action.type == ACTION_DISABLE then
+    if not action or not action.type then
         disable(button)
-    elseif action.type == ACTION_ITEM_MACRO and action.itemID then
+
+        return
+    end
+
+    if action.type == ACTION_ITEM_MACRO and action.itemID then
         setItemMacro(button, action.itemID, action.targetSlot)
     elseif action.type == ACTION_SPELL and action.spellName then
         setSpell(button, action.spellName, action.available)
     elseif action.type == ACTION_WEAPON_ENCHANT_ITEM and action.itemID then
         setWeaponEnchantItem(button, action.itemID, action.available)
+    else
+        disable(button)
     end
 end

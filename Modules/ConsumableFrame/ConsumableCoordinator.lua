@@ -13,8 +13,6 @@ local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
 local GetTime = GetTime
 
-local resetButtonState = Buttons.ResetState
-
 --------------------------------------------------------------------------------
 --- Update() coordinator
 --------------------------------------------------------------------------------
@@ -22,12 +20,6 @@ local resetButtonState = Buttons.ResetState
 function RCC.consumables:Update()
     self:UpdateReadyCheckAnchor()
     local buttons = self.buttons
-
-    local NOT_READY = "Interface\\RaidFrame\\ReadyCheck-NotReady"
-
-    for i = 1, #buttons do
-        resetButtonState(buttons[i], NOT_READY)
-    end
 
     local now = GetTime()
     local auraState = Auras.ScanPlayer(now)
