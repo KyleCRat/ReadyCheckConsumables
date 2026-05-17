@@ -12,18 +12,16 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
-local EXPIRING_SOON_SECONDS = 600
-
-local function getFlaskAuraState(state)
+local function getFlaskAuraState(state, expireWarnSeconds)
     local aura = Auras.FindBySpellID(state, RCC.db.flaskBuffIDs)
 
     return Auras.ToConsumableState(aura, {
-        expireWarnSeconds = EXPIRING_SOON_SECONDS,
+        expireWarnSeconds = expireWarnSeconds,
     })
 end
 
 function Flask.Update(button, state)
-    local flaskState = getFlaskAuraState(state)
+    local flaskState = getFlaskAuraState(state, button.expireWarnSeconds)
     local isFlask = flaskState and flaskState.satisfied
     local flaskCandidate = ItemCandidates.FindFirstAvailable(
         RCC.db.flaskItemIDs,

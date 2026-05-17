@@ -12,11 +12,11 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemIcon = C_Item.GetItemIconByID
 
-local function getAuraState(state)
+local function getAuraState(state, expireWarnSeconds)
     local aura = Auras.FindBySpellID(state, RCC.db.augmentBuffIDs)
 
     return Auras.ToConsumableState(aura, {
-        satisfied = true,
+        expireWarnSeconds = expireWarnSeconds,
     })
 end
 
@@ -55,7 +55,7 @@ local function findItemInBags()
 end
 
 function Augment.Update(button, state)
-    local augmentState = getAuraState(state)
+    local augmentState = getAuraState(state, button.expireWarnSeconds)
     local isAugment = augmentState and augmentState.satisfied
     local augmentItemID, augmentItemCount, augmentItemData = findItemInBags()
     local buttonState = ButtonState.Create()

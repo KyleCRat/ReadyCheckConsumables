@@ -12,7 +12,7 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
 
-local function getFoodAuraStates(state)
+local function getFoodAuraStates(state, expireWarnSeconds)
     local foodAuraState
     local eatingAuraState
 
@@ -31,7 +31,9 @@ local function getFoodAuraStates(state)
                     includeAuraInstanceID = false,
                 })
             else
-                foodAuraState = Auras.ToConsumableState(aura)
+                foodAuraState = Auras.ToConsumableState(aura, {
+                    expireWarnSeconds = expireWarnSeconds,
+                })
             end
         end
     end
@@ -56,9 +58,17 @@ local function getEatingCooldown(state)
 end
 
 function Food.Update(button, state)
-    local foodAuraState, eatingAuraState = getFoodAuraStates(state)
+    local foodAuraState, eatingAuraState = getFoodAuraStates(
+        state,
+        button.expireWarnSeconds
+    )
     local displayAuraState = foodAuraState or eatingAuraState
-    local foodSatisfied = displayAuraState ~= nil
+    local foodSatisfied = eatingAuraState ~= nil
+
+    if foodAuraState then
+        foodSatisfied = foodAuraState.satisfied == true
+    end
+
     local foodCandidate = ItemCandidates.FindFirstAvailable(
         RCC.db.foodItemIDs,
         ItemCandidates.BAGS_ONLY

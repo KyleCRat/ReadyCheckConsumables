@@ -17,7 +17,6 @@ local GetItemInfoInstant = C_Item.GetItemInfoInstant
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
-local EXPIRING_SOON_MS = 300000
 
 local cachedWeaponEnchantItemIDs = {}
 
@@ -81,7 +80,8 @@ local function canWeaponSlotBeEnchanted(slotID)
     return itemClassID == 2
 end
 
-local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID)
+local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID,
+                                    expireWarnSeconds)
     local canBeEnchanted = canWeaponSlotBeEnchanted(slotID)
 
     return {
@@ -89,7 +89,14 @@ local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID)
         hasEnchant = canBeEnchanted and hasEnchant == true,
         expiration = canBeEnchanted and expiration or nil,
         enchantID = canBeEnchanted and enchantID or nil,
+        expireWarnSeconds = expireWarnSeconds,
     }
+end
+
+local function isExpiringSoon(slotState)
+    return slotState.expiration ~= nil
+           and slotState.expireWarnSeconds ~= nil
+           and slotState.expiration <= slotState.expireWarnSeconds * 1000
 end
 
 local function addActiveEnchantToState(buttonState, slotID, slotState)
@@ -103,7 +110,7 @@ local function addActiveEnchantToState(buttonState, slotID, slotState)
     buttonState.timeText = F.FormatDuration((slotState.expiration or 0) / 1000)
 
     if slotState.expiration ~= nil then
-        buttonState.timeIsBad = slotState.expiration <= EXPIRING_SOON_MS
+        buttonState.timeIsBad = isExpiringSoon(slotState)
     end
 
     if enchantData then
@@ -216,11 +223,6 @@ local function shouldPreferSpellEnchant(hasEnchant, activeEnchantData)
            or (activeEnchantData and activeEnchantData.spellID ~= nil)
 end
 
-local function isExpiringSoon(slotState)
-    return slotState.expiration ~= nil
-           and slotState.expiration <= EXPIRING_SOON_MS
-end
-
 local function configureSpellEnchantState(buttonState, enchantData, slotState)
     if not enchantData or not enchantData.spellID then return false end
 
@@ -322,7 +324,8 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
         slotID,
         hasEnchant,
         expiration,
-        enchantID
+        enchantID,
+        button.expireWarnSeconds
     )
     local buttonState = ButtonState.Create({
         showInLayout = slotState.canBeEnchanted,
