@@ -4,7 +4,7 @@ RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
 --- Weapon Enchant / Oil Lookup
---- Maps enchant ID -> { item, spellID, icon, [q], [xpac] }
+--- Maps enchant ID -> { item, spellID, [icon], [q], [xpac] }
 --- Used by the consumable frame to detect and display weapon buffs.
 --- Detected via GetWeaponEnchantInfo() — only weapon-slot enchants belong here.
 --------------------------------------------------------------------------------
@@ -16,14 +16,12 @@ RCC.db.weaponEnchants = {
     -- Shaman Enchants (spellID = spell-based, not item-based)
     [5401] = { -- Windfury Weapon
         spellID = 33757,
-        icon = 462329,
         spellSlots = {
             [MAIN_HAND_INVENTORY_SLOT] = { priority = 1 },
         },
     },
     [5400] = { -- Flametongue Weapon
         spellID = 318038,
-        icon = 135814,
         spellSlots = {
             [MAIN_HAND_INVENTORY_SLOT] = {
                 priority = 3,
@@ -37,9 +35,26 @@ RCC.db.weaponEnchants = {
     },
     [6498] = { -- Earthliving Weapon
         spellID = 382021,
-        icon = 237578,
         spellSlots = {
             [MAIN_HAND_INVENTORY_SLOT] = { priority = 2 },
+        },
+    },
+
+    -- Rogue poisons are intentionally not listed here. Testing with poisons
+    -- applied returned no GetWeaponEnchantInfo() weapon enchant IDs:
+    -- false nil nil nil false nil nil nil.
+
+    -- Paladin Lightsmith Enchants (spellID = spell-based, not item-based)
+    [7143] = { -- Rite of Sanctification
+        spellID = 433568,
+        spellSlots = {
+            [MAIN_HAND_INVENTORY_SLOT] = { priority = 1 },
+        },
+    },
+    [7144] = { -- Rite of Adjuration
+        spellID = 433583,
+        spellSlots = {
+            [MAIN_HAND_INVENTORY_SLOT] = { priority = 1 },
         },
     },
 

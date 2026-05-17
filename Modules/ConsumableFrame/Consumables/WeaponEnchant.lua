@@ -30,9 +30,23 @@ local function getWeaponEnchantData(enchantID)
     return RCC.db.weaponEnchants[enchantID or 0]
 end
 
+local function getWeaponEnchantIcon(enchantData)
+    if not enchantData then return end
+
+    if enchantData.icon then
+        return enchantData.icon
+    end
+
+    local spellInfo = enchantData.spellID and GetSpellInfo(enchantData.spellID)
+
+    return spellInfo and spellInfo.iconID
+end
+
 local function setWeaponEnchantIcon(button, enchantData)
-    if enchantData then
-        button.texture:SetTexture(enchantData.icon)
+    local icon = getWeaponEnchantIcon(enchantData)
+
+    if icon then
+        button.texture:SetTexture(icon)
     end
 end
 
