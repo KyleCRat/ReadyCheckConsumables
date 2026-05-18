@@ -102,7 +102,7 @@ local function reportFood(toChat)
         elseif subgroup <= maxGroup then
             local hasFood = false
 
-            for i = 1, 60 do
+            for i = 1, RCC.MAX_AURAS do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then
@@ -173,7 +173,7 @@ local function reportFlasks(toChat)
             local hasFlask = false
             local colored = colorName(F.shortName(name), class)
 
-            for i = 1, 60 do
+            for i = 1, RCC.MAX_AURAS do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then
@@ -269,7 +269,7 @@ local function reportAugments(toChat)
             local hasAugment = false
             local colored = colorName(F.shortName(name), class)
 
-            for i = 1, 60 do
+            for i = 1, RCC.MAX_AURAS do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then
@@ -376,7 +376,7 @@ local function reportBuffs(toChat)
 
             local hasBuff = {}
 
-            for i = 1, 60 do
+            for i = 1, RCC.MAX_AURAS do
                 local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
                 if not aura then

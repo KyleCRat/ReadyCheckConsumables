@@ -69,7 +69,7 @@ function Auras.ScanPlayer(now)
         auras = {},
     }
 
-    for i = 1, 255 do
+    for i = 1, RCC.MAX_AURAS do
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
 
         if not auraData then

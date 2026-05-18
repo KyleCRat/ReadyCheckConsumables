@@ -96,7 +96,7 @@ function Status.ScanUnit(unit)
         return statuses
     end
 
-    for auraIndex = 1, 60 do
+    for auraIndex = 1, RCC.MAX_AURAS do
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
 
         if not aura then
@@ -122,7 +122,7 @@ function Status.GetUnitStatus(unit, index)
         return data
     end
 
-    for auraIndex = 1, 60 do
+    for auraIndex = 1, RCC.MAX_AURAS do
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
 
         if not aura then

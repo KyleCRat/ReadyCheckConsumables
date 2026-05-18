@@ -615,7 +615,7 @@ function Columns.ScanUnitData(unit, now, layout, context)
         rules     = rules,
     }
 
-    for auraIndex = 1, 60 do
+    for auraIndex = 1, RCC.MAX_AURAS do
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
 
         if not aura then
