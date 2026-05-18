@@ -206,7 +206,7 @@ local function addKnownSpellEnchantCandidate(candidates, enchantID, enchantData,
     end
 end
 
-local function selectKnownSpellEnchantForSlot(slotID)
+local function collectKnownSpellEnchantCandidatesForSlot(slotID)
     local candidates = {}
 
     for enchantID, enchantData in pairs(RCC.db.weaponEnchants) do
@@ -227,8 +227,85 @@ local function selectKnownSpellEnchantForSlot(slotID)
         return a.priority < b.priority
     end)
 
+    return candidates
+end
+
+local function selectKnownSpellEnchantForSlot(slotID)
+    local candidates = collectKnownSpellEnchantCandidatesForSlot(slotID)
+
     if candidates[1] then
         return candidates[1].enchantData
+    end
+end
+
+local function createSpellFlyoutChoice(enchantData, slotState)
+    if not enchantData or not enchantData.spellID then return end
+
+    local spellInfo = GetSpellInfo(enchantData.spellID)
+    local spellName = spellInfo and spellInfo.name
+
+    if not spellName then return end
+
+    return ButtonState.Create({
+        icon = getWeaponEnchantIcon(enchantData),
+        desaturated = false,
+        countText = "",
+        tooltipSpellID = enchantData.spellID,
+        clickHintSpellID = enchantData.spellID,
+        action = {
+            type = ActionType.SPELL,
+            spellName = spellName,
+            available = slotState.canBeEnchanted,
+            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
+        },
+    })
+end
+
+local function appendSpellFlyoutChoices(choices, slotState, activeEnchantData)
+    local spellCandidates =
+        collectKnownSpellEnchantCandidatesForSlot(slotState.slotID)
+
+    for i = 1, #spellCandidates do
+        local enchantData = spellCandidates[i].enchantData
+
+        if enchantData ~= activeEnchantData then
+            local choice = createSpellFlyoutChoice(enchantData, slotState)
+
+            if choice then
+                choices[#choices + 1] = choice
+            end
+        end
+    end
+end
+
+local function appendChoices(choices, additions)
+    if not additions then return end
+
+    for i = 1, #additions do
+        choices[#choices + 1] = additions[i]
+    end
+end
+
+local function buildItemPrimaryFlyoutChoices(itemCandidates, itemID, slotState,
+                                             activeEnchantData,
+                                             outOfCachedItem)
+    local choices = {}
+
+    appendSpellFlyoutChoices(choices, slotState, activeEnchantData)
+    appendChoices(choices, ButtonState.CreateItemFlyoutChoices(
+        itemCandidates,
+        itemID,
+        ActionType.WEAPON_ENCHANT_ITEM,
+        {
+            targetSlot = slotState.slotID,
+            available = slotState.canBeEnchanted,
+            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
+            includeSingleChoice = outOfCachedItem,
+        }
+    ))
+
+    if #choices > 0 then
+        return choices
     end
 end
 
@@ -242,7 +319,7 @@ end
 
 local function shouldPreferSpellEnchant(hasEnchant, activeEnchantData)
     return not hasEnchant
-           or (activeEnchantData and activeEnchantData.spellID ~= nil)
+           or playerKnowsSpellEnchantData(activeEnchantData)
 end
 
 local function configureSpellEnchantState(buttonState, enchantData, slotState,
@@ -262,6 +339,7 @@ local function configureSpellEnchantState(buttonState, enchantData, slotState,
         type = ActionType.SPELL,
         spellName = spellName,
         available = slotState.canBeEnchanted,
+        cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
     }
     buttonState.countText = ""
     buttonState.tooltipSpellID = enchantData.spellID
@@ -358,16 +436,12 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
         buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
     end
 
-    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
+    buttonState.flyoutChoices = buildItemPrimaryFlyoutChoices(
         itemCandidates,
         itemID,
-        ActionType.WEAPON_ENCHANT_ITEM,
-        {
-            targetSlot = slotState.slotID,
-            available = slotState.canBeEnchanted,
-            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
-            includeSingleChoice = outOfCachedItem,
-        }
+        slotState,
+        activeEnchantData,
+        outOfCachedItem
     )
 end
 
@@ -399,7 +473,10 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
     local spellEnchant = selectSpellEnchantForSlot(slotID, activeEnchantData)
     local itemCandidates = collectWeaponEnchantItemCandidatesInBags()
 
-    if not shouldPreferSpellEnchant(slotState.hasEnchant, activeEnchantData)
+    if not shouldPreferSpellEnchant(
+            slotState.hasEnchant,
+            activeEnchantData
+        )
         or not configureSpellEnchantState(
             buttonState,
             spellEnchant,

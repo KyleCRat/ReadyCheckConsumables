@@ -33,6 +33,13 @@ local function cacheClickedItem(self)
     scheduleConsumableFrameUpdate()
 end
 
+local function clearClickedItemCache(self)
+    if not ItemCache or not self.rccItemCacheKey then return end
+
+    ItemCache.Clear(self.rccItemCacheKey)
+    scheduleConsumableFrameUpdate()
+end
+
 local function setClickCache(button, cacheKey, itemID)
     if not button or not button.click or InCombatLockdown() then return end
 
@@ -41,6 +48,19 @@ local function setClickCache(button, cacheKey, itemID)
 
     if cacheKey and itemID then
         button.click:SetScript("PostClick", cacheClickedItem)
+    else
+        button.click:SetScript("PostClick", nil)
+    end
+end
+
+local function setClickCacheClear(button, cacheKey)
+    if not button or not button.click or InCombatLockdown() then return end
+
+    button.click.rccItemCacheKey = cacheKey
+    button.click.rccItemCacheID = nil
+
+    if cacheKey then
+        button.click:SetScript("PostClick", clearClickedItemCache)
     else
         button.click:SetScript("PostClick", nil)
     end
@@ -97,10 +117,10 @@ local function setItemMacro(button, itemID, targetSlot, cacheKey)
     enableClick(button)
 end
 
-local function setSpell(button, spellName, available)
+local function setSpell(button, spellName, available, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
-    setClickCache(button)
+    setClickCacheClear(button, cacheKey)
     button.click:SetAttribute("spell", spellName)
     button.click:SetAttribute("type", "spell")
 
@@ -146,7 +166,12 @@ function Actions.Apply(button, action)
             action.cacheKey
         )
     elseif action.type == ActionType.SPELL and action.spellName then
-        setSpell(button, action.spellName, action.available)
+        setSpell(
+            button,
+            action.spellName,
+            action.available,
+            action.cacheKey
+        )
     elseif action.type == ActionType.WEAPON_ENCHANT_ITEM
         and action.itemID and action.targetSlot
     then
