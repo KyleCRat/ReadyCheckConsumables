@@ -10,6 +10,8 @@ local Buttons = RCC.ConsumableFrameButtons
 local SIZE = 48
 local SPACING = 2
 local FONT = UI.FONT
+local DETAIL_TEXT_FONT_SIZE = 16
+local DETAIL_TEXT_MAX_WIDTH = (SIZE * 5) + (SPACING * 2)
 local TIME_TEXT_NORMAL_COLOR = { r = 1, g = 1, b = 1 }
 local TIME_TEXT_BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
 local MAIN_HAND_INVENTORY_SLOT = 16
@@ -282,7 +284,10 @@ local function getOrCreateFlyoutButton(owner, index)
     button.detailText = button:CreateFontString(nil, "ARTWORK",
                                                 "GameFontWhite")
     button.detailText:SetPoint("BOTTOM", button, "TOP", 0, 1)
-    button.detailText:SetFont(FONT, 12, "OUTLINE")
+    button.detailText:SetFont(FONT, DETAIL_TEXT_FONT_SIZE, "OUTLINE")
+    button.detailText:SetMaxLines(1)
+    button.detailText:SetWordWrap(false)
+    button.detailText:SetWidth(DETAIL_TEXT_MAX_WIDTH)
 
     button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
@@ -486,7 +491,7 @@ function Buttons.CreateAll(parent)
         button.detailText = button:CreateFontString(nil, "ARTWORK",
                                                     "GameFontWhite")
         button.detailText:SetPoint("BOTTOM", button, "TOP", 0, 1)
-        button.detailText:SetFont(FONT, 12, "OUTLINE")
+        button.detailText:SetFont(FONT, DETAIL_TEXT_FONT_SIZE, "OUTLINE")
 
         button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
         button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
