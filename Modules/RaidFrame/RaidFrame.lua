@@ -22,6 +22,8 @@ local FADE_OUT_DURATION   = 0.5
 local LAYOUT = Columns.CreateLayout()
 
 local broadcast             = Broadcast.Create()
+local foodData              = broadcast:GetFoodData()
+local flaskData             = broadcast:GetFlaskData()
 local durabilityData        = broadcast:GetDurabilityData()
 local tempWeaponEnchantData = broadcast:GetTempWeaponEnchantData()
 
@@ -80,6 +82,8 @@ local state = {
 local renderContext = {
     state  = state,
     shared = {
+        foodData              = foodData,
+        flaskData             = flaskData,
         durabilityData        = durabilityData,
         tempWeaponEnchantData = tempWeaponEnchantData,
     },
@@ -242,6 +246,17 @@ local function showReadyCheckDisplay(duration, showProgress)
     frame:Show()
 end
 
+local function broadcastPlayerTimedConsumables()
+    local columnData = Columns.ScanUnitData(
+        "player",
+        GetTime(),
+        LAYOUT,
+        renderContext
+    )
+
+    broadcast:SendTimedConsumableStatuses(columnData)
+end
+
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelSyntheticReadyCheck()
 
@@ -260,7 +275,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     broadcast:Reset()
 
     -- Broadcast even when the local raid frame is disabled so other RCC users
-    -- can still see this player's durability and temp weapon enchant status.
+    -- can still see this player's consumable, durability, and temp weapon
+    -- enchant status.
+    broadcastPlayerTimedConsumables()
     broadcast:SendDurability()
     broadcast:SendTempWeaponEnchantStatus()
 
@@ -440,6 +457,11 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
 
     if event == "UNIT_AURA" then
         local unit = arg1
+
+        if unit == "player" then
+            broadcastPlayerTimedConsumables()
+        end
+
         self:OnUnitAura(unit)
 
         return

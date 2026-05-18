@@ -135,10 +135,25 @@ local function storeAuraID(data, aura)
 end
 
 local function setTimedAuraData(data, aura, remaining)
-    data.has    = true
-    data.time   = remaining
-    data.iconID = aura.icon
+    data.has     = true
+    data.time    = remaining
+    data.iconID  = aura.icon
+    data.spellID = aura.spellId
+    data.source  = "aura"
     storeAuraID(data, aura)
+end
+
+local function setTimedExternalData(data, source)
+    if data.has and data.source == "aura" then
+        return
+    end
+
+    data.has     = source and source.has == true or false
+    data.time    = source and source.time or 0
+    data.iconID  = source and source.iconID or nil
+    data.spellID = source and source.spellID or nil
+    data.auraID  = nil
+    data.source  = "broadcast"
 end
 
 local function setIconAuraData(data, aura)
@@ -165,10 +180,12 @@ end
 
 local function createFoodData()
     return {
-        has    = false,
-        time   = 0,
-        auraID = nil,
-        iconID = nil,
+        has     = false,
+        time    = 0,
+        auraID  = nil,
+        iconID  = nil,
+        spellID = nil,
+        source  = nil,
     }
 end
 
@@ -186,6 +203,8 @@ local function refreshFoodDisplayData(data, rules)
     data.time     = displayData.time
     data.auraID   = displayData.auraID
     data.iconID   = displayData.iconID
+    data.spellID  = displayData.spellID
+    data.source   = displayData.source
     data.isEating = isEating
 end
 
@@ -225,6 +244,22 @@ local function isFoodBad(member, context, column)
     return isTimedDataBad(data, context.rules)
 end
 
+local function syncFoodData(data, member, context)
+    local playerKey = member.key
+    local entry = playerKey and context.shared.foodData[playerKey]
+
+    if not entry then
+        return
+    end
+
+    data.wellFed = data.wellFed or createFoodData()
+    data.eating  = data.eating or createFoodData()
+
+    setTimedExternalData(data.wellFed, entry.wellFed)
+    setTimedExternalData(data.eating, entry.eating)
+    refreshFoodDisplayData(data, context.rules)
+end
+
 local foodColumn = {
     columnType   = COLUMN_TYPE.TIMED,
     dataSource   = DATA_SOURCE.AURA,
@@ -236,6 +271,7 @@ local foodColumn = {
     label        = "Food: Missing",
     CreateData   = createFoodData,
     CollectAura  = collectFoodAura,
+    SyncData     = syncFoodData,
     IsBad        = isFoodBad,
 }
 
@@ -245,10 +281,12 @@ local foodColumn = {
 
 local function createFlaskData()
     return {
-        has    = false,
-        time   = 0,
-        auraID = nil,
-        iconID = nil,
+        has     = false,
+        time    = 0,
+        auraID  = nil,
+        iconID  = nil,
+        spellID = nil,
+        source  = nil,
     }
 end
 
@@ -266,6 +304,17 @@ local function isFlaskBad(member, context, column)
     return isTimedDataBad(getColumnData(member, column), context.rules)
 end
 
+local function syncFlaskData(data, member, context)
+    local playerKey = member.key
+    local entry = playerKey and context.shared.flaskData[playerKey]
+
+    if not entry then
+        return
+    end
+
+    setTimedExternalData(data, entry)
+end
+
 local flaskColumn = {
     columnType   = COLUMN_TYPE.TIMED,
     dataSource   = DATA_SOURCE.AURA,
@@ -277,6 +326,7 @@ local flaskColumn = {
     label        = "Flask: Missing",
     CreateData   = createFlaskData,
     CollectAura  = collectFlaskAura,
+    SyncData     = syncFlaskData,
     IsBad        = isFlaskBad,
 }
 

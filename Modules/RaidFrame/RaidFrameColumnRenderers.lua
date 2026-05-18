@@ -232,8 +232,18 @@ local function renderTimedAuraCell(row, member, column, context)
         timeText:SetText("")
     end
 
-    overlay.unit   = member.unit
-    overlay.auraID = data and data.auraID or nil
+    overlay.unit    = member.unit
+    overlay.auraID  = nil
+    overlay.spellID = nil
+    overlay.itemID  = nil
+    overlay.label   = nil
+
+    if data and data.has then
+        overlay.auraID  = data.auraID
+        overlay.spellID = data.spellID
+    else
+        overlay.label = column.label
+    end
 end
 
 local function setTempWeaponEnchantState(cell, column, label, text, r, g, b)

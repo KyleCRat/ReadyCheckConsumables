@@ -13,6 +13,8 @@ local GetItemIconByID    = C_Item.GetItemIconByID
 local GetSpellInfo       = C_Spell.GetSpellInfo
 
 local ADDON_PREFIX = "RCC"
+local FOOD_MESSAGE_TYPE = "FOOD"
+local FLASK_MESSAGE_TYPE = "FLASK"
 -- Keep the legacy "OIL" message type so older RCC clients can still read the
 -- remaining time and item ID from the first two payload fields.
 local TEMP_WEAPON_ENCHANT_MESSAGE_TYPE = "OIL"
@@ -68,6 +70,41 @@ local function getTempWeaponEnchantRemaining(expiration)
     end
 
     return expiration / 1000
+end
+
+local function getTimedStatusFields(data)
+    local has = data and data.has == true
+    local time = 0
+    local iconID = 0
+    local spellID = 0
+
+    if has and F.IsSafeNumber(data.time) then
+        time = floor(data.time)
+    end
+
+    if data and F.IsSafeNumber(data.iconID) and data.iconID > 0 then
+        iconID = data.iconID
+    end
+
+    if data and F.IsSafeNumber(data.spellID) and data.spellID > 0 then
+        spellID = data.spellID
+    end
+
+    return has and 1 or 0, time, iconID, spellID
+end
+
+local function createTimedStatus(hasValue, timeValue, iconValue, spellValue)
+    local has = tonumber(hasValue) == 1
+    local time = tonumber(timeValue) or 0
+    local iconID = tonumber(iconValue) or 0
+    local spellID = tonumber(spellValue) or 0
+
+    return {
+        has     = has,
+        time    = time,
+        iconID  = iconID > 0 and iconID or nil,
+        spellID = spellID > 0 and spellID or nil,
+    }
 end
 
 local function createTempWeaponEnchantStatus(time, enchantID)
@@ -141,13 +178,25 @@ end
 
 function Broadcast.Create()
     local broadcast = {
+        foodData              = {},
+        flaskData             = {},
         durabilityData        = {},
         tempWeaponEnchantData = {},
     }
 
     function broadcast:Reset()
+        wipe(self.foodData)
+        wipe(self.flaskData)
         wipe(self.durabilityData)
         wipe(self.tempWeaponEnchantData)
+    end
+
+    function broadcast:GetFoodData()
+        return self.foodData
+    end
+
+    function broadcast:GetFlaskData()
+        return self.flaskData
     end
 
     function broadcast:GetDurabilityData()
@@ -161,6 +210,18 @@ function Broadcast.Create()
     function broadcast:SetDurability(playerKey, pct)
         if playerKey and pct ~= nil then
             self.durabilityData[playerKey] = pct
+        end
+    end
+
+    function broadcast:SetFoodStatus(playerKey, status)
+        if playerKey and status ~= nil then
+            self.foodData[playerKey] = status
+        end
+    end
+
+    function broadcast:SetFlaskStatus(playerKey, status)
+        if playerKey and status ~= nil then
+            self.flaskData[playerKey] = status
         end
     end
 
@@ -181,6 +242,78 @@ function Broadcast.Create()
         if chatType ~= "SAY" then
             C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "DUR\t" .. pct, chatType)
         end
+    end
+
+    function broadcast:SendFoodStatus(status, chatType)
+        local playerKey = F.unitFullName("player")
+        local wellFedHas, wellFedTime, wellFedIconID, wellFedSpellID =
+            getTimedStatusFields(status and status.wellFed)
+        local eatingHas, eatingTime, eatingIconID, eatingSpellID =
+            getTimedStatusFields(status and status.eating)
+
+        status = {
+            wellFed = createTimedStatus(
+                wellFedHas,
+                wellFedTime,
+                wellFedIconID,
+                wellFedSpellID
+            ),
+            eating  = createTimedStatus(
+                eatingHas,
+                eatingTime,
+                eatingIconID,
+                eatingSpellID
+            ),
+        }
+
+        self:SetFoodStatus(playerKey, status)
+
+        chatType = chatType or F.chatType()
+
+        if chatType ~= "SAY" then
+            C_ChatInfo.SendAddonMessage(
+                ADDON_PREFIX,
+                FOOD_MESSAGE_TYPE
+                    .. "\t" .. wellFedHas
+                    .. "\t" .. wellFedTime
+                    .. "\t" .. wellFedIconID
+                    .. "\t" .. eatingHas
+                    .. "\t" .. eatingTime
+                    .. "\t" .. eatingIconID
+                    .. "\t" .. wellFedSpellID
+                    .. "\t" .. eatingSpellID,
+                chatType
+            )
+        end
+    end
+
+    function broadcast:SendFlaskStatus(status, chatType)
+        local playerKey = F.unitFullName("player")
+        local has, time, iconID, spellID = getTimedStatusFields(status)
+
+        status = createTimedStatus(has, time, iconID, spellID)
+        self:SetFlaskStatus(playerKey, status)
+
+        chatType = chatType or F.chatType()
+
+        if chatType ~= "SAY" then
+            C_ChatInfo.SendAddonMessage(
+                ADDON_PREFIX,
+                FLASK_MESSAGE_TYPE
+                    .. "\t" .. has
+                    .. "\t" .. time
+                    .. "\t" .. iconID
+                    .. "\t" .. spellID,
+                chatType
+            )
+        end
+    end
+
+    function broadcast:SendTimedConsumableStatuses(columnData)
+        local chatType = F.chatType()
+
+        self:SendFoodStatus(columnData and columnData.food, chatType)
+        self:SendFlaskStatus(columnData and columnData.flask, chatType)
     end
 
     function broadcast:SendTempWeaponEnchantStatus()
@@ -207,7 +340,7 @@ function Broadcast.Create()
 
     function broadcast:HandleAddonMessage(prefix, message, sender)
         if prefix == ADDON_PREFIX then
-            local msgType, val1, val2, val3, val4, val5 =
+            local msgType, val1, val2, val3, val4, val5, val6, val7, val8 =
                 strsplit("\t", message)
 
             if msgType == "DUR" then
@@ -216,6 +349,26 @@ function Broadcast.Create()
 
                 if pct and senderKey then
                     self.durabilityData[senderKey] = pct
+
+                    return true
+                end
+            elseif msgType == FOOD_MESSAGE_TYPE then
+                local senderKey = F.fullName(sender)
+
+                if senderKey then
+                    self.foodData[senderKey] = {
+                        wellFed = createTimedStatus(val1, val2, val3, val7),
+                        eating  = createTimedStatus(val4, val5, val6, val8),
+                    }
+
+                    return true
+                end
+            elseif msgType == FLASK_MESSAGE_TYPE then
+                local senderKey = F.fullName(sender)
+
+                if senderKey then
+                    self.flaskData[senderKey] =
+                        createTimedStatus(val1, val2, val3, val4)
 
                     return true
                 end
