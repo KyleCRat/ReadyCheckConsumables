@@ -35,6 +35,14 @@ local function getUnavailableText(button)
     return Buttons and Buttons.GetUnavailableText(button)
 end
 
+local function setGameTooltipOwner(button)
+    local Buttons = RCC.ConsumableFrameButtons
+    local spacing = Buttons and Buttons.SPACING or 0
+
+    GameTooltip:SetOwner(button, "ANCHOR_NONE")
+    GameTooltip:SetPoint("BOTTOMLEFT", button, "TOPRIGHT", spacing, spacing)
+end
+
 local function addClickHint(button)
     if not button.tooltipAction then return end
 
@@ -66,14 +74,14 @@ local function showButtonTooltip(button, shoppingTooltip)
     local shownTooltip
 
     if button.tooltipItemID then
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        setGameTooltipOwner(button)
         GameTooltip:SetItemByID(button.tooltipItemID)
         GameTooltip:Show()
         shownTooltip = true
     end
 
     if button.tooltipSpellID then
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        setGameTooltipOwner(button)
         GameTooltip:SetSpellByID(button.tooltipSpellID)
         GameTooltip:Show()
         shownTooltip = true
@@ -86,7 +94,7 @@ local function showButtonTooltip(button, shoppingTooltip)
         ShoppingTooltip1:Show()
 
     elseif button.tooltipAuraID then
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        setGameTooltipOwner(button)
         GameTooltip:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
         GameTooltip:Show()
         shownTooltip = true
@@ -126,7 +134,7 @@ function Tooltips.InfoButtonOnEnter(self)
     end
 
     if unavailableText then
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        setGameTooltipOwner(self)
         GameTooltip:ClearLines()
         GameTooltip:AddLine(unavailableText)
         GameTooltip:Show()
