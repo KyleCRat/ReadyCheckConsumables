@@ -130,6 +130,10 @@ function Tooltips.InfoButtonOnEnter(self)
     end
 
     if showButtonTooltip(self, true) then
+        if self.clickEnabled then
+            addClickHint(self)
+        end
+
         addUnavailableHint(self)
 
         return

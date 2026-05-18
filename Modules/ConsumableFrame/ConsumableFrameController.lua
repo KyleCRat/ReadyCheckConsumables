@@ -11,6 +11,7 @@ local Augment = RCC.Consumables.Augment
 local Healthstone = RCC.Consumables.Healthstone
 local DamagePotion = RCC.Consumables.DamagePotion
 local HealingPotion = RCC.Consumables.HealingPotion
+local RaidBuff = RCC.Consumables.RaidBuff
 local Vantus = RCC.Consumables.Vantus
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
@@ -160,6 +161,7 @@ function RCC.consumables:Update()
     Flask.Update(buttons.flask, auraState)
     WeaponEnchant.Update(buttons)
     Augment.Update(buttons.augment, auraState)
+    RaidBuff.Update(buttons.raidBuff)
     DamagePotion.Update(buttons.dmgpot)
     HealingPotion.Update(buttons.healpot)
     Vantus.Update(buttons.vantus, auraState)

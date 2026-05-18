@@ -172,11 +172,11 @@ local function setItemMacro(button, itemID, targetSlot, cacheKey)
     enableClick(button)
 end
 
-local function setSpell(button, spellName, available, cacheKey)
+local function setSpell(button, spell, available, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
     setClickCacheClear(button, cacheKey)
-    button.click:SetAttribute("spell", spellName)
+    button.click:SetAttribute("spell", spell)
     button.click:SetAttribute("type", "spell")
 
     setClickAvailability(button, available == true)
@@ -220,10 +220,12 @@ function Actions.Apply(button, action)
             action.targetSlot,
             action.cacheKey
         )
-    elseif action.type == ActionType.SPELL and action.spellName then
+    elseif action.type == ActionType.SPELL
+        and (action.spellID or action.spellName)
+    then
         setSpell(
             button,
-            action.spellName,
+            action.spellID or action.spellName,
             action.available,
             action.cacheKey
         )

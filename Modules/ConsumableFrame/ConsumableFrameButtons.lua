@@ -61,6 +61,13 @@ local BUTTON_DEFS = {
         tooltipAction = "use",
     },
     {
+        key           = "raidBuff",
+        settingKey    = "icon_raidBuff",
+        defaultIcon   = RCC.db.raidBuffIconID,
+        clickable     = true,
+        tooltipAction = "cast",
+    },
+    {
         key         = "hs",
         settingKey  = "icon_healthstone",
         defaultIcon = RCC.db.healthstoneIconID,

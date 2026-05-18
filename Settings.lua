@@ -28,6 +28,7 @@ local DEFAULTS = {
     icon_dmgPotion           = true,
     icon_healPotion          = true,
     icon_augment             = true,
+    icon_raidBuff            = true,
     icon_vantus              = true,
 
     -- Raid Frame
@@ -304,6 +305,7 @@ local function registerPanel()
         { "icon_dmgPotion",   "Damage Potion"  },
         { "icon_healPotion",  "Healing Potion" },
         { "icon_augment",     "Augment Rune"   },
+        { "icon_raidBuff",    "Raid Buff"      },
         { "icon_vantus",      "Vantus Rune"    },
     }
 
