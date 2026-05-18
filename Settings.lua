@@ -143,7 +143,7 @@ local function registerPanel()
 
     local cfEnabled = Settings.RegisterAddOnSetting(
         cfCat, "consumables_enabled", "consumables_enabled",
-        db, "boolean", "Enabled", db.consumables_enabled
+        db, "boolean", "Enabled", DEFAULTS.consumables_enabled
     )
     Settings.CreateCheckbox(cfCat, cfEnabled,
         "Show the consumable icon bar during ready checks.")
@@ -158,7 +158,7 @@ local function registerPanel()
 
     local cfScale = Settings.RegisterAddOnSetting(
         cfCat, "consumables_scale", "consumables_scale",
-        db, "number", "Scale", db.consumables_scale
+        db, "number", "Scale", DEFAULTS.consumables_scale
     )
     Settings.CreateSlider(cfCat, cfScale, scaleOptions,
         "Scale of the consumable icon bar.")
@@ -173,7 +173,7 @@ local function registerPanel()
 
     local cfMinShow = Settings.RegisterAddOnSetting(
         cfCat, "consumables_minShow", "consumables_minShow",
-        db, "boolean", "Keep Open After Response", db.consumables_minShow
+        db, "boolean", "Keep Open After Response", DEFAULTS.consumables_minShow
     )
     Settings.CreateCheckbox(cfCat, cfMinShow,
         "Keep the consumables frame open for a minimum duration after you respond to a ready check.")
@@ -184,7 +184,7 @@ local function registerPanel()
 
     local cfMinShowTime = Settings.RegisterAddOnSetting(
         cfCat, "consumables_minShowTime", "consumables_minShowTime",
-        db, "number", "Keep Open Duration", db.consumables_minShowTime
+        db, "number", "Keep Open Duration", DEFAULTS.consumables_minShowTime
     )
     Settings.CreateSlider(cfCat, cfMinShowTime, minShowOptions,
         "How long the consumables frame stays open after a ready check (1-40 seconds).")
@@ -196,7 +196,7 @@ local function registerPanel()
     local cfInstanceOpen = Settings.RegisterAddOnSetting(
         cfCat, "consumables_instanceOpen", "consumables_instanceOpen",
         db, "boolean", "Open When Entering Instance",
-        db.consumables_instanceOpen
+        DEFAULTS.consumables_instanceOpen
     )
     Settings.CreateCheckbox(cfCat, cfInstanceOpen,
         "Show the consumables frame when you enter instanced content.")
@@ -232,7 +232,7 @@ local function registerPanel()
     for _, option in ipairs(instanceTypeSettings) do
         local key, label, tooltip = option[1], option[2], option[3]
         local setting = Settings.RegisterAddOnSetting(
-            cfCat, key, key, db, "boolean", label, db[key]
+            cfCat, key, key, db, "boolean", label, DEFAULTS[key]
         )
         Settings.CreateCheckbox(cfCat, setting, tooltip)
     end
@@ -249,7 +249,7 @@ local function registerPanel()
 
     local cfInstanceHide = Settings.RegisterAddOnSetting(
         cfCat, "consumables_instanceHide", "consumables_instanceHide",
-        db, "boolean", "Auto-Hide After Delay", db.consumables_instanceHide
+        db, "boolean", "Auto-Hide After Delay", DEFAULTS.consumables_instanceHide
     )
     Settings.CreateCheckbox(cfCat, cfInstanceHide,
         "Hide the consumables frame automatically after the auto-hide delay.")
@@ -262,7 +262,7 @@ local function registerPanel()
 
     local cfInstanceHideTime = Settings.RegisterAddOnSetting(
         cfCat, "consumables_instanceHideTime", "consumables_instanceHideTime",
-        db, "number", "Auto-Hide Delay Duration", db.consumables_instanceHideTime
+        db, "number", "Auto-Hide Delay Duration", DEFAULTS.consumables_instanceHideTime
     )
     Settings.CreateSlider(cfCat, cfInstanceHideTime, instanceHideOptions,
         "How long the consumables frame stays open when Auto-Hide After Delay is enabled (5-120 seconds).")
@@ -275,7 +275,7 @@ local function registerPanel()
         cfCat, "consumables_preferUnlimitedAugment",
         "consumables_preferUnlimitedAugment",
         db, "boolean", "Prefer Unlimited Augment Runes",
-        db.consumables_preferUnlimitedAugment
+        DEFAULTS.consumables_preferUnlimitedAugment
     )
     Settings.CreateCheckbox(cfCat, cfPreferUnlimitedAugment,
         "Use unlimited augment runes before higher-expansion consumable augment runes.")
@@ -310,7 +310,7 @@ local function registerPanel()
     for _, pair in ipairs(iconKeys) do
         local key, label = pair[1], pair[2]
         local s = Settings.RegisterAddOnSetting(
-            cfCat, key, key, db, "boolean", label, db[key]
+            cfCat, key, key, db, "boolean", label, DEFAULTS[key]
         )
         Settings.CreateCheckbox(cfCat, s, "Show " .. label .. " icon.")
         Settings.SetOnValueChangedCallback(key, function()
@@ -328,7 +328,7 @@ local function registerPanel()
 
     local rfEnabled = Settings.RegisterAddOnSetting(
         rfCat, "raidFrame_enabled", "raidFrame_enabled",
-        db, "boolean", "Enabled", db.raidFrame_enabled
+        db, "boolean", "Enabled", DEFAULTS.raidFrame_enabled
     )
     Settings.CreateCheckbox(rfCat, rfEnabled,
         "Show the per-member consumable status frame during ready checks.")
@@ -343,7 +343,7 @@ local function registerPanel()
 
     local rfScale = Settings.RegisterAddOnSetting(
         rfCat, "raidFrame_scale", "raidFrame_scale",
-        db, "number", "Scale", db.raidFrame_scale
+        db, "number", "Scale", DEFAULTS.raidFrame_scale
     )
     Settings.CreateSlider(rfCat, rfScale, rfScaleOptions,
         "Scale of the raid status frame.")
@@ -362,7 +362,7 @@ local function registerPanel()
 
     local rfMinShow = Settings.RegisterAddOnSetting(
         rfCat, "raidFrame_minShow", "raidFrame_minShow",
-        db, "boolean", "Keep Open After Finished", db.raidFrame_minShow
+        db, "boolean", "Keep Open After Finished", DEFAULTS.raidFrame_minShow
     )
     Settings.CreateCheckbox(rfCat, rfMinShow,
         "Keep the raid status frame open for a minimum duration after the ready check finishes.")
@@ -373,7 +373,7 @@ local function registerPanel()
 
     local rfMinShowTime = Settings.RegisterAddOnSetting(
         rfCat, "raidFrame_minShowTime", "raidFrame_minShowTime",
-        db, "number", "Keep Open Duration", db.raidFrame_minShowTime
+        db, "number", "Keep Open Duration", DEFAULTS.raidFrame_minShowTime
     )
     Settings.CreateSlider(rfCat, rfMinShowTime, rfMinShowOptions,
         "How long the raid status frame stays open after a ready check (1-40 seconds).")
@@ -384,7 +384,7 @@ local function registerPanel()
 
     local crEnabled = Settings.RegisterAddOnSetting(
         crCat, "chatReport_enabled", "chatReport_enabled",
-        db, "boolean", "Enabled", db.chatReport_enabled
+        db, "boolean", "Enabled", DEFAULTS.chatReport_enabled
     )
     Settings.CreateCheckbox(crCat, crEnabled,
         "Automatically report missing consumables to chat on ready check.")
@@ -400,7 +400,7 @@ local function registerPanel()
 
     local crPerm = Settings.RegisterAddOnSetting(
         crCat, "chatReport_permission", "chatReport_permission",
-        db, "string", "Require Role to Report", db.chatReport_permission
+        db, "string", "Require Role to Report", DEFAULTS.chatReport_permission
     )
     Settings.CreateDropdown(crCat, crPerm, getPermOptions,
         "Which raid role is allowed to trigger chat reports.")
@@ -422,7 +422,7 @@ local function registerPanel()
     for _, pair in ipairs(instanceKeys) do
         local key, label = pair[1], pair[2]
         local s = Settings.RegisterAddOnSetting(
-            crCat, key, key, db, "boolean", label, db[key]
+            crCat, key, key, db, "boolean", label, DEFAULTS[key]
         )
         Settings.CreateCheckbox(crCat, s, "Report in " .. label .. ".")
     end
