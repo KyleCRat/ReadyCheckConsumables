@@ -14,6 +14,10 @@ RCC.ConsumableActionType = RCC.ConsumableActionType or {
 }
 
 local ActionType = RCC.ConsumableActionType
+local CACHE_COMMIT_DELAY = 0.2
+local pendingCacheAction
+local pendingCacheToken = 0
+local cacheEventFrame = CreateFrame("Frame")
 
 local function scheduleConsumableFrameUpdate()
     C_Timer.After(0, function()
@@ -26,18 +30,67 @@ local function scheduleConsumableFrameUpdate()
     end)
 end
 
-local function cacheClickedItem(self)
-    if not ItemCache then return end
+local function clearPendingCacheAction()
+    pendingCacheAction = nil
+    pendingCacheToken = pendingCacheToken + 1
+    cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
+    cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
+end
 
-    ItemCache.Set(self.rccItemCacheKey, self.rccItemCacheID)
+local function commitPendingCacheAction(token)
+    if token ~= pendingCacheToken or not pendingCacheAction then return end
+
+    local action = pendingCacheAction
+
+    pendingCacheAction = nil
+    cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
+    cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
+
+    if action.type == "set" then
+        ItemCache.Set(action.cacheKey, action.itemID)
+    elseif action.type == "clear" then
+        ItemCache.Clear(action.cacheKey)
+    end
+
     scheduleConsumableFrameUpdate()
 end
 
-local function clearClickedItemCache(self)
-    if not ItemCache or not self.rccItemCacheKey then return end
+local function queuePendingCacheAction(action)
+    if not ItemCache or not action or not action.cacheKey then return end
 
-    ItemCache.Clear(self.rccItemCacheKey)
-    scheduleConsumableFrameUpdate()
+    -- Use errors can fire during the secure action before PostClick runs, so
+    -- start watching in PreClick and commit only after a quiet frame window.
+    pendingCacheAction = action
+    pendingCacheToken = pendingCacheToken + 1
+
+    local token = pendingCacheToken
+
+    cacheEventFrame:RegisterEvent("UI_ERROR_MESSAGE")
+    cacheEventFrame:RegisterEvent("UI_ERROR_POPUP")
+    C_Timer.After(CACHE_COMMIT_DELAY, function()
+        commitPendingCacheAction(token)
+    end)
+end
+
+cacheEventFrame:SetScript("OnEvent", function()
+    if pendingCacheAction then
+        clearPendingCacheAction()
+    end
+end)
+
+local function cacheClickedItem(self)
+    queuePendingCacheAction({
+        type = "set",
+        cacheKey = self.rccItemCacheKey,
+        itemID = self.rccItemCacheID,
+    })
+end
+
+local function clearClickedItemCache(self)
+    queuePendingCacheAction({
+        type = "clear",
+        cacheKey = self.rccItemCacheKey,
+    })
 end
 
 local function setClickCache(button, cacheKey, itemID)
@@ -47,9 +100,9 @@ local function setClickCache(button, cacheKey, itemID)
     button.click.rccItemCacheID = itemID
 
     if cacheKey and itemID then
-        button.click:SetScript("PostClick", cacheClickedItem)
+        button.click:SetScript("PreClick", cacheClickedItem)
     else
-        button.click:SetScript("PostClick", nil)
+        button.click:SetScript("PreClick", nil)
     end
 end
 
@@ -60,9 +113,9 @@ local function setClickCacheClear(button, cacheKey)
     button.click.rccItemCacheID = nil
 
     if cacheKey then
-        button.click:SetScript("PostClick", clearClickedItemCache)
+        button.click:SetScript("PreClick", clearClickedItemCache)
     else
-        button.click:SetScript("PostClick", nil)
+        button.click:SetScript("PreClick", nil)
     end
 end
 
