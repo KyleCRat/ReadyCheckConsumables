@@ -176,6 +176,8 @@ end
 --------------------------------------------------------------------------------
 
 local function onReadyCheck(self, initiatorUnit)
+    instanceOpenPending = false
+
     local isInitiator = RCC.F.UnitIsUnitSafe(initiatorUnit, "player")
 
     return showConsumableFrame(self, isInitiator, true)
