@@ -11,15 +11,17 @@ local GLOW_UNAVAILABLE_COLOR = { 1.0, 0.05, 0.05, 1 }
 local GLOW_PARTICLES = 5
 local GLOW_FREQUENCY = 0.15
 local GLOW_SCALE = 1.4
-local GLOW_X_OFFSET = 0
-local GLOW_Y_OFFSET = 0
 
 local function applyButtonGlowPhase(button, glowWasActive)
     if glowWasActive then return end
 
     local glow = button["_AutoCastGlow" .. GLOW_KEY]
 
-    if not glow or type(glow.timer) ~= "table" then return end
+    -- glow.timer is a LibCustomGlow-1.0 internal; guard against library
+    -- changes that remove or restructure it.
+    if not glow or type(glow.timer) ~= "table" or #glow.timer < 4 then
+        return
+    end
 
     if not button.rccGlowPhases then
         button.rccGlowPhases = {}
@@ -51,8 +53,7 @@ local function startButtonGlow(button, color)
 
     button.rccGlowActiveColor = color
     LCG.AutoCastGlow_Start(button, color, GLOW_PARTICLES,
-                           GLOW_FREQUENCY, GLOW_SCALE,
-                           GLOW_X_OFFSET, GLOW_Y_OFFSET, GLOW_KEY)
+                           GLOW_FREQUENCY, GLOW_SCALE, 0, 0, GLOW_KEY)
 
     applyButtonGlowPhase(button, glowWasActive)
 end
@@ -72,6 +73,7 @@ local function isButtonClickable(button)
 end
 
 local function hasUnavailableState(button)
+    -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
     local Buttons = RCC.ConsumableFrameButtons
 
     return Buttons and Buttons.GetUnavailableText(button) ~= nil
@@ -85,26 +87,8 @@ local function shouldUseHoverGlow(button)
                 or not button.hasConsumableBuff)
 end
 
-function Glow.Set(button, enabled)
-    button.rccGlowEnabled = enabled
-
+local function resolveGlow(button)
     if button.rccGlowHovered and shouldUseHoverGlow(button) then
-        if isButtonClickable(button) then
-            startButtonGlow(button, GLOW_AVAILABLE_COLOR)
-        else
-            startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
-        end
-    elseif enabled then
-        startButtonGlow(button, GLOW_COLOR)
-    else
-        stopButtonGlow(button)
-    end
-end
-
-function Glow.SetHovered(button, hovered)
-    button.rccGlowHovered = hovered
-
-    if hovered and shouldUseHoverGlow(button) then
         if isButtonClickable(button) then
             startButtonGlow(button, GLOW_AVAILABLE_COLOR)
         else
@@ -115,6 +99,16 @@ function Glow.SetHovered(button, hovered)
     else
         stopButtonGlow(button)
     end
+end
+
+function Glow.Set(button, enabled)
+    button.rccGlowEnabled = enabled
+    resolveGlow(button)
+end
+
+function Glow.SetHovered(button, hovered)
+    button.rccGlowHovered = hovered
+    resolveGlow(button)
 end
 
 function Glow.Stop(button)
