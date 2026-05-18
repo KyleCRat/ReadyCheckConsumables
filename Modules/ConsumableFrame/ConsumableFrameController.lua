@@ -168,7 +168,7 @@ function RCC.consumables:Update()
         Buttons.ApplyLayout(self, buttons)
     end
 
-    Buttons.UpdateOutOverlays(buttons)
+    Buttons.UpdateUnavailableOverlays(buttons)
 end
 
 --------------------------------------------------------------------------------

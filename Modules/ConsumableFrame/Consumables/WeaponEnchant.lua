@@ -364,7 +364,7 @@ end
 
 local function configureMissingItemState(buttonState, showHint)
     if showHint then
-        buttonState.outOfItemsText = OUT_OF_ITEMS
+        ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
     end
 
     buttonState.glow = false
@@ -432,8 +432,12 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
         slotState
     )
 
-    if outOfCachedItem and not slotState.hasEnchant then
-        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+    if outOfCachedItem then
+        if slotState.hasEnchant then
+            ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        else
+            ButtonState.SetUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        end
     end
 
     buttonState.flyoutChoices = buildItemPrimaryFlyoutChoices(

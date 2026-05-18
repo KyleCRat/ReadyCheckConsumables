@@ -129,6 +129,56 @@ function Buttons.SetDetailTextBad(button, bad)
     button.detailText:SetTextColor(color.r, color.g, color.b)
 end
 
+local function applyButtonIcon(button)
+    local icon = button.normalIcon or button.defaultIcon
+
+    if button.hoverStateActive
+        and button.hoverState
+        and button.hoverState.icon
+    then
+        icon = button.hoverState.icon
+    end
+
+    button.texture:SetTexture(icon)
+end
+
+function Buttons.SetIcon(button, icon)
+    button.normalIcon = icon or button.defaultIcon
+    applyButtonIcon(button)
+end
+
+function Buttons.SetHoverState(button, state)
+    button.hoverState = state
+    applyButtonIcon(button)
+end
+
+function Buttons.SetHoverStateActive(button, active)
+    button.hoverStateActive = active == true
+    applyButtonIcon(button)
+end
+
+function Buttons.SetUnavailable(button, unavailable)
+    button.unavailable = unavailable
+end
+
+local function getUnavailableText(unavailable)
+    return unavailable and unavailable.text
+end
+
+function Buttons.GetUnavailableText(button)
+    if not button then return end
+
+    if button.hoverStateActive and button.hoverState then
+        local hoverText = getUnavailableText(button.hoverState.unavailable)
+
+        if hoverText then
+            return hoverText
+        end
+    end
+
+    return getUnavailableText(button.unavailable)
+end
+
 function Buttons.ResetState(button, notReadyTexture)
     button.consumableState = nil
     button.statustexture:SetTexture(notReadyTexture)
@@ -137,7 +187,10 @@ function Buttons.ResetState(button, notReadyTexture)
     button.detailText:SetText("")
     Buttons.SetDetailTextBad(button, false)
     button.count:SetText("")
-    button.texture:SetTexture(button.defaultIcon)
+    button.normalIcon = button.defaultIcon
+    button.hoverState = nil
+    button.unavailable = nil
+    applyButtonIcon(button)
     button.texture:SetDesaturated(true)
     if button.cooldown then
         button.cooldown:Clear()
@@ -149,7 +202,6 @@ function Buttons.ResetState(button, notReadyTexture)
     button.usableItemID = nil
     button.clickHintItemID = nil
     button.clickHintSpellID = nil
-    button.outOfItemsText = nil
     button.clickEnabled = false
     Buttons.SetShownInLayout(button, true)
 end
@@ -349,6 +401,7 @@ function Buttons.SetPrimaryHovered(button, hovered)
     if not owner then return end
 
     owner.primaryHovered = hovered == true
+    Buttons.SetHoverStateActive(owner, hovered)
 
     if hovered then
         Buttons.ShowFlyout(owner)
@@ -466,10 +519,11 @@ function Buttons.CreateAll(parent)
             highlight:SetColorTexture(1, 1, 1, 0.15)
             highlight:SetBlendMode("ADD")
 
-            button.outOverlay = button:CreateTexture(nil, "ARTWORK", nil, 1)
-            button.outOverlay:SetAllPoints()
-            button.outOverlay:SetColorTexture(0.6, 0, 0, 0.4)
-            button.outOverlay:Hide()
+            button.unavailableOverlay =
+                button:CreateTexture(nil, "ARTWORK", nil, 1)
+            button.unavailableOverlay:SetAllPoints()
+            button.unavailableOverlay:SetColorTexture(0.6, 0, 0, 0.4)
+            button.unavailableOverlay:Hide()
 
             button.tooltipAction = def.tooltipAction
         end
@@ -530,8 +584,8 @@ function Buttons.ApplyLayout(parent, buttons)
     parent:SetWidth(Buttons.GetWidth(visibleCount))
 end
 
-function Buttons.UpdateOutOverlays(buttons)
+function Buttons.UpdateUnavailableOverlays(buttons)
     for i = 1, #buttons do
-        Tooltips.UpdateOutOverlay(buttons[i])
+        Tooltips.UpdateUnavailableOverlay(buttons[i])
     end
 end

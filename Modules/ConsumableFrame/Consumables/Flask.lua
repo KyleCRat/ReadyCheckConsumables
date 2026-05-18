@@ -67,11 +67,15 @@ function Flask.Update(button, state)
             itemID = flaskItemID,
             cacheKey = CacheKey.FLASK,
         }
-    elseif outOfCachedFlask and not flaskState then
-        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+    elseif outOfCachedFlask then
+        if flaskState then
+            ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        else
+            ButtonState.SetUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        end
     else
         if not flaskState then
-            buttonState.outOfItemsText = OUT_OF_ITEMS
+            ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
         end
     end
 

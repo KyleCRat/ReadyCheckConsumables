@@ -124,12 +124,17 @@ function Augment.Update(button, state)
             itemID = augmentItemID,
             cacheKey = CacheKey.AUGMENT,
         }
-    elseif outOfCachedAugment and not augmentState then
+    elseif outOfCachedAugment then
         buttonState.countText = "0"
-        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+
+        if augmentState then
+            ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        else
+            ButtonState.SetUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        end
     else
         if not augmentState then
-            buttonState.outOfItemsText = OUT_OF_ITEMS
+            ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
         end
     end
 

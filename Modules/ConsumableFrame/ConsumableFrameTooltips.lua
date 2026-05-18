@@ -29,6 +29,12 @@ local function getSpellDisplay(spellID)
     return spellInfo and spellInfo.name
 end
 
+local function getUnavailableText(button)
+    local Buttons = RCC.ConsumableFrameButtons
+
+    return Buttons and Buttons.GetUnavailableText(button)
+end
+
 local function addClickHint(button)
     if not button.tooltipAction then return end
 
@@ -46,11 +52,13 @@ local function addClickHint(button)
     GameTooltip:Show()
 end
 
-local function addOutOfHint(button)
-    if not button.outOfItemsText then return end
+local function addUnavailableHint(button)
+    local unavailableText = getUnavailableText(button)
+
+    if not unavailableText then return end
 
     GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("|cffff3333" .. button.outOfItemsText .. "|r")
+    GameTooltip:AddLine("|cffff3333" .. unavailableText .. "|r")
     GameTooltip:Show()
 end
 
@@ -105,20 +113,22 @@ end
 function Tooltips.InfoButtonOnEnter(self)
     Glow.SetHovered(self, true)
 
-    if self.outOverlay and self.outOfItemsText then
-        self.outOverlay:Show()
+    local unavailableText = getUnavailableText(self)
+
+    if self.unavailableOverlay and unavailableText then
+        self.unavailableOverlay:Show()
     end
 
     if showButtonTooltip(self, true) then
-        addOutOfHint(self)
+        addUnavailableHint(self)
 
         return
     end
 
-    if self.outOfItemsText then
+    if unavailableText then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:ClearLines()
-        GameTooltip:AddLine(self.outOfItemsText)
+        GameTooltip:AddLine(unavailableText)
         GameTooltip:Show()
     end
 end
@@ -126,18 +136,18 @@ end
 function Tooltips.InfoButtonOnLeave(self)
     Glow.SetHovered(self, false)
 
-    Tooltips.UpdateOutOverlay(self)
+    Tooltips.UpdateUnavailableOverlay(self)
 
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
 end
 
-function Tooltips.UpdateOutOverlay(button)
-    if not button.outOverlay then return end
+function Tooltips.UpdateUnavailableOverlay(button)
+    if not button.unavailableOverlay then return end
 
-    if button.outOfItemsText then
-        button.outOverlay:Show()
+    if getUnavailableText(button) then
+        button.unavailableOverlay:Show()
     else
-        button.outOverlay:Hide()
+        button.unavailableOverlay:Hide()
     end
 end

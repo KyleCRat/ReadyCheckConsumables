@@ -35,7 +35,11 @@ function Renderer.Apply(button, state)
     end
 
     if state.icon then
-        button.texture:SetTexture(state.icon)
+        Buttons.SetIcon(button, state.icon)
+    end
+
+    if state.hoverState then
+        Buttons.SetHoverState(button, state.hoverState)
     end
 
     if state.desaturated ~= nil then
@@ -82,8 +86,8 @@ function Renderer.Apply(button, state)
         button.clickHintSpellID = state.clickHintSpellID
     end
 
-    if state.outOfItemsText ~= nil then
-        button.outOfItemsText = state.outOfItemsText
+    if state.unavailable ~= nil then
+        Buttons.SetUnavailable(button, state.unavailable)
     end
 
     applyCooldown(button, state.cooldown)

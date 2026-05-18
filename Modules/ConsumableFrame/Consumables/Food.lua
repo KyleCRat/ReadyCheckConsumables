@@ -115,8 +115,23 @@ function Food.Update(button, state)
         buttonState.tooltipItemID = foodItemID
         buttonState.usableItemID = foodItemID
 
-        if not displayAuraState and foodCandidate.icon then
-            buttonState.icon = foodCandidate.icon
+        if foodCandidate.icon then
+            if displayAuraState then
+                if foodCount <= 0 then
+                    ButtonState.SetHoverUnavailable(
+                        buttonState,
+                        OUT_OF_SELECTED_ITEM,
+                        { icon = foodCandidate.icon }
+                    )
+                else
+                    ButtonState.SetHoverState(
+                        buttonState,
+                        ButtonState.Create({ icon = foodCandidate.icon })
+                    )
+                end
+            elseif not displayAuraState then
+                buttonState.icon = foodCandidate.icon
+            end
         end
     end
 
@@ -127,10 +142,10 @@ function Food.Update(button, state)
             cacheKey = CacheKey.FOOD,
         }
     elseif outOfCachedFood and not hasFoodCoverage then
-        buttonState.outOfItemsText = OUT_OF_SELECTED_ITEM
+        ButtonState.SetUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
     else
         if not hasFoodCoverage then
-            buttonState.outOfItemsText = OUT_OF_ITEMS
+            ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
         end
     end
 

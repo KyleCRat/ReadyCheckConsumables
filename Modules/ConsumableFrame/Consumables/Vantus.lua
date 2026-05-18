@@ -96,6 +96,10 @@ function Vantus.Update(button, state)
             buttonState.countText = tostring(count)
         end
 
+        if outOfCachedItem then
+            ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+        end
+
         Renderer.Apply(button, buttonState)
 
         return
@@ -124,9 +128,10 @@ function Vantus.Update(button, state)
 
     buttonState.countText = "0"
     buttonState.tooltipItemID = itemID
-    buttonState.outOfItemsText = outOfCachedItem
-        and OUT_OF_SELECTED_ITEM
-        or OUT_OF_ITEMS
+    ButtonState.SetUnavailable(
+        buttonState,
+        outOfCachedItem and OUT_OF_SELECTED_ITEM or OUT_OF_ITEMS
+    )
     buttonState.glow = false
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         candidates,

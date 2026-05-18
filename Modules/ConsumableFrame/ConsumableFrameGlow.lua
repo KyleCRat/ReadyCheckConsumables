@@ -71,11 +71,17 @@ local function isButtonClickable(button)
     return button.click and button.clickEnabled and button.click:IsShown()
 end
 
+local function hasUnavailableState(button)
+    local Buttons = RCC.ConsumableFrameButtons
+
+    return Buttons and Buttons.GetUnavailableText(button) ~= nil
+end
+
 local function shouldUseHoverGlow(button)
     return button.click
            and (button.rccGlowEnabled
                 or button.clickEnabled
-                or button.outOfItemsText
+                or hasUnavailableState(button)
                 or not button.hasConsumableBuff)
 end
 

@@ -23,6 +23,29 @@ function State.Create(fields)
     return state
 end
 
+function State.SetUnavailable(state, text)
+    if not state or not text then return end
+
+    state.unavailable = {
+        text = text,
+    }
+end
+
+function State.SetHoverState(state, hoverState)
+    if not state or not hoverState then return end
+
+    state.hoverState = hoverState
+end
+
+function State.SetHoverUnavailable(state, text, fields)
+    if not state or not text then return end
+
+    local hoverState = State.Create(fields)
+
+    State.SetUnavailable(hoverState, text)
+    State.SetHoverState(state, hoverState)
+end
+
 function State.CreateItemChoice(candidate, actionType, options)
     if not candidate or not candidate.itemID then return end
 
