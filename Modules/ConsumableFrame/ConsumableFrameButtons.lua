@@ -19,9 +19,9 @@ local FLYOUT_HIDE_DELAY = 0.05
 Buttons.SIZE = SIZE
 Buttons.SPACING = SPACING
 
+-- Array order defines layout order (left to right).
 local BUTTON_DEFS = {
     {
-        order         = 1,
         key           = "food",
         settingKey    = "icon_food",
         defaultIcon   = RCC.db.food_icon_id,
@@ -30,7 +30,6 @@ local BUTTON_DEFS = {
         hasCooldown   = true,
     },
     {
-        order         = 2,
         key           = "flask",
         settingKey    = "icon_flask",
         defaultIcon   = RCC.db.flask_icon_id,
@@ -38,7 +37,6 @@ local BUTTON_DEFS = {
         tooltipAction = "use",
     },
     {
-        order         = 3,
         key           = "mainHandTempWeaponEnchant",
         weaponSlot    = MAIN_HAND_INVENTORY_SLOT,
         settingKey    = "icon_mhOil",
@@ -47,7 +45,6 @@ local BUTTON_DEFS = {
         tooltipAction = "apply to main hand",
     },
     {
-        order           = 4,
         key             = "offHandTempWeaponEnchant",
         weaponSlot      = OFF_HAND_INVENTORY_SLOT,
         settingKey      = "icon_ohOil",
@@ -57,7 +54,6 @@ local BUTTON_DEFS = {
         hiddenByDefault = true,
     },
     {
-        order         = 5,
         key           = "augment",
         settingKey    = "icon_augment",
         defaultIcon   = RCC.db.augment_icon_id,
@@ -65,25 +61,21 @@ local BUTTON_DEFS = {
         tooltipAction = "use",
     },
     {
-        order       = 6,
         key         = "hs",
         settingKey  = "icon_healthstone",
         defaultIcon = RCC.db.healthstone_icon_id,
     },
     {
-        order       = 7,
         key         = "dmgpot",
         settingKey  = "icon_dmgPotion",
         defaultIcon = RCC.db.potion_icon_id,
     },
     {
-        order       = 8,
         key         = "healpot",
         settingKey  = "icon_healPotion",
         defaultIcon = RCC.db.healing_potion_icon_id,
     },
     {
-        order           = 9,
         key             = "vantus",
         settingKey      = "icon_vantus",
         defaultIcon     = RCC.db.vantus_icon_id,
@@ -92,17 +84,6 @@ local BUTTON_DEFS = {
         hiddenByDefault = true,
     },
 }
-
-local BUTTON_LAYOUT_ORDER = {}
-
-for i = 1, #BUTTON_DEFS do
-    local def = BUTTON_DEFS[i]
-    BUTTON_LAYOUT_ORDER[#BUTTON_LAYOUT_ORDER + 1] = def
-end
-
-table.sort(BUTTON_LAYOUT_ORDER, function(a, b)
-    return a.order < b.order
-end)
 
 function Buttons.GetWidth(buttonCount)
     return SIZE * buttonCount
@@ -552,7 +533,7 @@ function Buttons.ApplyLayout(parent, buttons)
     local previous
     local visibleCount = 0
 
-    for _, def in ipairs(BUTTON_LAYOUT_ORDER) do
+    for _, def in ipairs(BUTTON_DEFS) do
         local button = buttons[def.key]
         local shouldShow = button.showInLayout
             and RCC.GetSetting(def.settingKey)
