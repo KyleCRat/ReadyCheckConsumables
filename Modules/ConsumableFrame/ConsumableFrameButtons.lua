@@ -12,11 +12,14 @@ local SPACING = 2
 local FONT = UI.FONT
 local DETAIL_TEXT_FONT_SIZE = 16
 local DETAIL_TEXT_MAX_WIDTH = (SIZE * 5) + (SPACING * 2)
+local QUALITY_ICON_SIZE = 28
 local TIME_TEXT_NORMAL_COLOR = { r = 1, g = 1, b = 1 }
 local TIME_TEXT_BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
 local FLYOUT_HIDE_DELAY = 0.05
+
+local GetItemReagentQualityInfo = C_TradeSkillUI.GetItemReagentQualityInfo
 
 Buttons.SIZE = SIZE
 Buttons.SPACING = SPACING
@@ -123,6 +126,27 @@ function Buttons.SetCountTextBad(button, bad)
     button.count:SetTextColor(color.r, color.g, color.b)
 end
 
+function Buttons.SetQualityOverlay(button, itemID)
+    if not button.qualityIcon then return end
+
+    if not itemID then
+        button.qualityIcon:Hide()
+
+        return
+    end
+
+    local info = GetItemReagentQualityInfo(itemID)
+
+    if not info or not info.iconSmall then
+        button.qualityIcon:Hide()
+
+        return
+    end
+
+    button.qualityIcon:SetAtlas(info.iconSmall, false)
+    button.qualityIcon:Show()
+end
+
 local function applyButtonIcon(button)
     local icon = button.normalIcon or button.defaultIcon
 
@@ -182,6 +206,7 @@ function Buttons.ResetState(button, notReadyTexture)
     Buttons.SetDetailTextBad(button, false)
     button.count:SetText("")
     Buttons.SetCountTextBad(button, false)
+    Buttons.SetQualityOverlay(button, nil)
     button.normalIcon = button.defaultIcon
     button.hoverState = nil
     button.unavailable = nil
@@ -283,7 +308,7 @@ local function getOrCreateFlyoutButton(owner, index)
     button.texture = button:CreateTexture()
     button.texture:SetAllPoints()
 
-    button.statustexture = button:CreateTexture(nil, "OVERLAY")
+    button.statustexture = button:CreateTexture(nil, "OVERLAY", nil, 1)
     button.statustexture:SetPoint("CENTER")
     button.statustexture:SetSize(SIZE / 2, SIZE / 2)
     button.statustexture:Hide()
@@ -299,6 +324,11 @@ local function getOrCreateFlyoutButton(owner, index)
     button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
     button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
     button.count:SetFont(FONT, 14, "OUTLINE")
+
+    button.qualityIcon = button:CreateTexture(nil, "OVERLAY")
+    button.qualityIcon:SetPoint("TOPLEFT", button, "TOPLEFT", -4, 4)
+    button.qualityIcon:SetSize(QUALITY_ICON_SIZE, QUALITY_ICON_SIZE)
+    button.qualityIcon:Hide()
 
     button.click = CreateFrame("Button", nil, button,
                                "SecureActionButtonTemplate")
@@ -491,7 +521,7 @@ function Buttons.CreateAll(parent)
         button.texture = button:CreateTexture()
         button.texture:SetAllPoints()
 
-        button.statustexture = button:CreateTexture(nil, "OVERLAY")
+        button.statustexture = button:CreateTexture(nil, "OVERLAY", nil, 1)
         button.statustexture:SetPoint("CENTER")
         button.statustexture:SetSize(SIZE / 2, SIZE / 2)
 
@@ -503,6 +533,11 @@ function Buttons.CreateAll(parent)
         button.count = button:CreateFontString(nil, "ARTWORK", "GameFontWhite")
         button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
         button.count:SetFont(FONT, 14, "OUTLINE")
+
+        button.qualityIcon = button:CreateTexture(nil, "OVERLAY")
+        button.qualityIcon:SetPoint("TOPLEFT", button, "TOPLEFT", -4, 4)
+        button.qualityIcon:SetSize(QUALITY_ICON_SIZE, QUALITY_ICON_SIZE)
+        button.qualityIcon:Hide()
 
         if def.clickable then
             button.click = CreateFrame("Button", nil, button,

@@ -80,6 +80,7 @@ function Renderer.Apply(button, state)
 
     if state.usableItemID ~= nil then
         button.usableItemID = state.usableItemID
+        Buttons.SetQualityOverlay(button, state.usableItemID)
     end
 
     if state.clickHintItemID ~= nil then
