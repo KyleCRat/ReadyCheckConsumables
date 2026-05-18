@@ -200,6 +200,18 @@ local function getFlyoutOwner(button)
     return button and (button.flyoutOwner or button)
 end
 
+local function isMouseOverFrame(frame)
+    return frame and frame:IsShown() and frame:IsMouseOver()
+end
+
+local function isFlyoutInteractionActive(owner)
+    return owner
+           and (owner.primaryHovered
+                or owner.flyoutHovered
+                or isMouseOverFrame(owner)
+                or isMouseOverFrame(owner.flyout))
+end
+
 local function getFlyoutButton(owner, index)
     local flyout = owner.flyout
     local button = flyout.buttons[index]
@@ -327,7 +339,7 @@ function Buttons.ScheduleFlyoutHide(button)
 
     C_Timer.After(FLYOUT_HIDE_DELAY, function()
         if owner.flyoutHideToken ~= token then return end
-        if owner.primaryHovered or owner.flyoutHovered then return end
+        if isFlyoutInteractionActive(owner) then return end
 
         Buttons.HideFlyout(owner)
     end)
@@ -377,6 +389,7 @@ function Buttons.SetFlyoutChoices(button, choices)
 
     local flyout = ensureFlyout(button)
     local Renderer = RCC.ConsumableFrameRenderer
+    local keepOpen = isFlyoutInteractionActive(button)
 
     flyout:SetHeight(Buttons.GetStackHeight(count))
 
@@ -384,14 +397,19 @@ function Buttons.SetFlyoutChoices(button, choices)
         local flyoutButton = getFlyoutButton(button, i)
 
         Renderer.Apply(flyoutButton, choices[i])
-        flyoutButton:Hide()
+
+        if keepOpen then
+            flyoutButton:Show()
+        else
+            flyoutButton:Hide()
+        end
     end
 
     for i = count + 1, #flyout.buttons do
         flyout.buttons[i]:Hide()
     end
 
-    if button.primaryHovered or button.flyoutHovered then
+    if keepOpen or isFlyoutInteractionActive(button) then
         Buttons.ShowFlyout(button)
     else
         Buttons.HideFlyout(button)
