@@ -8,7 +8,7 @@ RCC.db = RCC.db or {}
 --- "Hearty" variants are the same food but persist through death.
 --------------------------------------------------------------------------------
 
-RCC.db.feastItemids = {
+RCC.db.feastItemIDs = {
     242745, -- [Epic] Hearty Blooming Feast       | 98 Stam, 65 Primary Stat
     266996, -- [Epic] Hearty Harandar Celebration | 98 Stam, 65 Primary Stat
     242744, -- [Epic] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
