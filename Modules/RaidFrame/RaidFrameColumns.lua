@@ -7,6 +7,7 @@ local db             = RCC.db
 local F              = RCC.F
 local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
+local Timing         = RCC.ConsumableTiming
 
 local ICON_SIZE        = 26
 local NAME_WIDTH       = 150
@@ -15,6 +16,7 @@ local TIME_WIDTH       = 30
 local H_PAD            = 3
 local FRAME_PAD        = 3
 local DURABILITY_WIDTH = 42
+local NO_DURATION      = 0
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -33,8 +35,7 @@ local DATA_SOURCE = {
 Columns.COLUMN_TYPE = COLUMN_TYPE
 Columns.DATA_SOURCE = DATA_SOURCE
 Columns.RULES = {
-    expireWarnSeconds   = 600, -- 10 minutes
-    noDuration          = 0,
+    noDuration          = NO_DURATION,
     durabilityThreshold = 50,
 }
 
@@ -155,7 +156,7 @@ local function isTimedDataBad(data, rules)
         return false
     end
 
-    return data.time < rules.expireWarnSeconds
+    return Timing.IsExpiringSoon(data.time)
 end
 
 --------------------------------------------------------------------------------
@@ -280,10 +281,10 @@ local flaskColumn = {
 }
 
 --------------------------------------------------------------------------------
---- Weapon Oil Column
+--- Temp Weapon Enchant Column
 --------------------------------------------------------------------------------
 
-local function createOilData()
+local function createTempWeaponEnchantData()
     return {
         has    = false,
         time   = nil,
@@ -291,7 +292,7 @@ local function createOilData()
     }
 end
 
-local function syncOilData(data, member, context)
+local function syncTempWeaponEnchantData(data, member, context)
     local playerKey = member.key
 
     if not playerKey then
@@ -310,7 +311,7 @@ local function syncOilData(data, member, context)
     data.itemID = entry and entry.item or nil
 end
 
-local function isOilBad(member, context, column)
+local function isTempWeaponEnchantBad(member, context, column)
     local data = getColumnData(member, column)
     local time = data and data.time
 
@@ -318,13 +319,13 @@ local function isOilBad(member, context, column)
         return false
     end
 
-    return time == 0 or time < context.rules.expireWarnSeconds
+    return time == 0 or Timing.IsExpiringSoon(time)
 end
 
-local oilColumn = {
+local tempWeaponEnchantColumn = {
     columnType      = COLUMN_TYPE.TIMED,
     dataSource      = DATA_SOURCE.OIL,
-    key             = "oil",
+    key             = "tempWeaponEnchant",
     timeX           = OIL_TIME_X,
     iconX           = OIL_ICON_X,
     titleX          = OIL_ICON_X,
@@ -333,9 +334,9 @@ local oilColumn = {
     labelMissing    = "Weapon Oil: Missing",
     labelNoWeapon   = "Weapon Oil: No Weapon Equipped",
     labelUnknown    = "Weapon Oil: Unknown",
-    CreateData      = createOilData,
-    SyncData        = syncOilData,
-    IsBad           = isOilBad,
+    CreateData      = createTempWeaponEnchantData,
+    SyncData        = syncTempWeaponEnchantData,
+    IsBad           = isTempWeaponEnchantBad,
 }
 
 --------------------------------------------------------------------------------
@@ -614,7 +615,7 @@ function Columns.CreateLayout()
     local columns = {
         foodColumn,
         flaskColumn,
-        oilColumn,
+        tempWeaponEnchantColumn,
         augmentColumn,
         vantusColumn,
     }

@@ -4,6 +4,7 @@ RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 
 local Renderers      = RCC.RaidFrameColumnRenderers
 local UI             = RCC.UI
+local Timing         = RCC.ConsumableTiming
 local formatDuration = RCC.F.FormatDuration
 
 local MISSING_ALPHA     = 0.3
@@ -190,8 +191,8 @@ local function createDurabilityCell(row, column, layout, options)
     })
 end
 
-local function setTimeColor(timeText, time, context)
-    if time < context.rules.expireWarnSeconds then
+local function setTimeColor(timeText, time)
+    if Timing.IsExpiringSoon(time) then
         timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
     else
         timeText:SetTextColor(
@@ -222,7 +223,7 @@ local function renderTimedAuraCell(row, member, column, context)
             timeText:SetText("")
         else
             timeText:SetText(formatDuration(data.time))
-            setTimeColor(timeText, data.time, context)
+            setTimeColor(timeText, data.time)
         end
     else
         icon:SetTexture(column.iconID)
@@ -269,7 +270,7 @@ local function renderOilCell(row, member, column, context)
         icon:SetDesaturated(false)
         icon:SetVertexColor(1, 1, 1, 1)
         timeText:SetText(formatDuration(oilTime))
-        setTimeColor(timeText, oilTime, context)
+        setTimeColor(timeText, oilTime)
 
         if oilItemID > 0 then
             overlay.itemID = oilItemID

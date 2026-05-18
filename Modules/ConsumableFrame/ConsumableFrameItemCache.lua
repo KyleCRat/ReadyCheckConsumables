@@ -4,8 +4,6 @@ RCC.ConsumableFrameItemCache = RCC.ConsumableFrameItemCache or {}
 
 local Cache = RCC.ConsumableFrameItemCache
 
--- Buff-to-item maps are intentionally incomplete, so flyout primaries use the
--- last item chosen through this frame until the user chooses a different item.
 RCC.ConsumableItemCacheKey = RCC.ConsumableItemCacheKey or {
     FOOD                          = "food",
     FLASK                         = "flask",

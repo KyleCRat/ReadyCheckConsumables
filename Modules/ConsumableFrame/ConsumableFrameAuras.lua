@@ -4,14 +4,11 @@ RCC.ConsumableFrameAuras = RCC.ConsumableFrameAuras or {}
 
 local Auras = RCC.ConsumableFrameAuras
 local F = RCC.F
-
-function Auras.GetRemaining(expiry, now)
-    return F.GetAuraRemaining(expiry, now)
-end
+local Timing = RCC.ConsumableTiming
 
 function Auras.IsPositiveDuration(duration)
-    return type(duration) == "number"
-           and not issecretvalue(duration)
+    return not issecretvalue(duration)
+           and type(duration) == "number"
            and duration > 0
 end
 
@@ -59,14 +56,11 @@ function Auras.ToConsumableState(aura, options)
         auraState.auraInstanceID = aura.auraInstanceID
     end
 
-    if options.expireWarnSeconds then
-        local expiringSoon = aura.remaining
-            and aura.remaining <= options.expireWarnSeconds
+    if options.includeExpirationState then
+        local expiringSoon = Timing.IsExpiringSoon(aura.remaining)
 
         auraState.satisfied = not expiringSoon
-        auraState.timeIsBad = expiringSoon == true
-    elseif options.satisfied ~= nil then
-        auraState.satisfied = options.satisfied == true
+        auraState.timeIsBad = expiringSoon
     end
 
     return auraState
@@ -87,7 +81,7 @@ function Auras.ScanPlayer(now)
         if not issecretvalue(auraData.spellId) then
             local sid = auraData.spellId
             local expiry = auraData.expirationTime
-            local remaining = Auras.GetRemaining(expiry, now)
+            local remaining = F.GetAuraRemaining(expiry, now)
             local aura = {
                 duration = auraData.duration,
                 expiry = expiry,

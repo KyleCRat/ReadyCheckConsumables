@@ -54,12 +54,13 @@ local function getCountText(candidate)
     return tostring(candidate and candidate.count or 0)
 end
 
-local function getAuraState(state, expireWarnSeconds)
+local function getAuraState(state)
     local aura = Auras.FindBySpellID(state, RCC.db.augmentBuffIDs)
 
-    return Auras.ToConsumableState(aura, {
-        expireWarnSeconds = expireWarnSeconds,
-    })
+    return Auras.ToConsumableState(
+        aura,
+        { includeExpirationState = true }
+    )
 end
 
 local function collectItemsInBags()
@@ -76,7 +77,7 @@ local function collectItemsInBags()
 end
 
 function Augment.Update(button, state)
-    local augmentState = getAuraState(state, button.expireWarnSeconds)
+    local augmentState = getAuraState(state)
     local isAugment = augmentState and augmentState.satisfied
     local augmentCandidates = collectItemsInBags()
     local cachedAugmentCandidate = ItemCandidates.CreateFromMap(

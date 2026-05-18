@@ -88,7 +88,7 @@ function F.FormatDuration(seconds)
 end
 
 function F.GetAuraRemaining(expiry, now)
-    if type(expiry) ~= "number" or issecretvalue(expiry) then
+    if issecretvalue(expiry) or type(expiry) ~= "number" then
         return nil
     end
 

@@ -1,6 +1,7 @@
 local _, RCC = ...
 local F = RCC.F
 local RaidBuffStatus = RCC.RaidBuffStatus
+local Timing = RCC.ConsumableTiming
 local db = RCC.db
 
 local SendChatMessage = SendChatMessage
@@ -152,7 +153,7 @@ end
 --------------------------------------------------------------------------------
 --- Flask Report
 --- Uses RCC.db.flaskBuffIDs spell ID table.
---- Reports missing flasks and flasks expiring within 10 minutes.
+--- Reports missing flasks and flasks within the shared warning window.
 --------------------------------------------------------------------------------
 
 local function reportFlasks(toChat)
@@ -189,7 +190,7 @@ local function reportFlasks(toChat)
                             now
                         )
 
-                        if remaining and remaining <= 600 then
+                        if Timing.IsExpiringSoon(remaining) then
                             local mins = floor(remaining / 60)
                             local label = mins == 0 and "<1" or tostring(mins)
                             expiring[#expiring + 1] = format("%s(%s)", colored, label)

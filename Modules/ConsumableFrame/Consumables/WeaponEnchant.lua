@@ -10,6 +10,7 @@ local F = RCC.F
 local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
+local Timing = RCC.ConsumableTiming
 
 local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
@@ -99,8 +100,7 @@ local function canWeaponSlotBeEnchanted(slotID)
     return itemClassID == 2
 end
 
-local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID,
-                                    expireWarnSeconds)
+local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID)
     local canBeEnchanted = canWeaponSlotBeEnchanted(slotID)
 
     return {
@@ -108,15 +108,13 @@ local function buildWeaponSlotState(slotID, hasEnchant, expiration, enchantID,
         hasEnchant = canBeEnchanted and hasEnchant == true,
         expiration = canBeEnchanted and expiration or nil,
         enchantID = canBeEnchanted and enchantID or nil,
-        expireWarnSeconds = expireWarnSeconds,
         slotID = slotID,
     }
 end
 
 local function isExpiringSoon(slotState)
     return slotState.expiration ~= nil
-           and slotState.expireWarnSeconds ~= nil
-           and slotState.expiration <= slotState.expireWarnSeconds * 1000
+           and Timing.IsExpiringSoon(slotState.expiration / 1000)
 end
 
 local function addActiveEnchantToState(buttonState, slotID, slotState)
@@ -455,8 +453,7 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
         slotID,
         hasEnchant,
         expiration,
-        enchantID,
-        button.expireWarnSeconds
+        enchantID
     )
     local buttonState = ButtonState.Create({
         showInLayout = slotState.canBeEnchanted,

@@ -27,7 +27,6 @@ local BUTTON_DEFS = {
         clickable = true,
         tooltipAction = "eat",
         hasCooldown = true,
-        expireWarnSeconds = 60 * 10,
         layoutOrder = 1,
     },
     {
@@ -36,7 +35,6 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.flask_icon_id,
         clickable = true,
         tooltipAction = "use",
-        expireWarnSeconds = 60 * 10,
         layoutOrder = 2,
     },
     {
@@ -46,7 +44,6 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.weapon_enchant_icon_id,
         clickable = true,
         tooltipAction = "apply to main hand",
-        expireWarnSeconds = 60 * 10,
         layoutOrder = 3,
     },
     {
@@ -55,7 +52,6 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.augment_icon_id,
         clickable = true,
         tooltipAction = "use",
-        expireWarnSeconds = 60 * 10,
         layoutOrder = 5,
     },
     {
@@ -71,7 +67,6 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.weapon_enchant_icon_id,
         clickable = true,
         tooltipAction = "apply to off hand",
-        expireWarnSeconds = 60 * 10,
         hiddenByDefault = true,
         layoutOrder = 4,
     },
@@ -477,7 +472,6 @@ function Buttons.CreateAll(parent)
         local button = CreateFrame("Frame", nil, parent)
         buttons[i] = button
         button.defaultIcon = def.defaultIcon
-        button.expireWarnSeconds = def.expireWarnSeconds
         button.weaponSlot = def.weaponSlot
         button:SetSize(SIZE, SIZE)
 

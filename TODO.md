@@ -1,19 +1,5 @@
 # TODO
 
-## Features
-
-- Consumable frame should also have an idea of "isBad" timing and show timers
-  are red if they are soon to expire.
-- Define shared expiration severity rules for consumables and reports. The
-  consumable frame, raid frame, and chat report currently each define their own
-  "is bad soon" timing for button/icon/report state. Move those thresholds into
-  one shared definition that each module consumes. `ConsumableFrameButtons.lua`
-  currently carries `expireWarnSeconds` in button definitions, which makes
-  button construction own consumable severity policy; move that ownership as
-  part of this cleanup. (Maybe even understand a different isBad depending on
-  content type. Dungeons need 30+ minutes for a run, raid needs approx 10 min
-  for a boss fight.)
-
 ## Fixes
 
 - Evaluate debouncing consumables frame `UNIT_AURA` updates to roughly once per
@@ -28,3 +14,6 @@
   plus `buttons[def.key]` shape works, but it makes layout order, definition
   order, and consumer access harder to reason about as flyout choice buttons
   expand the button model.
+- Rename raid-frame temp weapon enchant internals that still use legacy "oil"
+  names. Keep addon message/protocol names such as `"OIL"` and `oilData` only
+  where backward compatibility or MRT compatibility requires them.

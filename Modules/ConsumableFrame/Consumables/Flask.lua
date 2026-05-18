@@ -17,16 +17,17 @@ local CacheKey = RCC.ConsumableItemCacheKey
 local OUT_OF_ITEMS = "No Flasks found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Flask not found in Bags"
 
-local function getFlaskAuraState(state, expireWarnSeconds)
+local function getFlaskAuraState(state)
     local aura = Auras.FindBySpellID(state, RCC.db.flaskBuffIDs)
 
-    return Auras.ToConsumableState(aura, {
-        expireWarnSeconds = expireWarnSeconds,
-    })
+    return Auras.ToConsumableState(
+        aura,
+        { includeExpirationState = true }
+    )
 end
 
 function Flask.Update(button, state)
-    local flaskState = getFlaskAuraState(state, button.expireWarnSeconds)
+    local flaskState = getFlaskAuraState(state)
     local isFlask = flaskState and flaskState.satisfied
     local flaskCandidates = ItemCandidates.CollectAvailableFromList(
         RCC.db.flaskItemIDs,

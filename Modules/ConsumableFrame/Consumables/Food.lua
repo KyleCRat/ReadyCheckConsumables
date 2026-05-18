@@ -27,7 +27,7 @@ local function getDisplayAuraState(foodAuraState, eatingAuraState)
     return foodAuraState
 end
 
-local function getFoodAuraStates(state, expireWarnSeconds)
+local function getFoodAuraStates(state)
     local foodAuraState
     local eatingAuraState
 
@@ -46,9 +46,10 @@ local function getFoodAuraStates(state, expireWarnSeconds)
                     includeAuraInstanceID = false,
                 })
             else
-                foodAuraState = Auras.ToConsumableState(aura, {
-                    expireWarnSeconds = expireWarnSeconds,
-                })
+                foodAuraState = Auras.ToConsumableState(
+                    aura,
+                    { includeExpirationState = true }
+                )
             end
         end
     end
@@ -73,10 +74,7 @@ local function getEatingCooldown(state)
 end
 
 function Food.Update(button, state)
-    local foodAuraState, eatingAuraState = getFoodAuraStates(
-        state,
-        button.expireWarnSeconds
-    )
+    local foodAuraState, eatingAuraState = getFoodAuraStates(state)
     local displayAuraState = getDisplayAuraState(
         foodAuraState,
         eatingAuraState
