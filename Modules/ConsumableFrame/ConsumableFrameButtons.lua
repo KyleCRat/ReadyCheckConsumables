@@ -21,75 +21,75 @@ Buttons.SPACING = SPACING
 
 local BUTTON_DEFS = {
     {
-        key = "food",
-        settingKey = "icon_food",
-        defaultIcon = RCC.db.food_icon_id,
-        clickable = true,
+        order         = 1,
+        key           = "food",
+        settingKey    = "icon_food",
+        defaultIcon   = RCC.db.food_icon_id,
+        clickable     = true,
         tooltipAction = "eat",
-        hasCooldown = true,
-        layoutOrder = 1,
+        hasCooldown   = true,
     },
     {
-        key = "flask",
-        settingKey = "icon_flask",
-        defaultIcon = RCC.db.flask_icon_id,
-        clickable = true,
+        order         = 2,
+        key           = "flask",
+        settingKey    = "icon_flask",
+        defaultIcon   = RCC.db.flask_icon_id,
+        clickable     = true,
         tooltipAction = "use",
-        layoutOrder = 2,
     },
     {
-        key = "mainHandTempWeaponEnchant",
-        weaponSlot = MAIN_HAND_INVENTORY_SLOT,
-        settingKey = "icon_mhOil",
-        defaultIcon = RCC.db.weapon_enchant_icon_id,
-        clickable = true,
+        order         = 3,
+        key           = "mainHandTempWeaponEnchant",
+        weaponSlot    = MAIN_HAND_INVENTORY_SLOT,
+        settingKey    = "icon_mhOil",
+        defaultIcon   = RCC.db.weapon_enchant_icon_id,
+        clickable     = true,
         tooltipAction = "apply to main hand",
-        layoutOrder = 3,
     },
     {
-        key = "augment",
-        settingKey = "icon_augment",
-        defaultIcon = RCC.db.augment_icon_id,
-        clickable = true,
+        order           = 4,
+        key             = "offHandTempWeaponEnchant",
+        weaponSlot      = OFF_HAND_INVENTORY_SLOT,
+        settingKey      = "icon_ohOil",
+        defaultIcon     = RCC.db.weapon_enchant_icon_id,
+        clickable       = true,
+        tooltipAction   = "apply to off hand",
+        hiddenByDefault = true,
+    },
+    {
+        order         = 5,
+        key           = "augment",
+        settingKey    = "icon_augment",
+        defaultIcon   = RCC.db.augment_icon_id,
+        clickable     = true,
         tooltipAction = "use",
-        layoutOrder = 5,
     },
     {
-        key = "hs",
-        settingKey = "icon_healthstone",
+        order       = 6,
+        key         = "hs",
+        settingKey  = "icon_healthstone",
         defaultIcon = RCC.db.healthstone_icon_id,
-        layoutOrder = 6,
     },
     {
-        key = "offHandTempWeaponEnchant",
-        weaponSlot = OFF_HAND_INVENTORY_SLOT,
-        settingKey = "icon_ohOil",
-        defaultIcon = RCC.db.weapon_enchant_icon_id,
-        clickable = true,
-        tooltipAction = "apply to off hand",
-        hiddenByDefault = true,
-        layoutOrder = 4,
-    },
-    {
-        key = "dmgpot",
-        settingKey = "icon_dmgPotion",
+        order       = 7,
+        key         = "dmgpot",
+        settingKey  = "icon_dmgPotion",
         defaultIcon = RCC.db.potion_icon_id,
-        layoutOrder = 7,
     },
     {
-        key = "healpot",
-        settingKey = "icon_healPotion",
+        order       = 8,
+        key         = "healpot",
+        settingKey  = "icon_healPotion",
         defaultIcon = RCC.db.healing_potion_icon_id,
-        layoutOrder = 8,
     },
     {
-        key = "vantus",
-        settingKey = "icon_vantus",
-        defaultIcon = RCC.db.vantus_icon_id,
-        clickable = true,
-        tooltipAction = "use",
+        order           = 9,
+        key             = "vantus",
+        settingKey      = "icon_vantus",
+        defaultIcon     = RCC.db.vantus_icon_id,
+        clickable       = true,
+        tooltipAction   = "use",
         hiddenByDefault = true,
-        layoutOrder = 9,
     },
 }
 
@@ -97,12 +97,11 @@ local BUTTON_LAYOUT_ORDER = {}
 
 for i = 1, #BUTTON_DEFS do
     local def = BUTTON_DEFS[i]
-    def.index = i
     BUTTON_LAYOUT_ORDER[#BUTTON_LAYOUT_ORDER + 1] = def
 end
 
 table.sort(BUTTON_LAYOUT_ORDER, function(a, b)
-    return a.layoutOrder < b.layoutOrder
+    return a.order < b.order
 end)
 
 function Buttons.GetWidth(buttonCount)
@@ -463,22 +462,22 @@ function Buttons.SetFlyoutChoices(button, choices)
 end
 
 function Buttons.CreateAll(parent)
-    parent.buttons = parent.buttons or {}
+    parent.buttons = {}
 
     local buttons = parent.buttons
+    local previous
 
     for i = 1, #BUTTON_DEFS do
         local def = BUTTON_DEFS[i]
         local button = CreateFrame("Frame", nil, parent)
-        buttons[i] = button
         button.defaultIcon = def.defaultIcon
         button.weaponSlot = def.weaponSlot
         button:SetSize(SIZE, SIZE)
 
-        if i == 1 then
-            button:SetPoint("LEFT", 0, 0)
+        if previous then
+            button:SetPoint("LEFT", previous, "RIGHT", SPACING, 0)
         else
-            button:SetPoint("LEFT", buttons[i - 1], "RIGHT", SPACING, 0)
+            button:SetPoint("LEFT", 0, 0)
         end
 
         button.texture = button:CreateTexture()
@@ -539,6 +538,7 @@ function Buttons.CreateAll(parent)
         end
 
         buttons[def.key] = button
+        previous = button
 
         if def.hiddenByDefault then
             button:Hide()
@@ -553,7 +553,7 @@ function Buttons.ApplyLayout(parent, buttons)
     local visibleCount = 0
 
     for _, def in ipairs(BUTTON_LAYOUT_ORDER) do
-        local button = buttons[def.index]
+        local button = buttons[def.key]
         local shouldShow = button.showInLayout
             and RCC.GetSetting(def.settingKey)
 
@@ -579,7 +579,9 @@ function Buttons.ApplyLayout(parent, buttons)
 end
 
 function Buttons.UpdateUnavailableOverlays(buttons)
-    for i = 1, #buttons do
-        Tooltips.UpdateUnavailableOverlay(buttons[i])
+    for i = 1, #BUTTON_DEFS do
+        local button = buttons[BUTTON_DEFS[i].key]
+
+        Tooltips.UpdateUnavailableOverlay(button)
     end
 end
