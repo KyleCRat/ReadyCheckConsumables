@@ -27,14 +27,13 @@ local function getAuraBossName(state)
     return name:gsub("^Vantus Rune: ", "")
 end
 
-local function getVantusForCurrentRaid()
+local function getVantusRuneIDsForCurrentRaid()
     local instanceID = select(8, GetInstanceInfo())
-    local vantusRuneIDs = RCC.db.vantusItemsByRaid[instanceID]
 
-    if not vantusRuneIDs then
-        return nil, nil, 0
-    end
+    return RCC.db.vantusItemsByRaid[instanceID]
+end
 
+local function getVantusCandidate(vantusRuneIDs)
     local candidates = ItemCandidates.CollectAvailableFromList(
         vantusRuneIDs,
         ItemCandidates.BAGS_ONLY
@@ -54,61 +53,62 @@ local function getVantusForCurrentRaid()
         candidate
     )
 
-    if candidate then
-        return vantusRuneIDs, candidate.itemID, candidate.count,
-            candidate.icon, candidates, outOfCachedItem
-    end
+    return candidate, candidates, outOfCachedItem
+end
 
+local function getFallbackVantusIcon(vantusRuneIDs)
     local itemID = vantusRuneIDs[1]
 
-    return vantusRuneIDs, itemID, 0, ItemCandidates.GetIcon(itemID),
-        candidates, false
+    return itemID, ItemCandidates.GetIcon(itemID)
 end
 
 function Vantus.Update(button, state)
-    local bossName = getAuraBossName(state)
-    local vantusRuneIDs, itemID, count, icon, candidates, outOfCachedItem =
-        getVantusForCurrentRaid()
-    local buttonState = ButtonState.Create()
+    local vantusRuneIDs = getVantusRuneIDsForCurrentRaid()
 
     if not vantusRuneIDs then
-        buttonState.showInLayout = false
-
-        Renderer.Apply(button, buttonState)
+        Renderer.Apply(button, ButtonState.Create({ showInLayout = false }))
 
         return
     end
 
-    buttonState.showInLayout = true
+    local bossName = getAuraBossName(state)
+    local candidate, candidates, outOfCachedItem =
+        getVantusCandidate(vantusRuneIDs)
 
-    if itemID then
-        buttonState.icon = icon
+    local itemID = candidate and candidate.itemID
+    local count = candidate and candidate.count or 0
+    local icon = candidate and candidate.icon
+
+    if not itemID then
+        itemID, icon = getFallbackVantusIcon(vantusRuneIDs)
     end
 
+    local buttonState = ButtonState.Create()
+    buttonState.showInLayout = true
+    buttonState.icon = icon
+    buttonState.tooltipItemID = itemID
+
     if bossName then
-        buttonState.tooltipItemID = itemID
         buttonState.detailText = bossName
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.hasConsumableBuff = true
         buttonState.desaturated = false
+        buttonState.glow = false
 
         if count > 0 or outOfCachedItem then
             buttonState.countText = tostring(count)
         end
 
         if outOfCachedItem then
-            ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
+            ButtonState.SetHoverUnavailable(
+                buttonState,
+                OUT_OF_SELECTED_ITEM
+            )
         end
-
-        Renderer.Apply(button, buttonState)
-
-        return
-    end
-
-    if itemID and count > 0 then
+    elseif count > 0 then
         buttonState.countText = tostring(count)
-        buttonState.tooltipItemID = itemID
         buttonState.usableItemID = itemID
+        buttonState.glow = true
         buttonState.action = {
             type = ActionType.ITEM_MACRO,
             itemID = itemID,
@@ -120,28 +120,23 @@ function Vantus.Update(button, state)
             ActionType.ITEM_MACRO,
             { cacheKey = CacheKey.VANTUS }
         )
-
-        Renderer.Apply(button, buttonState)
-
-        return
+    else
+        buttonState.countText = "0"
+        buttonState.glow = false
+        ButtonState.SetUnavailable(
+            buttonState,
+            outOfCachedItem and OUT_OF_SELECTED_ITEM or OUT_OF_ITEMS
+        )
+        buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
+            candidates,
+            itemID,
+            ActionType.ITEM_MACRO,
+            {
+                cacheKey = CacheKey.VANTUS,
+                includeSingleChoice = outOfCachedItem,
+            }
+        )
     end
-
-    buttonState.countText = "0"
-    buttonState.tooltipItemID = itemID
-    ButtonState.SetUnavailable(
-        buttonState,
-        outOfCachedItem and OUT_OF_SELECTED_ITEM or OUT_OF_ITEMS
-    )
-    buttonState.glow = false
-    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
-        candidates,
-        itemID,
-        ActionType.ITEM_MACRO,
-        {
-            cacheKey = CacheKey.VANTUS,
-            includeSingleChoice = outOfCachedItem,
-        }
-    )
 
     Renderer.Apply(button, buttonState)
 end
