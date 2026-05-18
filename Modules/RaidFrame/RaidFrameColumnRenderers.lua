@@ -307,6 +307,8 @@ local function renderTempWeaponEnchantCell(row, member, column, context)
             0.5,
             0.5
         )
+    else
+        setTempWeaponEnchantState(cell, column, column.labelUnknown)
     end
 end
 
@@ -320,8 +322,18 @@ local function renderIconAuraCell(row, member, column)
     icon:SetTexture((data and data.iconID) or column.iconID)
     icon:SetDesaturated(not hasAura)
     icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
-    overlay.unit   = member.unit
-    overlay.auraID = data and data.auraID or nil
+
+    overlay.unit    = member.unit
+    overlay.auraID  = nil
+    overlay.spellID = nil
+    overlay.itemID  = nil
+    overlay.label   = nil
+
+    if hasAura then
+        overlay.auraID = data.auraID
+    else
+        overlay.label = column.label
+    end
 end
 
 local function renderRaidBuffCell(row, member, column)

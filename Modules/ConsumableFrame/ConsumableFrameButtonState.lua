@@ -98,11 +98,15 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, actionType,
                 choiceOptions.countText = options.countText
             end
 
-            choices[#choices + 1] = State.CreateItemChoice(
+            local choice = State.CreateItemChoice(
                 candidate,
                 actionType,
                 choiceOptions
             )
+
+            if choice then
+                choices[#choices + 1] = choice
+            end
         end
     end
 
