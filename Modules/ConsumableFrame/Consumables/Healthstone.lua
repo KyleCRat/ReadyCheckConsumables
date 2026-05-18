@@ -23,7 +23,7 @@ function Healthstone.Update(button)
             countText = tostring(totalCount),
             statusTexture = ButtonState.READY_TEXTURE,
             desaturated = false,
-            tooltipItemID = RCC.db.healthstone_item_id,
+            tooltipItemID = RCC.db.healthstoneItemID,
         }))
     else
         Renderer.Apply(button, ButtonState.Create({

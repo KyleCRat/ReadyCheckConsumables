@@ -20,31 +20,31 @@ local MIDNIGHT       = 12
 
 RCC.settings = {
     [SHADOWLANDS] = {
-        augment        = { icon_id = 134078 },
-        armor_kit      = { item_id = 3528447 },
+        augment       = { iconID = 134078 },
+        armorKit      = { itemID = 3528447 },
     },
     [DRAGONFLIGHT] = {},
     [THE_WAR_WITHIN] = {
-        augment        = { icon_id = 4549102 },
-        flask          = { icon_id = 3566840 },
-        vantus_rune    = { icon_id = 4638737 },
+        augment       = { iconID = 4549102 },
+        flask         = { iconID = 3566840 },
+        vantusRune    = { iconID = 4638737 },
     },
     [MIDNIGHT] = {
-        augment        = { icon_id = 4549099 },
-        flask          = { icon_id = 7548902 },
-        vantus_rune    = { icon_id = 5976918 },
-        potion         = { icon_id = 7548911 },
-        healing_potion = { icon_id = 7548909 },
-        weapon_enchant = { icon_id = 7548985 },
+        augment       = { iconID = 4549099 },
+        flask         = { iconID = 7548902 },
+        vantusRune    = { iconID = 5976918 },
+        potion        = { iconID = 7548911 },
+        healingPotion = { iconID = 7548909 },
+        weaponEnchant = { iconID = 7548985 },
     },
 }
 
--- Sorted expansion IDs for deterministic oldest-to-newest iteration
-RCC.ordered_xpac_ids = {}
-for xpac_id in pairs(RCC.settings) do
-    table.insert(RCC.ordered_xpac_ids, xpac_id)
+-- Sorted expansion IDs for deterministic oldest-to-newest iteration.
+local orderedXpacIDs = {}
+for xpacID in pairs(RCC.settings) do
+    orderedXpacIDs[#orderedXpacIDs + 1] = xpacID
 end
-table.sort(RCC.ordered_xpac_ids)
+table.sort(orderedXpacIDs)
 
 --------------------------------------------------------------------------------
 --- Resolve icon and item IDs from settings
@@ -52,37 +52,37 @@ table.sort(RCC.ordered_xpac_ids)
 --------------------------------------------------------------------------------
 
 -- Defaults
-RCC.db.weapon_enchant_icon_id  = 463543
-RCC.db.food_icon_id            = 136000
-RCC.db.flask_icon_id           = 3528447
-RCC.db.armor_kit_icon_id       = 3566840
-RCC.db.healthstone_item_id     = 5512
-RCC.db.healthstone_icon_id     = 538745
-RCC.db.potion_icon_id          = 650640   -- trade_alchemy_potiona4
-RCC.db.healing_potion_icon_id  = 5931169  -- inv_flask_red
-RCC.db.vantus_icon_id          = 4638737  -- inv_10_inscription_glyphs_color5
+RCC.db.weaponEnchantIconID  = 463543
+RCC.db.foodIconID           = 136000
+RCC.db.flaskIconID          = 3528447
+RCC.db.armorKitIconID       = 3566840
+RCC.db.healthstoneItemID    = 5512
+RCC.db.healthstoneIconID    = 538745
+RCC.db.potionIconID         = 650640   -- trade_alchemy_potiona4
+RCC.db.healingPotionIconID  = 5931169  -- inv_flask_red
+RCC.db.vantusIconID         = 4638737  -- inv_10_inscription_glyphs_color5
 
-local icon_keys = {
-    { setting = "augment",        db_key = "augment_icon_id" },
-    { setting = "food",           db_key = "food_icon_id" },
-    { setting = "flask",          db_key = "flask_icon_id" },
-    { setting = "potion",         db_key = "potion_icon_id" },
-    { setting = "healing_potion", db_key = "healing_potion_icon_id" },
-    { setting = "weapon_enchant", db_key = "weapon_enchant_icon_id" },
-    { setting = "armor_kit",      db_key = "armor_kit_icon_id" },
-    { setting = "healthstone",    db_key = "healthstone_icon_id" },
-    { setting = "vantus_rune",    db_key = "vantus_icon_id" },
+local iconKeys = {
+    { setting = "augment",       dbKey = "augmentIconID" },
+    { setting = "food",          dbKey = "foodIconID" },
+    { setting = "flask",         dbKey = "flaskIconID" },
+    { setting = "potion",        dbKey = "potionIconID" },
+    { setting = "healingPotion", dbKey = "healingPotionIconID" },
+    { setting = "weaponEnchant", dbKey = "weaponEnchantIconID" },
+    { setting = "armorKit",      dbKey = "armorKitIconID" },
+    { setting = "healthstone",   dbKey = "healthstoneIconID" },
+    { setting = "vantusRune",    dbKey = "vantusIconID" },
 }
 
-for _, xpac_id in ipairs(RCC.ordered_xpac_ids) do
-    local xpac = RCC.settings[xpac_id]
+for _, xpacID in ipairs(orderedXpacIDs) do
+    local xpac = RCC.settings[xpacID]
 
     if xpac then
-        for _, key in ipairs(icon_keys) do
+        for _, key in ipairs(iconKeys) do
             local entry = xpac[key.setting]
 
-            if entry and entry.icon_id then
-                RCC.db[key.db_key] = entry.icon_id
+            if entry and entry.iconID then
+                RCC.db[key.dbKey] = entry.iconID
             end
         end
     end

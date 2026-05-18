@@ -74,7 +74,7 @@ local function generateTempWeaponEnchantData()
         return {
             time    = math.random(60, 3600),
             itemID  = 0,
-            iconID  = RCC.db.weapon_enchant_icon_id,
+            iconID  = RCC.db.weaponEnchantIconID,
             spellID = 0,
         }
     end
