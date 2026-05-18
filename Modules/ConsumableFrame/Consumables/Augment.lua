@@ -96,19 +96,13 @@ function Augment.Update(button, state)
     )
     local augmentItemID = augmentCandidate and augmentCandidate.itemID
     local augmentItemCount = augmentCandidate and augmentCandidate.count
-    local augmentItemData = augmentCandidate and augmentCandidate.data
     local augmentItemIcon = augmentCandidate and augmentCandidate.icon
     local buttonState = ButtonState.Create()
 
     ButtonState.ApplyActiveAura(buttonState, augmentState)
 
     if augmentItemID then
-        if augmentItemData and augmentItemData.unlimited then
-            buttonState.countText = ""
-        else
-            buttonState.countText = tostring(augmentItemCount or 0)
-        end
-
+        buttonState.countText = getCountText(augmentCandidate)
         buttonState.tooltipItemID = augmentItemID
         buttonState.usableItemID = augmentItemID
 
