@@ -1,7 +1,10 @@
 # TODO
 
 ## Fixes
-
+- The watching for an error message to deny caching a item choice is not working
+  Item choices even when throwing a "This item is not a valid target" error from
+  REfulgent Whetstone trying to be put on a blunt weapon still caches the 
+  Refulgent Whetstone.
 - Evaluate debouncing consumables frame `UNIT_AURA` updates to roughly once per
   second. Measure whether reduced refresh churn during test/ready-check frames
   is worth the added latency and complexity.
