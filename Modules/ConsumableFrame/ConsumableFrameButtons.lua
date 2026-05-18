@@ -39,7 +39,7 @@ local BUTTON_DEFS = {
     {
         key           = "mainHandTempWeaponEnchant",
         weaponSlot    = MAIN_HAND_INVENTORY_SLOT,
-        settingKey    = "icon_mhOil",
+        settingKey    = "icon_mhTempWeaponEnchant",
         defaultIcon   = RCC.db.weapon_enchant_icon_id,
         clickable     = true,
         tooltipAction = "apply to main hand",
@@ -47,7 +47,7 @@ local BUTTON_DEFS = {
     {
         key             = "offHandTempWeaponEnchant",
         weaponSlot      = OFF_HAND_INVENTORY_SLOT,
-        settingKey      = "icon_ohOil",
+        settingKey      = "icon_ohTempWeaponEnchant",
         defaultIcon     = RCC.db.weapon_enchant_icon_id,
         clickable       = true,
         tooltipAction   = "apply to off hand",
