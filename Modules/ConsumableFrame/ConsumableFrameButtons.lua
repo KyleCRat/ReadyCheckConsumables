@@ -1,7 +1,6 @@
 local _, RCC = ...
 
 local UI = RCC.UI
-local Glow = RCC.ConsumableFrameGlow
 local Tooltips = RCC.ConsumableFrameTooltips
 
 RCC.ConsumableFrameButtons = RCC.ConsumableFrameButtons or {}
@@ -144,7 +143,6 @@ function Buttons.ResetState(button, notReadyTexture)
         button.cooldown:Clear()
         button.cooldown:Hide()
     end
-    Glow.Stop(button)
     button.tooltipAuraID = nil
     button.tooltipItemID = nil
     button.tooltipSpellID = nil

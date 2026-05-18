@@ -176,7 +176,7 @@ end
 --------------------------------------------------------------------------------
 
 local function onReadyCheck(self, initiatorUnit)
-    local isInitiator = initiatorUnit and UnitIsUnit(initiatorUnit, "player")
+    local isInitiator = RCC.F.UnitIsUnitSafe(initiatorUnit, "player")
 
     return showConsumableFrame(self, isInitiator, true)
 end
@@ -202,7 +202,7 @@ local function onReadyCheckFinished(self)
 end
 
 local function onReadyCheckConfirm(self, unit)
-    if not unit or not UnitIsUnit(unit, "player") then
+    if not RCC.F.UnitIsUnitSafe(unit, "player") then
         return
     end
 
@@ -281,7 +281,7 @@ end
 --------------------------------------------------------------------------------
 
 local function onUnitAura(self, unit)
-    if unit == "player" then
+    if RCC.F.UnitIsUnitSafe(unit, "player") then
         self:Update()
     end
 end
@@ -295,7 +295,7 @@ local function scheduleLiveUpdate(self)
 end
 
 local function onInventoryChanged(self, unit)
-    if unit == "player" then
+    if RCC.F.UnitIsUnitSafe(unit, "player") then
         scheduleLiveUpdate(self)
     end
 end

@@ -272,9 +272,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 
     -- The initiator never receives READY_CHECK_CONFIRM for themselves;
     -- auto-mark them as ready so their row shows a check immediately.
-    if initiatorUnit then
+    if not issecretvalue(initiatorUnit) and initiatorUnit then
         for unit in pairs(state.unitToIndex) do
-            if UnitIsUnit(unit, initiatorUnit) then
+            if RCC.F.UnitIsUnitSafe(unit, initiatorUnit) then
                 state.rcStatus[unit] = ReadyCheck.READY
                 break
             end
@@ -285,6 +285,8 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
+    if issecretvalue(unit) or issecretvalue(ready) then return end
+
     local index = state.unitToIndex[unit]
 
     if not index then

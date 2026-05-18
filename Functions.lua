@@ -99,6 +99,24 @@ function F.GetAuraRemaining(expiry, now)
     return expiry - now
 end
 
+function F.UnitIsUnitSafe(unit, otherUnit)
+    if issecretvalue(unit) or issecretvalue(otherUnit) then
+        return false
+    end
+
+    if not unit or not otherUnit then
+        return false
+    end
+
+    local matches = UnitIsUnit(unit, otherUnit)
+
+    if issecretvalue(matches) then
+        return false
+    end
+
+    return matches == true
+end
+
 function F.GetRaidDiffMaxGroup()
     local _, instance_type, difficulty = GetInstanceInfo()
 
