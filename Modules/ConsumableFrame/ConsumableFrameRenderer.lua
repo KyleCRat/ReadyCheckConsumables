@@ -50,6 +50,10 @@ function Renderer.Apply(button, state)
         button.count:SetText(state.countText)
     end
 
+    if state.countTextIsBad ~= nil then
+        Buttons.SetCountTextBad(button, state.countTextIsBad)
+    end
+
     if state.detailText ~= nil then
         button.detailText:SetText(state.detailText)
     end

@@ -117,6 +117,12 @@ function Buttons.SetDetailTextBad(button, bad)
     button.detailText:SetTextColor(color.r, color.g, color.b)
 end
 
+function Buttons.SetCountTextBad(button, bad)
+    local color = bad and TIME_TEXT_BAD_COLOR or TIME_TEXT_NORMAL_COLOR
+
+    button.count:SetTextColor(color.r, color.g, color.b)
+end
+
 local function applyButtonIcon(button)
     local icon = button.normalIcon or button.defaultIcon
 
@@ -175,6 +181,7 @@ function Buttons.ResetState(button, notReadyTexture)
     button.detailText:SetText("")
     Buttons.SetDetailTextBad(button, false)
     button.count:SetText("")
+    Buttons.SetCountTextBad(button, false)
     button.normalIcon = button.defaultIcon
     button.hoverState = nil
     button.unavailable = nil

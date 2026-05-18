@@ -75,6 +75,7 @@ function RaidBuff.Update(button)
         detailText = minRemaining and F.FormatDuration(minRemaining) or "",
         detailTextIsBad = Timing.IsExpiringSoon(minRemaining),
         countText = hasMissing and tostring(missingCount) or "",
+        countTextIsBad = hasMissing,
         glow = info.spellID ~= nil
             and (hasMissing or Timing.IsExpiringSoon(minRemaining)),
     })
