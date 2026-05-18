@@ -16,6 +16,7 @@ local COLOR_TIME_NORMAL = { r = 1,   g = 1,    b = 1   }
 local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
 local FONT_SIZE_TIME    = 14
 local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
+local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
 
 local function hasUsableAuraID(auraID)
     return auraID
@@ -292,6 +293,7 @@ local function renderTempWeaponEnchantCell(row, member, column, context)
     local enchantMissing = remaining == 0
     local hasNoWeapon    = remaining == -1
     local noEnchantInfo  = remaining == nil
+        or remaining == UNKNOWN_TEMP_WEAPON_ENCHANT_TIME
 
     if hasEnchant then
         icon:SetDesaturated(false)

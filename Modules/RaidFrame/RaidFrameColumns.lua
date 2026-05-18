@@ -17,6 +17,7 @@ local H_PAD                      = 3
 local FRAME_PAD                  = 3
 local DURABILITY_WIDTH           = 42
 local NO_DURATION                = 0
+local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -369,7 +370,10 @@ local function isTempWeaponEnchantBad(member, context, column)
     local data = getColumnData(member, column)
     local time = data and data.time
 
-    if time == nil or time == -1 then
+    if time == nil
+        or time == -1
+        or time == UNKNOWN_TEMP_WEAPON_ENCHANT_TIME
+    then
         return false
     end
 

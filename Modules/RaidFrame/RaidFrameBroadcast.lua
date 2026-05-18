@@ -15,6 +15,8 @@ local GetSpellInfo       = C_Spell.GetSpellInfo
 local ADDON_PREFIX = "RCC"
 local FOOD_MESSAGE_TYPE = "FOOD"
 local FLASK_MESSAGE_TYPE = "FLASK"
+-- Enchant exists, but GetWeaponEnchantInfo() did not provide usable timing.
+local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
 -- Keep the legacy "OIL" message type so older RCC clients can still read the
 -- remaining time and item ID from the first two payload fields.
 local TEMP_WEAPON_ENCHANT_MESSAGE_TYPE = "OIL"
@@ -65,8 +67,8 @@ local function getTempWeaponEnchantData(enchantID)
 end
 
 local function getTempWeaponEnchantRemaining(expiration)
-    if not F.IsSafeNumber(expiration) then
-        return 0
+    if not F.IsSafeNumber(expiration) or expiration <= 0 then
+        return UNKNOWN_TEMP_WEAPON_ENCHANT_TIME
     end
 
     return expiration / 1000
