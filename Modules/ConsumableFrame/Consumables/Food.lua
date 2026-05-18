@@ -81,8 +81,6 @@ function Food.Update(button, state)
         foodAuraState,
         eatingAuraState
     )
-    local displayingEating = displayAuraState
-        and displayAuraState == eatingAuraState
     local hasFoodCoverage = foodAuraState ~= nil or eatingAuraState ~= nil
     local foodSatisfied = eatingAuraState ~= nil
         or (foodAuraState and foodAuraState.satisfied == true)
@@ -117,7 +115,7 @@ function Food.Update(button, state)
         buttonState.tooltipItemID = foodItemID
         buttonState.usableItemID = foodItemID
 
-        if not displayingEating and foodCandidate.icon then
+        if not displayAuraState and foodCandidate.icon then
             buttonState.icon = foodCandidate.icon
         end
     end
