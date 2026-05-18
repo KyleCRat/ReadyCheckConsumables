@@ -149,8 +149,9 @@ local function setTimedExternalData(data, source)
 end
 
 local function setIconAuraData(data, aura)
-    data.has    = true
-    data.iconID = aura.icon
+    data.has     = true
+    data.iconID  = aura.icon
+    data.spellID = aura.spellId
     storeAuraID(data, aura)
 end
 
@@ -261,6 +262,7 @@ local foodColumn = {
     titleX       = FOOD_ICON_X,
     iconID       = db.foodIconID,
     label        = "Food: Missing",
+    activeLabel  = "Food",
     CreateData   = createFoodData,
     CollectAura  = collectFoodAura,
     SyncData     = syncFoodData,
@@ -316,6 +318,7 @@ local flaskColumn = {
     titleX       = FLASK_ICON_X,
     iconID       = db.flaskIconID,
     label        = "Flask: Missing",
+    activeLabel  = "Flask",
     CreateData   = createFlaskData,
     CollectAura  = collectFlaskAura,
     SyncData     = syncFlaskData,
@@ -396,9 +399,10 @@ local tempWeaponEnchantColumn = {
 
 local function createAugmentData()
     return {
-        has    = false,
-        auraID = nil,
-        iconID = nil,
+        has     = false,
+        auraID  = nil,
+        iconID  = nil,
+        spellID = nil,
     }
 end
 
@@ -426,6 +430,7 @@ local augmentColumn = {
     titleX       = AUGMENT_ICON_X,
     iconID       = db.augmentIconID,
     label        = "Augment Rune: Missing",
+    activeLabel  = "Augment Rune",
     CreateData   = createAugmentData,
     CollectAura  = collectAugmentAura,
     IsBad        = isAugmentBad,
@@ -437,9 +442,10 @@ local augmentColumn = {
 
 local function createVantusData()
     return {
-        has    = false,
-        auraID = nil,
-        iconID = nil,
+        has     = false,
+        auraID  = nil,
+        iconID  = nil,
+        spellID = nil,
     }
 end
 
@@ -467,6 +473,7 @@ local vantusColumn = {
     titleX       = VANTUS_ICON_X,
     iconID       = db.vantusIconID,
     label        = "Vantus Rune: Missing",
+    activeLabel  = "Vantus Rune",
     CreateData   = createVantusData,
     CollectAura  = collectVantusAura,
     IsBad        = isVantusBad,

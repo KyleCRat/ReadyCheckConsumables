@@ -3,9 +3,10 @@ local _, RCC = ...
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 
 local Renderers      = RCC.RaidFrameColumnRenderers
+local F              = RCC.F
 local UI             = RCC.UI
 local Timing         = RCC.ConsumableTiming
-local formatDuration = RCC.F.FormatDuration
+local formatDuration = F.FormatDuration
 
 local MISSING_ALPHA     = 0.3
 local COLOR_DUR_GREEN   = { r = 0.2, g = 1,    b = 0.2 }
@@ -16,6 +17,16 @@ local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
 local FONT_SIZE_TIME    = 14
 local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
 
+local function hasUsableAuraID(auraID)
+    return auraID
+        and type(auraID) == "number"
+        and not issecretvalue(auraID)
+end
+
+local function hasUsableNumericID(id)
+    return F.IsSafeNumber(id) and id > 0
+end
+
 local function onOverlayEnter(self)
     local unit    = self.unit
     local auraID  = self.auraID
@@ -23,10 +34,7 @@ local function onOverlayEnter(self)
     local itemID  = self.itemID
     local label   = self.label
 
-    if auraID and unit
-        and type(auraID) == "number"
-        and not issecretvalue(auraID)
-    then
+    if unit and hasUsableAuraID(auraID) then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetUnitBuffByAuraInstanceID(unit, auraID)
         GameTooltip:Show()
@@ -34,7 +42,7 @@ local function onOverlayEnter(self)
         return
     end
 
-    if itemID then
+    if hasUsableNumericID(itemID) then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(itemID)
         GameTooltip:Show()
@@ -42,7 +50,7 @@ local function onOverlayEnter(self)
         return
     end
 
-    if spellID then
+    if hasUsableNumericID(spellID) then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetSpellByID(spellID)
         -- TODO: Add red "Aura Missing" text line if the aura is missing
@@ -241,6 +249,12 @@ local function renderTimedAuraCell(row, member, column, context)
     if data and data.has then
         overlay.auraID  = data.auraID
         overlay.spellID = data.spellID
+
+        if not hasUsableAuraID(overlay.auraID)
+            and not hasUsableNumericID(overlay.spellID)
+        then
+            overlay.label = column.activeLabel or column.label
+        end
     else
         overlay.label = column.label
     end
@@ -331,6 +345,13 @@ local function renderIconAuraCell(row, member, column)
 
     if hasAura then
         overlay.auraID = data.auraID
+        overlay.spellID = data.spellID
+
+        if not hasUsableAuraID(overlay.auraID)
+            and not hasUsableNumericID(overlay.spellID)
+        then
+            overlay.label = column.activeLabel or column.label
+        end
     else
         overlay.label = column.label
     end
