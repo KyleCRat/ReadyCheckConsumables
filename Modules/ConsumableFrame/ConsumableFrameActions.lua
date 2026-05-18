@@ -15,6 +15,8 @@ RCC.ConsumableActionType = RCC.ConsumableActionType or {
 
 local ActionType = RCC.ConsumableActionType
 local CACHE_COMMIT_DELAY = 0.2
+local CACHE_ACTION_SET = "set"
+local CACHE_ACTION_CLEAR = "clear"
 local pendingCacheAction
 local pendingCacheToken = 0
 local cacheEventFrame = CreateFrame("Frame")
@@ -46,9 +48,9 @@ local function commitPendingCacheAction(token)
     cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
     cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
 
-    if action.type == "set" then
+    if action.type == CACHE_ACTION_SET then
         ItemCache.Set(action.cacheKey, action.itemID)
-    elseif action.type == "clear" then
+    elseif action.type == CACHE_ACTION_CLEAR then
         ItemCache.Clear(action.cacheKey)
     end
 
@@ -80,7 +82,7 @@ end)
 
 local function cacheClickedItem(self)
     queuePendingCacheAction({
-        type = "set",
+        type = CACHE_ACTION_SET,
         cacheKey = self.rccItemCacheKey,
         itemID = self.rccItemCacheID,
     })
@@ -88,7 +90,7 @@ end
 
 local function clearClickedItemCache(self)
     queuePendingCacheAction({
-        type = "clear",
+        type = CACHE_ACTION_CLEAR,
         cacheKey = self.rccItemCacheKey,
     })
 end

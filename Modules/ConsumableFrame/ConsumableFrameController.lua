@@ -31,7 +31,7 @@ local INSTANCE_OPEN_DELAY = 0.5
 --- Timer lifecycle
 --------------------------------------------------------------------------------
 
-local function cancelDelay(self)
+local function cancelMinShowDelay(self)
     if self.cancelDelay then
         self.cancelDelay:Cancel()
         self.cancelDelay = nil
@@ -116,7 +116,7 @@ local function showConsumableFrame(self, isInitiator, registerConfirm)
         self:RegisterEvent("READY_CHECK_CONFIRM")
     end
 
-    cancelDelay(self)
+    cancelMinShowDelay(self)
     cancelInstanceHideDelay(self)
     self:Repos(isInitiator)
 
@@ -125,7 +125,7 @@ end
 
 local function hideImmediately(self)
     instanceOpenPending = false
-    cancelDelay(self)
+    cancelMinShowDelay(self)
     cancelInstanceHideDelay(self)
     self.anchor:Hide()
 
@@ -183,7 +183,7 @@ end
 
 local function onReadyCheckFinished(self)
     if not self:IsShown() then
-        cancelDelay(self)
+        cancelMinShowDelay(self)
 
         return
     end
@@ -331,7 +331,7 @@ local function onHide(self)
     instanceOpenPending = false
     unregisterLiveEvents(self)
     self.anchor:Hide()
-    cancelDelay(self)
+    cancelMinShowDelay(self)
     cancelInstanceHideDelay(self)
 
     if not InCombatLockdown() then

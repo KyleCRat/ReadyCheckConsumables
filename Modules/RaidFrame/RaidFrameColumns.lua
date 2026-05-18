@@ -140,7 +140,7 @@ local function setTimedExternalData(data, source)
         return
     end
 
-    data.has     = source and source.has == true or false
+    data.has     = source ~= nil and source.has == true
     data.time    = source and source.time or 0
     data.iconID  = source and source.iconID or nil
     data.spellID = source and source.spellID or nil

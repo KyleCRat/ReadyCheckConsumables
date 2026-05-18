@@ -127,7 +127,7 @@ function Food.Update(button, state)
                         ButtonState.Create({ icon = foodCandidate.icon })
                     )
                 end
-            elseif not displayAuraState then
+            else
                 buttonState.icon = foodCandidate.icon
             end
         end

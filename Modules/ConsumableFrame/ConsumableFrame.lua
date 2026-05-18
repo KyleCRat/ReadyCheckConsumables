@@ -9,7 +9,10 @@ local CONTROL_BORDER_OVERHANG = 1
 
 RCC.consumables = CreateFrame("Frame", "RCConsumables", UIParent)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
-RCC.consumables:SetSize(Buttons.GetWidth(5), Buttons.SIZE)
+RCC.consumables:SetSize(
+    Buttons.GetWidth(Buttons.GetButtonCount()),
+    Buttons.SIZE
+)
 RCC.consumables:Hide()
 RCC.consumables.buttons = {}
 

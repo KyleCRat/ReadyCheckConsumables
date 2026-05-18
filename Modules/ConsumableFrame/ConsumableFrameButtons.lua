@@ -85,6 +85,10 @@ local BUTTON_DEFS = {
     },
 }
 
+function Buttons.GetButtonCount()
+    return #BUTTON_DEFS
+end
+
 function Buttons.GetWidth(buttonCount)
     return SIZE * buttonCount
            + SPACING * math.max(buttonCount - 1, 0)
@@ -178,6 +182,9 @@ function Buttons.ResetState(button, notReadyTexture)
     button.clickHintItemID = nil
     button.clickHintSpellID = nil
     button.clickEnabled = false
+    if button.click and not InCombatLockdown() then
+        button.click:Hide()
+    end
     Buttons.SetShownInLayout(button, true)
 end
 
@@ -237,7 +244,7 @@ local function isFlyoutInteractionActive(owner)
                 or isMouseOverFrame(owner.flyout))
 end
 
-local function getFlyoutButton(owner, index)
+local function getOrCreateFlyoutButton(owner, index)
     local flyout = owner.flyout
     local button = flyout.buttons[index]
 
@@ -420,8 +427,9 @@ function Buttons.SetFlyoutChoices(button, choices)
     flyout:SetHeight(Buttons.GetStackHeight(count))
 
     for i = 1, count do
-        local flyoutButton = getFlyoutButton(button, i)
+        local flyoutButton = getOrCreateFlyoutButton(button, i)
 
+        -- Deferred lookup: breaks circular dependency with ConsumableFrameRenderer.
         Renderer.Apply(flyoutButton, choices[i])
 
         if keepOpen then

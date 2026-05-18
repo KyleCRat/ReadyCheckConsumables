@@ -95,19 +95,19 @@ local renderContext = {
 --------------------------------------------------------------------------------
 
 local function updateTitleCount()
-    local readyCount = 0
+    local respondedCount = 0
 
     for unit in pairs(state.unitToIndex) do
         local status = state.rcStatus[unit]
 
         if status == ReadyCheck.READY or status == ReadyCheck.NOT_READY then
-            readyCount = readyCount + 1
+            respondedCount = respondedCount + 1
         end
     end
 
-    titleBar:SetReadyCount(readyCount, state.activeCount)
+    titleBar:SetRespondedCount(respondedCount, state.activeCount)
 
-    return readyCount
+    return respondedCount
 end
 
 local function getFinishedCounts()

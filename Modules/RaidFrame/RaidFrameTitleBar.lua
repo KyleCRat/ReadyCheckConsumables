@@ -111,9 +111,9 @@ function TitleBar.Create(parent, layout, options)
         self:RefreshColumns(columnStates)
     end
 
-    function titleBar:SetReadyCount(readyCount, activeCount)
+    function titleBar:SetRespondedCount(respondedCount, activeCount)
         self.countText:SetTextColor(1, 1, 1)
-        self.countText:SetText(readyCount .. "/" .. activeCount)
+        self.countText:SetText(respondedCount .. "/" .. activeCount)
     end
 
     function titleBar:ShowFinishedSummary(notReadyCount, afkCount)

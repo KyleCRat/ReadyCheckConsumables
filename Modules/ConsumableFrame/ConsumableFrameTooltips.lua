@@ -30,12 +30,14 @@ local function getSpellDisplay(spellID)
 end
 
 local function getUnavailableText(button)
+    -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
     local Buttons = RCC.ConsumableFrameButtons
 
     return Buttons and Buttons.GetUnavailableText(button)
 end
 
 local function setGameTooltipOwner(button)
+    -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
     local Buttons = RCC.ConsumableFrameButtons
     local spacing = Buttons and Buttons.SPACING or 0
 
