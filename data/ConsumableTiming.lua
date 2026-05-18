@@ -2,6 +2,7 @@ local _, RCC = ...
 
 RCC.ConsumableTiming = RCC.ConsumableTiming or {}
 
+local F = RCC.F
 local Timing = RCC.ConsumableTiming
 
 local DEFAULT_EXPIRE_WARN_SECONDS = 60 * 10
@@ -23,7 +24,7 @@ local function getExpireWarnSeconds()
 end
 
 function Timing.IsExpiringSoon(remaining)
-    if issecretvalue(remaining) or type(remaining) ~= "number" then
+    if not F.IsSafeNumber(remaining) then
         return false
     end
 

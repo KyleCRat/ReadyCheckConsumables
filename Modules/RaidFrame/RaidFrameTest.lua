@@ -67,19 +67,24 @@ local function randomBool()
     return math.random() > 0.35
 end
 
-local function generateOilData()
+local function generateTempWeaponEnchantData()
     local roll = math.random()
 
     if roll < 0.5 then
-        return { time = math.random(60, 3600), item = 0 }
+        return {
+            time    = math.random(60, 3600),
+            itemID  = 0,
+            iconID  = RCC.db.weapon_enchant_icon_id,
+            spellID = 0,
+        }
     end
 
     if roll < 0.7 then
-        return { time = 0, item = 0 }
+        return { time = 0, itemID = 0 }
     end
 
     if roll < 0.85 then
-        return { time = -1, item = 0 }
+        return { time = -1, itemID = 0 }
     end
 
     return nil
@@ -91,12 +96,12 @@ local function generateSyntheticMembers(excludeClass)
     for i = 1, #ALL_CLASSES do
         if ALL_CLASSES[i] ~= excludeClass then
             members[#members + 1] = {
-                name       = TEST_NAMES[i],
-                class      = ALL_CLASSES[i],
-                online     = math.random() > 0.1,
-                isDead     = math.random() > 0.9,
-                durability = math.random(10, 100),
-                oil        = generateOilData(),
+                name              = TEST_NAMES[i],
+                class             = ALL_CLASSES[i],
+                online            = math.random() > 0.1,
+                isDead            = math.random() > 0.9,
+                durability        = math.random(10, 100),
+                tempWeaponEnchant = generateTempWeaponEnchantData(),
             }
         end
     end
@@ -232,8 +237,11 @@ local function populateSyntheticState(self)
 
         broadcast:SetDurability(playerKey, member.durability)
 
-        if member.oil then
-            broadcast:SetOilStatus(playerKey, member.oil)
+        if member.tempWeaponEnchant then
+            broadcast:SetTempWeaponEnchantStatus(
+                playerKey,
+                member.tempWeaponEnchant
+            )
         end
     end
 
@@ -326,7 +334,7 @@ function Test:Start(permanent, duration)
     env.beginDisplay(permanent or false)
     populateSyntheticState(self)
     env.broadcast:SendDurability()
-    env.broadcast:SendOilStatus()
+    env.broadcast:SendTempWeaponEnchantStatus()
     env.showDisplay(duration, true)
 
     scheduleSyntheticResponses(self, runID, duration)

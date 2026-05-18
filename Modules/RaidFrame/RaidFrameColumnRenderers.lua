@@ -236,7 +236,7 @@ local function renderTimedAuraCell(row, member, column, context)
     overlay.auraID = data and data.auraID or nil
 end
 
-local function setOilState(cell, column, label, text, r, g, b)
+local function setTempWeaponEnchantState(cell, column, label, text, r, g, b)
     cell.icon:SetTexture(column.iconID)
     cell.icon:SetDesaturated(true)
     cell.icon:SetVertexColor(1, 1, 1, MISSING_ALPHA)
@@ -249,40 +249,54 @@ local function setOilState(cell, column, label, text, r, g, b)
     cell.overlay.label = label
 end
 
-local function renderOilCell(row, member, column, context)
+local function renderTempWeaponEnchantCell(row, member, column, context)
     local data = getColumnData(member, column)
-    local oilTime = data and data.time
-    local oilItemID = data and data.itemID or 0
+    local remaining = data and data.time
+    local itemID = data and data.itemID or 0
+    local spellID = data and data.spellID or 0
     local cell = getCell(row, column)
     local icon = cell.icon
     local timeText = cell.timeText
     local overlay = cell.overlay
 
     overlay.itemID = nil
+    overlay.spellID = nil
+    overlay.auraID = nil
     overlay.label  = nil
 
-    local hasOil       = oilTime and oilTime > 0
-    local oilIsMissing = oilTime == 0
-    local hasNoWeapon  = oilTime == -1
-    local noOilInfo    = oilTime == nil
+    local hasEnchant     = remaining and remaining > 0
+    local enchantMissing = remaining == 0
+    local hasNoWeapon    = remaining == -1
+    local noEnchantInfo  = remaining == nil
 
-    if hasOil then
+    if hasEnchant then
         icon:SetDesaturated(false)
         icon:SetVertexColor(1, 1, 1, 1)
-        timeText:SetText(formatDuration(oilTime))
-        setTimeColor(timeText, oilTime)
+        icon:SetTexture(data.iconID or column.iconID)
+        timeText:SetText(formatDuration(remaining))
+        setTimeColor(timeText, remaining)
 
-        if oilItemID > 0 then
-            overlay.itemID = oilItemID
+        if itemID > 0 then
+            overlay.itemID = itemID
+        elseif spellID > 0 then
+            overlay.spellID = spellID
         else
-            overlay.label = "Weapon Oil"
+            overlay.label = column.label
         end
-    elseif oilIsMissing then
-        setOilState(cell, column, column.labelMissing)
+    elseif enchantMissing then
+        setTempWeaponEnchantState(cell, column, column.labelMissing)
     elseif hasNoWeapon then
-        setOilState(cell, column, column.labelNoWeapon)
-    elseif noOilInfo then
-        setOilState(cell, column, column.labelUnknown, "?", 0.5, 0.5, 0.5)
+        setTempWeaponEnchantState(cell, column, column.labelNoWeapon)
+    elseif noEnchantInfo then
+        setTempWeaponEnchantState(
+            cell,
+            column,
+            column.labelUnknown,
+            "?",
+            0.5,
+            0.5,
+            0.5
+        )
     end
 end
 
@@ -348,9 +362,9 @@ local function renderDurabilityCell(row, member, column, context)
 end
 
 Renderers.TIMED = {
-    CreateCell     = createTimedCell,
-    RenderAuraCell = renderTimedAuraCell,
-    RenderOilCell  = renderOilCell,
+    CreateCell                  = createTimedCell,
+    RenderAuraCell              = renderTimedAuraCell,
+    RenderTempWeaponEnchantCell = renderTempWeaponEnchantCell,
 }
 
 Renderers.ICON = {

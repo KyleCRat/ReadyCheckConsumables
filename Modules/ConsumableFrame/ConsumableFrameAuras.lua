@@ -7,9 +7,7 @@ local F = RCC.F
 local Timing = RCC.ConsumableTiming
 
 function Auras.IsPositiveDuration(duration)
-    return not issecretvalue(duration)
-           and type(duration) == "number"
-           and duration > 0
+    return F.IsSafeNumber(duration) and duration > 0
 end
 
 function Auras.FindBySpellID(state, spellIDs)

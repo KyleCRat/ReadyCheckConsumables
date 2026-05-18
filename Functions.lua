@@ -87,8 +87,13 @@ function F.FormatDuration(seconds)
     return durationFormatter:Format(seconds)
 end
 
+function F.IsSafeNumber(value)
+    return not issecretvalue(value)
+        and type(value) == "number"
+end
+
 function F.GetAuraRemaining(expiry, now)
-    if issecretvalue(expiry) or type(expiry) ~= "number" then
+    if not F.IsSafeNumber(expiry) then
         return nil
     end
 

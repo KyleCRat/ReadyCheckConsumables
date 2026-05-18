@@ -21,9 +21,9 @@ local FADE_OUT_DURATION   = 0.5
 
 local LAYOUT = Columns.CreateLayout()
 
-local broadcast      = Broadcast.Create()
-local durabilityData = broadcast:GetDurabilityData()
-local oilData        = broadcast:GetOilData()
+local broadcast             = Broadcast.Create()
+local durabilityData        = broadcast:GetDurabilityData()
+local tempWeaponEnchantData = broadcast:GetTempWeaponEnchantData()
 
 --------------------------------------------------------------------------------
 --- Frame creation
@@ -80,8 +80,8 @@ local state = {
 local renderContext = {
     state  = state,
     shared = {
-        oilData        = oilData,
-        durabilityData = durabilityData,
+        durabilityData        = durabilityData,
+        tempWeaponEnchantData = tempWeaponEnchantData,
     },
     rules = Columns.RULES,
 }
@@ -260,9 +260,9 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     broadcast:Reset()
 
     -- Broadcast even when the local raid frame is disabled so other RCC users
-    -- can still see this player's durability and weapon oil status.
+    -- can still see this player's durability and temp weapon enchant status.
     broadcast:SendDurability()
-    broadcast:SendOilStatus()
+    broadcast:SendTempWeaponEnchantStatus()
 
     if not enabled then
         return
@@ -427,7 +427,7 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
     if event == "UNIT_INVENTORY_CHANGED" then
         if arg1 == "player" then
             C_Timer.After(0.2, function()
-                broadcast:SendOilStatus()
+                broadcast:SendTempWeaponEnchantStatus()
 
                 if self:IsShown() then
                     refreshAllRowsAndTitle()

@@ -9,14 +9,14 @@ local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing         = RCC.ConsumableTiming
 
-local ICON_SIZE        = 26
-local NAME_WIDTH       = 150
-local RC_ICON_WIDTH    = 24
-local TIME_WIDTH       = 30
-local H_PAD            = 3
-local FRAME_PAD        = 3
-local DURABILITY_WIDTH = 42
-local NO_DURATION      = 0
+local ICON_SIZE                  = 26
+local NAME_WIDTH                 = 150
+local RC_ICON_WIDTH              = 24
+local TIME_WIDTH                 = 30
+local H_PAD                      = 3
+local FRAME_PAD                  = 3
+local DURABILITY_WIDTH           = 42
+local NO_DURATION                = 0
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -26,10 +26,10 @@ local COLUMN_TYPE = {
 }
 
 local DATA_SOURCE = {
-    AURA       = "aura",
-    OIL        = "oil",
-    RAID_BUFF  = "raidBuff",
-    DURABILITY = "durability",
+    AURA                 = "aura",
+    TEMP_WEAPON_ENCHANT  = "tempWeaponEnchant",
+    RAID_BUFF            = "raidBuff",
+    DURABILITY           = "durability",
 }
 
 Columns.COLUMN_TYPE = COLUMN_TYPE
@@ -51,8 +51,8 @@ local RENDER_CELL_BY_DATA_SOURCE = {
         [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderAuraCell,
         [COLUMN_TYPE.ICON]  = Renderers.ICON.RenderAuraCell,
     },
-    [DATA_SOURCE.OIL] = {
-        [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderOilCell,
+    [DATA_SOURCE.TEMP_WEAPON_ENCHANT] = {
+        [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderTempWeaponEnchantCell,
     },
     [DATA_SOURCE.RAID_BUFF] = {
         [COLUMN_TYPE.RAID_BUFF] = Renderers.RAID_BUFF.RenderCell,
@@ -65,16 +65,16 @@ local RENDER_CELL_BY_DATA_SOURCE = {
 local RAID_BUFF_COUNT = RaidBuffStatus.GetCount()
 local ICON_STEP       = ICON_SIZE + H_PAD
 
-local READY_ICON_CENTER_X = RC_ICON_WIDTH / 2
-local NAME_X              = RC_ICON_WIDTH + H_PAD
-local FOOD_ICON_X         = NAME_X + NAME_WIDTH + H_PAD + TIME_WIDTH
-local FOOD_TIME_X         = FOOD_ICON_X - TIME_WIDTH
-local FLASK_ICON_X        = FOOD_ICON_X + ICON_STEP + TIME_WIDTH
-local FLASK_TIME_X        = FLASK_ICON_X - TIME_WIDTH
-local OIL_ICON_X          = FLASK_ICON_X + ICON_STEP + TIME_WIDTH
-local OIL_TIME_X          = OIL_ICON_X - TIME_WIDTH
-local AUGMENT_ICON_X      = OIL_ICON_X + ICON_STEP
-local VANTUS_ICON_X       = AUGMENT_ICON_X + ICON_STEP
+local READY_ICON_CENTER_X        = RC_ICON_WIDTH / 2
+local NAME_X                     = RC_ICON_WIDTH + H_PAD
+local FOOD_ICON_X                = NAME_X + NAME_WIDTH + H_PAD + TIME_WIDTH
+local FOOD_TIME_X                = FOOD_ICON_X - TIME_WIDTH
+local FLASK_ICON_X               = FOOD_ICON_X + ICON_STEP + TIME_WIDTH
+local FLASK_TIME_X               = FLASK_ICON_X - TIME_WIDTH
+local TEMP_WEAPON_ENCHANT_ICON_X = FLASK_ICON_X + ICON_STEP + TIME_WIDTH
+local TEMP_WEAPON_ENCHANT_TIME_X = TEMP_WEAPON_ENCHANT_ICON_X - TIME_WIDTH
+local AUGMENT_ICON_X             = TEMP_WEAPON_ENCHANT_ICON_X + ICON_STEP
+local VANTUS_ICON_X              = AUGMENT_ICON_X + ICON_STEP
 
 local function getRaidBuffX(raidBuffIndex)
     return VANTUS_ICON_X + raidBuffIndex * ICON_STEP
@@ -94,7 +94,7 @@ local FRAME_WIDTH = FRAME_PAD
     + NAME_WIDTH + H_PAD
     + TIME_WIDTH + ICON_SIZE + H_PAD      -- food
     + TIME_WIDTH + ICON_SIZE + H_PAD      -- flask
-    + TIME_WIDTH + ICON_SIZE + H_PAD      -- oil
+    + TIME_WIDTH + ICON_SIZE + H_PAD      -- temp weapon enchant
     + ICON_SIZE + H_PAD                   -- augment
     + ICON_SIZE + H_PAD                   -- vantus
     + ICON_STEP * RAID_BUFF_COUNT         -- raid buffs
@@ -102,18 +102,18 @@ local FRAME_WIDTH = FRAME_PAD
     + FRAME_PAD
 
 local LAYOUT_X = {
-    readyIconCenter = READY_ICON_CENTER_X,
-    name            = NAME_X,
-    food            = FOOD_ICON_X,
-    foodTime        = FOOD_TIME_X,
-    flask           = FLASK_ICON_X,
-    flaskTime       = FLASK_TIME_X,
-    oil             = OIL_ICON_X,
-    oilTime         = OIL_TIME_X,
-    augment         = AUGMENT_ICON_X,
-    vantus          = VANTUS_ICON_X,
-    raidBuff        = RAID_BUFF_X,
-    durability      = DURABILITY_X,
+    readyIconCenter       = READY_ICON_CENTER_X,
+    name                  = NAME_X,
+    food                  = FOOD_ICON_X,
+    foodTime              = FOOD_TIME_X,
+    flask                 = FLASK_ICON_X,
+    flaskTime             = FLASK_TIME_X,
+    tempWeaponEnchant     = TEMP_WEAPON_ENCHANT_ICON_X,
+    tempWeaponEnchantTime = TEMP_WEAPON_ENCHANT_TIME_X,
+    augment               = AUGMENT_ICON_X,
+    vantus                = VANTUS_ICON_X,
+    raidBuff              = RAID_BUFF_X,
+    durability            = DURABILITY_X,
 }
 
 --------------------------------------------------------------------------------
@@ -286,9 +286,11 @@ local flaskColumn = {
 
 local function createTempWeaponEnchantData()
     return {
-        has    = false,
-        time   = nil,
-        itemID = nil,
+        has     = false,
+        time    = nil,
+        itemID  = nil,
+        spellID = nil,
+        iconID  = nil,
     }
 end
 
@@ -296,19 +298,26 @@ local function syncTempWeaponEnchantData(data, member, context)
     local playerKey = member.key
 
     if not playerKey then
-        data.has    = false
-        data.time   = nil
-        data.itemID = nil
+        data.has     = false
+        data.time    = nil
+        data.itemID  = nil
+        data.spellID = nil
+        data.iconID  = nil
 
         return
     end
 
-    local entry = context.shared.oilData[playerKey]
+    local entry = context.shared.tempWeaponEnchantData[playerKey]
     local time = entry and entry.time
+    local itemID = entry and entry.itemID
+    local spellID = entry and entry.spellID
+    local iconID = entry and entry.iconID
 
-    data.has    = time and time > 0 or false
-    data.time   = time
-    data.itemID = entry and entry.item or nil
+    data.has     = time and time > 0 or false
+    data.time    = time
+    data.itemID  = itemID and itemID > 0 and itemID or nil
+    data.spellID = spellID and spellID > 0 and spellID or nil
+    data.iconID  = iconID and iconID > 0 and iconID or nil
 end
 
 local function isTempWeaponEnchantBad(member, context, column)
@@ -324,16 +333,16 @@ end
 
 local tempWeaponEnchantColumn = {
     columnType      = COLUMN_TYPE.TIMED,
-    dataSource      = DATA_SOURCE.OIL,
+    dataSource      = DATA_SOURCE.TEMP_WEAPON_ENCHANT,
     key             = "tempWeaponEnchant",
-    timeX           = OIL_TIME_X,
-    iconX           = OIL_ICON_X,
-    titleX          = OIL_ICON_X,
+    timeX           = TEMP_WEAPON_ENCHANT_TIME_X,
+    iconX           = TEMP_WEAPON_ENCHANT_ICON_X,
+    titleX          = TEMP_WEAPON_ENCHANT_ICON_X,
     iconID          = db.weapon_enchant_icon_id,
-    label           = "Weapon Oil",
-    labelMissing    = "Weapon Oil: Missing",
-    labelNoWeapon   = "Weapon Oil: No Weapon Equipped",
-    labelUnknown    = "Weapon Oil: Unknown",
+    label           = "Weapon Enchant",
+    labelMissing    = "Weapon Enchant: Missing",
+    labelNoWeapon   = "Weapon Enchant: No Weapon",
+    labelUnknown    = "Weapon Enchant: Unknown",
     CreateData      = createTempWeaponEnchantData,
     SyncData        = syncTempWeaponEnchantData,
     IsBad           = isTempWeaponEnchantBad,
