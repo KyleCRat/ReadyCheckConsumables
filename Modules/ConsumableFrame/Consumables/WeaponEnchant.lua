@@ -448,7 +448,8 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
 end
 
 local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
-                                       enchantID, showMissingHint)
+                                       enchantID, showMissingHint,
+                                       itemCandidates)
     local slotState = buildWeaponSlotState(
         slotID,
         hasEnchant,
@@ -472,8 +473,6 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
         slotState
     )
     local spellEnchant = selectSpellEnchantForSlot(slotID, activeEnchantData)
-    local itemCandidates = collectWeaponEnchantItemCandidatesInBags()
-
     if not shouldPreferSpellEnchant(
             slotState.hasEnchant,
             activeEnchantData
@@ -499,7 +498,8 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
 end
 
 local function updateWeaponEnchantButton(button, hasEnchant, expiration,
-                                         enchantID, showMissingHint)
+                                         enchantID, showMissingHint,
+                                         itemCandidates)
     if not button or not button.weaponSlot then return end
 
     updateWeaponEnchantSlot(
@@ -508,7 +508,8 @@ local function updateWeaponEnchantButton(button, hasEnchant, expiration,
         hasEnchant,
         expiration,
         enchantID,
-        showMissingHint
+        showMissingHint,
+        itemCandidates
     )
 end
 
@@ -516,13 +517,15 @@ function WeaponEnchant.Update(buttons)
     local hasMainHandEnchant, mainHandExpiration, _, mainHandEnchantID,
           hasOffHandEnchant, offHandExpiration, _, offHandEnchantID =
           GetWeaponEnchantInfo()
+    local itemCandidates = collectWeaponEnchantItemCandidatesInBags()
 
     updateWeaponEnchantButton(
         buttons.mainHandTempWeaponEnchant,
         hasMainHandEnchant,
         mainHandExpiration,
         mainHandEnchantID,
-        true
+        true,
+        itemCandidates
     )
 
     updateWeaponEnchantButton(
@@ -530,6 +533,7 @@ function WeaponEnchant.Update(buttons)
         hasOffHandEnchant,
         offHandExpiration,
         offHandEnchantID,
-        true
+        true,
+        itemCandidates
     )
 end
