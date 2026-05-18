@@ -52,6 +52,7 @@ table.sort(orderedXpacIDs)
 --------------------------------------------------------------------------------
 
 -- Defaults
+RCC.db.augmentIconID        = 4549099
 RCC.db.weaponEnchantIconID  = 463543
 RCC.db.foodIconID           = 136000
 RCC.db.flaskIconID          = 3528447
