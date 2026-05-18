@@ -14,11 +14,13 @@ RCC.ConsumableActionType = RCC.ConsumableActionType or {
 }
 
 local ActionType = RCC.ConsumableActionType
-local CACHE_COMMIT_DELAY = 0.2
+local CACHE_COMMIT_DELAY = 0.1
+local CACHE_ERROR_SUPPRESS_WINDOW = 0.5
 local CACHE_ACTION_SET = "set"
 local CACHE_ACTION_CLEAR = "clear"
 local pendingCacheAction
 local pendingCacheToken = 0
+local lastErrorTime = 0
 local cacheEventFrame = CreateFrame("Frame")
 
 local function scheduleConsumableFrameUpdate()
@@ -32,11 +34,17 @@ local function scheduleConsumableFrameUpdate()
     end)
 end
 
+local function unregisterCacheEvents()
+    cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
+    cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
+    cacheEventFrame:UnregisterEvent("UI_INFO_MESSAGE")
+end
+
 local function clearPendingCacheAction()
     pendingCacheAction = nil
     pendingCacheToken = pendingCacheToken + 1
-    cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
-    cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
+    lastErrorTime = GetTime()
+    unregisterCacheEvents()
 end
 
 local function commitPendingCacheAction(token)
@@ -45,8 +53,7 @@ local function commitPendingCacheAction(token)
     local action = pendingCacheAction
 
     pendingCacheAction = nil
-    cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
-    cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
+    unregisterCacheEvents()
 
     if action.type == CACHE_ACTION_SET then
         ItemCache.Set(action.cacheKey, action.itemID)
@@ -60,6 +67,10 @@ end
 local function queuePendingCacheAction(action)
     if not ItemCache or not action or not action.cacheKey then return end
 
+    if GetTime() - lastErrorTime < CACHE_ERROR_SUPPRESS_WINDOW then
+        return
+    end
+
     -- Use errors can fire during the secure action before PostClick runs, so
     -- start watching in PreClick and commit only after a quiet frame window.
     pendingCacheAction = action
@@ -69,6 +80,7 @@ local function queuePendingCacheAction(action)
 
     cacheEventFrame:RegisterEvent("UI_ERROR_MESSAGE")
     cacheEventFrame:RegisterEvent("UI_ERROR_POPUP")
+    cacheEventFrame:RegisterEvent("UI_INFO_MESSAGE")
     C_Timer.After(CACHE_COMMIT_DELAY, function()
         commitPendingCacheAction(token)
     end)
