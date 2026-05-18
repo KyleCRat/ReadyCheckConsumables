@@ -20,16 +20,6 @@ local function getAuraSpellID(aura)
     return aura.spellId or aura.spellID
 end
 
-local function storeAuraID(data, aura)
-    local auraID = aura.auraInstanceID
-
-    if auraID and not issecretvalue(auraID) then
-        data.auraID = auraID
-    else
-        data.auraID = true
-    end
-end
-
 function Status.GetCount()
     local defs = RCC.db.raidBuffDefs
 
@@ -87,7 +77,7 @@ function Status.CollectAura(data, aura, index)
     if not Status.AuraMatches(index, aura) then return end
 
     data.has = true
-    storeAuraID(data, aura)
+    RCC.F.StoreAuraID(data, aura)
 end
 
 function Status.IsMissing(data)

@@ -104,6 +104,16 @@ function F.GetAuraRemaining(expiry, now)
     return expiry - now
 end
 
+function F.StoreAuraID(data, aura)
+    local auraID = aura and aura.auraInstanceID
+
+    if auraID and not issecretvalue(auraID) then
+        data.auraID = auraID
+    else
+        data.auraID = true
+    end
+end
+
 function F.UnitIsUnitSafe(unit, otherUnit)
     if issecretvalue(unit) or issecretvalue(otherUnit) then
         return false
