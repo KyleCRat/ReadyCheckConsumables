@@ -17,7 +17,7 @@ local TIME_TEXT_NORMAL_COLOR = { r = 1, g = 1, b = 1 }
 local TIME_TEXT_BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
-local FLYOUT_HIDE_DELAY = 0.05
+local FLYOUT_HIDE_DELAY = 0.1
 
 local GetItemReagentQualityInfo = C_TradeSkillUI.GetItemReagentQualityInfo
 
