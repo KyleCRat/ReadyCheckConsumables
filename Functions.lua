@@ -3,6 +3,8 @@ local _, RCC = ...
 RCC.F = RCC.F or {}
 local F = RCC.F
 
+local UnitIsConnected = UnitIsConnected
+
 -- Fallback max group when difficulty is not in the lookup table
 local DEFAULT_RAID_GROUP_COUNT = 6
 local SECONDS_PER_MINUTE = 60
@@ -209,7 +211,7 @@ end
 
 --------------------------------------------------------------------------------
 --- GetRosterInfo(index)
---- Returns full name, unit, subgroup, class for a single roster slot.
+--- Returns full name, unit, subgroup, class, online for a single roster slot.
 --- Works in both raid and party. Returns nil when no player at index.
 --- Party order: 1=player, 2=party1, 3=party2, 4=party3, 5=party4.
 --------------------------------------------------------------------------------
@@ -222,7 +224,9 @@ function F.GetRosterInfo(index)
             return nil
         end
 
-        return F.fullName(name), "raid" .. index, subgroup, class
+        local unit = "raid" .. index
+
+        return F.fullName(name), unit, subgroup, class, UnitIsConnected(unit)
     end
 
     if index > 5 then
@@ -243,28 +247,36 @@ function F.GetRosterInfo(index)
 
     local _, fileName = UnitClass(unit)
 
-    return F.fullName(name), unit, 1, fileName
+    return F.fullName(name), unit, 1, fileName, UnitIsConnected(unit)
 end
 
 --------------------------------------------------------------------------------
 --- ForEachActiveRosterMember(callback)
 --- Iterates party/raid members within the active instance groups.
---- Callback receives fullName, unit, subgroup, class, rosterIndex.
+--- Callback receives fullName, unit, subgroup, class, online, rosterIndex.
 --- Return false from the callback to stop iteration early.
 --------------------------------------------------------------------------------
 
 function F.ForEachActiveRosterMember(callback)
     local maxGroup = F.GetRaidDiffMaxGroup()
 
-    for j = 1, 40 do
-        local name, unit, subgroup, class = F.GetRosterInfo(j)
+    for rosterIndex = 1, 40 do
+        local name, unit, subgroup, class, online =
+            F.GetRosterInfo(rosterIndex)
 
         if not name then
             if not IsInRaid() then
                 break
             end
         elseif subgroup <= maxGroup then
-            if callback(name, unit, subgroup, class, j) == false then
+            if callback(
+                name,
+                unit,
+                subgroup,
+                class,
+                online,
+                rosterIndex
+            ) == false then
                 break
             end
         end

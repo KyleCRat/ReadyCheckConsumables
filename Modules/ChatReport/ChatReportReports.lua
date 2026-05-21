@@ -31,10 +31,26 @@ local function isOutdatedAugment(augmentData)
         and not isPreviousExpansionUnlimitedAugment(augmentData)
 end
 
+local function reportOffline(toChat)
+    local offline = {}
+
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then
+            offline[#offline + 1] = Output.ColorName(F.shortName(name), class)
+        end
+    end)
+
+    if #offline > 0 then
+        Output.SendChunked(format("Offline (%d): ", #offline), offline, toChat)
+    end
+end
+
 local function reportFood(toChat)
     local missing = {}
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
         local hasFood = false
 
         F.ForEachHelpfulAura(unit, function(aura, spellID)
@@ -64,7 +80,9 @@ local function reportFlasks(toChat)
     local expiring = {}
     local now = GetTime()
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
         local hasFlask = false
         local colored = Output.ColorName(F.shortName(name), class)
 
@@ -114,7 +132,9 @@ local function reportAugments(toChat)
     local missing = {}
     local lowXpac = {}
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
         local hasAugment = false
         local colored = Output.ColorName(F.shortName(name), class)
 
@@ -168,7 +188,9 @@ local function reportBuffs(toChat)
         missingCount[k] = 0
     end
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
         for k = 1, buffsCount do
             local info = buffInfos[k]
 
@@ -223,4 +245,5 @@ function Reports.SendAll(toChat)
     reportFlasks(toChat)
     reportAugments(toChat)
     reportBuffs(toChat)
+    reportOffline(toChat)
 end
