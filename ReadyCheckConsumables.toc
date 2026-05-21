@@ -55,5 +55,9 @@ Modules/RaidFrame/RaidFrame.lua
 ReadyCheckTest.lua
 Settings.lua
 ReadyCheckConsumables.lua
-ChatReport.lua
+Modules/ChatReport/ChatReportOutput.lua
+Modules/ChatReport/ChatReportRoster.lua
+Modules/ChatReport/ChatReportReports.lua
+Modules/ChatReport/ChatReportElection.lua
+Modules/ChatReport/ChatReport.lua
 SlashCommands.lua
