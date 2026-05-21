@@ -131,13 +131,30 @@ local function getFinishedCounts()
     return notReadyCount, afkCount
 end
 
+local function allActiveMembersReady()
+    if state.activeCount == 0 then
+        return false
+    end
+
+    for i = 1, state.activeCount do
+        local member = state.members[i]
+
+        if not member
+            or state.rcStatus[member.unit] ~= ReadyCheck.READY
+        then
+            return false
+        end
+    end
+
+    return true
+end
+
 local function showFinishedSummary()
     local notReadyCount, afkCount = getFinishedCounts()
 
     titleBar:ShowFinishedSummary(notReadyCount, afkCount)
 
-    if notReadyCount == 0
-        and afkCount == 0
+    if allActiveMembersReady()
         and not state.readyAnnounced
         and GetNumGroupMembers() > state.activeCount
     then
