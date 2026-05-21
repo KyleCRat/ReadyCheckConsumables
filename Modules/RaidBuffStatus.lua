@@ -114,16 +114,8 @@ function Status.ScanUnit(unit, now)
         return statuses
     end
 
-    for auraIndex = 1, RCC.MAX_AURAS do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
-
-        if not aura then
-            break
-        end
-
-        local spellID = getAuraSpellID(aura)
-
-        if spellID and not issecretvalue(spellID) then
+    F.ForEachHelpfulAura(unit, function(aura, spellID)
+        if spellID then
             local remaining = now and F.GetAuraRemaining(
                 aura.expirationTime,
                 now
@@ -133,7 +125,7 @@ function Status.ScanUnit(unit, now)
                 Status.CollectAura(statuses[index], aura, index, remaining)
             end
         end
-    end
+    end)
 
     return statuses
 end
@@ -145,16 +137,8 @@ function Status.GetUnitStatus(unit, index, now)
         return data
     end
 
-    for auraIndex = 1, RCC.MAX_AURAS do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
-
-        if not aura then
-            break
-        end
-
-        local spellID = getAuraSpellID(aura)
-
-        if spellID and not issecretvalue(spellID) then
+    F.ForEachHelpfulAura(unit, function(aura, spellID)
+        if spellID then
             local remaining = now and F.GetAuraRemaining(
                 aura.expirationTime,
                 now
@@ -163,10 +147,10 @@ function Status.GetUnitStatus(unit, index, now)
             Status.CollectAura(data, aura, index, remaining)
 
             if data.has then
-                break
+                return true
             end
         end
-    end
+    end)
 
     return data
 end

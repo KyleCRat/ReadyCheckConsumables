@@ -28,19 +28,12 @@ local function shouldCheckUnit(unit)
 end
 
 local function getGroupStatus(raidBuffIndex)
-    local maxGroup = F.GetRaidDiffMaxGroup()
     local missingCount = 0
     local minRemaining
     local now = GetTime()
 
-    for rosterIndex = 1, 40 do
-        local name, unit, subgroup = F.GetRosterInfo(rosterIndex)
-
-        if not name then
-            if not IsInRaid() then
-                break
-            end
-        elseif subgroup <= maxGroup and shouldCheckUnit(unit) then
+    F.ForEachActiveRosterMember(function(name, unit)
+        if shouldCheckUnit(unit) then
             local data = RaidBuffStatus.GetUnitStatus(unit, raidBuffIndex, now)
 
             if RaidBuffStatus.IsMissing(data) then
@@ -51,7 +44,7 @@ local function getGroupStatus(raidBuffIndex)
                 end
             end
         end
-    end
+    end)
 
     return missingCount, minRemaining
 end

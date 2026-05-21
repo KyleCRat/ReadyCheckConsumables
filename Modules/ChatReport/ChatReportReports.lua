@@ -6,7 +6,6 @@ local Reports = RCC.ChatReportReports
 local F = RCC.F
 local Output = RCC.ChatReportOutput
 local RaidBuffStatus = RCC.RaidBuffStatus
-local Roster = RCC.ChatReportRoster
 local Timing = RCC.ConsumableTiming
 local db = RCC.db
 
@@ -25,10 +24,10 @@ end
 local function reportFood(toChat)
     local missing = {}
 
-    Roster.ForEachMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
         local hasFood = false
 
-        Roster.ForEachHelpfulAura(unit, function(aura, spellID)
+        F.ForEachHelpfulAura(unit, function(aura, spellID)
             if db.foodBuffIDs[spellID] or db.foodIconIDs[aura.icon] then
                 hasFood = true
 
@@ -55,11 +54,11 @@ local function reportFlasks(toChat)
     local expiring = {}
     local now = GetTime()
 
-    Roster.ForEachMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
         local hasFlask = false
         local colored = Output.ColorName(F.shortName(name), class)
 
-        Roster.ForEachHelpfulAura(unit, function(aura, spellID)
+        F.ForEachHelpfulAura(unit, function(aura, spellID)
             if db.flaskBuffIDs[spellID] then
                 hasFlask = true
 
@@ -105,11 +104,11 @@ local function reportAugments(toChat)
     local missing = {}
     local lowXpac = {}
 
-    Roster.ForEachMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
         local hasAugment = false
         local colored = Output.ColorName(F.shortName(name), class)
 
-        Roster.ForEachHelpfulAura(unit, function(aura, spellID)
+        F.ForEachHelpfulAura(unit, function(aura, spellID)
             local auraXpac = db.augmentBuffIDs[spellID]
 
             if auraXpac then
@@ -159,7 +158,7 @@ local function reportBuffs(toChat)
         missingCount[k] = 0
     end
 
-    Roster.ForEachMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
         for k = 1, buffsCount do
             local info = buffInfos[k]
 
@@ -170,7 +169,7 @@ local function reportBuffs(toChat)
 
         local hasBuff = {}
 
-        Roster.ForEachHelpfulAura(unit, function(aura)
+        F.ForEachHelpfulAura(unit, function(aura)
             for k = 1, buffsCount do
                 if RaidBuffStatus.AuraMatches(k, aura) then
                     hasBuff[k] = true

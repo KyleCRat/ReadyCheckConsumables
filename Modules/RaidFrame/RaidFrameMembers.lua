@@ -14,44 +14,35 @@ local function scanMemberColumnData(unit, now, layout, context)
 end
 
 function Members.ScanAll(state, layout, context)
-    local maxGroup = F.GetRaidDiffMaxGroup()
     local now = GetTime()
     local count = 0
 
     wipe(state.members)
     wipe(state.unitToIndex)
 
-    for j = 1, 40 do
-        local name, unit, subgroup, class = F.GetRosterInfo(j)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+        count = count + 1
 
-        if not name then
-            if not IsInRaid() then
-                break
-            end
-        elseif subgroup <= maxGroup then
-            count = count + 1
+        local online    = UnitIsConnected(unit)
+        local isDead    = UnitIsDeadOrGhost(unit)
+        local playerKey = F.fullName(name)
 
-            local online    = UnitIsConnected(unit)
-            local isDead    = UnitIsDeadOrGhost(unit)
-            local playerKey = F.fullName(name)
+        state.members[count] = {
+            name       = name,
+            key        = playerKey,
+            unit       = unit,
+            class      = class,
+            online     = online,
+            isDead     = isDead,
+            columnData = scanMemberColumnData(unit, now, layout, context),
+        }
 
-            state.members[count] = {
-                name       = name,
-                key        = playerKey,
-                unit       = unit,
-                class      = class,
-                online     = online,
-                isDead     = isDead,
-                columnData = scanMemberColumnData(unit, now, layout, context),
-            }
+        state.unitToIndex[unit] = count
 
-            state.unitToIndex[unit] = count
-
-            if not state.rcStatus[unit] then
-                state.rcStatus[unit] = ReadyCheck.PENDING
-            end
+        if not state.rcStatus[unit] then
+            state.rcStatus[unit] = ReadyCheck.PENDING
         end
-    end
+    end)
 
     state.activeCount = count
 end

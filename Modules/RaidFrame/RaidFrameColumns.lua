@@ -619,33 +619,25 @@ function Columns.ScanUnitData(unit, now, layout, context)
         rules     = rules,
     }
 
-    for auraIndex = 1, RCC.MAX_AURAS do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, "HELPFUL")
+    F.ForEachHelpfulAura(unit, function(aura)
+        scanContext.remaining = F.GetAuraRemaining(
+            aura.expirationTime,
+            now
+        ) or rules.noDuration
 
-        if not aura then
-            break
-        end
+        for columnIndex = 1, #layout.columns do
+            local column = layout.columns[columnIndex]
 
-        if not issecretvalue(aura.spellId) then
-            scanContext.remaining = F.GetAuraRemaining(
-                aura.expirationTime,
-                now
-            ) or rules.noDuration
-
-            for columnIndex = 1, #layout.columns do
-                local column = layout.columns[columnIndex]
-
-                if column.CollectAura then
-                    column.CollectAura(
-                        columnData[column.key],
-                        aura,
-                        scanContext,
-                        column
-                    )
-                end
+            if column.CollectAura then
+                column.CollectAura(
+                    columnData[column.key],
+                    aura,
+                    scanContext,
+                    column
+                )
             end
         end
-    end
+    end)
 
     return columnData
 end

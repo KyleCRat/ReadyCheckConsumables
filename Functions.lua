@@ -7,6 +7,9 @@ local F = RCC.F
 local DEFAULT_RAID_GROUP_COUNT = 6
 local SECONDS_PER_MINUTE = 60
 
+-- C_UnitAuras has no count API; nil marks the end of the aura list.
+RCC.MAX_AURAS = 255
+
 local durationFormatter = CreateFromMixins(SecondsFormatterMixin)
 durationFormatter:Init(
     SecondsFormatterConstants.ZeroApproximationThreshold,
@@ -244,24 +247,70 @@ function F.GetRosterInfo(index)
 end
 
 --------------------------------------------------------------------------------
+--- ForEachActiveRosterMember(callback)
+--- Iterates party/raid members within the active instance groups.
+--- Callback receives fullName, unit, subgroup, class, rosterIndex.
+--- Return false from the callback to stop iteration early.
+--------------------------------------------------------------------------------
+
+function F.ForEachActiveRosterMember(callback)
+    local maxGroup = F.GetRaidDiffMaxGroup()
+
+    for j = 1, 40 do
+        local name, unit, subgroup, class = F.GetRosterInfo(j)
+
+        if not name then
+            if not IsInRaid() then
+                break
+            end
+        elseif subgroup <= maxGroup then
+            if callback(name, unit, subgroup, class, j) == false then
+                break
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+--- ForEachHelpfulAura(unit, callback)
+--- Iterates helpful auras and skips secret spell IDs before callback.
+--- Callback receives aura, spellID, auraIndex.
+--- Return true from the callback to stop iteration early.
+--------------------------------------------------------------------------------
+
+function F.ForEachHelpfulAura(unit, callback)
+    for i = 1, RCC.MAX_AURAS do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+
+        if not aura then
+            break
+        end
+
+        local spellID = aura.spellId or aura.spellID
+
+        if not issecretvalue(spellID)
+            and callback(aura, spellID, i) == true
+        then
+            break
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
 --- hasClassInRoster(className)
 --- Returns true if any roster member within active groups is the given class.
 --------------------------------------------------------------------------------
 
 function F.hasClassInRoster(className)
-    local maxGroup = F.GetRaidDiffMaxGroup()
+    local found = false
 
-    for j = 1, 40 do
-        local name, _, subgroup, class = F.GetRosterInfo(j)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+        if class == className then
+            found = true
 
-        if not name then
-            if not IsInRaid() then
-                return false
-            end
-        elseif subgroup <= maxGroup and class == className then
-            return true
+            return false
         end
-    end
+    end)
 
-    return false
+    return found
 end

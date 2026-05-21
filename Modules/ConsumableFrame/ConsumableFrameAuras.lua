@@ -69,35 +69,26 @@ function Auras.ScanPlayer(now)
         auras = {},
     }
 
-    for i = 1, RCC.MAX_AURAS do
-        local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+    F.ForEachHelpfulAura("player", function(auraData, spellID)
+        local expiry = auraData.expirationTime
+        local remaining = F.GetAuraRemaining(expiry, now)
+        local aura = {
+            duration = auraData.duration,
+            expiry = expiry,
+            icon = auraData.icon,
+            name = auraData.name,
+            remaining = remaining,
+            spellID = spellID,
+        }
 
-        if not auraData then
-            break
+        if auraData.auraInstanceID
+            and not issecretvalue(auraData.auraInstanceID)
+        then
+            aura.auraInstanceID = auraData.auraInstanceID
         end
 
-        if not issecretvalue(auraData.spellId) then
-            local sid = auraData.spellId
-            local expiry = auraData.expirationTime
-            local remaining = F.GetAuraRemaining(expiry, now)
-            local aura = {
-                duration = auraData.duration,
-                expiry = expiry,
-                icon = auraData.icon,
-                name = auraData.name,
-                remaining = remaining,
-                spellID = sid,
-            }
-
-            if auraData.auraInstanceID
-                and not issecretvalue(auraData.auraInstanceID)
-            then
-                aura.auraInstanceID = auraData.auraInstanceID
-            end
-
-            state.auras[#state.auras + 1] = aura
-        end
-    end
+        state.auras[#state.auras + 1] = aura
+    end)
 
     return state
 end
