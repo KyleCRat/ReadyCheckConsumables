@@ -11,7 +11,6 @@ local Timing = RCC.ConsumableTiming
 local db = RCC.db
 
 local GetTime = GetTime
-local floor = floor
 local format = format
 
 local CURRENT_AUGMENT_XPAC = db.currentAugmentXpac
@@ -70,12 +69,10 @@ local function reportFood(toChat)
                 )
 
                 if Timing.IsExpiringSoon(remaining) then
-                    local mins = floor(remaining / 60)
-                    local label = mins == 0 and "<1" or tostring(mins)
                     expiring[#expiring + 1] = format(
                         "%s(%s)",
                         colored,
-                        label
+                        F.FormatDuration(remaining)
                     )
                 end
 
@@ -123,12 +120,10 @@ local function reportFlasks(toChat)
                 )
 
                 if Timing.IsExpiringSoon(remaining) then
-                    local mins = floor(remaining / 60)
-                    local label = mins == 0 and "<1" or tostring(mins)
                     expiring[#expiring + 1] = format(
                         "%s(%s)",
                         colored,
-                        label
+                        F.FormatDuration(remaining)
                     )
                 end
 
