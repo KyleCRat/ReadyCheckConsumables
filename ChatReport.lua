@@ -22,10 +22,13 @@ local CURRENT_AUGMENT_XPAC = db.currentAugmentXpac
 --------------------------------------------------------------------------------
 
 local ADDON_PREFIX = "RCC"
+local CHAT_MESSAGE_LIMIT = 220
+local REPORT_ELECTION_DELAY = 1
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
 
 local reportCandidates = {}
 local mrtWillReport = false
+local reportGeneration = 0
 
 local DIFFICULTY_TO_SETTING = {
     [16]  = "chatReport_mythicRaid",
@@ -83,13 +86,40 @@ local function sendResults(msg, toChat)
     SendChatMessage(msg, chatType)
 end
 
---------------------------------------------------------------------------------
---- Food Report
---- Reports players with no food buff.
---------------------------------------------------------------------------------
+local function sendChunked(prefix, entries, toChat)
+    if not entries or #entries == 0 then
+        return
+    end
 
-local function reportFood(toChat)
-    local missing = {}
+    local line = prefix or ""
+    local hasEntry = false
+
+    for i = 1, #entries do
+        local entry = entries[i]
+        local separator = hasEntry and ", " or ""
+
+        if hasEntry
+            and #line + #separator + #entry > CHAT_MESSAGE_LIMIT
+        then
+            sendResults(line, toChat)
+            line = entry
+        else
+            line = line .. separator .. entry
+        end
+
+        hasEntry = true
+    end
+
+    sendResults(line, toChat)
+end
+
+local function appendEntries(target, source)
+    for i = 1, #source do
+        target[#target + 1] = source[i]
+    end
+end
+
+local function forEachRosterMember(callback)
     local maxGroup = F.GetRaidDiffMaxGroup()
 
     for j = 1, 40 do
@@ -100,31 +130,52 @@ local function reportFood(toChat)
                 break
             end
         elseif subgroup <= maxGroup then
-            local hasFood = false
-
-            for i = 1, RCC.MAX_AURAS do
-                local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-
-                if not aura then
-                    break
-                end
-
-                if not issecretvalue(aura.spellId) then
-                    local sid = aura.spellId
-                    local icon = aura.icon
-
-                    if db.foodBuffIDs[sid] or db.foodIconIDs[icon] then
-                        hasFood = true
-                        break
-                    end
-                end
-            end
-
-            if not hasFood then
-                missing[#missing + 1] = colorName(F.shortName(name), class)
+            if callback(name, unit, subgroup, class, j) == false then
+                break
             end
         end
     end
+end
+
+local function forEachHelpfulAura(unit, callback)
+    for i = 1, RCC.MAX_AURAS do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+
+        if not aura then
+            break
+        end
+
+        if not issecretvalue(aura.spellId)
+            and callback(aura, aura.spellId) == true
+        then
+            break
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+--- Food Report
+--- Reports players with no food buff.
+--------------------------------------------------------------------------------
+
+local function reportFood(toChat)
+    local missing = {}
+
+    forEachRosterMember(function(name, unit, subgroup, class)
+        local hasFood = false
+
+        forEachHelpfulAura(unit, function(aura, spellID)
+            if db.foodBuffIDs[spellID] or db.foodIconIDs[aura.icon] then
+                hasFood = true
+
+                return true
+            end
+        end)
+
+        if not hasFood then
+            missing[#missing + 1] = colorName(F.shortName(name), class)
+        end
+    end)
 
     if #missing == 0 then
         sendResults("Food: All Fed", toChat)
@@ -132,22 +183,7 @@ local function reportFood(toChat)
         return
     end
 
-    local result = format("No Food (%d): ", #missing)
-
-    for i = 1, #missing do
-        result = result .. missing[i]
-
-        if i < #missing then
-            result = result .. ", "
-        end
-
-        if #result > 220 then
-            sendResults(result, toChat)
-            result = ""
-        end
-    end
-
-    sendResults(result, toChat)
+    sendChunked(format("No Food (%d): ", #missing), missing, toChat)
 end
 
 --------------------------------------------------------------------------------
@@ -159,53 +195,39 @@ end
 local function reportFlasks(toChat)
     local missing = {}
     local expiring = {}
-    local maxGroup = F.GetRaidDiffMaxGroup()
     local now = GetTime()
 
-    for j = 1, 40 do
-        local name, unit, subgroup, class = getRosterInfo(j)
+    forEachRosterMember(function(name, unit, subgroup, class)
+        local hasFlask = false
+        local colored = colorName(F.shortName(name), class)
 
-        if not name then
-            if not IsInRaid() then
-                break
-            end
-        elseif subgroup <= maxGroup then
-            local hasFlask = false
-            local colored = colorName(F.shortName(name), class)
+        forEachHelpfulAura(unit, function(aura, spellID)
+            if db.flaskBuffIDs[spellID] then
+                hasFlask = true
 
-            for i = 1, RCC.MAX_AURAS do
-                local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+                local remaining = F.GetAuraRemaining(
+                    aura.expirationTime,
+                    now
+                )
 
-                if not aura then
-                    break
+                if Timing.IsExpiringSoon(remaining) then
+                    local mins = floor(remaining / 60)
+                    local label = mins == 0 and "<1" or tostring(mins)
+                    expiring[#expiring + 1] = format(
+                        "%s(%s)",
+                        colored,
+                        label
+                    )
                 end
 
-                if not issecretvalue(aura.spellId) then
-                    local sid = aura.spellId
-
-                    if db.flaskBuffIDs[sid] then
-                        hasFlask = true
-                        local remaining = F.GetAuraRemaining(
-                            aura.expirationTime,
-                            now
-                        )
-
-                        if Timing.IsExpiringSoon(remaining) then
-                            local mins = floor(remaining / 60)
-                            local label = mins == 0 and "<1" or tostring(mins)
-                            expiring[#expiring + 1] = format("%s(%s)", colored, label)
-                        end
-
-                        break
-                    end
-                end
+                return true
             end
+        end)
 
-            if not hasFlask then
-                missing[#missing + 1] = colored
-            end
+        if not hasFlask then
+            missing[#missing + 1] = colored
         end
-    end
+    end)
 
     local totalBad = #missing + #expiring
 
@@ -215,36 +237,10 @@ local function reportFlasks(toChat)
         return
     end
 
-    local result = format("No Flask (%d): ", totalBad)
-
-    for i = 1, #missing do
-        local isLast = (i == #missing and #expiring == 0)
-        result = result .. missing[i]
-
-        if not isLast then
-            result = result .. ", "
-        end
-
-        if #result > 220 then
-            sendResults(result, toChat)
-            result = ""
-        end
-    end
-
-    for i = 1, #expiring do
-        result = result .. expiring[i]
-
-        if i < #expiring then
-            result = result .. ", "
-        end
-
-        if #result > 220 then
-            sendResults(result, toChat)
-            result = ""
-        end
-    end
-
-    sendResults(result, toChat)
+    local entries = {}
+    appendEntries(entries, missing)
+    appendEntries(entries, expiring)
+    sendChunked(format("No Flask (%d): ", totalBad), entries, toChat)
 end
 
 --------------------------------------------------------------------------------
@@ -256,48 +252,35 @@ end
 local function reportAugments(toChat)
     local missing = {}
     local lowXpac = {}
-    local maxGroup = F.GetRaidDiffMaxGroup()
 
-    for j = 1, 40 do
-        local name, unit, subgroup, class = getRosterInfo(j)
+    forEachRosterMember(function(name, unit, subgroup, class)
+        local hasAugment = false
+        local colored = colorName(F.shortName(name), class)
 
-        if not name then
-            if not IsInRaid() then
-                break
-            end
-        elseif subgroup <= maxGroup then
-            local hasAugment = false
-            local colored = colorName(F.shortName(name), class)
+        forEachHelpfulAura(unit, function(aura, spellID)
+            local auraXpac = db.augmentBuffIDs[spellID]
 
-            for i = 1, RCC.MAX_AURAS do
-                local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+            if auraXpac then
+                hasAugment = true
 
-                if not aura then
-                    break
+                if auraXpac < CURRENT_AUGMENT_XPAC then
+                    local xpacName = db.augmentXpacNames[auraXpac]
+                        or tostring(auraXpac)
+                    lowXpac[#lowXpac + 1] = format(
+                        "%s(%s)",
+                        colored,
+                        xpacName
+                    )
                 end
 
-                if not issecretvalue(aura.spellId) then
-                    local sid = aura.spellId
-
-                    if db.augmentBuffIDs[sid] then
-                        hasAugment = true
-
-                        if db.augmentBuffIDs[sid] < CURRENT_AUGMENT_XPAC then
-                            local xpacName = db.augmentXpacNames[db.augmentBuffIDs[sid]]
-                                or tostring(db.augmentBuffIDs[sid])
-                            lowXpac[#lowXpac + 1] = format("%s(%s)", colored, xpacName)
-                        end
-
-                        break
-                    end
-                end
+                return true
             end
+        end)
 
-            if not hasAugment then
-                missing[#missing + 1] = colored
-            end
+        if not hasAugment then
+            missing[#missing + 1] = colored
         end
-    end
+    end)
 
     local totalBad = #missing + #lowXpac
 
@@ -307,36 +290,10 @@ local function reportAugments(toChat)
         return
     end
 
-    local result = format("No Augment (%d): ", totalBad)
-
-    for i = 1, #missing do
-        local isLast = (i == #missing and #lowXpac == 0)
-        result = result .. missing[i]
-
-        if not isLast then
-            result = result .. ", "
-        end
-
-        if #result > 220 then
-            sendResults(result, toChat)
-            result = ""
-        end
-    end
-
-    for i = 1, #lowXpac do
-        result = result .. lowXpac[i]
-
-        if i < #lowXpac then
-            result = result .. ", "
-        end
-
-        if #result > 220 then
-            sendResults(result, toChat)
-            result = ""
-        end
-    end
-
-    sendResults(result, toChat)
+    local entries = {}
+    appendEntries(entries, missing)
+    appendEntries(entries, lowXpac)
+    sendChunked(format("No Augment (%d): ", totalBad), entries, toChat)
 end
 
 --------------------------------------------------------------------------------
@@ -351,54 +308,37 @@ local function reportBuffs(toChat)
     local buffInfos = {}
     local classPresent = {}
     local missingCount = {}
-    local maxGroup = F.GetRaidDiffMaxGroup()
 
     for k = 1, buffsCount do
         buffInfos[k] = RaidBuffStatus.GetInfo(k)
         missingCount[k] = 0
     end
 
-    for j = 1, 40 do
-        local name, unit, subgroup, class = getRosterInfo(j)
+    forEachRosterMember(function(name, unit, subgroup, class)
+        for k = 1, buffsCount do
+            local info = buffInfos[k]
 
-        if not name then
-            if not IsInRaid() then
-                break
-            end
-        elseif subgroup <= maxGroup then
-            for k = 1, buffsCount do
-                local info = buffInfos[k]
-
-                if info and class == info.providerClass then
-                    classPresent[k] = true
-                end
-            end
-
-            local hasBuff = {}
-
-            for i = 1, RCC.MAX_AURAS do
-                local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-
-                if not aura then
-                    break
-                end
-
-                if not issecretvalue(aura.spellId) then
-                    for k = 1, buffsCount do
-                        if RaidBuffStatus.AuraMatches(k, aura) then
-                            hasBuff[k] = true
-                        end
-                    end
-                end
-            end
-
-            for k = 1, buffsCount do
-                if not hasBuff[k] then
-                    missingCount[k] = missingCount[k] + 1
-                end
+            if info and class == info.providerClass then
+                classPresent[k] = true
             end
         end
-    end
+
+        local hasBuff = {}
+
+        forEachHelpfulAura(unit, function(aura)
+            for k = 1, buffsCount do
+                if RaidBuffStatus.AuraMatches(k, aura) then
+                    hasBuff[k] = true
+                end
+            end
+        end)
+
+        for k = 1, buffsCount do
+            if not hasBuff[k] then
+                missingCount[k] = missingCount[k] + 1
+            end
+        end
+    end)
 
     local parts = {}
 
@@ -421,8 +361,14 @@ local function reportBuffs(toChat)
     end
 
     local label = GARRISON_MISSION_PARTY_BUFFS or "Buffs"
-    local result = label .. " " .. table.concat(parts, ", ")
-    sendResults(result, toChat)
+    sendChunked(label .. " ", parts, toChat)
+end
+
+local function sendConsumableReports(toChat)
+    reportFood(toChat)
+    reportFlasks(toChat)
+    reportAugments(toChat)
+    reportBuffs(toChat)
 end
 
 --------------------------------------------------------------------------------
@@ -498,8 +444,11 @@ local function isElectedReporter()
 end
 
 local function resetReportElection()
+    reportGeneration = reportGeneration + 1
     wipe(reportCandidates)
     mrtWillReport = false
+
+    return reportGeneration
 end
 
 local function broadcastReportIntent()
@@ -522,7 +471,11 @@ local function broadcastReportIntent()
     end
 end
 
-local function onReadyCheck()
+local function onReadyCheck(generation)
+    if generation ~= reportGeneration then
+        return
+    end
+
     if not shouldReport() then
         return
     end
@@ -535,17 +488,16 @@ local function onReadyCheck()
         return
     end
 
-    reportFood(true)
-    reportFlasks(true)
-    reportAugments(true)
-    reportBuffs(true)
+    sendConsumableReports(true)
 end
 
 local function onEvent(self, event, ...)
     if event == "READY_CHECK" then
-        resetReportElection()
+        local generation = resetReportElection()
         broadcastReportIntent()
-        C_Timer.After(1, onReadyCheck)
+        C_Timer.After(REPORT_ELECTION_DELAY, function()
+            onReadyCheck(generation)
+        end)
 
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, message, _, sender = ...
@@ -603,8 +555,5 @@ end
 RCC.chatReport = {}
 
 function RCC.chatReport.Test(toChat)
-    reportFood(toChat)
-    reportFlasks(toChat)
-    reportAugments(toChat)
-    reportBuffs(toChat)
+    sendConsumableReports(toChat)
 end
