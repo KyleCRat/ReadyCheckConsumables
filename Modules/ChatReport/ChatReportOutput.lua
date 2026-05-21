@@ -36,6 +36,13 @@ function Output.Send(msg, toChat)
     end
 
     local chatType = F.chatType()
+
+    if chatType == "SAY" then
+        print(msg)
+
+        return
+    end
+
     msg = msg:gsub("|c%x%x%x%x%x%x%x%x", "")
     msg = msg:gsub("|r", "")
     SendChatMessage(msg, chatType)
