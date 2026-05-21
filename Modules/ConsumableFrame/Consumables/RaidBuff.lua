@@ -21,9 +21,9 @@ local function getPlayerRaidBuffInfo()
     return RaidBuffStatus.GetInfoByProviderClass(class)
 end
 
-local function shouldCheckUnit(unit)
+local function shouldCheckUnit(unit, online)
     return unit
-        and UnitIsConnected(unit)
+        and online
         and not UnitIsDeadOrGhost(unit)
 end
 
@@ -32,8 +32,8 @@ local function getGroupStatus(raidBuffIndex)
     local minRemaining
     local now = GetTime()
 
-    F.ForEachActiveRosterMember(function(name, unit)
-        if shouldCheckUnit(unit) then
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if shouldCheckUnit(unit, online) then
             local data = RaidBuffStatus.GetUnitStatus(unit, raidBuffIndex, now)
 
             if RaidBuffStatus.IsMissing(data) then

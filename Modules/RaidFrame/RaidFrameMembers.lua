@@ -20,10 +20,9 @@ function Members.ScanAll(state, layout, context)
     wipe(state.members)
     wipe(state.unitToIndex)
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
         count = count + 1
 
-        local online    = UnitIsConnected(unit)
         local isDead    = UnitIsDeadOrGhost(unit)
         local playerKey = F.fullName(name)
 
