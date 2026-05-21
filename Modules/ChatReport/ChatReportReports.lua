@@ -4,6 +4,7 @@ RCC.ChatReportReports = RCC.ChatReportReports or {}
 local Reports = RCC.ChatReportReports
 
 local F = RCC.F
+local FoodAuras = RCC.FoodAuras
 local Output = RCC.ChatReportOutput
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing = RCC.ConsumableTiming
@@ -14,6 +15,7 @@ local floor = floor
 local format = format
 
 local CURRENT_AUGMENT_XPAC = db.currentAugmentXpac
+local FOOD_AURA_TYPE = FoodAuras.Type
 
 local function appendEntries(target, source)
     for i = 1, #source do
@@ -47,32 +49,57 @@ end
 
 local function reportFood(toChat)
     local missing = {}
+    local expiring = {}
+    local now = GetTime()
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
         if not online then return end
 
         local hasFood = false
+        local colored = Output.ColorName(F.shortName(name), class)
 
         F.ForEachHelpfulAura(unit, function(aura, spellID)
-            if db.foodBuffIDs[spellID] or db.foodIconIDs[aura.icon] then
+            local auraType = FoodAuras.GetType(aura, spellID)
+
+            if auraType == FOOD_AURA_TYPE.WELL_FED then
                 hasFood = true
+
+                local remaining = F.GetAuraRemaining(
+                    aura.expirationTime,
+                    now
+                )
+
+                if Timing.IsExpiringSoon(remaining) then
+                    local mins = floor(remaining / 60)
+                    local label = mins == 0 and "<1" or tostring(mins)
+                    expiring[#expiring + 1] = format(
+                        "%s(%s)",
+                        colored,
+                        label
+                    )
+                end
 
                 return true
             end
         end)
 
         if not hasFood then
-            missing[#missing + 1] = Output.ColorName(F.shortName(name), class)
+            missing[#missing + 1] = colored
         end
     end)
 
-    if #missing == 0 then
+    local totalBad = #missing + #expiring
+
+    if totalBad == 0 then
         Output.Send("Food: All Fed", toChat)
 
         return
     end
 
-    Output.SendChunked(format("No Food (%d): ", #missing), missing, toChat)
+    local entries = {}
+    appendEntries(entries, missing)
+    appendEntries(entries, expiring)
+    Output.SendChunked(format("No Food (%d): ", totalBad), entries, toChat)
 end
 
 local function reportFlasks(toChat)

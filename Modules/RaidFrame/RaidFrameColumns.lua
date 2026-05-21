@@ -5,6 +5,7 @@ local Columns = RCC.RaidFrameColumns
 
 local db             = RCC.db
 local F              = RCC.F
+local FoodAuras      = RCC.FoodAuras
 local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing         = RCC.ConsumableTiming
@@ -18,6 +19,7 @@ local FRAME_PAD                  = 3
 local DURABILITY_WIDTH           = 42
 local NO_DURATION                = 0
 local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
+local FOOD_AURA_TYPE = FoodAuras.Type
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -204,22 +206,16 @@ end
 
 local function collectFoodAura(data, aura, scanContext)
     local spellID = aura.spellId
-    local iconID = aura.icon
+    local auraType = FoodAuras.GetType(aura, spellID)
 
-    if not spellID and not iconID then
-        return
-    end
-
-    if not (spellID and db.foodBuffIDs[spellID])
-        and not (iconID and db.foodIconIDs[iconID])
-    then
+    if not auraType then
         return
     end
 
     data.wellFed = data.wellFed or createFoodData()
     data.eating  = data.eating or createFoodData()
 
-    if iconID and db.eatingIconIDs[iconID] then
+    if auraType == FOOD_AURA_TYPE.EATING then
         setTimedAuraData(data.eating, aura, scanContext.remaining)
     else
         setTimedAuraData(data.wellFed, aura, scanContext.remaining)

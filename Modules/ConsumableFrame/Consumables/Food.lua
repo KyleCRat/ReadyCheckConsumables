@@ -7,12 +7,14 @@ local Food = RCC.Consumables.Food
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
+local FoodAuras = RCC.FoodAuras
 local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
+local FOOD_AURA_TYPE = FoodAuras.Type
 
 local OUT_OF_ITEMS = "No Food found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Food not found in Bags"
@@ -37,20 +39,17 @@ local function getFoodAuraStates(state)
 
     for i = 1, #state.auras do
         local aura = state.auras[i]
+        local auraType = FoodAuras.GetType(aura, aura.spellID)
 
-        if RCC.db.foodBuffIDs[aura.spellID]
-            or RCC.db.foodIconIDs[aura.icon]
-        then
-            if RCC.db.eatingIconIDs[aura.icon] then
-                eatingAuraState = Auras.ToConsumableState(aura, {
-                    includeAuraInstanceID = false,
-                })
-            else
-                foodAuraState = Auras.ToConsumableState(
-                    aura,
-                    { includeExpirationState = true }
-                )
-            end
+        if auraType == FOOD_AURA_TYPE.EATING then
+            eatingAuraState = Auras.ToConsumableState(aura, {
+                includeAuraInstanceID = false,
+            })
+        elseif auraType == FOOD_AURA_TYPE.WELL_FED then
+            foodAuraState = Auras.ToConsumableState(
+                aura,
+                { includeExpirationState = true }
+            )
         end
     end
 

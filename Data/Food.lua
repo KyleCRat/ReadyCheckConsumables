@@ -1,6 +1,16 @@
 local _, RCC = ...
 
 RCC.db = RCC.db or {}
+RCC.FoodAuras = RCC.FoodAuras or {}
+
+local FoodAuras = RCC.FoodAuras
+
+FoodAuras.Type = FoodAuras.Type or {
+    WELL_FED = "wellFed",
+    EATING   = "eating",
+}
+
+local FOOD_AURA_TYPE = FoodAuras.Type
 
 --------------------------------------------------------------------------------
 --- Food Item IDs (12.0.0 - Midnight)
@@ -120,29 +130,33 @@ RCC.db.manaItemIDs = {
 }
 
 --------------------------------------------------------------------------------
---- Food Detection Icon IDs
---- Icon IDs used as a fallback to detect food/drink auras when the spell ID
---- is not in foodBuffIDs. 136000 is the canonical Well Fed icon and is
---- prioritized over others when multiple food auras are present.
+--- Food Aura Icon Types
+--- Icon IDs used as a fallback to classify food/drink auras when the spell ID
+--- is not in foodBuffIDs.
 --------------------------------------------------------------------------------
 
-RCC.db.foodIconIDs = {
-    [136000] = true, -- Spell_misc_food,  Well Fed / Food Buff
-    [132805] = true, -- Inv_drink_18,     Drinking
-    [133950] = true, -- Inv_misc_food_08, Eating
+RCC.db.foodAuraIconTypes = {
+    [136000] = FOOD_AURA_TYPE.WELL_FED, -- Spell_misc_food,  Well Fed Food Buff
+    [132805] = FOOD_AURA_TYPE.EATING,   -- Inv_drink_18,     Drinking
+    [133950] = FOOD_AURA_TYPE.EATING,   -- Inv_misc_food_08, Eating
 }
 
-RCC.db.eatingIconIDs = {
-    [132805] = true, -- Inv_drink_18,     Drinking
-    [133950] = true, -- Inv_misc_food_08, Eating
-}
+function FoodAuras.GetType(aura, spellID)
+    if spellID and RCC.db.foodBuffIDs[spellID] then
+        return FOOD_AURA_TYPE.WELL_FED
+    end
 
-RCC.db.foodWellFedIconID = 136000
+    local iconID = aura and aura.icon
+
+    if iconID then
+        return RCC.db.foodAuraIconTypes[iconID]
+    end
+end
 
 --------------------------------------------------------------------------------
 --- Food Buff Spell IDs
 --- Maps spell ID -> true for detecting Well Fed auras on players.
---- Also detected by icon ID (foodIconIDs) as a fallback.
+--- Also detected by icon ID (foodAuraIconTypes) as a fallback.
 --------------------------------------------------------------------------------
 
 RCC.db.foodBuffIDs = {
