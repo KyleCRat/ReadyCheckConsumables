@@ -108,6 +108,7 @@ function Vantus.Update(button, state)
     elseif count > 0 then
         buttonState.countText = tostring(count)
         buttonState.usableItemID = itemID
+        buttonState.qualityItemID = itemID
         buttonState.glow = true
         buttonState.action = {
             type = ActionType.ITEM_MACRO,

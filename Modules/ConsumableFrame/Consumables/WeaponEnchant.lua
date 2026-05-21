@@ -373,6 +373,7 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
 
     buttonState.countText = tostring(count or 0)
     buttonState.usableItemID = itemID
+    buttonState.qualityItemID = itemID
     buttonState.clickHintItemID = itemID
 
     if not buttonState.tooltipItemID then

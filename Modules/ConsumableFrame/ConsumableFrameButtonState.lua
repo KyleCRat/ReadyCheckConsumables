@@ -65,6 +65,7 @@ function State.CreateItemChoice(candidate, actionType, options)
         countText = options.countText or tostring(candidate.count or 0),
         tooltipItemID = candidate.itemID,
         usableItemID = candidate.itemID,
+        qualityItemID = candidate.itemID,
         clickHintItemID = candidate.itemID,
         action = action,
     })

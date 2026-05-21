@@ -28,6 +28,7 @@ function DamagePotion.Update(button)
             icon = inventoryItemCandidate.icon,
             desaturated = false,
             tooltipItemID = inventoryItem,
+            qualityItemID = inventoryItem,
         }))
     else
         Renderer.Apply(button, ButtonState.Create({
