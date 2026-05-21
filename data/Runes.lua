@@ -4,7 +4,7 @@ RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
 --- Augment Rune Spell IDs
---- Maps spell ID -> xpac for detecting augment rune auras.
+--- Maps spell ID -> data for detecting augment rune auras.
 --- Higher xpac = more current expansion.
 --------------------------------------------------------------------------------
 
@@ -18,21 +18,23 @@ RCC.db.augmentXpacNames = {
 }
 
 RCC.db.augmentBuffIDs = {
-    [1264426] = 12, -- 12.0.0: Void-Touched Augment Rune
-    [1242347] = 11, -- 11.2.0: Soulgorged Augmentation
-    [1234969] = 11, -- 11.2.0: Ethereal Augmentation
-    [453250]  = 11, -- 11.0.0: Crystallization
-    [393438]  = 10, -- 10.0.0: Draconic Augmentation
-    [367405]  = 9,  -- 9.2.0:  Eternal Augmentation
-    [347901]  = 9,  -- 9.0.2:  Veiled Augmentation
-    [317065]  = 8,  -- 8.3.0:  Battle-Scarred Augmentation
-    [270058]  = 8,  -- 8.1.0:  Battle-Scarred Augmentation
-    [224001]  = 7,  -- 7.0.3:  Defiled Augmentation
+    [1264426] = { xpac = 12, unlimited = false }, -- 12.0.0: Void-Touched Augment Rune
+    [1242347] = { xpac = 11, unlimited = false }, -- 11.2.0: Soulgorged Augmentation
+    [1234969] = { xpac = 11, unlimited = true  }, -- 11.2.0: Ethereal Augmentation
+    [453250]  = { xpac = 11, unlimited = false }, -- 11.0.0: Crystallization
+    [393438]  = { xpac = 10, unlimited = false }, -- 10.0.0: Draconic Augmentation
+    [367405]  = { xpac = 9,  unlimited = false }, -- 9.2.0:  Eternal Augmentation
+    [347901]  = { xpac = 9,  unlimited = false }, -- 9.0.2:  Veiled Augmentation
+    [317065]  = { xpac = 8,  unlimited = false }, -- 8.3.0:  Battle-Scarred Augmentation
+    [270058]  = { xpac = 8,  unlimited = false }, -- 8.1.0:  Battle-Scarred Augmentation
+    [224001]  = { xpac = 7,  unlimited = false }, -- 7.0.3:  Defiled Augmentation
 }
 
 local maxXpac = 0
 
-for _, xpac in pairs(RCC.db.augmentBuffIDs) do
+for _, data in pairs(RCC.db.augmentBuffIDs) do
+    local xpac = data.xpac
+
     if xpac > maxXpac then
         maxXpac = xpac
     end

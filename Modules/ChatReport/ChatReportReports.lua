@@ -21,6 +21,16 @@ local function appendEntries(target, source)
     end
 end
 
+local function isPreviousExpansionUnlimitedAugment(augmentData)
+    return augmentData.unlimited == true
+        and augmentData.xpac == CURRENT_AUGMENT_XPAC - 1
+end
+
+local function isOutdatedAugment(augmentData)
+    return augmentData.xpac < CURRENT_AUGMENT_XPAC
+        and not isPreviousExpansionUnlimitedAugment(augmentData)
+end
+
 local function reportFood(toChat)
     local missing = {}
 
@@ -109,14 +119,14 @@ local function reportAugments(toChat)
         local colored = Output.ColorName(F.shortName(name), class)
 
         F.ForEachHelpfulAura(unit, function(aura, spellID)
-            local auraXpac = db.augmentBuffIDs[spellID]
+            local augmentData = db.augmentBuffIDs[spellID]
 
-            if auraXpac then
+            if augmentData then
                 hasAugment = true
 
-                if auraXpac < CURRENT_AUGMENT_XPAC then
-                    local xpacName = db.augmentXpacNames[auraXpac]
-                        or tostring(auraXpac)
+                if isOutdatedAugment(augmentData) then
+                    local xpacName = db.augmentXpacNames[augmentData.xpac]
+                        or tostring(augmentData.xpac)
                     lowXpac[#lowXpac + 1] = format(
                         "%s(%s)",
                         colored,
