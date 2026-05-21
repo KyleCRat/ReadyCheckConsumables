@@ -18,15 +18,26 @@ RCC.db.augmentXpacNames = {
 }
 
 RCC.db.augmentBuffIDs = {
+    -- Midnight
     [1264426] = { xpac = 12, unlimited = false }, -- 12.0.0: Void-Touched Augment Rune
+
+    -- The War Within
     [1242347] = { xpac = 11, unlimited = false }, -- 11.2.0: Soulgorged Augmentation
     [1234969] = { xpac = 11, unlimited = true  }, -- 11.2.0: Ethereal Augmentation
     [453250]  = { xpac = 11, unlimited = false }, -- 11.0.0: Crystallization
+
+    -- Dragonflight
     [393438]  = { xpac = 10, unlimited = false }, -- 10.0.0: Draconic Augmentation
+
+    -- Shadowlands
     [367405]  = { xpac = 9,  unlimited = false }, -- 9.2.0:  Eternal Augmentation
     [347901]  = { xpac = 9,  unlimited = false }, -- 9.0.2:  Veiled Augmentation
+
+    -- Battle for Azeroth
     [317065]  = { xpac = 8,  unlimited = false }, -- 8.3.0:  Battle-Scarred Augmentation
     [270058]  = { xpac = 8,  unlimited = false }, -- 8.1.0:  Battle-Scarred Augmentation
+
+    -- Legion
     [224001]  = { xpac = 7,  unlimited = false }, -- 7.0.3:  Defiled Augmentation
 }
 
