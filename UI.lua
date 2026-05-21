@@ -5,7 +5,7 @@ local UI = RCC.UI
 
 local floor = floor
 
-UI.FONT = "Interface\\AddOns\\ReadyCheckConsumables\\media\\fonts\\PTSansNarrow-Bold.ttf"
+UI.FONT = "Interface\\AddOns\\ReadyCheckConsumables\\Media\\Fonts\\PTSansNarrow-Bold.ttf"
 
 local CONTROL_BG        = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
 local CONTROL_HIGHLIGHT = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 }

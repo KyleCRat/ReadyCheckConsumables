@@ -750,7 +750,7 @@ and the consumable frame can later use the same module for a raid-buff icon.
 
 Target responsibilities:
 
-- Load raid-buff definitions from `data/RaidBuffs.lua`.
+- Load raid-buff definitions from `Data/RaidBuffs.lua`.
 - Match equivalent buff spell IDs.
 - Return status for a unit without requiring raid-frame column state.
 - Keep the raid-frame rendering code focused on columns and display.
