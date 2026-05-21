@@ -14,7 +14,8 @@ FrameAnimations.lua
 data/Food.lua
 data/Flasks.lua
 data/Potions.lua
-data/Runes.lua
+data/AugmentRunes.lua
+data/VantusRunes.lua
 data/RaidBuffs.lua
 data/HealingItems.lua
 data/WeaponEnchants.lua
