@@ -111,6 +111,12 @@ end
 local function resolveGlow(button)
     local cache = getRenderCache(button)
 
+    if State.IsGlowSuppressed(button.consumableState) then
+        stopButtonGlow(button)
+
+        return
+    end
+
     if cache.glowHovered and shouldUseHoverGlow(button) then
         if isButtonClickable(button) then
             startButtonGlow(button, GLOW_AVAILABLE_COLOR)

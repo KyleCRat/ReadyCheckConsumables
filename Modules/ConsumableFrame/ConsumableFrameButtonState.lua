@@ -20,6 +20,7 @@ State.DEFAULTS = {
     detailTextIsBad = false,
     hasConsumableBuff = false,
     glow = false,
+    suppressGlow = false,
 }
 
 -- Consumable modules return partial input state. The renderer normalizes that
@@ -126,6 +127,10 @@ function State.HasConsumableBuff(state)
     return hasConsumableBuff == true
 end
 
+function State.IsGlowSuppressed(state)
+    return state and state.suppressGlow == true
+end
+
 function State.GetIcon(state, defaultIcon, hoverActive)
     local icon = state and state.icon
 
@@ -160,6 +165,7 @@ function State.CreateItemChoice(candidate, actionType, options)
         tooltipItemID = candidate.itemID,
         qualityItemID = candidate.itemID,
         clickHintItemID = candidate.itemID,
+        suppressGlow = options.suppressGlow == true,
         action = action,
     })
 end
@@ -184,6 +190,7 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, actionType,
                 targetSlot = options.targetSlot,
                 available = options.available,
                 cacheKey = options.cacheKey,
+                suppressGlow = options.suppressGlow,
             }
 
             if options.getCountText then

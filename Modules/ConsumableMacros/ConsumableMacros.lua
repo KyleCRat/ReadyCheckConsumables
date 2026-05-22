@@ -104,11 +104,17 @@ local function vantusAction()
 end
 
 local function damagePotionAction()
-    return itemAction(Consumables.DamagePotion.GetItemCandidate())
+    return itemAction(
+        Consumables.DamagePotion.GetItemCandidate(),
+        CacheKey.DAMAGE_POTION
+    )
 end
 
 local function healingPotionAction()
-    return itemAction(Consumables.HealingPotion.GetItemCandidate())
+    return itemAction(
+        Consumables.HealingPotion.GetItemCandidate(),
+        CacheKey.HEALING_POTION
+    )
 end
 
 local function healthstoneAction()
@@ -188,7 +194,7 @@ local MACRO_DEFINITIONS = {
         key = "dmgpot",
         label = "Damage Potion",
         macroName = "RCC Dmg Pot",
-        description = "Uses the first available damage potion from RCC's potion list.",
+        description = "Uses the cached damage potion when available, otherwise the first available damage potion.",
         getAction = damagePotionAction,
         defaultIcon = function() return RCC.db.potionIconID end,
     },
@@ -196,7 +202,7 @@ local MACRO_DEFINITIONS = {
         key = "healpot",
         label = "Healing Potion",
         macroName = "RCC Heal Pot",
-        description = "Uses the first available healing potion from RCC's potion list.",
+        description = "Uses the cached healing potion when available, otherwise the first available healing potion.",
         getAction = healingPotionAction,
         defaultIcon = function() return RCC.db.healingPotionIconID end,
     },

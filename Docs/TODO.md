@@ -1,9 +1,11 @@
 # TODO
 
 ## Changes
-- Update health pots and dmg potions to show all items in bags in flyout to allow clicking and choosing a cached item for the macro to use. 
+
 - Macros should use the priority finder to pick the next best item to use in the macro. This is slightly diff than what we do now. If we use a R2 Thal oil, we should prio using the same type of oil and a diff quality before a higher quality diff type oil. Damage pots should do the same, use a lower quality light potion before a R2 recklessness if light is cached. This will likey require a re-work of our db's as this includes fleeting flasks and damage pots. A R1 fleeting dmg pot should be used before a R2 non-fleeting even if the R2 non-fleeting is cached. R2 fleeting should be used before R1 fleeting, even if R1 fleeting is in bag and R2 non-fleeting is cached.
-- Review all priority logic. 
+- Review all priority logic.
+- Health potion should have an action frame that uses the Recuperate Spell: id: 1231411 icon: 136074, when the player is out of combat and not at full health.
+- Health Potion macro should use the Recuperate Spell: id: 1231411 icon: 136074, when in [nocombat] state. So it needs two use lines. and a showtooltip that doens't specify so it can fallback to the line for combat vs nocombat
 
 ## Fixes
 - Evaluate debouncing consumables frame `UNIT_AURA` updates to roughly once per

@@ -9,6 +9,7 @@ local ItemCache = RCC.ConsumableFrameItemCache
 -- malformed actions disable clickable overlays by default.
 RCC.ConsumableActionType = RCC.ConsumableActionType or {
     ITEM_MACRO          = "itemMacro",
+    ITEM_CACHE_SELECT   = "itemCacheSelect",
     SPELL               = "spell",
     WEAPON_ENCHANT_ITEM = "weaponEnchantItem",
 }
@@ -18,6 +19,7 @@ local CACHE_COMMIT_DELAY = 0.1
 local CACHE_ERROR_SUPPRESS_WINDOW = 0.5
 local CACHE_ACTION_SET = "set"
 local CACHE_ACTION_CLEAR = "clear"
+local CACHE_ACTION_SELECT = "select"
 local pendingCacheAction
 local pendingCacheToken = 0
 local lastErrorTime = 0
@@ -107,6 +109,16 @@ local function clearClickedItemCache(self)
     })
 end
 
+local function selectClickedItem(self)
+    local cacheKey = self.consumableFrameItemCacheKey
+    local itemID = self.consumableFrameItemCacheID
+
+    if not cacheKey or not itemID then return end
+
+    ItemCache.Set(cacheKey, itemID)
+    scheduleConsumableFrameUpdate()
+end
+
 local function setClickCache(button, cacheKey, itemID)
     if not button or not button.click or InCombatLockdown() then return end
 
@@ -148,6 +160,29 @@ local function setClickCacheClear(button, cacheKey)
 
     if cacheKey then
         click:SetScript("PreClick", clearClickedItemCache)
+    else
+        click:SetScript("PreClick", nil)
+    end
+end
+
+local function setClickCacheSelect(button, cacheKey, itemID)
+    if not button or not button.click or InCombatLockdown() then return end
+
+    local click = button.click
+
+    if click.consumableFrameItemCacheMode == CACHE_ACTION_SELECT
+        and click.consumableFrameItemCacheKey == cacheKey
+        and click.consumableFrameItemCacheID == itemID
+    then
+        return
+    end
+
+    click.consumableFrameItemCacheMode = CACHE_ACTION_SELECT
+    click.consumableFrameItemCacheKey = cacheKey
+    click.consumableFrameItemCacheID = itemID
+
+    if cacheKey and itemID then
+        click:SetScript("PreClick", selectClickedItem)
     else
         click:SetScript("PreClick", nil)
     end
@@ -223,6 +258,36 @@ local function setItemMacro(button, itemID, targetSlot, cacheKey)
     enableClick(button)
 end
 
+local function setItemCacheSelect(button, itemID, cacheKey)
+    if not button or not button.click or InCombatLockdown() then return end
+
+    if not itemID or not cacheKey then
+        setClickCache(button)
+        disableClick(button)
+
+        return
+    end
+
+    local click = button.click
+    local signature = table.concat({
+        ActionType.ITEM_CACHE_SELECT,
+        tostring(itemID),
+        tostring(cacheKey),
+    }, "|")
+
+    if click.consumableFrameActionSignature ~= signature then
+        click:SetAttribute("type", nil)
+        click:SetAttribute("spell", nil)
+        click:SetAttribute("item", nil)
+        click:SetAttribute("target-slot", nil)
+        click:SetAttribute("macrotext1", nil)
+        setClickCacheSelect(button, cacheKey, itemID)
+        click.consumableFrameActionSignature = signature
+    end
+
+    enableClick(button)
+end
+
 local function setSpell(button, spell, available, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
@@ -290,6 +355,14 @@ function Actions.Apply(button, action)
             button,
             action.itemID,
             action.targetSlot,
+            action.cacheKey
+        )
+    elseif action.type == ActionType.ITEM_CACHE_SELECT
+        and action.itemID and action.cacheKey
+    then
+        setItemCacheSelect(
+            button,
+            action.itemID,
             action.cacheKey
         )
     elseif action.type == ActionType.SPELL
