@@ -12,12 +12,14 @@ local GetSpellInfo = C_Spell.GetSpellInfo
 
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
+local RECUPERATE_SPELL_ID = 1231411
 local UPDATE_DELAY = 0.2
 local DEFAULT_MAX_ACCOUNT_MACROS = 120
 local DEFAULT_MAX_CHARACTER_MACROS = 30
 local DEFAULT_MACRO_ICON = 134400
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
 local AUTOMATED_COMMENT = "#Automated by RCC: use '/rcc s' for settings"
+local HEALING_POTION_RECUPERATE_MACRO = "healingPotionRecuperateMacro"
 local updateScheduled = false
 local updatePendingCombat = false
 local updatingMacros = false
@@ -111,10 +113,21 @@ local function damagePotionAction()
 end
 
 local function healingPotionAction()
-    return itemAction(
-        Consumables.HealingPotion.GetItemCandidate(),
-        CacheKey.HEALING_POTION
-    )
+    local candidate = Consumables.HealingPotion.GetItemCandidate()
+    local spellName = getSpellName(RECUPERATE_SPELL_ID)
+
+    if not spellName then
+        return itemAction(candidate, CacheKey.HEALING_POTION)
+    end
+
+    local action = {
+        type = HEALING_POTION_RECUPERATE_MACRO,
+        itemID = candidate and candidate.itemID,
+        spellID = RECUPERATE_SPELL_ID,
+        spellName = spellName,
+    }
+
+    return action, DEFAULT_MACRO_ICON
 end
 
 local function healthstoneAction()
@@ -202,7 +215,7 @@ local MACRO_DEFINITIONS = {
         key = "healpot",
         label = "Healing Potion",
         macroName = "RCC Heal Pot",
-        description = "Uses the cached healing potion when available, otherwise the first available healing potion.",
+        description = "Casts Recuperate out of combat and uses the cached healing potion in combat when available.",
         getAction = healingPotionAction,
         defaultIcon = function() return RCC.db.healingPotionIconID end,
     },
@@ -329,6 +342,26 @@ local function appendSpellMacroLines(lines, action)
     lines[#lines + 1] = "/cast " .. spellName
 end
 
+local function appendHealingPotionMacroLines(lines, action)
+    local spellName = action.spellName or getSpellName(action.spellID)
+    local itemID = action.itemID
+
+    if not spellName then return end
+
+    if itemID then
+        lines[#lines + 1] = "#showtooltip [nocombat] "
+            .. spellName .. "; [combat] item:" .. itemID
+    else
+        lines[#lines + 1] = "#showtooltip [nocombat] " .. spellName
+    end
+
+    lines[#lines + 1] = "/cast [nocombat] " .. spellName
+
+    if itemID then
+        lines[#lines + 1] = "/use [combat] item:" .. itemID
+    end
+end
+
 local function buildMacroBody(markerLine, action)
     local lines = { markerLine, AUTOMATED_COMMENT }
 
@@ -344,6 +377,8 @@ local function buildMacroBody(markerLine, action)
         appendItemMacroLines(lines, action.itemID, action.targetSlot)
     elseif action.type == ActionType.SPELL then
         appendSpellMacroLines(lines, action)
+    elseif action.type == HEALING_POTION_RECUPERATE_MACRO then
+        appendHealingPotionMacroLines(lines, action)
     end
 
     if #lines == 2 then

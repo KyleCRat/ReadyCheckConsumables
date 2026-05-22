@@ -146,8 +146,9 @@ local function createMacrosSettingsFrame()
         .. "cache changes when you choose or use a cached consumable from "
         .. "RCC's consumable buttons. If a cached item is out of bags, RCC "
         .. "still writes that item ID into the macro so the action bar shows "
-        .. "it as unavailable. Potions and healthstones use the current "
-        .. "available item list.",
+        .. "it as unavailable. Damage potions and healthstones use the "
+        .. "current available item list. The healing potion macro also "
+        .. "casts Recuperate out of combat.",
         600
     )
     body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
