@@ -48,6 +48,7 @@ Modules/ConsumableFrame/Presenters/Augment.lua
 Modules/ConsumableFrame/Presenters/Healthstone.lua
 Modules/ConsumableFrame/Presenters/DamagePotion.lua
 Modules/ConsumableFrame/Presenters/HealingPotion.lua
+Modules/ConsumableFrame/Presenters/Recuperate.lua
 Modules/ConsumableFrame/Presenters/RaidBuff.lua
 Modules/ConsumableFrame/Presenters/Vantus.lua
 Modules/ConsumableFrame/Presenters/WeaponEnchant.lua

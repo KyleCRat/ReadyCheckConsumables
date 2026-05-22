@@ -93,6 +93,13 @@ local BUTTON_DEFS = {
         tooltipAction = "select the preferred item for macro use",
     },
     {
+        key           = "recuperate",
+        settingKey    = "icon_recuperate",
+        defaultIcon   = RCC.db.recuperateIconID,
+        clickable     = true,
+        tooltipAction = "cast",
+    },
+    {
         key             = "vantus",
         settingKey      = "icon_vantus",
         defaultIcon     = RCC.db.vantusIconID,

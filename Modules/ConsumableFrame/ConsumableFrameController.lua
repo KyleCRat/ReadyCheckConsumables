@@ -11,6 +11,7 @@ local Augment = RCC.Consumables.Augment
 local Healthstone = RCC.Consumables.Healthstone
 local DamagePotion = RCC.Consumables.DamagePotion
 local HealingPotion = RCC.Consumables.HealingPotion
+local Recuperate = RCC.Consumables.Recuperate
 local RaidBuff = RCC.Consumables.RaidBuff
 local Vantus = RCC.Consumables.Vantus
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
@@ -164,6 +165,7 @@ function RCC.consumables:Update()
     RaidBuff.Update(buttons.raidBuff)
     DamagePotion.Update(buttons.dmgpot)
     HealingPotion.Update(buttons.healpot)
+    Recuperate.Update(buttons.recuperate)
     Vantus.Update(buttons.vantus, auraState)
 
     if not InCombatLockdown() then

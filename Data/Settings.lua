@@ -62,6 +62,7 @@ RCC.db.healthstoneIconID    = 538745
 RCC.db.raidBuffIconID       = 134400
 RCC.db.potionIconID         = 650640   -- trade_alchemy_potiona4
 RCC.db.healingPotionIconID  = 5931169  -- inv_flask_red
+RCC.db.recuperateIconID     = 136074
 RCC.db.vantusIconID         = 4638737  -- inv_10_inscription_glyphs_color5
 
 local iconKeys = {
@@ -70,6 +71,7 @@ local iconKeys = {
     { setting = "flask",         dbKey = "flaskIconID" },
     { setting = "potion",        dbKey = "potionIconID" },
     { setting = "healingPotion", dbKey = "healingPotionIconID" },
+    { setting = "recuperate",    dbKey = "recuperateIconID" },
     { setting = "weaponEnchant", dbKey = "weaponEnchantIconID" },
     { setting = "armorKit",      dbKey = "armorKitIconID" },
     { setting = "healthstone",   dbKey = "healthstoneIconID" },
