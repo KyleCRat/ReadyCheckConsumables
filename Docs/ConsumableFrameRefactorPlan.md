@@ -457,7 +457,7 @@ ordinary Lua values or nils.
 
 ### Step 4: Extract Simple Consumables First
 
-Create the `Modules/ConsumableFrame/Consumables/` folder and move the lowest
+Create the `Modules/ConsumableFrame/Presenters/` folder and move the lowest
 risk update functions first:
 
 - `Healthstone.lua`

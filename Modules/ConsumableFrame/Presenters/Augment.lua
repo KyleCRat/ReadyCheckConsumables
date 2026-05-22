@@ -7,8 +7,6 @@ local Augment = RCC.Consumables.Augment
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
@@ -17,43 +15,6 @@ local CacheKey = RCC.ConsumableItemCacheKey
 local OUT_OF_ITEMS = "No Augment Runes found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Augment Rune not found in Bags"
 
-local function isBetterAugmentCandidate(candidate, best, preferUnlimited)
-    local data = candidate.data or {}
-    local bestData = best.data or {}
-    local unlimited = data.unlimited == true
-    local bestUnlimited = bestData.unlimited == true
-
-    if preferUnlimited and unlimited ~= bestUnlimited then
-        return unlimited
-    end
-
-    local xpac = data.xpac or 0
-    local priority = data.priority or 0
-    local bestXpac = bestData.xpac or 0
-    local bestPriority = bestData.priority or 0
-
-    return xpac > bestXpac
-        or (xpac == bestXpac and priority > bestPriority)
-        or (xpac == bestXpac and priority == bestPriority
-            and candidate.itemID > (best.itemID or 0))
-end
-
-local function sortAugmentCandidates(candidates, preferUnlimited)
-    table.sort(candidates, function(a, b)
-        return isBetterAugmentCandidate(a, b, preferUnlimited)
-    end)
-end
-
-function Augment.GetCountText(candidate)
-    local data = candidate and candidate.data
-
-    if data and data.unlimited then
-        return ""
-    end
-
-    return tostring(candidate and candidate.count or 0)
-end
-
 local function getAuraState(state)
     local aura = Auras.FindBySpellID(state, RCC.db.augmentBuffIDs)
 
@@ -61,44 +22,6 @@ local function getAuraState(state)
         aura,
         { includeExpirationState = true }
     )
-end
-
-function Augment.CollectItemsInBags()
-    local preferUnlimited =
-        RCC.GetSetting("consumables_preferUnlimitedAugment")
-    local candidates = ItemCandidates.CollectAvailableFromMap(
-        RCC.db.augmentItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-
-    sortAugmentCandidates(candidates, preferUnlimited)
-
-    return candidates
-end
-
-function Augment.GetItemCandidate(includeUnavailableCached)
-    local augmentCandidates = Augment.CollectItemsInBags()
-    local cachedAugmentCandidate
-
-    if includeUnavailableCached then
-        cachedAugmentCandidate = ItemCandidates.CreateFromMap(
-            RCC.db.augmentItemIDs,
-            ItemCache.Get(CacheKey.AUGMENT),
-            ItemCandidates.BAGS_ONLY
-        )
-    end
-
-    local augmentCandidate = ItemCache.SelectCandidate(
-        CacheKey.AUGMENT,
-        augmentCandidates,
-        cachedAugmentCandidate
-    )
-    local outOfCachedAugment = ItemCache.IsUnavailableCachedCandidate(
-        CacheKey.AUGMENT,
-        augmentCandidate
-    )
-
-    return augmentCandidate, augmentCandidates, outOfCachedAugment
 end
 
 function Augment.Update(button, state)

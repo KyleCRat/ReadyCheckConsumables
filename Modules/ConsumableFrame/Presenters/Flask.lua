@@ -7,8 +7,6 @@ local Flask = RCC.Consumables.Flask
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
@@ -24,34 +22,6 @@ local function getFlaskAuraState(state)
         aura,
         { includeExpirationState = true }
     )
-end
-
-function Flask.GetItemCandidate(includeUnavailableCached)
-    local flaskCandidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.flaskItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-    local cachedFlaskCandidate
-
-    if includeUnavailableCached then
-        cachedFlaskCandidate = ItemCandidates.CreateFromList(
-            RCC.db.flaskItemIDs,
-            ItemCache.Get(CacheKey.FLASK),
-            ItemCandidates.BAGS_ONLY
-        )
-    end
-
-    local flaskCandidate = ItemCache.SelectCandidate(
-        CacheKey.FLASK,
-        flaskCandidates,
-        cachedFlaskCandidate
-    )
-    local outOfCachedFlask = ItemCache.IsUnavailableCachedCandidate(
-        CacheKey.FLASK,
-        flaskCandidate
-    )
-
-    return flaskCandidate, flaskCandidates, outOfCachedFlask
 end
 
 function Flask.Update(button, state)

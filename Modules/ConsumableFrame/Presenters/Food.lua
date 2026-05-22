@@ -8,8 +8,6 @@ local Food = RCC.Consumables.Food
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
 local FoodAuras = RCC.FoodAuras
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
@@ -70,34 +68,6 @@ local function getEatingCooldown(state)
     end
 
     return { clear = true }
-end
-
-function Food.GetItemCandidate(includeUnavailableCached)
-    local foodCandidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.foodItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-    local cachedFoodCandidate
-
-    if includeUnavailableCached then
-        cachedFoodCandidate = ItemCandidates.CreateFromList(
-            RCC.db.foodItemIDs,
-            ItemCache.Get(CacheKey.FOOD),
-            ItemCandidates.BAGS_ONLY
-        )
-    end
-
-    local foodCandidate = ItemCache.SelectCandidate(
-        CacheKey.FOOD,
-        foodCandidates,
-        cachedFoodCandidate
-    )
-    local outOfCachedFood = ItemCache.IsUnavailableCachedCandidate(
-        CacheKey.FOOD,
-        foodCandidate
-    )
-
-    return foodCandidate, foodCandidates, outOfCachedFood
 end
 
 function Food.Update(button, state)

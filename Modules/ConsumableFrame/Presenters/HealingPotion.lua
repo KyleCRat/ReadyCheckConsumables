@@ -6,15 +6,7 @@ RCC.Consumables.HealingPotion = RCC.Consumables.HealingPotion or {}
 local HealingPotion = RCC.Consumables.HealingPotion
 
 local ButtonState = RCC.ConsumableFrameButtonState
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
-
-function HealingPotion.GetItemCandidate()
-    return ItemCandidates.FindFirstAvailable(
-        RCC.db.healingPotionItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-end
 
 function HealingPotion.Update(button)
     local inventoryItemCandidate = HealingPotion.GetItemCandidate()

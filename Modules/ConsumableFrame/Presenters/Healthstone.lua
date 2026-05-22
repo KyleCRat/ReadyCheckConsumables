@@ -10,29 +10,6 @@ local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-function Healthstone.GetItemCandidate()
-    local best
-
-    for itemID in pairs(RCC.db.healthstoneItemIDs) do
-        local count = ItemCandidates.GetCount(
-            itemID,
-            ItemCandidates.BAGS_WITH_USES
-        )
-
-        if count > 0
-            and (not best or itemID > best.itemID)
-        then
-            best = {
-                itemID = itemID,
-                count = count,
-                icon = ItemCandidates.GetIcon(itemID),
-            }
-        end
-    end
-
-    return best
-end
-
 function Healthstone.Update(button)
     local showHealthstone = F.hasClassInRoster("WARLOCK")
     local totalCount = ItemCandidates.SumCounts(

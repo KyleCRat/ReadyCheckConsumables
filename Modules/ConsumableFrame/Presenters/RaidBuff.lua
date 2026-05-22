@@ -15,12 +15,6 @@ local ActionType = RCC.ConsumableActionType
 
 local UNAVAILABLE_SPELL = "Raid buff spell unavailable"
 
-function RaidBuff.GetPlayerRaidBuffInfo()
-    local _, class = UnitClass("player")
-
-    return RaidBuffStatus.GetInfoByProviderClass(class)
-end
-
 local function shouldCheckUnit(unit, online)
     return unit
         and online
