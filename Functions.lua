@@ -18,7 +18,7 @@ durationFormatter:Init(
     SecondsFormatter.Abbreviation.OneLetter,
     SecondsFormatterConstants.RoundUpLastUnit,
     SecondsFormatterConstants.ConvertToLower,
-    SecondsFormatterConstants.DontRoundUpIntervals
+    SecondsFormatterConstants.RoundUpIntervals
 )
 durationFormatter:SetDesiredUnitCount(1)
 durationFormatter:SetMinInterval(SecondsFormatter.Interval.Minutes)
