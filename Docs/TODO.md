@@ -4,8 +4,6 @@
 - Update health pots and dmg potions to show all items in bags in flyout to allow clicking and choosing a cached item for the macro to use. 
 - Macros should use the priority finder to pick the next best item to use in the macro. This is slightly diff than what we do now. If we use a R2 Thal oil, we should prio using the same type of oil and a diff quality before a higher quality diff type oil. Damage pots should do the same, use a lower quality light potion before a R2 recklessness if light is cached. This will likey require a re-work of our db's as this includes fleeting flasks and damage pots. A R1 fleeting dmg pot should be used before a R2 non-fleeting even if the R2 non-fleeting is cached. R2 fleeting should be used before R1 fleeting, even if R1 fleeting is in bag and R2 non-fleeting is cached.
 - Review all priority logic. 
-- we are now sharing modules/consumableframe/consumable/*.lua logic between two modules. Macros and ConsumeableFrame. Should we move these into the modules directory itself now that they are defining logic for more than one module?
-- Move ConsumableMacros.lua into a subfolder so all of our modules are contained within their own subfolder even if they are a single file for now. 
 
 ## Fixes
 - Evaluate debouncing consumables frame `UNIT_AURA` updates to roughly once per
