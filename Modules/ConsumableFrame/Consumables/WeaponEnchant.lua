@@ -372,7 +372,6 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
     local hasItem = count ~= nil and count > 0
 
     buttonState.countText = tostring(count or 0)
-    buttonState.usableItemID = itemID
     buttonState.qualityItemID = itemID
     buttonState.clickHintItemID = itemID
 

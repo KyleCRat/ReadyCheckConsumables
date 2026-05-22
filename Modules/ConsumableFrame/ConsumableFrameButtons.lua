@@ -2,6 +2,7 @@ local _, RCC = ...
 
 local UI = RCC.UI
 local Tooltips = RCC.ConsumableFrameTooltips
+local State = RCC.ConsumableFrameButtonState
 
 RCC.ConsumableFrameButtons = RCC.ConsumableFrameButtons or {}
 
@@ -110,8 +111,11 @@ function Buttons.GetStackHeight(buttonCount)
     return Buttons.GetWidth(buttonCount)
 end
 
-function Buttons.SetShownInLayout(button, shown)
-    button.showInLayout = shown == true
+local function getRenderCache(button)
+    button.consumableFrameRenderCache =
+        button.consumableFrameRenderCache or {}
+
+    return button.consumableFrameRenderCache
 end
 
 function Buttons.SetDetailTextBad(button, bad)
@@ -129,45 +133,45 @@ end
 function Buttons.SetQualityOverlay(button, itemID)
     if not button.qualityIcon then return end
 
+    local cache = getRenderCache(button)
+
     if not itemID then
+        if not cache.qualityItemID and not button.qualityIcon:IsShown() then
+            return
+        end
+
+        cache.qualityItemID = nil
         button.qualityIcon:Hide()
 
         return
     end
+
+    if cache.qualityItemID == itemID then return end
 
     local info = GetItemReagentQualityInfo(itemID)
 
     if not info or not info.iconSmall then
+        cache.qualityItemID = nil
         button.qualityIcon:Hide()
 
         return
     end
 
+    cache.qualityItemID = itemID
     button.qualityIcon:SetAtlas(info.iconSmall, false)
     button.qualityIcon:Show()
 end
 
 local function applyButtonIcon(button)
-    local icon = button.normalIcon or button.defaultIcon
+    local icon = State.GetIcon(
+        button.consumableState,
+        button.defaultIcon,
+        button.hoverStateActive
+    )
 
-    if button.hoverStateActive
-        and button.hoverState
-        and button.hoverState.icon
-    then
-        icon = button.hoverState.icon
+    if icon then
+        button.texture:SetTexture(icon)
     end
-
-    button.texture:SetTexture(icon)
-end
-
-function Buttons.SetIcon(button, icon)
-    button.normalIcon = icon or button.defaultIcon
-    applyButtonIcon(button)
-end
-
-function Buttons.SetHoverState(button, state)
-    button.hoverState = state
-    applyButtonIcon(button)
 end
 
 function Buttons.SetHoverStateActive(button, active)
@@ -175,58 +179,63 @@ function Buttons.SetHoverStateActive(button, active)
     applyButtonIcon(button)
 end
 
-function Buttons.SetUnavailable(button, unavailable)
-    button.unavailable = unavailable
-end
-
-local function getUnavailableText(unavailable)
-    return unavailable and unavailable.text
-end
-
 function Buttons.GetUnavailableText(button)
     if not button then return end
 
-    if button.hoverStateActive and button.hoverState then
-        local hoverText = getUnavailableText(button.hoverState.unavailable)
-
-        if hoverText then
-            return hoverText
-        end
-    end
-
-    return getUnavailableText(button.unavailable)
+    return State.GetUnavailableText(
+        button.consumableState,
+        button.hoverStateActive
+    )
 end
 
-function Buttons.ResetState(button, notReadyTexture)
-    button.consumableState = nil
-    button.statustexture:SetTexture(notReadyTexture)
-    button.statustexture:SetShown(not button.hideStatusTexture)
-    button.hasConsumableBuff = false
-    button.detailText:SetText("")
-    Buttons.SetDetailTextBad(button, false)
-    button.count:SetText("")
-    Buttons.SetCountTextBad(button, false)
-    Buttons.SetQualityOverlay(button, nil)
-    button.normalIcon = button.defaultIcon
-    button.hoverState = nil
-    button.unavailable = nil
+local function applyCooldown(button, cooldown)
+    if not button.cooldown then return end
+
+    local cache = getRenderCache(button)
+
+    if cooldown and cooldown.start and cooldown.duration then
+        if cache.cooldownStart == cooldown.start
+            and cache.cooldownDuration == cooldown.duration
+            and cache.cooldownShown
+        then
+            return
+        end
+
+        cache.cooldownStart = cooldown.start
+        cache.cooldownDuration = cooldown.duration
+        cache.cooldownShown = true
+        button.cooldown:SetCooldown(cooldown.start, cooldown.duration)
+        button.cooldown:Show()
+
+        return
+    end
+
+    if not cache.cooldownShown and not button.cooldown:IsShown() then
+        return
+    end
+
+    cache.cooldownStart = nil
+    cache.cooldownDuration = nil
+    cache.cooldownShown = false
+    button.cooldown:Clear()
+    button.cooldown:Hide()
+end
+
+function Buttons.ApplyState(button, state)
+    if not button or not state then return end
+
+    button.statustexture:SetTexture(state.statusTexture)
+    button.statustexture:SetShown(
+        state.showStatusTexture == true and not button.hideStatusTexture
+    )
     applyButtonIcon(button)
-    button.texture:SetDesaturated(true)
-    if button.cooldown then
-        button.cooldown:Clear()
-        button.cooldown:Hide()
-    end
-    button.tooltipAuraID = nil
-    button.tooltipItemID = nil
-    button.tooltipSpellID = nil
-    button.usableItemID = nil
-    button.clickHintItemID = nil
-    button.clickHintSpellID = nil
-    button.clickEnabled = false
-    if button.click and not InCombatLockdown() then
-        button.click:Hide()
-    end
-    Buttons.SetShownInLayout(button, true)
+    button.texture:SetDesaturated(state.desaturated == true)
+    button.count:SetText(state.countText or "")
+    Buttons.SetCountTextBad(button, state.countTextIsBad == true)
+    button.detailText:SetText(state.detailText or "")
+    Buttons.SetDetailTextBad(button, state.detailTextIsBad == true)
+    Buttons.SetQualityOverlay(button, state.qualityItemID)
+    applyCooldown(button, state.cooldown)
 end
 
 local function primaryFrameOnEnter(self)
@@ -597,7 +606,7 @@ function Buttons.ApplyLayout(parent, buttons)
 
     for _, def in ipairs(BUTTON_DEFS) do
         local button = buttons[def.key]
-        local shouldShow = button.showInLayout
+        local shouldShow = State.IsShownInLayout(button.consumableState)
             and RCC.GetSetting(def.settingKey)
 
         button:ClearAllPoints()

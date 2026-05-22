@@ -95,41 +95,61 @@ end)
 local function cacheClickedItem(self)
     queuePendingCacheAction({
         type = CACHE_ACTION_SET,
-        cacheKey = self.rccItemCacheKey,
-        itemID = self.rccItemCacheID,
+        cacheKey = self.consumableFrameItemCacheKey,
+        itemID = self.consumableFrameItemCacheID,
     })
 end
 
 local function clearClickedItemCache(self)
     queuePendingCacheAction({
         type = CACHE_ACTION_CLEAR,
-        cacheKey = self.rccItemCacheKey,
+        cacheKey = self.consumableFrameItemCacheKey,
     })
 end
 
 local function setClickCache(button, cacheKey, itemID)
     if not button or not button.click or InCombatLockdown() then return end
 
-    button.click.rccItemCacheKey = cacheKey
-    button.click.rccItemCacheID = itemID
+    local click = button.click
+
+    if click.consumableFrameItemCacheMode == CACHE_ACTION_SET
+        and click.consumableFrameItemCacheKey == cacheKey
+        and click.consumableFrameItemCacheID == itemID
+    then
+        return
+    end
+
+    click.consumableFrameItemCacheMode = CACHE_ACTION_SET
+    click.consumableFrameItemCacheKey = cacheKey
+    click.consumableFrameItemCacheID = itemID
 
     if cacheKey and itemID then
-        button.click:SetScript("PreClick", cacheClickedItem)
+        click:SetScript("PreClick", cacheClickedItem)
     else
-        button.click:SetScript("PreClick", nil)
+        click:SetScript("PreClick", nil)
     end
 end
 
 local function setClickCacheClear(button, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
-    button.click.rccItemCacheKey = cacheKey
-    button.click.rccItemCacheID = nil
+    local click = button.click
+
+    if click.consumableFrameItemCacheMode == CACHE_ACTION_CLEAR
+        and click.consumableFrameItemCacheKey == cacheKey
+        and click.consumableFrameItemCacheID == nil
+    then
+        return
+    end
+
+    click.consumableFrameItemCacheMode = CACHE_ACTION_CLEAR
+    click.consumableFrameItemCacheKey = cacheKey
+    click.consumableFrameItemCacheID = nil
 
     if cacheKey then
-        button.click:SetScript("PreClick", clearClickedItemCache)
+        click:SetScript("PreClick", clearClickedItemCache)
     else
-        button.click:SetScript("PreClick", nil)
+        click:SetScript("PreClick", nil)
     end
 end
 
@@ -138,7 +158,9 @@ local function enableClick(button)
 
     if not button.click or InCombatLockdown() then return end
 
-    button.click:Show()
+    if not button.click:IsShown() then
+        button.click:Show()
+    end
 end
 
 local function disableClick(button)
@@ -146,7 +168,9 @@ local function disableClick(button)
 
     if not button.click or InCombatLockdown() then return end
 
-    button.click:Hide()
+    if button.click:IsShown() then
+        button.click:Hide()
+    end
 end
 
 local function setClickAvailability(button, available)
@@ -169,17 +193,32 @@ end
 local function disable(button)
     if not button or not button.click then return end
 
-    setClickCache(button)
+    if not InCombatLockdown() then
+        button.click.consumableFrameActionSignature = nil
+        setClickCache(button)
+    end
+
     disableClick(button)
 end
 
 local function setItemMacro(button, itemID, targetSlot, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
-    button.click:SetAttribute("type", "macro")
-    button.click:SetAttribute("macrotext1",
-        getItemUseMacro(itemID, targetSlot))
-    setClickCache(button, cacheKey, itemID)
+    local click = button.click
+    local macroText = getItemUseMacro(itemID, targetSlot)
+    local signature = table.concat({
+        ActionType.ITEM_MACRO,
+        tostring(itemID),
+        tostring(targetSlot or ""),
+        tostring(cacheKey or ""),
+    }, "|")
+
+    if click.consumableFrameActionSignature ~= signature then
+        click:SetAttribute("type", "macro")
+        click:SetAttribute("macrotext1", macroText)
+        setClickCache(button, cacheKey, itemID)
+        click.consumableFrameActionSignature = signature
+    end
 
     enableClick(button)
 end
@@ -187,9 +226,19 @@ end
 local function setSpell(button, spell, available, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
-    setClickCacheClear(button, cacheKey)
-    button.click:SetAttribute("spell", spell)
-    button.click:SetAttribute("type", "spell")
+    local click = button.click
+    local signature = table.concat({
+        ActionType.SPELL,
+        tostring(spell),
+        tostring(cacheKey or ""),
+    }, "|")
+
+    if click.consumableFrameActionSignature ~= signature then
+        setClickCacheClear(button, cacheKey)
+        click:SetAttribute("spell", spell)
+        click:SetAttribute("type", "spell")
+        click.consumableFrameActionSignature = signature
+    end
 
     setClickAvailability(button, available == true)
 end
@@ -205,13 +254,24 @@ local function setWeaponEnchantItem(button, itemID, targetSlot, available,
         return
     end
 
-    button.click:SetAttribute("spell", nil)
-    button.click:SetAttribute("item", nil)
-    button.click:SetAttribute("target-slot", nil)
-    button.click:SetAttribute("type", "macro")
-    button.click:SetAttribute("macrotext1",
-        getItemUseMacro(itemID, targetSlot))
-    setClickCache(button, cacheKey, itemID)
+    local click = button.click
+    local macroText = getItemUseMacro(itemID, targetSlot)
+    local signature = table.concat({
+        ActionType.WEAPON_ENCHANT_ITEM,
+        tostring(itemID),
+        tostring(targetSlot),
+        tostring(cacheKey or ""),
+    }, "|")
+
+    if click.consumableFrameActionSignature ~= signature then
+        click:SetAttribute("spell", nil)
+        click:SetAttribute("item", nil)
+        click:SetAttribute("target-slot", nil)
+        click:SetAttribute("type", "macro")
+        click:SetAttribute("macrotext1", macroText)
+        setClickCache(button, cacheKey, itemID)
+        click.consumableFrameActionSignature = signature
+    end
 
     setClickAvailability(button, available == true)
 end

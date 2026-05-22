@@ -110,7 +110,6 @@ function Food.Update(button, state)
 
     if foodItemID then
         buttonState.tooltipItemID = foodItemID
-        buttonState.usableItemID = foodItemID
         buttonState.qualityItemID = foodItemID
 
         if foodCandidate.icon then

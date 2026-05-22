@@ -9,8 +9,21 @@ local F = RCC.F
 State.READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-Ready"
 State.NOT_READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
--- Buttons are reset before module updates, so omitted fields keep the reset
--- defaults for the current update pass.
+State.DEFAULTS = {
+    showInLayout = true,
+    statusTexture = State.NOT_READY_TEXTURE,
+    showStatusTexture = true,
+    desaturated = true,
+    countText = "",
+    countTextIsBad = false,
+    detailText = "",
+    detailTextIsBad = false,
+    hasConsumableBuff = false,
+    glow = false,
+}
+
+-- Consumable modules return partial input state. The renderer normalizes that
+-- input before applying it, so omitted fields use State.DEFAULTS.
 function State.Create(fields)
     local state = {}
 
@@ -21,6 +34,22 @@ function State.Create(fields)
     end
 
     return state
+end
+
+function State.Normalize(state)
+    local normalized = {}
+
+    for key, value in pairs(State.DEFAULTS) do
+        normalized[key] = value
+    end
+
+    if state then
+        for key, value in pairs(state) do
+            normalized[key] = value
+        end
+    end
+
+    return normalized
 end
 
 function State.SetUnavailable(state, text)
@@ -46,6 +75,71 @@ function State.SetHoverUnavailable(state, text, fields)
     State.SetHoverState(state, hoverState)
 end
 
+function State.GetUnavailableText(state, hoverActive)
+    if not state then return end
+
+    if hoverActive and state.hoverState then
+        local unavailable = state.hoverState.unavailable
+        local hoverText = unavailable and unavailable.text
+
+        if hoverText then
+            return hoverText
+        end
+    end
+
+    return state.unavailable and state.unavailable.text
+end
+
+function State.GetClickHintItemID(state)
+    if not state then return end
+
+    if state.clickHintItemID then
+        return state.clickHintItemID
+    end
+
+    return state.action and state.action.itemID
+end
+
+function State.GetClickHintSpellID(state)
+    if not state then return end
+
+    return state.clickHintSpellID or (state.action and state.action.spellID)
+end
+
+function State.IsShownInLayout(state)
+    local showInLayout = state and state.showInLayout
+
+    if showInLayout == nil then
+        showInLayout = State.DEFAULTS.showInLayout
+    end
+
+    return showInLayout == true
+end
+
+function State.HasConsumableBuff(state)
+    local hasConsumableBuff = state and state.hasConsumableBuff
+
+    if hasConsumableBuff == nil then
+        hasConsumableBuff = State.DEFAULTS.hasConsumableBuff
+    end
+
+    return hasConsumableBuff == true
+end
+
+function State.GetIcon(state, defaultIcon, hoverActive)
+    local icon = state and state.icon
+
+    if hoverActive
+        and state
+        and state.hoverState
+        and state.hoverState.icon
+    then
+        icon = state.hoverState.icon
+    end
+
+    return icon or defaultIcon
+end
+
 function State.CreateItemChoice(candidate, actionType, options)
     if not candidate or not candidate.itemID then return end
 
@@ -64,7 +158,6 @@ function State.CreateItemChoice(candidate, actionType, options)
         desaturated = false,
         countText = options.countText or tostring(candidate.count or 0),
         tooltipItemID = candidate.itemID,
-        usableItemID = candidate.itemID,
         qualityItemID = candidate.itemID,
         clickHintItemID = candidate.itemID,
         action = action,

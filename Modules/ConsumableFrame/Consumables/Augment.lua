@@ -104,7 +104,6 @@ function Augment.Update(button, state)
     if augmentItemID then
         buttonState.countText = getCountText(augmentCandidate)
         buttonState.tooltipItemID = augmentItemID
-        buttonState.usableItemID = augmentItemID
         buttonState.qualityItemID = augmentItemID
 
         if augmentItemIcon then

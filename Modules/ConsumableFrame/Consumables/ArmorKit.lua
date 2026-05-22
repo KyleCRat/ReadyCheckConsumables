@@ -50,7 +50,6 @@ function ArmorKit.Update(button)
 
     if kitCount > 0 then
         buttonState.tooltipItemID = ARMOR_KIT_ITEM_ID
-        buttonState.usableItemID = ARMOR_KIT_ITEM_ID
         buttonState.qualityItemID = ARMOR_KIT_ITEM_ID
         buttonState.action = {
             type = ActionType.ITEM_MACRO,

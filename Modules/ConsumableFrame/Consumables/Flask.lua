@@ -55,7 +55,6 @@ function Flask.Update(button, state)
 
     if flaskItemID then
         buttonState.tooltipItemID = flaskItemID
-        buttonState.usableItemID = flaskItemID
         buttonState.qualityItemID = flaskItemID
 
         if flaskCandidate.icon then

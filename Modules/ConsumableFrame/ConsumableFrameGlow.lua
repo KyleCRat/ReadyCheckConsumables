@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.ConsumableFrameGlow = RCC.ConsumableFrameGlow or {}
 
 local Glow = RCC.ConsumableFrameGlow
+local State = RCC.ConsumableFrameButtonState
 
 local GLOW_KEY = "rcc_consumable"
 local GLOW_COLOR = { 0.0, 0.85, 1.0, 1 }
@@ -12,10 +13,18 @@ local GLOW_PARTICLES = 5
 local GLOW_FREQUENCY = 0.15
 local GLOW_SCALE = 1.4
 
+local function getRenderCache(button)
+    button.consumableFrameRenderCache =
+        button.consumableFrameRenderCache or {}
+
+    return button.consumableFrameRenderCache
+end
+
 local function applyButtonGlowPhase(button, glowWasActive)
     if glowWasActive then return end
 
     local glow = button["_AutoCastGlow" .. GLOW_KEY]
+    local cache = getRenderCache(button)
 
     -- glow.timer is a LibCustomGlow-1.0 internal; guard against library
     -- changes that remove or restructure it.
@@ -23,16 +32,16 @@ local function applyButtonGlowPhase(button, glowWasActive)
         return
     end
 
-    if not button.rccGlowPhases then
-        button.rccGlowPhases = {}
+    if not cache.glowPhases then
+        cache.glowPhases = {}
 
         for i = 1, 4 do
-            button.rccGlowPhases[i] = math.random()
+            cache.glowPhases[i] = math.random()
         end
     end
 
     for i = 1, 4 do
-        glow.timer[i] = button.rccGlowPhases[i]
+        glow.timer[i] = cache.glowPhases[i]
     end
 
     local onUpdate = glow:GetScript("OnUpdate")
@@ -43,7 +52,9 @@ local function applyButtonGlowPhase(button, glowWasActive)
 end
 
 local function startButtonGlow(button, color)
-    if button.rccGlowActiveColor == color then return end
+    local cache = getRenderCache(button)
+
+    if cache.glowActiveColor == color then return end
 
     local LCG = LibStub("LibCustomGlow-1.0", true)
 
@@ -51,7 +62,7 @@ local function startButtonGlow(button, color)
 
     local glowWasActive = button["_AutoCastGlow" .. GLOW_KEY] ~= nil
 
-    button.rccGlowActiveColor = color
+    cache.glowActiveColor = color
     LCG.AutoCastGlow_Start(button, color, GLOW_PARTICLES,
                            GLOW_FREQUENCY, GLOW_SCALE, 0, 0, GLOW_KEY)
 
@@ -59,7 +70,11 @@ local function startButtonGlow(button, color)
 end
 
 local function stopButtonGlow(button)
-    button.rccGlowActiveColor = nil
+    local cache = getRenderCache(button)
+
+    if not cache.glowActiveColor then return end
+
+    cache.glowActiveColor = nil
 
     local LCG = LibStub("LibCustomGlow-1.0", true)
 
@@ -79,22 +94,30 @@ local function hasUnavailableState(button)
     return Buttons and Buttons.GetUnavailableText(button) ~= nil
 end
 
+local function hasConsumableBuff(button)
+    return State.HasConsumableBuff(button.consumableState)
+end
+
 local function shouldUseHoverGlow(button)
+    local cache = getRenderCache(button)
+
     return button.click
-           and (button.rccGlowEnabled
+           and (cache.glowEnabled
                 or button.clickEnabled
                 or hasUnavailableState(button)
-                or not button.hasConsumableBuff)
+                or not hasConsumableBuff(button))
 end
 
 local function resolveGlow(button)
-    if button.rccGlowHovered and shouldUseHoverGlow(button) then
+    local cache = getRenderCache(button)
+
+    if cache.glowHovered and shouldUseHoverGlow(button) then
         if isButtonClickable(button) then
             startButtonGlow(button, GLOW_AVAILABLE_COLOR)
         else
             startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
         end
-    elseif button.rccGlowEnabled then
+    elseif cache.glowEnabled then
         startButtonGlow(button, GLOW_COLOR)
     else
         stopButtonGlow(button)
@@ -102,16 +125,22 @@ local function resolveGlow(button)
 end
 
 function Glow.Set(button, enabled)
-    button.rccGlowEnabled = enabled
+    local cache = getRenderCache(button)
+
+    cache.glowEnabled = enabled
     resolveGlow(button)
 end
 
 function Glow.SetHovered(button, hovered)
-    button.rccGlowHovered = hovered
+    local cache = getRenderCache(button)
+
+    cache.glowHovered = hovered
     resolveGlow(button)
 end
 
 function Glow.Stop(button)
-    button.rccGlowEnabled = false
+    local cache = getRenderCache(button)
+
+    cache.glowEnabled = false
     stopButtonGlow(button)
 end

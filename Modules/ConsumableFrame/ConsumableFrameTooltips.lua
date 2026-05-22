@@ -1,6 +1,7 @@
 local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
+local State = RCC.ConsumableFrameButtonState
 local GetItemInfo = C_Item.GetItemInfo
 local GetSpellInfo = C_Spell.GetSpellInfo
 local GetSpellLink = C_Spell.GetSpellLink
@@ -48,11 +49,12 @@ end
 local function addClickHint(button)
     if not button.tooltipAction then return end
 
-    local targetText = getItemLink(button.clickHintItemID
-                                   or button.usableItemID
-                                   or button.tooltipItemID)
-        or getSpellDisplay(button.clickHintSpellID
-                           or button.tooltipSpellID)
+    local state = button.consumableState
+
+    if not state then return end
+
+    local targetText = getItemLink(State.GetClickHintItemID(state))
+        or getSpellDisplay(State.GetClickHintSpellID(state))
 
     if not targetText then return end
 
@@ -73,31 +75,34 @@ local function addUnavailableHint(button)
 end
 
 local function showButtonTooltip(button, shoppingTooltip)
+    local state = button.consumableState
     local shownTooltip
 
-    if button.tooltipItemID then
+    if not state then return end
+
+    if state.tooltipItemID then
         setGameTooltipOwner(button)
-        GameTooltip:SetItemByID(button.tooltipItemID)
+        GameTooltip:SetItemByID(state.tooltipItemID)
         GameTooltip:Show()
         shownTooltip = true
     end
 
-    if button.tooltipSpellID then
+    if state.tooltipSpellID then
         setGameTooltipOwner(button)
-        GameTooltip:SetSpellByID(button.tooltipSpellID)
+        GameTooltip:SetSpellByID(state.tooltipSpellID)
         GameTooltip:Show()
         shownTooltip = true
     end
 
-    if button.tooltipAuraID and shoppingTooltip and shownTooltip then
+    if state.tooltipAuraID and shoppingTooltip and shownTooltip then
         ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
         ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
-        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", state.tooltipAuraID)
         ShoppingTooltip1:Show()
 
-    elseif button.tooltipAuraID then
+    elseif state.tooltipAuraID then
         setGameTooltipOwner(button)
-        GameTooltip:SetUnitBuffByAuraInstanceID("player", button.tooltipAuraID)
+        GameTooltip:SetUnitBuffByAuraInstanceID("player", state.tooltipAuraID)
         GameTooltip:Show()
         shownTooltip = true
     end
