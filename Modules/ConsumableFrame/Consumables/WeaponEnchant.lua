@@ -65,6 +65,12 @@ local function addEnchantIconToState(buttonState, enchantData)
     end
 end
 
+local function cacheActiveEnchantItem(slotID, enchantData)
+    if enchantData and enchantData.item then
+        ItemCache.Set(getWeaponEnchantCacheKey(slotID), enchantData.item)
+    end
+end
+
 local function isBetterWeaponEnchantCandidate(candidate, best)
     local data = candidate.data or {}
     local bestData = best.data or {}
@@ -137,7 +143,7 @@ local function addActiveEnchantToState(buttonState, slotID, slotState)
         addEnchantIconToState(buttonState, enchantData)
 
         if enchantData.item then
-            ItemCache.Set(getWeaponEnchantCacheKey(slotID), enchantData.item)
+            cacheActiveEnchantItem(slotID, enchantData)
             buttonState.tooltipItemID = enchantData.item
         elseif enchantData.spellID then
             buttonState.tooltipSpellID = enchantData.spellID
@@ -236,7 +242,7 @@ local function selectKnownSpellEnchantForSlot(slotID)
     end
 end
 
-local function createSpellFlyoutChoice(enchantData, slotState)
+local function createSpellEnchantAction(enchantData, slotState)
     if not enchantData or not enchantData.spellID then return end
 
     local spellInfo = GetSpellInfo(enchantData.spellID)
@@ -244,18 +250,27 @@ local function createSpellFlyoutChoice(enchantData, slotState)
 
     if not spellName then return end
 
+    return {
+        type = ActionType.SPELL,
+        spellName = spellName,
+        spellID = enchantData.spellID,
+        available = slotState.canBeEnchanted,
+        cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
+    }
+end
+
+local function createSpellFlyoutChoice(enchantData, slotState)
+    local action = createSpellEnchantAction(enchantData, slotState)
+
+    if not action then return end
+
     return ButtonState.Create({
         icon = getWeaponEnchantIcon(enchantData),
         desaturated = false,
         countText = "",
         tooltipSpellID = enchantData.spellID,
         clickHintSpellID = enchantData.spellID,
-        action = {
-            type = ActionType.SPELL,
-            spellName = spellName,
-            available = slotState.canBeEnchanted,
-            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
-        },
+        action = action,
     })
 end
 
@@ -320,25 +335,76 @@ local function shouldPreferSpellEnchant(hasEnchant, activeEnchantData)
            or playerKnowsSpellEnchantData(activeEnchantData)
 end
 
-local function configureSpellEnchantState(buttonState, enchantData, slotState,
+local function createItemEnchantAction(candidate, slotState)
+    if not candidate or not candidate.itemID then return end
+
+    return {
+        type = ActionType.WEAPON_ENCHANT_ITEM,
+        itemID = candidate.itemID,
+        targetSlot = slotState.slotID,
+        available = slotState.canBeEnchanted
+                    and (candidate.count or 0) > 0,
+        cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
+    }
+end
+
+local function selectWeaponEnchantItemForSlot(slotID, candidates)
+    return ItemCache.SelectCandidate(
+        getWeaponEnchantCacheKey(slotID),
+        candidates,
+        getCachedWeaponEnchantCandidate(slotID)
+    )
+end
+
+local function resolveWeaponEnchantAction(slotState, activeEnchantData,
                                           itemCandidates)
-    if not enchantData or not enchantData.spellID then return false end
+    if not slotState or not slotState.canBeEnchanted then return end
 
-    local spellInfo = GetSpellInfo(enchantData.spellID)
-    local spellName = spellInfo and spellInfo.name
+    local spellEnchant = selectSpellEnchantForSlot(
+        slotState.slotID,
+        activeEnchantData
+    )
 
-    if not spellName then
-        return false
+    if shouldPreferSpellEnchant(slotState.hasEnchant, activeEnchantData) then
+        local spellAction = createSpellEnchantAction(
+            spellEnchant,
+            slotState
+        )
+
+        if spellAction then
+            return {
+                kind = "spell",
+                action = spellAction,
+                spellEnchant = spellEnchant,
+            }
+        end
     end
+
+    local candidate = selectWeaponEnchantItemForSlot(
+        slotState.slotID,
+        itemCandidates
+    )
+
+    return {
+        kind = "item",
+        action = createItemEnchantAction(candidate, slotState),
+        itemCandidate = candidate,
+        outOfCachedItem = ItemCache.IsUnavailableCachedCandidate(
+            getWeaponEnchantCacheKey(slotState.slotID),
+            candidate
+        ),
+    }
+end
+
+local function configureSpellEnchantState(buttonState, resolution, slotState,
+                                          itemCandidates)
+    local enchantData = resolution and resolution.spellEnchant
+
+    if not enchantData then return false end
 
     addEnchantIconToState(buttonState, enchantData)
 
-    buttonState.action = {
-        type = ActionType.SPELL,
-        spellName = spellName,
-        available = slotState.canBeEnchanted,
-        cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
-    }
+    buttonState.action = resolution.action
     buttonState.countText = ""
     buttonState.tooltipSpellID = enchantData.spellID
     buttonState.clickHintSpellID = enchantData.spellID
@@ -368,7 +434,10 @@ local function configureMissingItemState(buttonState, showHint)
     buttonState.glow = false
 end
 
-local function configureItemEnchantState(buttonState, itemID, count, slotState)
+local function configureItemEnchantState(buttonState, resolution, slotState)
+    local candidate = resolution and resolution.itemCandidate
+    local itemID = candidate and candidate.itemID
+    local count = candidate and candidate.count
     local hasItem = count ~= nil and count > 0
 
     buttonState.countText = tostring(count or 0)
@@ -379,15 +448,7 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
         buttonState.tooltipItemID = itemID
     end
 
-    if hasItem then
-        buttonState.action = {
-            type = ActionType.WEAPON_ENCHANT_ITEM,
-            itemID = itemID,
-            targetSlot = slotState.slotID,
-            available = slotState.canBeEnchanted,
-            cacheKey = getWeaponEnchantCacheKey(slotState.slotID),
-        }
-    end
+    buttonState.action = resolution.action
 
     buttonState.glow = slotState.canBeEnchanted
                        and hasItem
@@ -395,23 +456,12 @@ local function configureItemEnchantState(buttonState, itemID, count, slotState)
                             or isExpiringSoon(slotState))
 end
 
-local function selectWeaponEnchantItemForSlot(slotID, candidates)
-    return ItemCache.SelectCandidate(
-        getWeaponEnchantCacheKey(slotID),
-        candidates,
-        getCachedWeaponEnchantCandidate(slotID)
-    )
-end
-
-local function configureItemEnchantForSlot(buttonState, slotID, slotState,
-                                           activeEnchantData, showMissingHint,
-                                           itemCandidates)
-    local candidate = selectWeaponEnchantItemForSlot(slotID, itemCandidates)
+local function configureItemEnchantForSlot(buttonState, slotState,
+                                           activeEnchantData, resolution,
+                                           showMissingHint, itemCandidates)
+    local candidate = resolution and resolution.itemCandidate
     local itemID = candidate and candidate.itemID
-    local outOfCachedItem = ItemCache.IsUnavailableCachedCandidate(
-        getWeaponEnchantCacheKey(slotID),
-        candidate
-    )
+    local outOfCachedItem = resolution and resolution.outOfCachedItem
 
     if not itemID then
         if not slotState.hasEnchant then
@@ -425,8 +475,7 @@ local function configureItemEnchantForSlot(buttonState, slotID, slotState,
 
     configureItemEnchantState(
         buttonState,
-        itemID,
-        candidate.count,
+        resolution,
         slotState
     )
 
@@ -472,23 +521,26 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
         slotID,
         slotState
     )
-    local spellEnchant = selectSpellEnchantForSlot(slotID, activeEnchantData)
-    if not shouldPreferSpellEnchant(
-            slotState.hasEnchant,
-            activeEnchantData
-        )
+    local resolution = resolveWeaponEnchantAction(
+        slotState,
+        activeEnchantData,
+        itemCandidates
+    )
+
+    if not resolution
+        or resolution.kind ~= "spell"
         or not configureSpellEnchantState(
             buttonState,
-            spellEnchant,
+            resolution,
             slotState,
             itemCandidates
         )
     then
         configureItemEnchantForSlot(
             buttonState,
-            slotID,
             slotState,
             activeEnchantData,
+            resolution,
             showMissingHint,
             itemCandidates
         )
@@ -511,6 +563,48 @@ local function updateWeaponEnchantButton(button, hasEnchant, expiration,
         showMissingHint,
         itemCandidates
     )
+end
+
+local function getCurrentWeaponSlotState(slotID)
+    local hasMainHandEnchant, mainHandExpiration, _, mainHandEnchantID,
+          hasOffHandEnchant, offHandExpiration, _, offHandEnchantID =
+          GetWeaponEnchantInfo()
+
+    if slotID == MAIN_HAND_INVENTORY_SLOT then
+        return buildWeaponSlotState(
+            slotID,
+            hasMainHandEnchant,
+            mainHandExpiration,
+            mainHandEnchantID
+        )
+    elseif slotID == OFF_HAND_INVENTORY_SLOT then
+        return buildWeaponSlotState(
+            slotID,
+            hasOffHandEnchant,
+            offHandExpiration,
+            offHandEnchantID
+        )
+    end
+end
+
+function WeaponEnchant.GetActionForSlot(slotID)
+    local slotState = getCurrentWeaponSlotState(slotID)
+
+    if not slotState or not slotState.canBeEnchanted then return end
+
+    local itemCandidates = collectWeaponEnchantItemCandidatesInBags()
+    local activeEnchantData = slotState.hasEnchant
+        and getWeaponEnchantData(slotState.enchantID)
+
+    cacheActiveEnchantItem(slotID, activeEnchantData)
+
+    local resolution = resolveWeaponEnchantAction(
+        slotState,
+        activeEnchantData,
+        itemCandidates
+    )
+
+    return resolution and resolution.action
 end
 
 function WeaponEnchant.Update(buttons)

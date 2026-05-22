@@ -15,6 +15,14 @@ RCC.ConsumableItemCacheKey = RCC.ConsumableItemCacheKey or {
 
 local cachedItemIDs = {}
 
+local function scheduleMacroUpdate()
+    local Macros = RCC.ConsumableMacros
+
+    if Macros and Macros.ScheduleUpdate then
+        Macros.ScheduleUpdate()
+    end
+end
+
 local function getSavedCache()
     if not ReadyCheckConsumablesDB then return end
 
@@ -27,6 +35,8 @@ end
 function Cache.Set(cacheKey, itemID)
     if not cacheKey or not itemID then return end
 
+    local previousItemID = Cache.Get(cacheKey)
+
     cachedItemIDs[cacheKey] = itemID
 
     local savedCache = getSavedCache()
@@ -34,10 +44,16 @@ function Cache.Set(cacheKey, itemID)
     if savedCache then
         savedCache[cacheKey] = itemID
     end
+
+    if previousItemID ~= itemID then
+        scheduleMacroUpdate()
+    end
 end
 
 function Cache.Clear(cacheKey)
     if not cacheKey then return end
+
+    local previousItemID = Cache.Get(cacheKey)
 
     cachedItemIDs[cacheKey] = nil
 
@@ -45,6 +61,10 @@ function Cache.Clear(cacheKey)
 
     if savedCache then
         savedCache[cacheKey] = nil
+    end
+
+    if previousItemID ~= nil then
+        scheduleMacroUpdate()
     end
 end
 

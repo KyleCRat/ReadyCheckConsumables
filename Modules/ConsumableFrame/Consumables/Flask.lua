@@ -26,18 +26,21 @@ local function getFlaskAuraState(state)
     )
 end
 
-function Flask.Update(button, state)
-    local flaskState = getFlaskAuraState(state)
-    local isFlask = flaskState and flaskState.satisfied
+function Flask.GetItemCandidate(includeUnavailableCached)
     local flaskCandidates = ItemCandidates.CollectAvailableFromList(
         RCC.db.flaskItemIDs,
         ItemCandidates.BAGS_ONLY
     )
-    local cachedFlaskCandidate = ItemCandidates.CreateFromList(
-        RCC.db.flaskItemIDs,
-        ItemCache.Get(CacheKey.FLASK),
-        ItemCandidates.BAGS_ONLY
-    )
+    local cachedFlaskCandidate
+
+    if includeUnavailableCached then
+        cachedFlaskCandidate = ItemCandidates.CreateFromList(
+            RCC.db.flaskItemIDs,
+            ItemCache.Get(CacheKey.FLASK),
+            ItemCandidates.BAGS_ONLY
+        )
+    end
+
     local flaskCandidate = ItemCache.SelectCandidate(
         CacheKey.FLASK,
         flaskCandidates,
@@ -47,6 +50,15 @@ function Flask.Update(button, state)
         CacheKey.FLASK,
         flaskCandidate
     )
+
+    return flaskCandidate, flaskCandidates, outOfCachedFlask
+end
+
+function Flask.Update(button, state)
+    local flaskState = getFlaskAuraState(state)
+    local isFlask = flaskState and flaskState.satisfied
+    local flaskCandidate, flaskCandidates, outOfCachedFlask =
+        Flask.GetItemCandidate(true)
     local flaskCount = flaskCandidate and flaskCandidate.count or 0
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
     local buttonState = ButtonState.Create()

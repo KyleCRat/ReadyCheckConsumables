@@ -41,6 +41,7 @@ Modules/ConsumableFrame/Consumables/HealingPotion.lua
 Modules/ConsumableFrame/Consumables/RaidBuff.lua
 Modules/ConsumableFrame/Consumables/Vantus.lua
 Modules/ConsumableFrame/Consumables/WeaponEnchant.lua
+Modules/ConsumableMacros.lua
 Modules/ConsumableFrame/ConsumableFrame.lua
 Modules/ConsumableFrame/ConsumableFrameController.lua
 Modules/RaidFrame/RaidFrameReadyCheck.lua

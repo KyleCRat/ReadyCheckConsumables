@@ -9,11 +9,15 @@ local ButtonState = RCC.ConsumableFrameButtonState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 local Renderer = RCC.ConsumableFrameRenderer
 
-function HealingPotion.Update(button)
-    local inventoryItemCandidate = ItemCandidates.FindFirstAvailable(
+function HealingPotion.GetItemCandidate()
+    return ItemCandidates.FindFirstAvailable(
         RCC.db.healingPotionItemIDs,
         ItemCandidates.BAGS_ONLY
     )
+end
+
+function HealingPotion.Update(button)
+    local inventoryItemCandidate = HealingPotion.GetItemCandidate()
     local inventoryItem = inventoryItemCandidate
         and inventoryItemCandidate.itemID
     local inventoryItemCount = inventoryItemCandidate

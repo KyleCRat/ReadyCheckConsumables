@@ -72,6 +72,34 @@ local function getEatingCooldown(state)
     return { clear = true }
 end
 
+function Food.GetItemCandidate(includeUnavailableCached)
+    local foodCandidates = ItemCandidates.CollectAvailableFromList(
+        RCC.db.foodItemIDs,
+        ItemCandidates.BAGS_ONLY
+    )
+    local cachedFoodCandidate
+
+    if includeUnavailableCached then
+        cachedFoodCandidate = ItemCandidates.CreateFromList(
+            RCC.db.foodItemIDs,
+            ItemCache.Get(CacheKey.FOOD),
+            ItemCandidates.BAGS_ONLY
+        )
+    end
+
+    local foodCandidate = ItemCache.SelectCandidate(
+        CacheKey.FOOD,
+        foodCandidates,
+        cachedFoodCandidate
+    )
+    local outOfCachedFood = ItemCache.IsUnavailableCachedCandidate(
+        CacheKey.FOOD,
+        foodCandidate
+    )
+
+    return foodCandidate, foodCandidates, outOfCachedFood
+end
+
 function Food.Update(button, state)
     local foodAuraState, eatingAuraState = getFoodAuraStates(state)
     local displayAuraState = getDisplayAuraState(
@@ -82,24 +110,8 @@ function Food.Update(button, state)
     local foodSatisfied = eatingAuraState ~= nil
         or (foodAuraState and foodAuraState.satisfied == true)
 
-    local foodCandidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.foodItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-    local cachedFoodCandidate = ItemCandidates.CreateFromList(
-        RCC.db.foodItemIDs,
-        ItemCache.Get(CacheKey.FOOD),
-        ItemCandidates.BAGS_ONLY
-    )
-    local foodCandidate = ItemCache.SelectCandidate(
-        CacheKey.FOOD,
-        foodCandidates,
-        cachedFoodCandidate
-    )
-    local outOfCachedFood = ItemCache.IsUnavailableCachedCandidate(
-        CacheKey.FOOD,
-        foodCandidate
-    )
+    local foodCandidate, foodCandidates, outOfCachedFood =
+        Food.GetItemCandidate(true)
     local foodCount = foodCandidate and foodCandidate.count or 0
     local foodItemID = foodCandidate and foodCandidate.itemID
     local buttonState = ButtonState.Create({

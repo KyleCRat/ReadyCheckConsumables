@@ -44,7 +44,7 @@ local function sortAugmentCandidates(candidates, preferUnlimited)
     end)
 end
 
-local function getCountText(candidate)
+function Augment.GetCountText(candidate)
     local data = candidate and candidate.data
 
     if data and data.unlimited then
@@ -63,7 +63,7 @@ local function getAuraState(state)
     )
 end
 
-local function collectItemsInBags()
+function Augment.CollectItemsInBags()
     local preferUnlimited =
         RCC.GetSetting("consumables_preferUnlimitedAugment")
     local candidates = ItemCandidates.CollectAvailableFromMap(
@@ -76,15 +76,18 @@ local function collectItemsInBags()
     return candidates
 end
 
-function Augment.Update(button, state)
-    local augmentState = getAuraState(state)
-    local isAugment = augmentState and augmentState.satisfied
-    local augmentCandidates = collectItemsInBags()
-    local cachedAugmentCandidate = ItemCandidates.CreateFromMap(
-        RCC.db.augmentItemIDs,
-        ItemCache.Get(CacheKey.AUGMENT),
-        ItemCandidates.BAGS_ONLY
-    )
+function Augment.GetItemCandidate(includeUnavailableCached)
+    local augmentCandidates = Augment.CollectItemsInBags()
+    local cachedAugmentCandidate
+
+    if includeUnavailableCached then
+        cachedAugmentCandidate = ItemCandidates.CreateFromMap(
+            RCC.db.augmentItemIDs,
+            ItemCache.Get(CacheKey.AUGMENT),
+            ItemCandidates.BAGS_ONLY
+        )
+    end
+
     local augmentCandidate = ItemCache.SelectCandidate(
         CacheKey.AUGMENT,
         augmentCandidates,
@@ -94,6 +97,15 @@ function Augment.Update(button, state)
         CacheKey.AUGMENT,
         augmentCandidate
     )
+
+    return augmentCandidate, augmentCandidates, outOfCachedAugment
+end
+
+function Augment.Update(button, state)
+    local augmentState = getAuraState(state)
+    local isAugment = augmentState and augmentState.satisfied
+    local augmentCandidate, augmentCandidates, outOfCachedAugment =
+        Augment.GetItemCandidate(true)
     local augmentItemID = augmentCandidate and augmentCandidate.itemID
     local augmentItemCount = augmentCandidate and augmentCandidate.count
     local augmentItemIcon = augmentCandidate and augmentCandidate.icon
@@ -102,7 +114,7 @@ function Augment.Update(button, state)
     ButtonState.ApplyActiveAura(buttonState, augmentState)
 
     if augmentItemID then
-        buttonState.countText = getCountText(augmentCandidate)
+        buttonState.countText = Augment.GetCountText(augmentCandidate)
         buttonState.tooltipItemID = augmentItemID
         buttonState.qualityItemID = augmentItemID
 
@@ -141,7 +153,7 @@ function Augment.Update(button, state)
         augmentItemID,
         ActionType.ITEM_MACRO,
         {
-            getCountText = getCountText,
+            getCountText = Augment.GetCountText,
             cacheKey = CacheKey.AUGMENT,
             includeSingleChoice = outOfCachedAugment,
         }

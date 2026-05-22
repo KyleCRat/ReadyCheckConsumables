@@ -15,7 +15,7 @@ local ActionType = RCC.ConsumableActionType
 
 local UNAVAILABLE_SPELL = "Raid buff spell unavailable"
 
-local function getPlayerRaidBuffInfo()
+function RaidBuff.GetPlayerRaidBuffInfo()
     local _, class = UnitClass("player")
 
     return RaidBuffStatus.GetInfoByProviderClass(class)
@@ -50,7 +50,7 @@ local function getGroupStatus(raidBuffIndex)
 end
 
 function RaidBuff.Update(button)
-    local info = getPlayerRaidBuffInfo()
+    local info = RaidBuff.GetPlayerRaidBuffInfo()
 
     if not info then
         Renderer.Apply(button, ButtonState.Create({ showInLayout = false }))

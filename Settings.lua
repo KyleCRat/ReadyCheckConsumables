@@ -70,6 +70,151 @@ function RCC.GetSetting(key)
 end
 
 --------------------------------------------------------------------------------
+--- Macro settings canvas
+--------------------------------------------------------------------------------
+
+local function createMacroButton(parent, text, key, label, characterSpecific)
+    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    button:SetSize(86, 22)
+    button:SetText(text)
+
+    local macroTab = characterSpecific
+        and "Character Specific Macro tab"
+        or "Shared Macro tab"
+    button.tooltipText = "Create " .. label .. " macro in the " .. macroTab .. "."
+
+    button:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(self.tooltipText, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    button:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+    button:SetScript("OnClick", function()
+        local Macros = RCC.ConsumableMacros
+
+        if Macros and Macros.CreateManagedMacro then
+            Macros.CreateManagedMacro(key, characterSpecific)
+        end
+    end)
+
+    return button
+end
+
+local function getMacroMarker(key)
+    return "#RCC:" .. key
+end
+
+local function createMacroText(parent, fontObject, text, width)
+    local fontString = parent:CreateFontString(nil, "ARTWORK")
+
+    if fontObject then
+        fontString:SetFontObject(fontObject)
+    end
+
+    fontString:SetJustifyH("LEFT")
+    fontString:SetJustifyV("TOP")
+    fontString:SetWidth(width)
+    fontString:SetText(text)
+
+    return fontString
+end
+
+local function createMacrosSettingsFrame()
+    local frame = CreateFrame("Frame")
+    frame:SetSize(640, 560)
+
+    local title = createMacroText(
+        frame,
+        GameFontNormalLarge,
+        "Managed Macros",
+        600
+    )
+    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
+
+    local body = createMacroText(
+        frame,
+        GameFontHighlight,
+        "Managed macros are ordinary WoW macros containing a marker like "
+        .. "#RCC:dmgpot. RCC keeps the marker, adds an automated comment, "
+        .. "and rewrites the generated /use or /cast lines when bags, "
+        .. "cached selections, equipment, spells, zone, or macros change.\n\n"
+        .. "Food, flask, augment, Vantus, and weapon enchant macros follow "
+        .. "the same cached selection used by the consumable frame. The "
+        .. "cache changes when you choose or use a cached consumable from "
+        .. "RCC's consumable buttons. If a cached item is out of bags, RCC "
+        .. "still writes that item ID into the macro so the action bar shows "
+        .. "it as unavailable. Potions and healthstones use the current "
+        .. "available item list.",
+        600
+    )
+    body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
+
+    local keyHeader = createMacroText(frame, GameFontNormal, "Name", 120)
+    keyHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -176)
+
+    local markerHeader = createMacroText(frame, GameFontNormal, "Key", 120)
+    markerHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 180, -176)
+
+    local sharedHeader = createMacroText(frame, GameFontNormal, "Create", 190)
+    sharedHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 360, -176)
+
+    local rowTop = -204
+    local rowHeight = 28
+    local definitions = RCC.ConsumableMacros
+        and RCC.ConsumableMacros.GetDefinitions
+        and RCC.ConsumableMacros.GetDefinitions()
+        or {}
+
+    for i = 1, #definitions do
+        local definition = definitions[i]
+        local key = definition.key
+        local label = createMacroText(
+            frame,
+            GameFontHighlight,
+            definition.label,
+            170
+        )
+        label:SetPoint(
+            "TOPLEFT",
+            frame,
+            "TOPLEFT",
+            0,
+            rowTop - ((i - 1) * rowHeight)
+        )
+
+        local marker = createMacroText(
+            frame,
+            GameFontHighlight,
+            getMacroMarker(key),
+            150
+        )
+        marker:SetPoint("TOPLEFT", label, "TOPLEFT", 180, 0)
+
+        local sharedButton = createMacroButton(
+            frame,
+            "Shared",
+            key,
+            definition.label,
+            false
+        )
+        sharedButton:SetPoint("TOPLEFT", label, "TOPLEFT", 360, -2)
+
+        local characterButton = createMacroButton(
+            frame,
+            "Character",
+            key,
+            definition.label,
+            true
+        )
+        characterButton:SetPoint("LEFT", sharedButton, "RIGHT", 8, 0)
+    end
+
+    return frame
+end
+
+--------------------------------------------------------------------------------
 --- Panel registration (ADDON_LOADED)
 --------------------------------------------------------------------------------
 
@@ -111,6 +256,17 @@ local function registerPanel()
     )
 
     ----------------------------------------------------------------------------
+    --- Macros (subcategory - canvas)
+    ----------------------------------------------------------------------------
+
+    local macroFrame = createMacrosSettingsFrame()
+    local macroCat, macroLayout = Settings.RegisterCanvasLayoutSubcategory(
+        category, macroFrame, "Macros"
+    )
+    macroLayout:AddAnchorPoint("TOPLEFT", 35, -35)
+    macroLayout:AddAnchorPoint("BOTTOMRIGHT", -35, 35)
+
+    ----------------------------------------------------------------------------
     --- Parent page
     ----------------------------------------------------------------------------
 
@@ -137,6 +293,14 @@ local function registerPanel()
         false
     )
     layout:AddInitializer(crButton)
+
+    local macroButton = CreateSettingsButtonInitializer(
+        "", "Macros",
+        function() Settings.OpenToCategory(macroCat:GetID()) end,
+        "Create and manage RCC marker macros.",
+        false
+    )
+    layout:AddInitializer(macroButton)
 
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
         "Version: " .. (C_AddOns.GetAddOnMetadata("ReadyCheckConsumables", "Version") or "Unknown")

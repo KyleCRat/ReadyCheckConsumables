@@ -27,22 +27,27 @@ local function getAuraBossName(state)
     return name:gsub("^Vantus Rune: ", "")
 end
 
-local function getVantusRuneIDsForCurrentRaid()
+function Vantus.GetRuneIDsForCurrentRaid()
     local instanceID = select(8, GetInstanceInfo())
 
     return RCC.db.vantusItemsByRaid[instanceID]
 end
 
-local function getVantusCandidate(vantusRuneIDs)
+function Vantus.GetItemCandidate(vantusRuneIDs, includeUnavailableCached)
     local candidates = ItemCandidates.CollectAvailableFromList(
         vantusRuneIDs,
         ItemCandidates.BAGS_ONLY
     )
-    local cachedCandidate = ItemCandidates.CreateFromList(
-        vantusRuneIDs,
-        ItemCache.Get(CacheKey.VANTUS),
-        ItemCandidates.BAGS_ONLY
-    )
+    local cachedCandidate
+
+    if includeUnavailableCached then
+        cachedCandidate = ItemCandidates.CreateFromList(
+            vantusRuneIDs,
+            ItemCache.Get(CacheKey.VANTUS),
+            ItemCandidates.BAGS_ONLY
+        )
+    end
+
     local candidate = ItemCache.SelectCandidate(
         CacheKey.VANTUS,
         candidates,
@@ -56,14 +61,14 @@ local function getVantusCandidate(vantusRuneIDs)
     return candidate, candidates, outOfCachedItem
 end
 
-local function getFallbackVantusIcon(vantusRuneIDs)
+function Vantus.GetFallbackItem(vantusRuneIDs)
     local itemID = vantusRuneIDs[1]
 
     return itemID, ItemCandidates.GetIcon(itemID)
 end
 
 function Vantus.Update(button, state)
-    local vantusRuneIDs = getVantusRuneIDsForCurrentRaid()
+    local vantusRuneIDs = Vantus.GetRuneIDsForCurrentRaid()
 
     if not vantusRuneIDs then
         Renderer.Apply(button, ButtonState.Create({ showInLayout = false }))
@@ -73,14 +78,14 @@ function Vantus.Update(button, state)
 
     local bossName = getAuraBossName(state)
     local candidate, candidates, outOfCachedItem =
-        getVantusCandidate(vantusRuneIDs)
+        Vantus.GetItemCandidate(vantusRuneIDs, true)
 
     local itemID = candidate and candidate.itemID
     local count = candidate and candidate.count or 0
     local icon = candidate and candidate.icon
 
     if not itemID then
-        itemID, icon = getFallbackVantusIcon(vantusRuneIDs)
+        itemID, icon = Vantus.GetFallbackItem(vantusRuneIDs)
     end
 
     local buttonState = ButtonState.Create()
