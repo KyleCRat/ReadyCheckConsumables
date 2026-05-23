@@ -98,46 +98,188 @@ RCC.db.potionBuffIDs = {
 }
 
 --------------------------------------------------------------------------------
---- Damage Potion Item IDs
---- Used to check player inventory for combat potions. Order matters:
---- first match wins for icon display, all are summed for count.
+--- Potion Item IDs
+--- `potionItems` is the editable source of truth for potion families. Family
+--- order controls fallback order; item order inside a family controls priority
+--- when quality metadata is incomplete.
 --------------------------------------------------------------------------------
 
-RCC.db.potionItemIDs = {
-    -- 12.0.0 - Fleeting
-    245916, 245917, -- Fleeting Lightfused Mana Potion
-    245897, 245898, -- Fleeting Light's Potential
-    245910, 245911, -- Fleeting Draught of Rampant Abandon
-    245902, 245903, -- Fleeting Potion of Recklessness
-    245900, 245901, -- Fleeting Potion of Zealotry
-    245904, 245905, -- Fleeting Potion of Devoured Dreams
-
-    -- 12.0.0 - Full duration
-    241300, 241301, -- Lightfused Mana Potion
-    241308, 241309, -- Light's Potential
-    241292, 241293, -- Draught of Rampant Abandon
-    241288, 241289, -- Potion of Recklessness
-    241296, 241297, -- Potion of Zealotry
-    241286, 241287, -- Light's Preservation
-    241294, 241295, -- Potion of Devoured Dreams
-
-    -- 11.0.0 - Fleeting
-    212969, 212970, 212971, -- Fleeting Tempered Potion
-    212963, 212964, 212965, -- Fleeting Potion of Unwavering Focus
-    212966, 212967, 212968, -- Fleeting Frontline Potion
-
-    -- 11.0.0 - Full duration
-    212263, 212264, 212265, -- Tempered Potion
-    212257, 212258, 212259, -- Potion of Unwavering Focus
-    212260, 212261, 212262, -- Frontline Potion
+RCC.PotionType = RCC.PotionType or {
+    MANA    = "mana_potion",
+    DAMAGE  = "damage_potion",
+    UTILITY = "utility_potion",
 }
 
---------------------------------------------------------------------------------
---- Utility Potions (12.0.0 - Midnight)
---- Stored for future use. Not currently tracked by the addon.
---------------------------------------------------------------------------------
-
-RCC.db.utilityPotionItemIDs = {
-    241302, 241303, -- Void-Shrouded Tincture (invisibility)
-    241338, 241339, -- Enlightenment Tonic (slow fall)
+RCC.PotionVariant = RCC.PotionVariant or {
+    FLEETING = "fleeting",
 }
+
+local MANA     = RCC.PotionType.MANA
+local DAMAGE   = RCC.PotionType.DAMAGE
+local UTILITY  = RCC.PotionType.UTILITY
+local FLEETING = RCC.PotionVariant.FLEETING
+
+RCC.db.potionItems = {
+    {
+        -- Lightfused Mana Potion
+        type = MANA,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 245917, variant = FLEETING, q = 2 }, -- Fleeting Lightfused Mana Potion
+            { itemID = 245916, variant = FLEETING, q = 1 }, -- Fleeting Lightfused Mana Potion
+            { itemID = 241300, q = 2 }, -- Lightfused Mana Potion
+            { itemID = 241301, q = 1 }, -- Lightfused Mana Potion
+        },
+    },
+    {
+        -- Light's Potential
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 245897, variant = FLEETING }, -- Fleeting Light's Potential
+            { itemID = 245898, variant = FLEETING }, -- Fleeting Light's Potential
+            { itemID = 241308 }, -- Light's Potential
+            { itemID = 241309 }, -- Light's Potential
+        },
+    },
+    {
+        -- Draught of Rampant Abandon
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 245910, variant = FLEETING }, -- Fleeting Draught of Rampant Abandon
+            { itemID = 245911, variant = FLEETING }, -- Fleeting Draught of Rampant Abandon
+            { itemID = 241292 }, -- Draught of Rampant Abandon
+            { itemID = 241293 }, -- Draught of Rampant Abandon
+        },
+    },
+    {
+        -- Potion of Recklessness
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 245902, variant = FLEETING }, -- Fleeting Potion of Recklessness
+            { itemID = 245903, variant = FLEETING }, -- Fleeting Potion of Recklessness
+            { itemID = 241288 }, -- Potion of Recklessness
+            { itemID = 241289 }, -- Potion of Recklessness
+        },
+    },
+    {
+        -- Potion of Zealotry
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 245900, variant = FLEETING }, -- Fleeting Potion of Zealotry
+            { itemID = 245901, variant = FLEETING }, -- Fleeting Potion of Zealotry
+            { itemID = 241296 }, -- Potion of Zealotry
+            { itemID = 241297 }, -- Potion of Zealotry
+        },
+    },
+    {
+        -- Light's Preservation
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 241286 }, -- Light's Preservation
+            { itemID = 241287 }, -- Light's Preservation
+        },
+    },
+    {
+        -- Potion of Devoured Dreams
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 245904, variant = FLEETING }, -- Fleeting Potion of Devoured Dreams
+            { itemID = 245905, variant = FLEETING }, -- Fleeting Potion of Devoured Dreams
+            { itemID = 241294 }, -- Potion of Devoured Dreams
+            { itemID = 241295 }, -- Potion of Devoured Dreams
+        },
+    },
+    {
+        -- Void-Shrouded Tincture (Invisibility)
+        type = UTILITY,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 241302 }, -- Void-Shrouded Tincture
+            { itemID = 241303 }, -- Void-Shrouded Tincture
+        },
+    },
+    {
+        -- Enlightenment Tonic (Slow Fall)
+        type = UTILITY,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            { itemID = 241338 }, -- Enlightenment Tonic
+            { itemID = 241339 }, -- Enlightenment Tonic
+        },
+    },
+    {
+        -- Tempered Potion
+        type = DAMAGE,
+        xpac = RCC.THE_WAR_WITHIN,
+        items = {
+            { itemID = 212969, variant = FLEETING }, -- Fleeting Tempered Potion
+            { itemID = 212970, variant = FLEETING }, -- Fleeting Tempered Potion
+            { itemID = 212971, variant = FLEETING }, -- Fleeting Tempered Potion
+            { itemID = 212263 }, -- Tempered Potion
+            { itemID = 212264 }, -- Tempered Potion
+            { itemID = 212265 }, -- Tempered Potion
+        },
+    },
+    {
+        -- Potion of Unwavering Focus
+        type = DAMAGE,
+        xpac = RCC.THE_WAR_WITHIN,
+        items = {
+            { itemID = 212963, variant = FLEETING }, -- Fleeting Potion of Unwavering Focus
+            { itemID = 212964, variant = FLEETING }, -- Fleeting Potion of Unwavering Focus
+            { itemID = 212965, variant = FLEETING }, -- Fleeting Potion of Unwavering Focus
+            { itemID = 212257 }, -- Potion of Unwavering Focus
+            { itemID = 212258 }, -- Potion of Unwavering Focus
+            { itemID = 212259 }, -- Potion of Unwavering Focus
+        },
+    },
+    {
+        -- Frontline Potion
+        type = UTILITY,
+        xpac = RCC.THE_WAR_WITHIN,
+        items = {
+            { itemID = 212966, variant = FLEETING }, -- Fleeting Frontline Potion
+            { itemID = 212967, variant = FLEETING }, -- Fleeting Frontline Potion
+            { itemID = 212968, variant = FLEETING }, -- Fleeting Frontline Potion
+            { itemID = 212260 }, -- Frontline Potion
+            { itemID = 212261 }, -- Frontline Potion
+            { itemID = 212262 }, -- Frontline Potion
+        },
+    },
+}
+
+-- Derived lookup tables. Keep edits in `potionItems` above; these are built
+-- once at load time so existing bag scans can still use a flat item ID list
+-- while selection code can quickly resolve an item ID back to its family data.
+RCC.db.potionItemIDs = {}
+RCC.db.potionItemData = {}
+
+for familyIndex = 1, #RCC.db.potionItems do
+    local family = RCC.db.potionItems[familyIndex]
+    local items = family.items or {}
+
+    -- Store the ordered family position for fallback priority decisions.
+    family.index = familyIndex
+
+    for itemIndex = 1, #items do
+        local item = items[itemIndex]
+        local itemID = item.itemID
+
+        -- Copy family-level metadata onto each item so candidate selection only
+        -- needs the item ID after a bag scan.
+        item.familyIndex = familyIndex
+        item.itemIndex = itemIndex
+        item.type = family.type
+        item.xpac = item.xpac or family.xpac
+
+        -- Preserve the old flat-list API and add a reverse itemID -> data map.
+        RCC.db.potionItemIDs[#RCC.db.potionItemIDs + 1] = itemID
+        RCC.db.potionItemData[itemID] = item
+    end
+end
