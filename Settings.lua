@@ -140,15 +140,17 @@ local function createMacrosSettingsFrame()
         "Managed macros are ordinary WoW macros containing a marker like "
         .. "#RCC:combatpot. RCC keeps the marker, adds an automated comment, "
         .. "and rewrites the generated /use or /cast lines when bags, "
-        .. "cached selections, equipment, spells, zone, or macros change.\n\n"
+        .. "preferred selections, equipment, spells, zone, or macros change.\n\n"
         .. "Food, flask, augment, Vantus, and weapon enchant macros follow "
-        .. "the same cached selection used by the consumable frame. The "
-        .. "cache changes when you choose or use a cached consumable from "
-        .. "RCC's consumable buttons. If a cached item is out of bags, RCC "
+        .. "the same preferred selection used by the consumable frame. The "
+        .. "preference changes when you choose or use a preferred consumable "
+        .. "from RCC's consumable buttons. If a preferred item is out of bags, RCC "
         .. "still writes that item ID into the macro so the action bar shows "
-        .. "it as unavailable. Damage potions and healthstones use the "
-        .. "current available item list. The healing potion macro also "
-        .. "casts Recuperate out of combat.",
+        .. "it as unavailable. Combat and healing potion macros use the "
+        .. "preferred potion when available and otherwise use the best "
+        .. "available potion. The healing potion macro also casts "
+        .. "Recuperate out of combat. Healthstones use the current available "
+        .. "item list.",
         600
     )
     body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)

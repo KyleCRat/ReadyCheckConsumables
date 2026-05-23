@@ -9,6 +9,7 @@ local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 
 local CacheKey = RCC.ConsumableItemCacheKey
+local HEALING_POTION = CacheKey.HEALING_POTION
 
 function HealingPotion.CollectItemsInBags()
     return ItemCandidates.CollectAvailableFromList(
@@ -17,27 +18,48 @@ function HealingPotion.CollectItemsInBags()
     )
 end
 
-function HealingPotion.GetItemCandidate(includeUnavailableCached)
-    local potionCandidates = HealingPotion.CollectItemsInBags()
-    local cachedPotionCandidate
+local function createCachedPotionCandidate(cachedItemID)
+    return ItemCandidates.CreateFromList(
+        RCC.db.healingPotionItemIDs,
+        cachedItemID,
+        ItemCandidates.BAGS_ONLY
+    )
+end
 
-    if includeUnavailableCached then
-        cachedPotionCandidate = ItemCandidates.CreateFromList(
-            RCC.db.healingPotionItemIDs,
-            ItemCache.Get(CacheKey.HEALING_POTION),
-            ItemCandidates.BAGS_ONLY
-        )
+local function selectPotionCandidate(potionCandidates)
+    local cachedItemID = ItemCache.Get(HEALING_POTION)
+    local cachedPotionCandidate = ItemCache.FindCandidate(
+        potionCandidates,
+        cachedItemID
+    )
+
+    -- Macro selection uses the cached potion when it is available, then falls
+    -- back to list order from Data/HealingItems.lua.
+    return cachedPotionCandidate or potionCandidates[1]
+end
+
+local function getDisplayPotionCandidate(selectedPotionCandidate,
+                                         includeUnavailableCached)
+    if not includeUnavailableCached then
+        return selectedPotionCandidate
     end
 
-    local potionCandidate = ItemCache.SelectCandidate(
-        CacheKey.HEALING_POTION,
-        potionCandidates,
-        cachedPotionCandidate
+    -- Frame display preserves the cached preference even when its count is 0.
+    return createCachedPotionCandidate(ItemCache.Get(HEALING_POTION))
+        or selectedPotionCandidate
+end
+
+function HealingPotion.GetItemCandidate(includeUnavailableCached)
+    local potionCandidates = HealingPotion.CollectItemsInBags()
+    local selectedPotionCandidate = selectPotionCandidate(potionCandidates)
+    local displayPotionCandidate = getDisplayPotionCandidate(
+        selectedPotionCandidate,
+        includeUnavailableCached
     )
     local outOfCachedPotion = ItemCache.IsUnavailableCachedCandidate(
-        CacheKey.HEALING_POTION,
-        potionCandidate
+        HEALING_POTION,
+        displayPotionCandidate
     )
 
-    return potionCandidate, potionCandidates, outOfCachedPotion
+    return displayPotionCandidate, potionCandidates, outOfCachedPotion
 end

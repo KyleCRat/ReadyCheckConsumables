@@ -47,26 +47,28 @@ RCC.db.healingPotionSpellIDs = {
 --------------------------------------------------------------------------------
 --- Healing Potion Item IDs
 --- Used to check player inventory for healing potions.
---- All items are summed for total count.
+--- Keep this list in priority order from strongest to weakest. If the cached
+--- healing potion is unavailable, the macro falls back to the first available
+--- item found from top to bottom.
 --------------------------------------------------------------------------------
 
 RCC.db.healingPotionItemIDs = {
     -- 12.0.0 - Full duration
-    241304, 241305, -- Silvermoon Health Potion
-    241298, 241299, -- Amani Extract
-    241306, 241307, -- Refreshing Serum
+    241304, 241305, -- Q2, Q1 Silvermoon Health Potion
+    241298, 241299, -- Q2, Q1 Amani Extract
+    241306, 241307, -- Q2, Q1 Refreshing Serum
 
     -- 11.2.0 - Fleeting
     244849,                 -- Fleeting Invigorating Healing Potion
 
     -- 11.2.0 - Full duration
-    244835, 244838, 244839, -- Invigorating Healing Potion
+    244835, 244838, 244839, -- Q3, Q2, Q1 Invigorating Healing Potion
 
     -- 11.0.0 - Fleeting
-    212948, 212949, 212950, -- Fleeting Cavedweller's Delight
-    212942, 212943, 212944, -- Fleeting Algari Healing Potion
+    212948, 212949, 212950, -- Q3, Q2, Q1 Fleeting Cavedweller's Delight
+    212942, 212943, 212944, -- Q3, Q2, Q1 Fleeting Algari Healing Potion
 
     -- 11.0.0 - Full duration
-    212242, 212243, 212244, -- Cavedweller's Delight
-    211878, 211879, 211880, -- Algari Healing Potion
+    212242, 212243, 212244, -- Q3, Q2, Q1 Cavedweller's Delight
+    211878, 211879, 211880, -- Q3, Q2, Q1 Algari Healing Potion
 }
