@@ -1,70 +1,75 @@
 local _, RCC = ...
 
+-- Group keys are readable equipment/enchant groups. Detection code can map
+-- these groups to one or more inventory slot IDs later.
+-- Row keys should be enchant IDs from the item link's enchantID field.
+-- Midnight enchant IDs and icons still need to be collected, so those values
+-- are marked with unique FIXME strings for now.
+
 RCC.Data.AddEnchantItems({
     boots = {
-        244009, -- Farstrider's Hunt
-        243953, -- Lynx's Dexterity
-        243983, -- Shaladrassil's Roots
+        ["FIXME_ENCHANT_ID_FARSTRIDERS_HUNT_R2"] = { item = 244009, icon = "FIXME_ICON", q = 2 }, -- Farstrider's Hunt
+        ["FIXME_ENCHANT_ID_FARSTRIDERS_HUNT_R1"] = { item = 244008, icon = "FIXME_ICON", q = 1 }, -- Farstrider's Hunt
+        ["FIXME_ENCHANT_ID_LYNXS_DEXTERITY_R2"] = { item = 243953, icon = "FIXME_ICON", q = 2 }, -- Lynx's Dexterity
+        ["FIXME_ENCHANT_ID_SHALADRASSILS_ROOTS_R2"] = { item = 243983, icon = "FIXME_ICON", q = 2 }, -- Shaladrassil's Roots
     },
     chest = {
-        243947, -- Mark of Nalorakk
-        244003, -- Mark of the Magister
-        243975, -- Mark of the Rootwarden
-        243977, -- Mark of the Worldsoul
+        ["FIXME_ENCHANT_ID_MARK_OF_NALORAKK_R2"] = { item = 243947, icon = "FIXME_ICON", q = 2 }, -- Mark of Nalorakk
+        ["FIXME_ENCHANT_ID_MARK_OF_THE_MAGISTER_R2"] = { item = 244003, icon = "FIXME_ICON", q = 2 }, -- Mark of the Magister
+        ["FIXME_ENCHANT_ID_MARK_OF_THE_ROOTWARDEN_R2"] = { item = 243975, icon = "FIXME_ICON", q = 2 }, -- Mark of the Rootwarden
+        ["FIXME_ENCHANT_ID_MARK_OF_THE_WORLDSOUL_R2"] = { item = 243977, icon = "FIXME_ICON", q = 2 }, -- Mark of the Worldsoul
     },
     helm = {
-        243979, -- Blessing of Speed
-        243981, -- Empowered Blessing of Speed
-        244007, -- Empowered Rune of Avoidance
-        243949, -- Hex of Leeching
-        244005, -- Rune of Avoidance
+        ["FIXME_ENCHANT_ID_BLESSING_OF_SPEED_R2"] = { item = 243979, icon = "FIXME_ICON", q = 2 }, -- Blessing of Speed
+        ["FIXME_ENCHANT_ID_EMPOWERED_BLESSING_OF_SPEED_R2"] = { item = 243981, icon = "FIXME_ICON", q = 2 }, -- Empowered Blessing of Speed
+        ["FIXME_ENCHANT_ID_EMPOWERED_RUNE_OF_AVOIDANCE_R2"] = { item = 244007, icon = "FIXME_ICON", q = 2 }, -- Empowered Rune of Avoidance
+        ["FIXME_ENCHANT_ID_HEX_OF_LEECHING_R2"] = { item = 243949, icon = "FIXME_ICON", q = 2 }, -- Hex of Leeching
+        ["FIXME_ENCHANT_ID_RUNE_OF_AVOIDANCE_R2"] = { item = 244005, icon = "FIXME_ICON", q = 2 }, -- Rune of Avoidance
     },
     ring = {
-        243955, -- Amani Mastery
-        243957, -- Eyes of the Eagle
-        243987, -- Nature's Fury
-        243985, -- Nature's Wrath
-        244015, -- Silvermoon's Alacrity
-        244017, -- Silvermoon's Tenacity
-        244011, -- Thalassian Haste
-        244013, -- Thalassian Versatility
-        243959, -- Zul'jins Mastery
+        ["FIXME_ENCHANT_ID_AMANI_MASTERY_R2"] = { item = 243955, icon = "FIXME_ICON", q = 2 }, -- Amani Mastery
+        ["FIXME_ENCHANT_ID_EYES_OF_THE_EAGLE_R2"] = { item = 243957, icon = "FIXME_ICON", q = 2 }, -- Eyes of the Eagle
+        ["FIXME_ENCHANT_ID_NATURES_FURY_R2"] = { item = 243987, icon = "FIXME_ICON", q = 2 }, -- Nature's Fury
+        ["FIXME_ENCHANT_ID_NATURES_WRATH_R2"] = { item = 243985, icon = "FIXME_ICON", q = 2 }, -- Nature's Wrath
+        ["FIXME_ENCHANT_ID_SILVERMOONS_ALACRITY_R2"] = { item = 244015, icon = "FIXME_ICON", q = 2 }, -- Silvermoon's Alacrity
+        ["FIXME_ENCHANT_ID_SILVERMOONS_TENACITY_R2"] = { item = 244017, icon = "FIXME_ICON", q = 2 }, -- Silvermoon's Tenacity
+        ["FIXME_ENCHANT_ID_THALASSIAN_HASTE_R2"] = { item = 244011, icon = "FIXME_ICON", q = 2 }, -- Thalassian Haste
+        ["FIXME_ENCHANT_ID_THALASSIAN_VERSATILITY_R2"] = { item = 244013, icon = "FIXME_ICON", q = 2 }, -- Thalassian Versatility
+        ["FIXME_ENCHANT_ID_ZULJINS_MASTERY_R2"] = { item = 243959, icon = "FIXME_ICON", q = 2 }, -- Zul'jins Mastery
     },
     shoulder = {
-        243963, -- Akil'zon's Celerity
-        243991, -- Amirdrassil's Grace
-        243961, -- Flight of the Eagle
-        243989, -- Nature's Grace
-        244021, -- Silvermoon's Mending
-        244019, -- Thalassian Recovery
+        ["FIXME_ENCHANT_ID_AKILZONS_CELERITY_R2"] = { item = 243963, icon = "FIXME_ICON", q = 2 }, -- Akil'zon's Celerity
+        ["FIXME_ENCHANT_ID_AMIRDRASSILS_GRACE_R2"] = { item = 243991, icon = "FIXME_ICON", q = 2 }, -- Amirdrassil's Grace
+        ["FIXME_ENCHANT_ID_FLIGHT_OF_THE_EAGLE_R2"] = { item = 243961, icon = "FIXME_ICON", q = 2 }, -- Flight of the Eagle
+        ["FIXME_ENCHANT_ID_NATURES_GRACE_R2"] = { item = 243989, icon = "FIXME_ICON", q = 2 }, -- Nature's Grace
+        ["FIXME_ENCHANT_ID_SILVERMOONS_MENDING_R2"] = { item = 244021, icon = "FIXME_ICON", q = 2 }, -- Silvermoon's Mending
+        ["FIXME_ENCHANT_ID_THALASSIAN_RECOVERY_R2"] = { item = 244019, icon = "FIXME_ICON", q = 2 }, -- Thalassian Recovery
     },
     weapon = {
-        244029, -- Acuity of the Ren'dorei
-        244031, -- Arcane Mastery
-        243973, -- Berserker's Rage
-        244027, -- Flames of the Sin'dorei
-        243971, -- Jan'alai's Precision
-        243969, -- Strength of Halazzi
-        243999, -- Worldsoul Aegis
-        243997, -- Worldsoul Cradle
-        244001, -- Worldsoul Tenacity
+        ["FIXME_ENCHANT_ID_ACUITY_OF_THE_RENDOREI_R2"] = { item = 244029, icon = "FIXME_ICON", q = 2 }, -- Acuity of the Ren'dorei
+        ["FIXME_ENCHANT_ID_ARCANE_MASTERY_R2"] = { item = 244031, icon = "FIXME_ICON", q = 2 }, -- Arcane Mastery
+        ["FIXME_ENCHANT_ID_BERSERKERS_RAGE_R2"] = { item = 243973, icon = "FIXME_ICON", q = 2 }, -- Berserker's Rage
+        ["FIXME_ENCHANT_ID_FLAMES_OF_THE_SINDOREI_R2"] = { item = 244027, icon = "FIXME_ICON", q = 2 }, -- Flames of the Sin'dorei
+        ["FIXME_ENCHANT_ID_JANALAIS_PRECISION_R2"] = { item = 243971, icon = "FIXME_ICON", q = 2 }, -- Jan'alai's Precision
+        ["FIXME_ENCHANT_ID_STRENGTH_OF_HALAZZI_R2"] = { item = 243969, icon = "FIXME_ICON", q = 2 }, -- Strength of Halazzi
+        ["FIXME_ENCHANT_ID_WORLDSOUL_AEGIS_R2"] = { item = 243999, icon = "FIXME_ICON", q = 2 }, -- Worldsoul Aegis
+        ["FIXME_ENCHANT_ID_WORLDSOUL_CRADLE_R2"] = { item = 243997, icon = "FIXME_ICON", q = 2 }, -- Worldsoul Cradle
+        ["FIXME_ENCHANT_ID_WORLDSOUL_TENACITY_R2"] = { item = 244001, icon = "FIXME_ICON", q = 2 }, -- Worldsoul Tenacity
     },
     tool = {
-        243965, -- Amani Perception
-        243967, -- Amani Resourcefulness
-        243993, -- Haranir Finesse
-        243995, -- Haranir Multicrafting
-        244025, -- Ren'dorei Ingenuity
-        244023, -- Sin'dorei Deftness
+        ["FIXME_ENCHANT_ID_AMANI_PERCEPTION_R2"] = { item = 243965, icon = "FIXME_ICON", q = 2 }, -- Amani Perception
+        ["FIXME_ENCHANT_ID_AMANI_RESOURCEFULNESS_R2"] = { item = 243967, icon = "FIXME_ICON", q = 2 }, -- Amani Resourcefulness
+        ["FIXME_ENCHANT_ID_HARANIR_FINESSE_R2"] = { item = 243993, icon = "FIXME_ICON", q = 2 }, -- Haranir Finesse
+        ["FIXME_ENCHANT_ID_HARANIR_MULTICRAFTING_R2"] = { item = 243995, icon = "FIXME_ICON", q = 2 }, -- Haranir Multicrafting
+        ["FIXME_ENCHANT_ID_RENDOREI_INGENUITY_R2"] = { item = 244025, icon = "FIXME_ICON", q = 2 }, -- Ren'dorei Ingenuity
+        ["FIXME_ENCHANT_ID_SINDOREI_DEFTNESS_R2"] = { item = 244023, icon = "FIXME_ICON", q = 2 }, -- Sin'dorei Deftness
     },
-    spellthread = {
-        240155, -- Arcanoweave Spellthread
-        240133, -- Sunfire Silk Spellthread
-        240157, -- Bright Linen Spellthread
-    },
-    armorkit = {
-        244643, -- Blood Knight's Armor Kit
-        244641, -- Forest Hunter's Armor Kit
-        244645, -- Thalassian Scout Armor Kit
+    legs = {
+        ["FIXME_ENCHANT_ID_ARCANOWEAVE_SPELLTHREAD_R2"] = { item = 240155, icon = "FIXME_ICON", q = 2 }, -- Arcanoweave Spellthread
+        ["FIXME_ENCHANT_ID_SUNFIRE_SILK_SPELLTHREAD_R2"] = { item = 240133, icon = "FIXME_ICON", q = 2 }, -- Sunfire Silk Spellthread
+        ["FIXME_ENCHANT_ID_BRIGHT_LINEN_SPELLTHREAD_R2"] = { item = 240157, icon = "FIXME_ICON", q = 2 }, -- Bright Linen Spellthread
+        ["FIXME_ENCHANT_ID_BLOOD_KNIGHTS_ARMOR_KIT_R2"] = { item = 244643, icon = "FIXME_ICON", q = 2 }, -- Blood Knight's Armor Kit
+        ["FIXME_ENCHANT_ID_FOREST_HUNTERS_ARMOR_KIT_R2"] = { item = 244641, icon = "FIXME_ICON", q = 2 }, -- Forest Hunter's Armor Kit
+        ["FIXME_ENCHANT_ID_THALASSIAN_SCOUT_ARMOR_KIT_R2"] = { item = 244645, icon = "FIXME_ICON", q = 2 }, -- Thalassian Scout Armor Kit
     },
 })

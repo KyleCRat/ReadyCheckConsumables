@@ -36,7 +36,9 @@ function RCC.Data.AddWeaponEnchants(enchantIDs)
 end
 
 RCC.Data.AddWeaponEnchants({
-    -- Shaman Enchants (spellID = spell-based, not item-based)
+    ----------------------------------------------------------------------------
+    --- Shaman Enchants (spellID = spell-based, not item-based)
+    ---
     [5401] = { -- Windfury Weapon
         spellID = 33757,
         spellSlots = {
@@ -63,11 +65,9 @@ RCC.Data.AddWeaponEnchants({
         },
     },
 
-    -- Rogue poisons are intentionally not listed here. Testing with poisons
-    -- applied returned no GetWeaponEnchantInfo() weapon enchant IDs:
-    -- false nil nil nil false nil nil nil.
-
-    -- Paladin Lightsmith Enchants (spellID = spell-based, not item-based)
+    ----------------------------------------------------------------------------
+    --- Paladin Lightsmith Enchants (spellID = spell-based, not item-based)
+    ---
     [7143] = { -- Rite of Sanctification
         spellID = 433568,
         spellSlots = {

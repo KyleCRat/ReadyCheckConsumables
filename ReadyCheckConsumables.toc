@@ -25,6 +25,8 @@ Data/12_Midnight/Flasks.lua
 Data/12_Midnight/Cauldrons.lua
 Data/12_Midnight/Gems.lua
 Data/12_Midnight/Enchants.lua
+Data/11_TheWarWithin/Enchants.lua
+Data/10_Dragonflight/Enchants.lua
 Data/11_TheWarWithin/Flasks.lua
 Data/CombatPotions.lua
 Data/12_Midnight/CombatPotions.lua
