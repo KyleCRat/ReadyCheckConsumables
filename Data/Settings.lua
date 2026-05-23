@@ -3,15 +3,6 @@ local _, RCC = ...
 RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
---- Expansion Constants
---------------------------------------------------------------------------------
-
-local SHADOWLANDS    = 9
-local DRAGONFLIGHT   = 10
-local THE_WAR_WITHIN = 11
-local MIDNIGHT       = 12
-
---------------------------------------------------------------------------------
 --- Per-Expansion Settings
 --- Default icon overrides per expansion. Item selection lives in the
 --- data-specific lookup tables. The resolution loop below iterates
@@ -19,17 +10,17 @@ local MIDNIGHT       = 12
 --------------------------------------------------------------------------------
 
 RCC.settings = {
-    [SHADOWLANDS] = {
+    [RCC.SHADOWLANDS] = {
         augment       = { iconID = 134078 },
         armorKit      = { itemID = 3528447 },
     },
-    [DRAGONFLIGHT] = {},
-    [THE_WAR_WITHIN] = {
+    [RCC.DRAGONFLIGHT] = {},
+    [RCC.THE_WAR_WITHIN] = {
         augment       = { iconID = 4549102 },
         flask         = { iconID = 3566840 },
         vantusRune    = { iconID = 4638737 },
     },
-    [MIDNIGHT] = {
+    [RCC.MIDNIGHT] = {
         augment       = { iconID = 4549099 },
         flask         = { iconID = 7548902 },
         vantusRune    = { iconID = 5976918 },

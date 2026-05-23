@@ -8,15 +8,6 @@ RCC.db = RCC.db or {}
 --- Higher xpac = more current expansion.
 --------------------------------------------------------------------------------
 
-RCC.db.augmentXpacNames = {
-    [7]  = "Legion",
-    [8]  = "BfA",
-    [9]  = "SL",
-    [10] = "DF",
-    [11] = "TWW",
-    [12] = "MN",
-}
-
 RCC.db.augmentBuffIDs = {
     -- Midnight
     [1264426] = { xpac = 12, unlimited = false }, -- 12.0.0: Void-Touched Augment Rune
@@ -59,6 +50,11 @@ RCC.db.currentAugmentXpac = maxXpac
 --- Higher xpac wins. Within same xpac, higher priority wins.
 --- Unlimited runes are not consumed on use.
 --------------------------------------------------------------------------------
+
+-- TODO: Review selector logic, but I'm pretty sure these are correct.
+--
+-- Select highest xpac, highest priority, unless unlimited is favored in settings
+-- then select highest xpac highest priority unlimited over higher xpac unlimited.
 
 RCC.db.augmentItemIDs = {
     -- Midnight

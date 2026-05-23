@@ -11,6 +11,7 @@ embeds.xml
 Functions.lua
 UI.lua
 FrameAnimations.lua
+Data/Globals.lua
 Data/Food.lua
 Data/Flasks.lua
 Data/Potions.lua

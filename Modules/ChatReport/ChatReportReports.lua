@@ -167,7 +167,7 @@ local function reportAugments(toChat)
                 hasAugment = true
 
                 if isOutdatedAugment(augmentData) then
-                    local xpacName = db.augmentXpacNames[augmentData.xpac]
+                    local xpacName = RCC.xpacShortNames[augmentData.xpac]
                         or tostring(augmentData.xpac)
                     lowXpac[#lowXpac + 1] = format(
                         "%s(%s)",
