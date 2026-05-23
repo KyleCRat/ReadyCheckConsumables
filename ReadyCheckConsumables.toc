@@ -13,8 +13,14 @@ UI.lua
 FrameAnimations.lua
 Data/Globals.lua
 Data/Food.lua
+Data/Feasts.lua
 Data/Flasks.lua
+Data/Cauldrons.lua
+Data/Midnight/Flasks.lua
+Data/TheWarWithin/Flasks.lua
 Data/CombatPotions.lua
+Data/Midnight/CombatPotions.lua
+Data/TheWarWithin/CombatPotions.lua
 Data/AugmentRunes.lua
 Data/VantusRunes.lua
 Data/RaidBuffs.lua

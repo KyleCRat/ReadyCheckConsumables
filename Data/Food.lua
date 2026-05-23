@@ -18,21 +18,6 @@ local FOOD_AURA_TYPE = FoodAuras.Type
 --- "Hearty" variants are the same food but persist through death.
 --------------------------------------------------------------------------------
 
-RCC.db.feastItemIDs = {
-    242745, -- [Epic] Hearty Blooming Feast       | 98 Stam, 65 Primary Stat
-    266996, -- [Epic] Hearty Harandar Celebration | 98 Stam, 65 Primary Stat
-    242744, -- [Epic] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
-    266985, -- [Epic] Hearty Silvermoon Parade    | 98 Stam, 65 Primary Stat
-    266986, -- [Rare] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
-
-    242273, -- [Rare] Blooming Feast    | 98 Stam, 65 Highest Secondary Stat
-    242272, -- [Rare] Quel'dorei Medley | 98 Stam, 65 Highest Secondary Stat
-
-    255846, -- [Rare] Harandar Celebration   | 98 Stam, 50 Primary Stat
-    255845, -- [Rare] Silvermoon Parade      | 98 Stam, 50 Primary Stat
-    255847, -- [Rare] Impossibly Royal Roast | 98 Stam, 50 Primary Stat
-}
-
 RCC.db.foodItemIDs = {
     242747, -- [Rare] Hearty Royal Roast            | 50 Primary Stat
     268679, -- [Rare] Hearty Impossibly Royal Roast | 50 Primary Stat
@@ -114,7 +99,7 @@ RCC.db.foodItemIDs = {
     242284, -- [Rare] Void-Kissed Fish Rolls        | 59 Versatility
 }
 
-RCC.db.manaItemIDs = {
+RCC.db.drinkItemIDs = {
     242297, -- [Uncm] Mana Lily Tea                 | Mana
     242298, -- [Uncm] Argentleaf Tea                | Mana
     242299, -- [Uncm] Sanguithorn Tea               | Mana

@@ -63,154 +63,35 @@ RCC.FlaskVariant = RCC.FlaskVariant or {
     FLEETING = "fleeting",
 }
 
-local FLEETING = RCC.FlaskVariant.FLEETING
-
-RCC.db.flaskItems = {
-    {
-        -- Flask of Thalassian Resistance
-        xpac = RCC.MIDNIGHT,
-        items = {
-            { itemID = 245927, variant = FLEETING, q = 2 },
-            { itemID = 245926, variant = FLEETING, q = 1 },
-            { itemID = 241320, q = 2 },
-            { itemID = 241321, q = 1 },
-        },
-    },
-    {
-        -- Flask of the Magisters
-        xpac = RCC.MIDNIGHT,
-        items = {
-            { itemID = 245932, variant = FLEETING, q = 2 },
-            { itemID = 245933, variant = FLEETING, q = 1 },
-            { itemID = 241322, q = 2 },
-            { itemID = 241323, q = 1 },
-        },
-    },
-    {
-        -- Flask of the Blood Knights
-        xpac = RCC.MIDNIGHT,
-        items = {
-            { itemID = 245930, variant = FLEETING, q = 2 },
-            { itemID = 245931, variant = FLEETING, q = 1 },
-            { itemID = 241324, q = 2 },
-            { itemID = 241325, q = 1 },
-        },
-    },
-    {
-        -- Flask of the Shattered Sun
-        xpac = RCC.MIDNIGHT,
-        items = {
-            { itemID = 245928, variant = FLEETING, q = 2 },
-            { itemID = 245929, variant = FLEETING, q = 1 },
-            { itemID = 241326, q = 2 },
-            { itemID = 241327, q = 1 },
-        },
-    },
-    {
-        -- Flask of Alchemical Chaos
-        xpac = RCC.THE_WAR_WITHIN,
-        items = {
-            { itemID = 212741, variant = FLEETING, q = 3 },
-            { itemID = 212740, variant = FLEETING, q = 2 },
-            { itemID = 212739, variant = FLEETING, q = 1 },
-            { itemID = 212283, q = 3 },
-            { itemID = 212282, q = 2 },
-            { itemID = 212281, q = 1 },
-        },
-    },
-    {
-        -- Flask of Saving Graces
-        xpac = RCC.THE_WAR_WITHIN,
-        items = {
-            { itemID = 212747, variant = FLEETING, q = 3 },
-            { itemID = 212746, variant = FLEETING, q = 2 },
-            { itemID = 212745, variant = FLEETING, q = 1 },
-            { itemID = 212301, q = 3 },
-            { itemID = 212300, q = 2 },
-            { itemID = 212299, q = 1 },
-        },
-    },
-    {
-        -- Flask of Tempered Aggression
-        xpac = RCC.THE_WAR_WITHIN,
-        items = {
-            { itemID = 212728, variant = FLEETING, q = 3 },
-            { itemID = 212727, variant = FLEETING, q = 2 },
-            { itemID = 212725, variant = FLEETING, q = 1 },
-            { itemID = 212271, q = 3 },
-            { itemID = 212270, q = 2 },
-            { itemID = 212269, q = 1 },
-        },
-    },
-    {
-        -- Flask of Tempered Swiftness
-        xpac = RCC.THE_WAR_WITHIN,
-        items = {
-            { itemID = 212731, variant = FLEETING, q = 3 },
-            { itemID = 212730, variant = FLEETING, q = 2 },
-            { itemID = 212729, variant = FLEETING, q = 1 },
-            { itemID = 212274, q = 3 },
-            { itemID = 212273, q = 2 },
-            { itemID = 212272, q = 1 },
-        },
-    },
-    {
-        -- Flask of Tempered Mastery
-        xpac = RCC.THE_WAR_WITHIN,
-        items = {
-            { itemID = 212738, variant = FLEETING, q = 3 },
-            { itemID = 212736, variant = FLEETING, q = 2 },
-            { itemID = 212735, variant = FLEETING, q = 1 },
-            { itemID = 212280, q = 3 },
-            { itemID = 212279, q = 2 },
-            { itemID = 212278, q = 1 },
-        },
-    },
-    {
-        -- Flask of Tempered Versatility
-        xpac = RCC.THE_WAR_WITHIN,
-        items = {
-            { itemID = 212734, variant = FLEETING, q = 3 },
-            { itemID = 212733, variant = FLEETING, q = 2 },
-            { itemID = 212732, variant = FLEETING, q = 1 },
-            { itemID = 212277, q = 3 },
-            { itemID = 212276, q = 2 },
-            { itemID = 212275, q = 1 },
-        },
-    },
-}
-
--- Derived lookup tables. Keep edits in `flaskItems` above; these are built
--- once at load time so bag scans can still use a flat item ID list while
--- selection code can quickly resolve an item ID back to its family data.
+-- Expansion files append their rows through AddFlaskItems so the rest of the
+-- addon can keep reading one combined set of flask tables.
 RCC.db.flaskItemIDs = {}
 RCC.db.flaskItemData = {}
+RCC.db.flaskItems = {}
 
-for familyIndex = 1, #RCC.db.flaskItems do
-    local family = RCC.db.flaskItems[familyIndex]
-    local items = family.items or {}
+RCC.Data = RCC.Data or {}
 
-    family.index = familyIndex
+function RCC.Data.AddFlaskItems(families)
+    if not families then return end
 
-    for itemIndex = 1, #items do
-        local item = items[itemIndex]
-        local itemID = item.itemID
+    for i = 1, #families do
+        local family = families[i]
+        local items = family.items or {}
+        local familyIndex = #RCC.db.flaskItems + 1
 
-        item.familyIndex = familyIndex
-        item.itemIndex = itemIndex
-        item.xpac = item.xpac or family.xpac
+        family.index = familyIndex
+        RCC.db.flaskItems[familyIndex] = family
 
-        RCC.db.flaskItemIDs[#RCC.db.flaskItemIDs + 1] = itemID
-        RCC.db.flaskItemData[itemID] = item
+        for itemIndex = 1, #items do
+            local item = items[itemIndex]
+            local itemID = item.itemID
+
+            item.familyIndex = familyIndex
+            item.itemIndex = itemIndex
+            item.xpac = item.xpac or family.xpac
+
+            RCC.db.flaskItemIDs[#RCC.db.flaskItemIDs + 1] = itemID
+            RCC.db.flaskItemData[itemID] = item
+        end
     end
 end
-
---------------------------------------------------------------------------------
---- Cauldron Item IDs (12.0.0 - Midnight)
---- Stored for future use. Not currently tracked by the addon.
---------------------------------------------------------------------------------
-
-RCC.db.cauldronItemIDs = {
-    241284, 241285, -- Voidlight Potion Cauldron
-    241318, 241319, -- Cauldron of Sin'dorei Flasks
-}
