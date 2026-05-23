@@ -2,6 +2,7 @@ local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
 local State = RCC.ConsumableFrameButtonState
+local ActionType = RCC.ConsumableActionType
 local GetItemInfo = C_Item.GetItemInfo
 local GetSpellInfo = C_Spell.GetSpellInfo
 local GetSpellLink = C_Spell.GetSpellLink
@@ -55,10 +56,8 @@ local function addClickHint(button)
 
     local action = state.action
 
-    local actionType = RCC.ConsumableActionType
-
     if not action
-        or (actionType and action.type == actionType.ITEM_CACHE_SELECT)
+        or action.type == ActionType.ITEM_CACHE_SELECT
     then
         return
     end

@@ -1,9 +1,5 @@
 # TODO
 
-## Fixes
-
-- Please review the [@ConsumableFrameTooltips.lua (56:64)](file:///D:/World%20of%20Warcraft/_retail_/Interface/AddOns/ReadyCheckConsumables/Modules/ConsumableFrame/ConsumableFrameTooltips.lua#L56:64) action type circular depency, can we fix this with load order rather than hiding circular depency via a real time load?
-
 ## Review
 - Review consumable priority/data structures before extracting shared selector
   helpers. Combat potions and flasks now use family/variant metadata, but wait
