@@ -105,10 +105,10 @@ local function vantusAction()
     )
 end
 
-local function damagePotionAction()
+local function combatPotionAction()
     return itemAction(
-        Consumables.DamagePotion.GetItemCandidate(),
-        CacheKey.DAMAGE_POTION
+        Consumables.CombatPotion.GetItemCandidate(),
+        CacheKey.COMBAT_POTION
     )
 end
 
@@ -204,12 +204,12 @@ local MACRO_DEFINITIONS = {
         defaultIcon = function() return RCC.db.vantusIconID end,
     },
     {
-        key = "dmgpot",
-        label = "Damage Potion",
-        macroName = "RCC Dmg Pot",
-        description = "Uses the cached damage potion when available, otherwise the first available damage potion.",
-        getAction = damagePotionAction,
-        defaultIcon = function() return RCC.db.potionIconID end,
+        key = "combatpot",
+        label = "Combat Potion",
+        macroName = "RCC Combat Pot",
+        description = "Uses the cached combat potion when available, otherwise the preferred available combat potion.",
+        getAction = combatPotionAction,
+        defaultIcon = function() return RCC.db.combatPotionIconID end,
     },
     {
         key = "healpot",

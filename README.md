@@ -12,7 +12,7 @@ A row of icons appears on the ready check frame showing your own consumable stat
 - **Eating indicator** — cooldown swipe on the food icon while eating, clears when Well Fed applies
 - **Mainhand / Offhand Oil** — weapon enchant detection for both slots
 - **Healthstone** — inventory count (includes Demonic Healthstone)
-- **Damage Potion / Healing Potion** — inventory count
+- **Combat Potion / Healing Potion** — inventory count
 - **Vantus Rune** — raid-only, detects the correct rune for the current instance
 - Click-to-use buttons for food, flasks, oils, augment runes, and vantus runes
 - Glow highlights when a consumable is missing or about to expire

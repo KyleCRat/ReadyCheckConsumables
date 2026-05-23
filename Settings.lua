@@ -25,7 +25,7 @@ local DEFAULTS = {
     icon_mhTempWeaponEnchant = true,
     icon_ohTempWeaponEnchant = true,
     icon_healthstone         = true,
-    icon_dmgPotion           = true,
+    icon_combatPotion        = true,
     icon_healPotion          = true,
     icon_recuperate          = false,
     icon_augment             = true,
@@ -138,7 +138,7 @@ local function createMacrosSettingsFrame()
         frame,
         GameFontHighlight,
         "Managed macros are ordinary WoW macros containing a marker like "
-        .. "#RCC:dmgpot. RCC keeps the marker, adds an automated comment, "
+        .. "#RCC:combatpot. RCC keeps the marker, adds an automated comment, "
         .. "and rewrites the generated /use or /cast lines when bags, "
         .. "cached selections, equipment, spells, zone, or macros change.\n\n"
         .. "Food, flask, augment, Vantus, and weapon enchant macros follow "
@@ -468,7 +468,7 @@ local function registerPanel()
         { "icon_mhTempWeaponEnchant", "MH Weapon Enchant" },
         { "icon_ohTempWeaponEnchant", "OH Weapon Enchant" },
         { "icon_healthstone", "Healthstone"    },
-        { "icon_dmgPotion",   "Damage Potion"  },
+        { "icon_combatPotion", "Combat Potion" },
         { "icon_healPotion",  "Healing Potion" },
         { "icon_recuperate",  "Recuperate"     },
         { "icon_augment",     "Augment Rune"   },

@@ -98,28 +98,28 @@ RCC.db.potionBuffIDs = {
 }
 
 --------------------------------------------------------------------------------
---- Potion Item IDs
---- `potionItems` is the editable source of truth for potion families. Family
---- order controls fallback order; item order inside a family controls priority
---- when quality metadata is incomplete.
+--- Combat Potion Item IDs
+--- `combatPotionItems` is the editable source of truth for combat potion
+--- families. Family order controls fallback order; item order inside a family
+--- controls priority when quality metadata is incomplete.
 --------------------------------------------------------------------------------
 
-RCC.PotionType = RCC.PotionType or {
+RCC.CombatPotionType = RCC.CombatPotionType or {
     MANA    = "mana_potion",
     DAMAGE  = "damage_potion",
     UTILITY = "utility_potion",
 }
 
-RCC.PotionVariant = RCC.PotionVariant or {
+RCC.CombatPotionVariant = RCC.CombatPotionVariant or {
     FLEETING = "fleeting",
 }
 
-local MANA     = RCC.PotionType.MANA
-local DAMAGE   = RCC.PotionType.DAMAGE
-local UTILITY  = RCC.PotionType.UTILITY
-local FLEETING = RCC.PotionVariant.FLEETING
+local MANA     = RCC.CombatPotionType.MANA
+local DAMAGE   = RCC.CombatPotionType.DAMAGE
+local UTILITY  = RCC.CombatPotionType.UTILITY
+local FLEETING = RCC.CombatPotionVariant.FLEETING
 
-RCC.db.potionItems = {
+RCC.db.combatPotionItems = {
     {
         -- Lightfused Mana Potion
         type = MANA,
@@ -254,14 +254,15 @@ RCC.db.potionItems = {
     },
 }
 
--- Derived lookup tables. Keep edits in `potionItems` above; these are built
--- once at load time so existing bag scans can still use a flat item ID list
--- while selection code can quickly resolve an item ID back to its family data.
-RCC.db.potionItemIDs = {}
-RCC.db.potionItemData = {}
+-- Derived lookup tables. Keep edits in `combatPotionItems` above; these are
+-- built once at load time so existing bag scans can still use a flat item ID
+-- list while selection code can quickly resolve an item ID back to its family
+-- data.
+RCC.db.combatPotionItemIDs = {}
+RCC.db.combatPotionItemData = {}
 
-for familyIndex = 1, #RCC.db.potionItems do
-    local family = RCC.db.potionItems[familyIndex]
+for familyIndex = 1, #RCC.db.combatPotionItems do
+    local family = RCC.db.combatPotionItems[familyIndex]
     local items = family.items or {}
 
     -- Store the ordered family position for fallback priority decisions.
@@ -279,7 +280,7 @@ for familyIndex = 1, #RCC.db.potionItems do
         item.xpac = item.xpac or family.xpac
 
         -- Preserve the old flat-list API and add a reverse itemID -> data map.
-        RCC.db.potionItemIDs[#RCC.db.potionItemIDs + 1] = itemID
-        RCC.db.potionItemData[itemID] = item
+        RCC.db.combatPotionItemIDs[#RCC.db.combatPotionItemIDs + 1] = itemID
+        RCC.db.combatPotionItemData[itemID] = item
     end
 end

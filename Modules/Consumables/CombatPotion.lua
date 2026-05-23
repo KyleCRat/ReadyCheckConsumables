@@ -1,17 +1,16 @@
 local _, RCC = ...
 
 RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.DamagePotion = RCC.Consumables.DamagePotion or {}
+RCC.Consumables.CombatPotion = RCC.Consumables.CombatPotion or {}
 
-local DamagePotion = RCC.Consumables.DamagePotion
+local CombatPotion = RCC.Consumables.CombatPotion
 
--- This module is still named DamagePotion because that is the existing frame
--- button/API name, but it now owns the shared-cooldown potion button. That
--- button can show and cache damage, mana, and utility potions from the flyout.
+-- This module owns the shared-cooldown combat potion button. That button can
+-- show and cache damage, mana, and utility potions from the flyout.
 --
 -- Potion type is only used after the player has cached a preferred potion. Once
 -- a type is cached, automatic fallback stays within that type so a selected
--- damage potion never falls through to a mana or utility potion, and vice versa.
+-- damage-family potion never falls through to mana or utility, and vice versa.
 -- Utility potion families are stricter: they only fallback inside the cached
 -- family because different utility families can do completely different things.
 -- When the frame asks to include unavailable cached items, the primary button
@@ -23,17 +22,13 @@ local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
 
 local CacheKey = RCC.ConsumableItemCacheKey
-local UTILITY = RCC.PotionType.UTILITY
-local FLEETING = RCC.PotionVariant.FLEETING
+local UTILITY = RCC.CombatPotionType.UTILITY
+local FLEETING = RCC.CombatPotionVariant.FLEETING
 local NO_ORDER = 999999
 
--- TODO: Consider renaming this module once the shared-cooldown potion button
--- work settles. This file handles damage, mana, and utility potion types;
--- healing potions stay separate because they have their own cooldown and
--- simpler selection rules.
-
 -- Higher priority wins. Ties are broken by the family and item order from
--- Data/Potions.lua, which keeps the selection rules editable in the data table.
+-- Data/CombatPotions.lua, which keeps the selection rules editable in the data
+-- table.
 local Priority = {
     SAME_FAMILY_FLEETING = 5,
     CACHED_ITEM = 4,
@@ -44,8 +39,8 @@ local Priority = {
 
 local function getPotionData(itemID)
     return itemID
-        and RCC.db.potionItemData
-        and RCC.db.potionItemData[itemID]
+        and RCC.db.combatPotionItemData
+        and RCC.db.combatPotionItemData[itemID]
 end
 
 local function addPotionData(candidate)
@@ -62,7 +57,7 @@ end
 
 local function collectPotionCandidatesInBags()
     local candidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.potionItemIDs,
+        RCC.db.combatPotionItemIDs,
         ItemCandidates.BAGS_ONLY
     )
 
@@ -154,7 +149,7 @@ local function createCachedCandidate(context)
     if not context.cachedData then return end
 
     return addPotionData(ItemCandidates.CreateFromList(
-        RCC.db.potionItemIDs,
+        RCC.db.combatPotionItemIDs,
         context.cachedItemID,
         ItemCandidates.BAGS_ONLY
     ))
@@ -188,13 +183,13 @@ local function getPotionItemCandidate(cacheKey, includeUnavailableCached)
     return displayCandidate, candidates, outOfCachedItem
 end
 
-function DamagePotion.CollectItemsInBags()
+function CombatPotion.CollectItemsInBags()
     return collectPotionCandidatesInBags()
 end
 
-function DamagePotion.GetItemCandidate(includeUnavailableCached, cacheKey)
+function CombatPotion.GetItemCandidate(includeUnavailableCached, cacheKey)
     return getPotionItemCandidate(
-        cacheKey or CacheKey.DAMAGE_POTION,
+        cacheKey or CacheKey.COMBAT_POTION,
         includeUnavailableCached
     )
 end

@@ -1,9 +1,9 @@
 local _, RCC = ...
 
 RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.DamagePotion = RCC.Consumables.DamagePotion or {}
+RCC.Consumables.CombatPotion = RCC.Consumables.CombatPotion or {}
 
-local DamagePotion = RCC.Consumables.DamagePotion
+local CombatPotion = RCC.Consumables.CombatPotion
 
 local ButtonState = RCC.ConsumableFrameButtonState
 local Renderer = RCC.ConsumableFrameRenderer
@@ -11,9 +11,9 @@ local Renderer = RCC.ConsumableFrameRenderer
 local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 
-function DamagePotion.Update(button)
+function CombatPotion.Update(button)
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
-        DamagePotion.GetItemCandidate(true)
+        CombatPotion.GetItemCandidate(true)
     local inventoryItem = inventoryItemCandidate
         and inventoryItemCandidate.itemID
     local inventoryItemCount = inventoryItemCandidate
@@ -29,7 +29,7 @@ function DamagePotion.Update(button)
         buttonState.action = {
             type = ActionType.ITEM_CACHE_SELECT,
             itemID = inventoryItem,
-            cacheKey = CacheKey.DAMAGE_POTION,
+            cacheKey = CacheKey.COMBAT_POTION,
         }
     end
 
@@ -47,7 +47,7 @@ function DamagePotion.Update(button)
         inventoryItem,
         ActionType.ITEM_CACHE_SELECT,
         {
-            cacheKey = CacheKey.DAMAGE_POTION,
+            cacheKey = CacheKey.COMBAT_POTION,
             includeSingleChoice = outOfCachedPotion,
             suppressGlow = true,
         }

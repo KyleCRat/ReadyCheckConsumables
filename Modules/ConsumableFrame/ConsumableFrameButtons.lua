@@ -79,9 +79,9 @@ local BUTTON_DEFS = {
         defaultIcon = RCC.db.healthstoneIconID,
     },
     {
-        key           = "dmgpot",
-        settingKey    = "icon_dmgPotion",
-        defaultIcon   = RCC.db.potionIconID,
+        key           = "combatpot",
+        settingKey    = "icon_combatPotion",
+        defaultIcon   = RCC.db.combatPotionIconID,
         clickable     = true,
         tooltipAction = "select the preferred item for macro use",
     },

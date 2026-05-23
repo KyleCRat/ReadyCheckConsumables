@@ -314,7 +314,7 @@ Modules/ConsumableFrame/
     Healthstone.lua
     WeaponEnchant.lua
     Augment.lua
-    DamagePotion.lua
+    CombatPotion.lua
     HealingPotion.lua
     Vantus.lua
 ```
@@ -333,7 +333,7 @@ function ConsumableCoordinator.Update(frame)
     Flask.Update(buttons.flask, state)
     WeaponEnchant.Update(buttons, state)
     Augment.Update(buttons.augment, state)
-    DamagePotion.Update(buttons.dmgpot, state)
+    CombatPotion.Update(buttons.combatpot, state)
     HealingPotion.Update(buttons.healpot, state)
     Vantus.Update(buttons.vantus, state)
 
@@ -461,7 +461,7 @@ Create the `Modules/ConsumableFrame/Presenters/` folder and move the lowest
 risk update functions first:
 
 - `Healthstone.lua`
-- `DamagePotion.lua`
+- `CombatPotion.lua`
 - `HealingPotion.lua`
 
 These do not currently configure secure click actions and mostly render count,
@@ -723,7 +723,7 @@ Migration targets:
   while preserving unlimited-rune preference and ranking behavior.
 - `Vantus.lua` should use shared item candidates, shared aura lookup, and
   renderer-applied state while preserving current-raid layout gating.
-- `Healthstone.lua`, `DamagePotion.lua`, and `HealingPotion.lua` should remain
+- `Healthstone.lua`, `CombatPotion.lua`, and `HealingPotion.lua` should remain
   on renderer-applied state and should not reintroduce direct button mutation.
 - `WeaponEnchant.lua` should migrate last, after action descriptors can express
   item enchants, spell enchants, disable states, tooltip hints, independent

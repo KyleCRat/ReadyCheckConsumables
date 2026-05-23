@@ -24,7 +24,7 @@ RCC.settings = {
         augment       = { iconID = 4549099 },
         flask         = { iconID = 7548902 },
         vantusRune    = { iconID = 5976918 },
-        potion        = { iconID = 7548911 },
+        combatPotion  = { iconID = 7548911 },
         healingPotion = { iconID = 7548909 },
         weaponEnchant = { iconID = 7548985 },
     },
@@ -51,7 +51,7 @@ RCC.db.armorKitIconID       = 3566840
 RCC.db.healthstoneItemID    = 5512
 RCC.db.healthstoneIconID    = 538745
 RCC.db.raidBuffIconID       = 134400
-RCC.db.potionIconID         = 650640   -- trade_alchemy_potiona4
+RCC.db.combatPotionIconID   = 650640   -- trade_alchemy_potiona4
 RCC.db.healingPotionIconID  = 5931169  -- inv_flask_red
 RCC.db.recuperateIconID     = 136074
 RCC.db.vantusIconID         = 4638737  -- inv_10_inscription_glyphs_color5
@@ -60,7 +60,7 @@ local iconKeys = {
     { setting = "augment",       dbKey = "augmentIconID" },
     { setting = "food",          dbKey = "foodIconID" },
     { setting = "flask",         dbKey = "flaskIconID" },
-    { setting = "potion",        dbKey = "potionIconID" },
+    { setting = "combatPotion", dbKey = "combatPotionIconID" },
     { setting = "healingPotion", dbKey = "healingPotionIconID" },
     { setting = "recuperate",    dbKey = "recuperateIconID" },
     { setting = "weaponEnchant", dbKey = "weaponEnchantIconID" },

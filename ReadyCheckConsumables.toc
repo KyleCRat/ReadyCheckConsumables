@@ -14,7 +14,7 @@ FrameAnimations.lua
 Data/Globals.lua
 Data/Food.lua
 Data/Flasks.lua
-Data/Potions.lua
+Data/CombatPotions.lua
 Data/AugmentRunes.lua
 Data/VantusRunes.lua
 Data/RaidBuffs.lua
@@ -36,7 +36,7 @@ Modules/Consumables/Food.lua
 Modules/Consumables/Flask.lua
 Modules/Consumables/Augment.lua
 Modules/Consumables/Healthstone.lua
-Modules/Consumables/DamagePotion.lua
+Modules/Consumables/CombatPotion.lua
 Modules/Consumables/HealingPotion.lua
 Modules/Consumables/RaidBuff.lua
 Modules/Consumables/Vantus.lua
@@ -47,7 +47,7 @@ Modules/ConsumableFrame/Presenters/Food.lua
 Modules/ConsumableFrame/Presenters/Flask.lua
 Modules/ConsumableFrame/Presenters/Augment.lua
 Modules/ConsumableFrame/Presenters/Healthstone.lua
-Modules/ConsumableFrame/Presenters/DamagePotion.lua
+Modules/ConsumableFrame/Presenters/CombatPotion.lua
 Modules/ConsumableFrame/Presenters/HealingPotion.lua
 Modules/ConsumableFrame/Presenters/Recuperate.lua
 Modules/ConsumableFrame/Presenters/RaidBuff.lua
