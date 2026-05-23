@@ -420,87 +420,85 @@ end
 --- Event wiring
 --------------------------------------------------------------------------------
 
-frame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4)
-    if event == "READY_CHECK" then
-        if InCombatLockdown() then
-            return
+local function onReadyCheck(self, initiatorUnit, duration)
+    if InCombatLockdown() then
+        return
+    end
+
+    self:OnReadyCheck(initiatorUnit, duration)
+end
+
+local function onReadyCheckConfirm(self, unit, isReady)
+    self:OnReadyCheckConfirm(unit, isReady)
+end
+
+local function onReadyCheckFinished(self)
+    self:OnReadyCheckFinished()
+end
+
+local function onPlayerRegenDisabled(self)
+    self:OnCombat()
+end
+
+local function onUpdateInventoryDurability()
+    broadcast:SendDurability()
+    refreshAllRowsAndTitle()
+end
+
+local function onUnitInventoryChanged(self, unit)
+    if unit ~= "player" then
+        return
+    end
+
+    C_Timer.After(0.2, function()
+        broadcast:SendTempWeaponEnchantStatus()
+
+        if self:IsShown() then
+            refreshAllRowsAndTitle()
         end
+    end)
+end
 
-        local initiatorUnit, duration = arg1, arg2
-        self:OnReadyCheck(initiatorUnit, duration)
+local function onUnitAura(self, unit)
+    if unit == "player" then
+        broadcastPlayerTimedConsumables()
+    end
 
+    self:OnUnitAura(unit)
+end
+
+local function onChatMsgAddon(_self, prefix, message, _channel, sender)
+    if broadcast:HandleAddonMessage(prefix, message, sender) then
+        scheduleAddonRefresh()
+    end
+end
+
+local function onAddonLoaded(self, addonName)
+    if addonName ~= "ReadyCheckConsumables" then
         return
     end
 
-    if event == "READY_CHECK_CONFIRM" then
-        local unit, isReady = arg1, arg2
-        self:OnReadyCheckConfirm(unit, isReady)
+    ReadyCheckConsumablesDB = ReadyCheckConsumablesDB or {}
+    self:UnregisterEvent("ADDON_LOADED")
+end
 
-        return
-    end
+local EVENT_HANDLERS = {
+    ADDON_LOADED                = onAddonLoaded,
+    CHAT_MSG_ADDON              = onChatMsgAddon,
+    PLAYER_REGEN_DISABLED       = onPlayerRegenDisabled,
+    READY_CHECK                 = onReadyCheck,
+    READY_CHECK_CONFIRM         = onReadyCheckConfirm,
+    READY_CHECK_FINISHED        = onReadyCheckFinished,
+    UNIT_AURA                   = onUnitAura,
+    UNIT_INVENTORY_CHANGED      = onUnitInventoryChanged,
+    UPDATE_INVENTORY_DURABILITY = onUpdateInventoryDurability,
+}
 
-    if event == "READY_CHECK_FINISHED" then
-        self:OnReadyCheckFinished()
+frame:SetScript("OnEvent", function(self, event, ...)
+    local handler = EVENT_HANDLERS[event]
 
-        return
-    end
-
-    if event == "PLAYER_REGEN_DISABLED" then
-        self:OnCombat()
-
-        return
-    end
-
-    if event == "UPDATE_INVENTORY_DURABILITY" then
-        broadcast:SendDurability()
-        refreshAllRowsAndTitle()
-
-        return
-    end
-
-    if event == "UNIT_INVENTORY_CHANGED" then
-        if arg1 == "player" then
-            C_Timer.After(0.2, function()
-                broadcast:SendTempWeaponEnchantStatus()
-
-                if self:IsShown() then
-                    refreshAllRowsAndTitle()
-                end
-            end)
-        end
-
-        return
-    end
-
-    if event == "UNIT_AURA" then
-        local unit = arg1
-
-        if unit == "player" then
-            broadcastPlayerTimedConsumables()
-        end
-
-        self:OnUnitAura(unit)
-
-        return
-    end
-
-    if event == "CHAT_MSG_ADDON" then
-        if broadcast:HandleAddonMessage(arg1, arg2, arg4) then
-            scheduleAddonRefresh()
-        end
-
-        return
-    end
-
-    if event == "ADDON_LOADED" then
-        local addonName = arg1
-
-        if addonName == "ReadyCheckConsumables" then
-            ReadyCheckConsumablesDB = ReadyCheckConsumablesDB or {}
-            self:UnregisterEvent("ADDON_LOADED")
-        end
-
-        return
+    if handler then
+        handler(self, ...)
     end
 end)
 
