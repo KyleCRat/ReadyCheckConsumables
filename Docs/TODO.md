@@ -1,14 +1,11 @@
 # TODO
 
-## Changes
-
+## Review
 - Review consumable priority/data structures before extracting shared selector
   helpers. Combat potions and flasks now use family/variant metadata, but wait
   until food, augments, weapon enchants, and other consumables are reviewed so a
   shared helper follows real common behavior instead of forcing everything into
   the first family-based shape.
-
-## Fixes
 - Evaluate debouncing consumables frame `UNIT_AURA` updates to roughly once per
   second. Measure whether reduced refresh churn during test/ready-check frames
   is worth the added latency and complexity.
