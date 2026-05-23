@@ -53,15 +53,52 @@ local function addClickHint(button)
 
     if not state then return end
 
+    local action = state.action
+
+    local actionType = RCC.ConsumableActionType
+
+    if not action
+        or (actionType and action.type == actionType.ITEM_CACHE_SELECT)
+    then
+        return
+    end
+
     local targetText = getItemLink(State.GetClickHintItemID(state))
         or getSpellDisplay(State.GetClickHintSpellID(state))
 
     if not targetText then return end
 
     GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("|cff00ff00Click to " .. button.tooltipAction .. "|r "
-                        .. targetText)
+    GameTooltip:AddLine("|cff00ff00Left click to "
+                        .. button.tooltipAction .. "|r " .. targetText)
     GameTooltip:Show()
+
+    return true
+end
+
+local function addRightClickPreferenceHint(button, hasHint)
+    local state = button.consumableState
+    local action = state and state.action
+    local itemID = State.GetClickHintItemID(state)
+
+    if not action or not action.cacheKey or not itemID then return end
+
+    local targetText = getItemLink(itemID)
+
+    if not targetText then return end
+
+    if not hasHint then
+        GameTooltip:AddLine(" ")
+    end
+
+    GameTooltip:AddLine("|cff00ff00Right click to prefer|r " .. targetText)
+    GameTooltip:Show()
+end
+
+local function addClickHints(button)
+    local hasHint = addClickHint(button)
+
+    addRightClickPreferenceHint(button, hasHint)
 end
 
 local function addUnavailableHint(button)
@@ -115,7 +152,7 @@ function Tooltips.ClickButtonOnEnter(self)
     Glow.SetHovered(button, true)
 
     if showButtonTooltip(button, true) then
-        addClickHint(button)
+        addClickHints(button)
     end
 end
 
@@ -136,7 +173,7 @@ function Tooltips.InfoButtonOnEnter(self)
 
     if showButtonTooltip(self, true) then
         if self.clickEnabled then
-            addClickHint(self)
+            addClickHints(self)
         end
 
         addUnavailableHint(self)

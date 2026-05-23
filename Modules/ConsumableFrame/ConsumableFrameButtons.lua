@@ -83,14 +83,12 @@ local BUTTON_DEFS = {
         settingKey    = "icon_combatPotion",
         defaultIcon   = RCC.db.combatPotionIconID,
         clickable     = true,
-        tooltipAction = "select the preferred item for macro use",
     },
     {
         key           = "healpot",
         settingKey    = "icon_healPotion",
         defaultIcon   = RCC.db.healingPotionIconID,
         clickable     = true,
-        tooltipAction = "select the preferred item for macro use",
     },
     {
         key           = "recuperate",
@@ -355,7 +353,6 @@ local function getOrCreateFlyoutButton(owner, index)
     button.click:SetAllPoints()
     button.click:Hide()
     button.click:RegisterForClicks("AnyDown")
-    button.click:SetAttribute("type", "macro")
     button.click:SetScript("OnEnter", flyoutClickOnEnter)
     button.click:SetScript("OnLeave", flyoutClickOnLeave)
 
@@ -565,7 +562,6 @@ function Buttons.CreateAll(parent)
             button.click:SetAllPoints()
             button.click:Hide()
             button.click:RegisterForClicks("AnyDown")
-            button.click:SetAttribute("type", "macro")
 
             button.click:SetScript("OnEnter", primaryClickOnEnter)
             button.click:SetScript("OnLeave", primaryClickOnLeave)

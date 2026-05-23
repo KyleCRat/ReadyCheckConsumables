@@ -15,16 +15,11 @@ RCC.ConsumableActionType = RCC.ConsumableActionType or {
 }
 
 local ActionType = RCC.ConsumableActionType
-local CACHE_COMMIT_DELAY = 0.1
-local CACHE_ERROR_SUPPRESS_WINDOW = 0.5
-local CACHE_ACTION_SET = "set"
-local CACHE_ACTION_CLEAR = "clear"
-local CACHE_ACTION_SELECT = "select"
-local pendingCacheAction
-local pendingCacheToken = 0
-local lastErrorTime = 0
-local cacheEventFrame = CreateFrame("Frame")
 
+-- Click contract:
+-- LeftButton uses secure action attributes with the "1" suffix.
+-- RightButton only stores the preferred item through PreClick.
+-- Do not set "2" suffix action attributes unless right-click should consume.
 local function scheduleConsumableFrameUpdate()
     C_Timer.After(0, function()
         if RCC.consumables
@@ -36,80 +31,9 @@ local function scheduleConsumableFrameUpdate()
     end)
 end
 
-local function unregisterCacheEvents()
-    cacheEventFrame:UnregisterEvent("UI_ERROR_MESSAGE")
-    cacheEventFrame:UnregisterEvent("UI_ERROR_POPUP")
-    cacheEventFrame:UnregisterEvent("UI_INFO_MESSAGE")
-end
+local function preferClickedItem(self, mouseButton)
+    if mouseButton ~= "RightButton" then return end
 
-local function clearPendingCacheAction()
-    pendingCacheAction = nil
-    pendingCacheToken = pendingCacheToken + 1
-    lastErrorTime = GetTime()
-    unregisterCacheEvents()
-end
-
-local function commitPendingCacheAction(token)
-    if token ~= pendingCacheToken or not pendingCacheAction then return end
-
-    local action = pendingCacheAction
-
-    pendingCacheAction = nil
-    unregisterCacheEvents()
-
-    if action.type == CACHE_ACTION_SET then
-        ItemCache.Set(action.cacheKey, action.itemID)
-    elseif action.type == CACHE_ACTION_CLEAR then
-        ItemCache.Clear(action.cacheKey)
-    end
-
-    scheduleConsumableFrameUpdate()
-end
-
-local function queuePendingCacheAction(action)
-    if not ItemCache or not action or not action.cacheKey then return end
-
-    if GetTime() - lastErrorTime < CACHE_ERROR_SUPPRESS_WINDOW then
-        return
-    end
-
-    -- Use errors can fire during the secure action before PostClick runs, so
-    -- start watching in PreClick and commit only after a quiet frame window.
-    pendingCacheAction = action
-    pendingCacheToken = pendingCacheToken + 1
-
-    local token = pendingCacheToken
-
-    cacheEventFrame:RegisterEvent("UI_ERROR_MESSAGE")
-    cacheEventFrame:RegisterEvent("UI_ERROR_POPUP")
-    cacheEventFrame:RegisterEvent("UI_INFO_MESSAGE")
-    C_Timer.After(CACHE_COMMIT_DELAY, function()
-        commitPendingCacheAction(token)
-    end)
-end
-
-cacheEventFrame:SetScript("OnEvent", function()
-    if pendingCacheAction then
-        clearPendingCacheAction()
-    end
-end)
-
-local function cacheClickedItem(self)
-    queuePendingCacheAction({
-        type = CACHE_ACTION_SET,
-        cacheKey = self.consumableFrameItemCacheKey,
-        itemID = self.consumableFrameItemCacheID,
-    })
-end
-
-local function clearClickedItemCache(self)
-    queuePendingCacheAction({
-        type = CACHE_ACTION_CLEAR,
-        cacheKey = self.consumableFrameItemCacheKey,
-    })
-end
-
-local function selectClickedItem(self)
     local cacheKey = self.consumableFrameItemCacheKey
     local itemID = self.consumableFrameItemCacheID
 
@@ -119,73 +43,31 @@ local function selectClickedItem(self)
     scheduleConsumableFrameUpdate()
 end
 
-local function setClickCache(button, cacheKey, itemID)
+local function setRightClickPreference(button, cacheKey, itemID)
     if not button or not button.click or InCombatLockdown() then return end
 
     local click = button.click
 
-    if click.consumableFrameItemCacheMode == CACHE_ACTION_SET
-        and click.consumableFrameItemCacheKey == cacheKey
+    if click.consumableFrameItemCacheKey == cacheKey
         and click.consumableFrameItemCacheID == itemID
     then
         return
     end
 
-    click.consumableFrameItemCacheMode = CACHE_ACTION_SET
     click.consumableFrameItemCacheKey = cacheKey
     click.consumableFrameItemCacheID = itemID
 
     if cacheKey and itemID then
-        click:SetScript("PreClick", cacheClickedItem)
+        click:SetScript("PreClick", preferClickedItem)
     else
         click:SetScript("PreClick", nil)
     end
 end
 
-local function setClickCacheClear(button, cacheKey)
-    if not button or not button.click or InCombatLockdown() then return end
-
-    local click = button.click
-
-    if click.consumableFrameItemCacheMode == CACHE_ACTION_CLEAR
-        and click.consumableFrameItemCacheKey == cacheKey
-        and click.consumableFrameItemCacheID == nil
-    then
-        return
-    end
-
-    click.consumableFrameItemCacheMode = CACHE_ACTION_CLEAR
-    click.consumableFrameItemCacheKey = cacheKey
-    click.consumableFrameItemCacheID = nil
-
-    if cacheKey then
-        click:SetScript("PreClick", clearClickedItemCache)
-    else
-        click:SetScript("PreClick", nil)
-    end
-end
-
-local function setClickCacheSelect(button, cacheKey, itemID)
-    if not button or not button.click or InCombatLockdown() then return end
-
-    local click = button.click
-
-    if click.consumableFrameItemCacheMode == CACHE_ACTION_SELECT
-        and click.consumableFrameItemCacheKey == cacheKey
-        and click.consumableFrameItemCacheID == itemID
-    then
-        return
-    end
-
-    click.consumableFrameItemCacheMode = CACHE_ACTION_SELECT
-    click.consumableFrameItemCacheKey = cacheKey
-    click.consumableFrameItemCacheID = itemID
-
-    if cacheKey and itemID then
-        click:SetScript("PreClick", selectClickedItem)
-    else
-        click:SetScript("PreClick", nil)
-    end
+local function clearLeftClickAction(click)
+    click:SetAttribute("type1", nil)
+    click:SetAttribute("spell1", nil)
+    click:SetAttribute("macrotext1", nil)
 end
 
 local function enableClick(button)
@@ -230,7 +112,8 @@ local function disable(button)
 
     if not InCombatLockdown() then
         button.click.consumableFrameActionSignature = nil
-        setClickCache(button)
+        clearLeftClickAction(button.click)
+        setRightClickPreference(button)
     end
 
     disableClick(button)
@@ -249,20 +132,21 @@ local function setItemMacro(button, itemID, targetSlot, cacheKey)
     }, "|")
 
     if click.consumableFrameActionSignature ~= signature then
-        click:SetAttribute("type", "macro")
+        clearLeftClickAction(click)
+        click:SetAttribute("type1", "macro")
         click:SetAttribute("macrotext1", macroText)
-        setClickCache(button, cacheKey, itemID)
+        setRightClickPreference(button, cacheKey, itemID)
         click.consumableFrameActionSignature = signature
     end
 
     enableClick(button)
 end
 
-local function setItemCacheSelect(button, itemID, cacheKey)
+local function setPreferenceOnly(button, itemID, cacheKey)
     if not button or not button.click or InCombatLockdown() then return end
 
     if not itemID or not cacheKey then
-        setClickCache(button)
+        setRightClickPreference(button)
         disableClick(button)
 
         return
@@ -276,32 +160,28 @@ local function setItemCacheSelect(button, itemID, cacheKey)
     }, "|")
 
     if click.consumableFrameActionSignature ~= signature then
-        click:SetAttribute("type", nil)
-        click:SetAttribute("spell", nil)
-        click:SetAttribute("item", nil)
-        click:SetAttribute("target-slot", nil)
-        click:SetAttribute("macrotext1", nil)
-        setClickCacheSelect(button, cacheKey, itemID)
+        clearLeftClickAction(click)
+        setRightClickPreference(button, cacheKey, itemID)
         click.consumableFrameActionSignature = signature
     end
 
     enableClick(button)
 end
 
-local function setSpell(button, spell, available, cacheKey)
+local function setSpell(button, spell, available)
     if not button or not button.click or InCombatLockdown() then return end
 
     local click = button.click
     local signature = table.concat({
         ActionType.SPELL,
         tostring(spell),
-        tostring(cacheKey or ""),
     }, "|")
 
     if click.consumableFrameActionSignature ~= signature then
-        setClickCacheClear(button, cacheKey)
-        click:SetAttribute("spell", spell)
-        click:SetAttribute("type", "spell")
+        setRightClickPreference(button)
+        clearLeftClickAction(click)
+        click:SetAttribute("spell1", spell)
+        click:SetAttribute("type1", "spell")
         click.consumableFrameActionSignature = signature
     end
 
@@ -313,7 +193,7 @@ local function setWeaponEnchantItem(button, itemID, targetSlot, available,
     if not button or not button.click or InCombatLockdown() then return end
 
     if not targetSlot then
-        setClickCache(button)
+        setRightClickPreference(button)
         disableClick(button)
 
         return
@@ -329,12 +209,10 @@ local function setWeaponEnchantItem(button, itemID, targetSlot, available,
     }, "|")
 
     if click.consumableFrameActionSignature ~= signature then
-        click:SetAttribute("spell", nil)
-        click:SetAttribute("item", nil)
-        click:SetAttribute("target-slot", nil)
-        click:SetAttribute("type", "macro")
+        clearLeftClickAction(click)
+        click:SetAttribute("type1", "macro")
         click:SetAttribute("macrotext1", macroText)
-        setClickCache(button, cacheKey, itemID)
+        setRightClickPreference(button, cacheKey, itemID)
         click.consumableFrameActionSignature = signature
     end
 
@@ -360,7 +238,7 @@ function Actions.Apply(button, action)
     elseif action.type == ActionType.ITEM_CACHE_SELECT
         and action.itemID and action.cacheKey
     then
-        setItemCacheSelect(
+        setPreferenceOnly(
             button,
             action.itemID,
             action.cacheKey
@@ -371,8 +249,7 @@ function Actions.Apply(button, action)
         setSpell(
             button,
             action.spellID or action.spellName,
-            action.available,
-            action.cacheKey
+            action.available
         )
     elseif action.type == ActionType.WEAPON_ENCHANT_ITEM
         and action.itemID and action.targetSlot
