@@ -8,29 +8,42 @@
 ## SavedVariables: ReadyCheckConsumablesDB
 
 embeds.xml
+
+# Core utilities
+ReadyCheckConsumables.lua
 Functions.lua
 UI.lua
 FrameAnimations.lua
 
+################################################################################
+# Data
 Data/Globals.lua
+
 Data/Food.lua
-Data/Feasts.lua
-Data/Flasks.lua
-Data/Cauldrons.lua
-Data/Gems.lua
-Data/Enchants.lua
 Data/12_Midnight/Food.lua
+
+Data/Feasts.lua
 Data/12_Midnight/Feasts.lua
+
+Data/Flasks.lua
 Data/12_Midnight/Flasks.lua
+Data/11_TheWarWithin/Flasks.lua
+
+Data/Cauldrons.lua
 Data/12_Midnight/Cauldrons.lua
+
+Data/Gems.lua
 Data/12_Midnight/Gems.lua
+
+Data/Enchants.lua
 Data/12_Midnight/Enchants.lua
 Data/11_TheWarWithin/Enchants.lua
 Data/10_Dragonflight/Enchants.lua
-Data/11_TheWarWithin/Flasks.lua
+
 Data/CombatPotions.lua
 Data/12_Midnight/CombatPotions.lua
 Data/11_TheWarWithin/CombatPotions.lua
+
 Data/AugmentRunes.lua
 Data/12_Midnight/AugmentRunes.lua
 Data/11_TheWarWithin/AugmentRunes.lua
@@ -39,25 +52,37 @@ Data/09_Shadowlands/AugmentRunes.lua
 Data/08_BattleForAzeroth/AugmentRunes.lua
 Data/07_Legion/AugmentRunes.lua
 Data/06_WarlordsOfDraenor/AugmentRunes.lua
+
 Data/VantusRunes.lua
 Data/12_Midnight/VantusRunes.lua
 Data/11_TheWarWithin/VantusRunes.lua
 Data/10_Dragonflight/VantusRunes.lua
 Data/09_Shadowlands/VantusRunes.lua
 Data/08_BattleForAzeroth/VantusRunes.lua
+
 Data/RaidBuffs.lua
+
 Data/HealingItems.lua
 Data/12_Midnight/HealingItems.lua
 Data/11_TheWarWithin/HealingItems.lua
+
 Data/WeaponEnchants.lua
 Data/12_Midnight/WeaponEnchants.lua
 Data/11_TheWarWithin/WeaponEnchants.lua
 Data/10_Dragonflight/WeaponEnchants.lua
 Data/09_Shadowlands/WeaponEnchants.lua
+
 Data/Settings.lua
 Data/ConsumableTiming.lua
 
+# Settings and SavedVariables
+Settings.lua
+
+# Shared status helpers
 Modules/RaidBuffStatus.lua
+
+################################################################################
+# Consumable Frame
 Modules/ConsumableFrame/ConsumableFrameButtonState.lua
 Modules/ConsumableFrame/ConsumableFrameGlow.lua
 Modules/ConsumableFrame/ConsumableFrameItemCache.lua
@@ -67,6 +92,7 @@ Modules/ConsumableFrame/ConsumableFrameButtons.lua
 Modules/ConsumableFrame/ConsumableFrameRenderer.lua
 Modules/ConsumableFrame/ConsumableFrameItemCandidates.lua
 Modules/ConsumableFrame/ConsumableFrameAuras.lua
+
 Modules/Consumables/Food.lua
 Modules/Consumables/Flask.lua
 Modules/Consumables/Augment.lua
@@ -76,7 +102,7 @@ Modules/Consumables/HealingPotion.lua
 Modules/Consumables/RaidBuff.lua
 Modules/Consumables/Vantus.lua
 Modules/Consumables/WeaponEnchant.lua
-Modules/ConsumableMacros/ConsumableMacros.lua
+
 Modules/ConsumableFrame/Presenters/ArmorKit.lua
 Modules/ConsumableFrame/Presenters/Food.lua
 Modules/ConsumableFrame/Presenters/Flask.lua
@@ -88,8 +114,16 @@ Modules/ConsumableFrame/Presenters/Recuperate.lua
 Modules/ConsumableFrame/Presenters/RaidBuff.lua
 Modules/ConsumableFrame/Presenters/Vantus.lua
 Modules/ConsumableFrame/Presenters/WeaponEnchant.lua
+
 Modules/ConsumableFrame/ConsumableFrame.lua
 Modules/ConsumableFrame/ConsumableFrameController.lua
+
+################################################################################
+# Managed macros
+Modules/ConsumableMacros/ConsumableMacros.lua
+
+################################################################################
+# Raid Frame
 Modules/RaidFrame/RaidFrameReadyCheck.lua
 Modules/RaidFrame/RaidFrameBroadcast.lua
 Modules/RaidFrame/RaidFrameColumnRenderers.lua
@@ -101,13 +135,17 @@ Modules/RaidFrame/RaidFrameTitleBar.lua
 Modules/RaidFrame/RaidFrameControls.lua
 Modules/RaidFrame/RaidFrame.lua
 
-ReadyCheckTest.lua
-Settings.lua
-ReadyCheckConsumables.lua
-
+################################################################################
+# Chat reporting
 Modules/ChatReport/ChatReportOutput.lua
 Modules/ChatReport/ChatReportReports.lua
 Modules/ChatReport/ChatReportElection.lua
 Modules/ChatReport/ChatReport.lua
 
+################################################################################
+
+# Cross-frame ready-check test coordinator
+ReadyCheckTest.lua
+
+# Slash commands
 SlashCommands.lua
