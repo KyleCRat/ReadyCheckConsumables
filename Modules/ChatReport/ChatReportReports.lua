@@ -58,7 +58,7 @@ local function reportFood(toChat)
         local colored = Output.ColorName(F.shortName(name), class)
 
         F.ForEachHelpfulAura(unit, function(aura, spellID)
-            local auraType = FoodAuras.GetType(aura, spellID)
+            local auraType = FoodAuras.GetType(aura)
 
             if auraType == FOOD_AURA_TYPE.WELL_FED then
                 hasFood = true

@@ -37,7 +37,7 @@ local function getFoodAuraStates(state)
 
     for i = 1, #state.auras do
         local aura = state.auras[i]
-        local auraType = FoodAuras.GetType(aura, aura.spellID)
+        local auraType = FoodAuras.GetType(aura)
 
         if auraType == FOOD_AURA_TYPE.EATING then
             eatingAuraState = Auras.ToConsumableState(aura, {

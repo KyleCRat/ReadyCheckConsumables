@@ -205,8 +205,7 @@ local function refreshFoodDisplayData(data, rules)
 end
 
 local function collectFoodAura(data, aura, scanContext)
-    local spellID = aura.spellId
-    local auraType = FoodAuras.GetType(aura, spellID)
+    local auraType = FoodAuras.GetType(aura)
 
     if not auraType then
         return
