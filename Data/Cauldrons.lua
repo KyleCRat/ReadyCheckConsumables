@@ -3,11 +3,20 @@ local _, RCC = ...
 RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
---- Cauldron Item IDs (12.0.0 - Midnight)
+--- Cauldron Item IDs
 --- Stored for future use. Not currently tracked by the addon.
+--- Expansion files append their item rows so the rest of the addon can keep
+--- reading one combined cauldron table.
 --------------------------------------------------------------------------------
 
-RCC.db.cauldronItemIDs = {
-    241284, 241285, -- Voidlight Potion Cauldron
-    241318, 241319, -- Cauldron of Sin'dorei Flasks
-}
+RCC.db.cauldronItemIDs = {}
+
+RCC.Data = RCC.Data or {}
+
+function RCC.Data.AddCauldronItems(itemIDs)
+    if not itemIDs then return end
+
+    for i = 1, #itemIDs do
+        RCC.db.cauldronItemIDs[#RCC.db.cauldronItemIDs + 1] = itemIDs[i]
+    end
+end
