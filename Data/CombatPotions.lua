@@ -6,7 +6,8 @@ RCC.db = RCC.db or {}
 --- Combat Potion Item IDs
 --- `combatPotionItems` is the editable source of truth for combat potion
 --- families. Family order controls fallback order; item order inside a family
---- controls priority when quality metadata is incomplete.
+--- controls priority. Every ranked item should still specify `q` so quality is
+--- explicit in the data.
 --------------------------------------------------------------------------------
 
 RCC.CombatPotionType = RCC.CombatPotionType or {
