@@ -82,7 +82,7 @@ end
 
 local function flaskAction()
     return itemAction(
-        Consumables.Flask.GetItemCandidate(true),
+        Consumables.Flask.GetItemCandidate(),
         CacheKey.FLASK
     )
 end
@@ -183,7 +183,7 @@ local MACRO_DEFINITIONS = {
         key = "flask",
         label = "Flask",
         macroName = "RCC Flask",
-        description = "Uses the preferred flask when available, otherwise the best available flask.",
+        description = "Uses the preferred flask family when available, otherwise the best available flask.",
         getAction = flaskAction,
         defaultIcon = function() return RCC.db.flaskIconID end,
     },
