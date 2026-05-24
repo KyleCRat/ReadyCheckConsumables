@@ -358,6 +358,7 @@ local function appendHealingPotionMacroLines(lines, action)
     lines[#lines + 1] = "/cast [nocombat] " .. spellName
 
     if itemID then
+        lines[#lines + 1] = "/stopcasting [combat]"
         lines[#lines + 1] = "/use [combat] item:" .. itemID
     end
 end
