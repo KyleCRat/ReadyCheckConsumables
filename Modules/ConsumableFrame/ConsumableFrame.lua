@@ -96,6 +96,10 @@ function RCC.consumables:Repos(isInitiator)
             and ReadyCheckFrame
             or ReadyCheckListenerFrame
 
+        self.anchor:Hide()
+        self.drag:Hide()
+        self.close:Hide()
+
         self:ClearAllPoints()
         self:SetPoint("BOTTOM", anchor, "TOP", 0, 5)
     end
