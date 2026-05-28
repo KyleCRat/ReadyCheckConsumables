@@ -18,6 +18,7 @@ local DEFAULT_MAX_ACCOUNT_MACROS = 120
 local DEFAULT_MAX_CHARACTER_MACROS = 30
 local DEFAULT_MACRO_ICON = 134400
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
+local INLINE_MARKER_PATTERN = "#RCCI%s*:%s*([%w_%-]+)"
 local AUTOMATED_COMMENT = "#Automated by RCC: use '/rcc s' for settings"
 local HEALING_POTION_RECUPERATE_MACRO = "healingPotionRecuperateMacro"
 local updateScheduled = false
@@ -130,6 +131,13 @@ local function healingPotionAction()
     return action, DEFAULT_MACRO_ICON
 end
 
+local function healingPotionItemAction()
+    return itemAction(
+        Consumables.HealingPotion.GetItemCandidate(),
+        CacheKey.HEALING_POTION
+    )
+end
+
 local function healthstoneAction()
     return itemAction(Consumables.Healthstone.GetItemCandidate())
 end
@@ -193,6 +201,7 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Augment",
         description = "Uses the preferred augment rune when available, otherwise the best available augment rune.",
         getAction = augmentAction,
+        aliases = { "aug" },
         defaultIcon = function() return RCC.db.augmentIconID end,
     },
     {
@@ -209,6 +218,8 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Combat Pot",
         description = "Uses the preferred combat potion when available, otherwise the best available combat potion.",
         getAction = combatPotionAction,
+        inlineGetAction = combatPotionAction,
+        aliases = { "combatpotion", "cp" },
         defaultIcon = function() return RCC.db.combatPotionIconID end,
     },
     {
@@ -217,14 +228,18 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Heal Pot",
         description = "Casts Recuperate out of combat and uses the preferred healing potion in combat when available, otherwise the best available healing potion.",
         getAction = healingPotionAction,
+        inlineGetAction = healingPotionItemAction,
+        aliases = { "healingpotion", "hp" },
         defaultIcon = function() return RCC.db.healingPotionIconID end,
     },
     {
-        key = "hs",
+        key = "healthstone",
         label = "Healthstone",
         macroName = "RCC Healthstone",
         description = "Uses the best available healthstone variant.",
         getAction = healthstoneAction,
+        inlineGetAction = healthstoneAction,
+        aliases = { "hs" },
         defaultIcon = function() return RCC.db.healthstoneIconID end,
     },
     {
@@ -241,6 +256,7 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC MH Enchant",
         description = "Uses your selected main-hand weapon enchant item or spell.",
         getAction = mainHandEnchantAction,
+        aliases = { "mhen" },
         defaultIcon = function() return RCC.db.weaponEnchantIconID end,
     },
     {
@@ -249,16 +265,43 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC OH Enchant",
         description = "Uses your selected off-hand weapon enchant item or spell.",
         getAction = offHandEnchantAction,
+        aliases = { "ohen" },
         defaultIcon = function() return RCC.db.weaponEnchantIconID end,
     },
 }
 
 local MACRO_TYPES = {}
+local INLINE_MACRO_TYPES = {}
+
+local function registerMacroType(map, key, definition)
+    local normalizedKey = normalizeToken(key)
+
+    if normalizedKey then
+        map[normalizedKey] = definition
+    end
+end
 
 for i = 1, #MACRO_DEFINITIONS do
     local definition = MACRO_DEFINITIONS[i]
+    local aliases = definition.aliases
 
-    MACRO_TYPES[definition.key] = definition
+    registerMacroType(MACRO_TYPES, definition.key, definition)
+
+    if definition.inlineGetAction then
+        registerMacroType(INLINE_MACRO_TYPES, definition.key, definition)
+    end
+
+    if aliases then
+        for aliasIndex = 1, #aliases do
+            local alias = aliases[aliasIndex]
+
+            registerMacroType(MACRO_TYPES, alias, definition)
+
+            if definition.inlineGetAction then
+                registerMacroType(INLINE_MACRO_TYPES, alias, definition)
+            end
+        end
+    end
 end
 
 function Macros.GetDefinitions()
@@ -267,6 +310,10 @@ end
 
 local function getMacroType(token)
     return MACRO_TYPES[normalizeToken(token)]
+end
+
+local function getInlineMacroType(token)
+    return INLINE_MACRO_TYPES[normalizeToken(token)]
 end
 
 local function printMessage(message)
@@ -299,13 +346,15 @@ local function findManagedMacroIndex(key, characterSpecific)
 
     if not firstIndex then return end
 
-    local normalizedKey = normalizeToken(key)
+    local macroType = getMacroType(key)
+
+    if not macroType then return end
 
     for index = firstIndex, lastIndex do
         local _, _, body = GetMacroInfo(index)
         local token = findMarker(body)
 
-        if normalizeToken(token) == normalizedKey then
+        if getMacroType(token) == macroType then
             return index
         end
     end
@@ -403,6 +452,60 @@ local function resolveMacro(token)
     return action, icon, true
 end
 
+local function resolveInlineMacro(token)
+    local macroType = getInlineMacroType(token)
+
+    if not macroType then return nil, nil, false end
+
+    local action = macroType.inlineGetAction()
+
+    return action, normalizeToken(token), true
+end
+
+local function buildInlineMacroLine(markerKey, action)
+    local marker = "#RCCI:" .. markerKey
+    local itemID = action and action.itemID
+
+    if itemID then
+        return "/use item:" .. itemID .. "; " .. marker
+    end
+
+    return marker
+end
+
+local function rewriteInlineMacroBody(body)
+    local lines = {}
+    local changed = false
+
+    for line in (body .. "\n"):gmatch("([^\n]*)\n") do
+        line = line:gsub("\r", "")
+
+        local token = line:match(INLINE_MARKER_PATTERN)
+
+        if token then
+            local action, markerKey, recognized = resolveInlineMacro(token)
+
+            if recognized then
+                local nextLine = buildInlineMacroLine(markerKey, action)
+
+                lines[#lines + 1] = nextLine
+
+                if nextLine ~= line then
+                    changed = true
+                end
+            else
+                lines[#lines + 1] = line
+            end
+        else
+            lines[#lines + 1] = line
+        end
+    end
+
+    if changed then
+        return table.concat(lines, "\n")
+    end
+end
+
 function Macros.CreateManagedMacro(key, characterSpecific)
     local macroType = getMacroType(key)
 
@@ -484,17 +587,25 @@ local function updateMacro(index)
 
     local token, markerLine = findMarker(body)
 
-    if not token then return end
+    if token then
+        local action, resolvedIcon, recognized = resolveMacro(token)
 
-    local action, resolvedIcon, recognized = resolveMacro(token)
+        if markerLine and recognized then
+            local nextBody = buildMacroBody(markerLine, action)
+            local nextIcon = resolvedIcon or icon
 
-    if not markerLine or not recognized then return end
+            if nextBody ~= body or nextIcon ~= icon then
+                EditMacro(index, nil, nextIcon, nextBody)
+            end
 
-    local nextBody = buildMacroBody(markerLine, action)
-    local nextIcon = resolvedIcon or icon
+            return
+        end
+    end
 
-    if nextBody ~= body or nextIcon ~= icon then
-        EditMacro(index, nil, nextIcon, nextBody)
+    local nextBody = rewriteInlineMacroBody(body)
+
+    if nextBody then
+        EditMacro(index, nil, nil, nextBody)
     end
 end
 
