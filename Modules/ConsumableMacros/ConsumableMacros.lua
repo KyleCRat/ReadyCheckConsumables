@@ -18,7 +18,8 @@ local DEFAULT_MAX_ACCOUNT_MACROS = 120
 local DEFAULT_MAX_CHARACTER_MACROS = 30
 local DEFAULT_MACRO_ICON = 134400
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
-local INLINE_MARKER_PATTERN = "#RCCI%s*:%s*([%w_%-]+)"
+local INLINE_MARKER_LINE_PATTERN = "^%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
+local INLINE_USE_LINE_PATTERN = "^%s*/use%s+(.-)%s*item:%d+%s*;?%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
 local AUTOMATED_COMMENT = "#Automated by RCC: use '/rcc s' for settings"
 local HEALING_POTION_RECUPERATE_MACRO = "healingPotionRecuperateMacro"
 local updateScheduled = false
@@ -28,6 +29,10 @@ local eventFrame = CreateFrame("Frame")
 
 local function normalizeToken(token)
     return token and token:lower():gsub("[%s_%-]", "")
+end
+
+local function trim(text)
+    return text and text:match("^%s*(.-)%s*$") or ""
 end
 
 local function findMarker(body)
@@ -462,12 +467,70 @@ local function resolveInlineMacro(token)
     return action, normalizeToken(token), true
 end
 
-local function buildInlineMacroLine(markerKey, action)
+local function normalizeInlineSelectors(selectors)
+    local remaining = trim(selectors)
+    local groups = {}
+
+    if remaining == "" then
+        return ""
+    end
+
+    while remaining ~= "" do
+        remaining = remaining:gsub("^%s+", "")
+
+        local group = remaining:match("^(%[[^%[%]\r\n;]*%])")
+
+        if not group then return end
+
+        groups[#groups + 1] = group
+        remaining = remaining:sub(#group + 1)
+    end
+
+    return table.concat(groups, "")
+end
+
+local function parseInlineMacroLine(line)
+    local useSelectors, useToken, markerSelectors =
+        line:match(INLINE_USE_LINE_PATTERN)
+
+    if useToken then
+        useSelectors = normalizeInlineSelectors(useSelectors)
+        markerSelectors = normalizeInlineSelectors(markerSelectors)
+
+        if useSelectors == nil or markerSelectors == nil then return end
+
+        if useSelectors ~= "" then
+            return useToken, useSelectors
+        end
+
+        return useToken, markerSelectors
+    end
+
+    local markerToken, selectors = line:match(INLINE_MARKER_LINE_PATTERN)
+
+    if not markerToken then return end
+
+    selectors = normalizeInlineSelectors(selectors)
+
+    if selectors == nil then return end
+
+    return markerToken, selectors
+end
+
+local function buildInlineMacroLine(markerKey, selectors, action)
     local marker = "#RCCI:" .. markerKey
     local itemID = action and action.itemID
 
     if itemID then
-        return "/use item:" .. itemID .. "; " .. marker
+        if selectors and selectors ~= "" then
+            return "/use " .. selectors .. " item:" .. itemID .. " " .. marker
+        end
+
+        return "/use item:" .. itemID .. " " .. marker
+    end
+
+    if selectors and selectors ~= "" then
+        return marker .. " " .. selectors
     end
 
     return marker
@@ -480,13 +543,17 @@ local function rewriteInlineMacroBody(body)
     for line in (body .. "\n"):gmatch("([^\n]*)\n") do
         line = line:gsub("\r", "")
 
-        local token = line:match(INLINE_MARKER_PATTERN)
+        local token, selectors = parseInlineMacroLine(line)
 
         if token then
             local action, markerKey, recognized = resolveInlineMacro(token)
 
             if recognized then
-                local nextLine = buildInlineMacroLine(markerKey, action)
+                local nextLine = buildInlineMacroLine(
+                    markerKey,
+                    selectors,
+                    action
+                )
 
                 lines[#lines + 1] = nextLine
 

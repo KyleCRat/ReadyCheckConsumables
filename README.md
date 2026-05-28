@@ -86,8 +86,10 @@ The settings panel can create marker-based macros that RCC keeps updated.
 - Existing custom macros can use inline markers on a single line:
   `#RCCI:combatpot`, `#RCCI:combatpotion`, `#RCCI:cp`, `#RCCI:healpot`,
   `#RCCI:healingpotion`, `#RCCI:hp`, `#RCCI:healthstone`, or `#RCCI:hs`.
-  RCC rewrites only that line to `/use item:<id>; #RCCI:<key>` when an item is
-  available, or back to the marker-only line when no item is available.
+  Optional selectors can follow the key, such as `#RCCI:cp [combat]`. RCC
+  rewrites only that line to `/use [combat] item:<id> #RCCI:cp` when an item is
+  available, or back to the marker-only line with selectors when no item is
+  available.
 - Food, flask, augment, Vantus, potion, and weapon enchant macros follow the
   same preferred selections used by the consumable frame.
 - Healing potion macros cast Recuperate out of combat and use a healing potion
