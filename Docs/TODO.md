@@ -11,3 +11,8 @@
   remove legacy `"OIL"` receive handling. It is currently kept so older RCC
   clients can still read remaining time and item ID from newer clients while
   newer clients can still read older clients.
+- Update managed augment rune macros when the "Prefer Unlimited Augment Runes"
+  setting changes. The setting currently refreshes the visible consumables frame,
+  but does not schedule `RCC.ConsumableMacros` to rewrite existing augment
+  macros until another bag, zone, spell, equipment, or macro event fires.
+- Add item:253011 Brawler's Guild health pot to use first if available?
