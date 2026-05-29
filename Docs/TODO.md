@@ -16,3 +16,8 @@
   but does not schedule `RCC.ConsumableMacros` to rewrite existing augment
   macros until another bag, zone, spell, equipment, or macro event fires.
 - Add item:253011 Brawler's Guild health pot to use first if available?
+
+## LibPopupSlider
+
+1. **Programmatic `SetValue` triggers `onValueChanged`**
+   [LibPopupSlider-1.0.lua](<D:/World of Warcraft/_retail_/Interface/AddOns/ReadyCheckConsumables/Libs/LibPopupSlider/LibPopupSlider-1.0.lua:491>) means initialization/sync calls also fire the callback. That is often fine, but if ported to another app, you may want `SetValue(value, silent)` or `SetValueSilently`.

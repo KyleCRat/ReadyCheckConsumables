@@ -37,11 +37,11 @@ function UI.ApplyControlStyle(control, text, fontSize)
         control.text:SetTextColor(1, 1, 1)
     end
 
-    control:SetScript("OnEnter", function(self)
+    control:HookScript("OnEnter", function(self)
         self.highlight:Show()
     end)
 
-    control:SetScript("OnLeave", function(self)
+    control:HookScript("OnLeave", function(self)
         self.highlight:Hide()
     end)
 end
