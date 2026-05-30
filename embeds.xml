@@ -2,5 +2,5 @@
 ..\FrameXML\UI.xsd">
   <Script file="Libs\LibStub\LibStub.lua"/>
   <Include file="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.xml"/>
-  <Include file="Libs\LibPopupSlider\LibPopupSlider-1.0.xml"/>
+  <Include file="Libs\LibPopupSlider-1.0\LibPopupSlider-1.0.xml"/>
 </Ui>
