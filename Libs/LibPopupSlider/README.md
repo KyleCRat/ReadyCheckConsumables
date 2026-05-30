@@ -21,6 +21,9 @@ local popup = LibPopupSlider:Create(myButton, {
 -- Set initial value
 popup:SetValue(100)
 
+-- Sync display without firing onValueChanged
+popup:SetValue(100, true)
+
 -- Read current value
 local current = popup:GetValue()
 ```
@@ -82,6 +85,10 @@ calculated the first time the popup opens, then reused. Set `fontSize`,
 or from the widest formatted value among the highest-digit values in the range
 when the range has no more than 1000 steps. It is cached after the first popup
 open and does not resize while dragging between shorter and longer values.
+
+**Silent value sync** - `popup:SetValue(value)` updates the popup and fires
+`onValueChanged` when the value changes. Pass `true` as the second argument to
+update the popup without firing the callback: `popup:SetValue(value, true)`.
 
 **Value inversion** - WoW vertical sliders map min=top, max=bottom. The library inverts internally so higher values correspond to dragging up.
 

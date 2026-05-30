@@ -42,6 +42,7 @@
 --   })
 --
 --   popup:SetValue(100)
+--   popup:SetValue(100, true) -- update without onValueChanged
 --   popup:GetValue()
 
 local MAJOR_VERSION = "LibPopupSlider-1.0"
@@ -654,7 +655,7 @@ function lib:Create(button, options)
         return floor(value / step + 0.5) * step
     end
 
-    local function setValue(value)
+    local function setValue(value, silent)
         value = clamp(snap(value), minValue, maxValue)
 
         if currentValue == value then
@@ -666,7 +667,7 @@ function lib:Create(button, options)
         popup.value:SetText(formatValue(value))
         popup.slider:SetValue(toSlider(value))
 
-        if options.onValueChanged then
+        if not silent and options.onValueChanged then
             options.onValueChanged(value)
         end
 
@@ -759,8 +760,8 @@ function lib:Create(button, options)
     --- Public API
     -- -----------------------------------------------------------------
 
-    popup.SetValue = function(self, value)
-        setValue(value)
+    popup.SetValue = function(self, value, silent)
+        setValue(value, silent)
     end
 
     popup.GetValue = function()
