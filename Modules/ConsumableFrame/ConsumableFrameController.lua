@@ -26,6 +26,7 @@ local frame
 local consumablesShowStart = 0
 local wasInInstance
 local instanceOpenPending
+local readyCheckButtonsHooked
 
 local INSTANCE_OPEN_DELAY = 0.5
 
@@ -139,6 +140,48 @@ local function hideImmediately(self)
     self:Hide()
 end
 
+local function handleLocalReadyCheckResponse(self)
+    if not self:IsShown() then
+        cancelMinShowDelay(self)
+
+        return
+    end
+
+    if InCombatLockdown() then
+        hideImmediately(self)
+
+        return
+    end
+
+    self:UnregisterEvent("READY_CHECK_CONFIRM")
+
+    if self.cancelDelay then
+        return
+    end
+
+    startMinShowDelay(self)
+end
+
+local function hookBlizzardReadyCheckButtons()
+    if readyCheckButtonsHooked then
+        return
+    end
+
+    if not ReadyCheckFrameYesButton or not ReadyCheckFrameNoButton then
+        return
+    end
+
+    local function onReadyCheckButtonClick()
+        if frame then
+            handleLocalReadyCheckResponse(frame)
+        end
+    end
+
+    ReadyCheckFrameYesButton:HookScript("OnClick", onReadyCheckButtonClick)
+    ReadyCheckFrameNoButton:HookScript("OnClick", onReadyCheckButtonClick)
+    readyCheckButtonsHooked = true
+end
+
 local function unregisterLiveEvents(self)
     self:UnregisterEvent("UNIT_AURA")
     self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
@@ -181,6 +224,7 @@ end
 
 local function onReadyCheck(self, initiatorUnit)
     instanceOpenPending = false
+    hookBlizzardReadyCheckButtons()
 
     local isInitiator = RCC.F.UnitIsUnitSafe(initiatorUnit, "player")
 
@@ -212,8 +256,7 @@ local function onReadyCheckConfirm(self, unit)
         return
     end
 
-    self:UnregisterEvent("READY_CHECK_CONFIRM")
-    startMinShowDelay(self)
+    handleLocalReadyCheckResponse(self)
 end
 
 local function onCombat(self)
@@ -352,6 +395,7 @@ end
 
 function Controller.Attach(consumablesFrame)
     frame = consumablesFrame
+    hookBlizzardReadyCheckButtons()
 
     frame:SetScript("OnEvent", onEvent)
     frame:SetScript("OnHide", onHide)
