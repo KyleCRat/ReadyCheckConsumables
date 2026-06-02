@@ -1,5 +1,29 @@
 # Changelog
 
+## [12.0.7-14] - 2026-06-02
+
+### Added
+- Added inline marker automation for existing custom macros, including optional
+  macro condition selectors on inline marker lines.
+- Added more LibPopupSlider configuration for automatic sizing, padding, font
+  handling, and silent value updates.
+
+### Changed
+- Updated supported Interface metadata for WoW 12.0.7.
+- Renamed the embedded popup slider library folder to `LibPopupSlider-1.0` and
+  updated the embed path.
+- Removed obsolete internal refactor planning docs from the packaged project.
+
+### Fixed
+- Consumables frame now closes immediately when you click Ready or Not Ready on
+  the Blizzard ready-check prompt while Keep Open After Response is disabled.
+  The configured minimum-show timer is still respected when that setting is
+  enabled.
+- Non-initiator ready checks now hide the consumables frame anchor, drag handle,
+  and close button before reanchoring above the Blizzard ready-check listener.
+- Healing potion macros now stop the current cast before using a healing potion
+  in combat.
+
 ## [12.0.5-13] - 2026-05-23
 
 ### Important
@@ -59,35 +83,3 @@
   handling across the consumables frame, raid frame, and chat report.
 - Fixed the TOC load order for consumable action constants and converted the
   raid-frame event chain to a dispatch table.
-
-## [12.0.5-12] - 2026-04-29
-
-### Important
-- The Consumable Frame Augment Rune icon setting has been renamed internally. If you previously disabled it, it will re-enable itself after this update. You can disable it again in `/rcc settings` → Consumables Frame.
-
-### Added
-- Added timed and permanent raid status frame test modes via `/rcc test` and `/rcc testp`.
-- Added Midnight augment rune and Vantus rune data.
-
-### Changed
-- Renamed augment rune UI/report wording from "Rune" to "Augment" to avoid confusion with Vantus runes.
-- Improved augment rune tier handling so reports use expansion-aware tiers and readable tier names.
-- Raid status frame now fades out over 0.5 seconds when it closes automatically.
-- Raid status frame addon-message redraws are coalesced to reduce burst refresh work at ready-check start.
-
-### Fixed
-- Consumable icon buttons now collapse correctly when individual icons are disabled.
-- Re-enabling consumable icon settings now updates the visible consumables frame without requiring a reload.
-- Durability and weapon oil broadcasts now still send when the local raid status frame is disabled.
-- Fixed a ready-check race where personal durability and weapon oil data could be cleared after being broadcast.
-- Fixed stale chat-report election state so RCC does not suppress reports after an earlier MRT/RCC report.
-- Fixed MRT compatibility by listening to MRT addon prefixes and parsing `raidcheck` as the message payload module.
-- Fixed cross-realm player collisions by keying durability, weapon oil, and report election state by full `Name-Realm`.
-- Healthstone visibility now ignores benched warlocks outside the active raid groups.
-- Consumables frame delayed inventory updates no longer run after the frame hides or combat starts.
-- Consumable buttons retry item-name lookups when item data is not cached yet.
-- Fixed permanent-duration buffs (e.g. some feast buffs) showing "0m" in red instead of no time text.
-
-### Internal
-- Extracted slash commands and raid-frame test data into separate files.
-- Refactored raid frame row rendering, event handling, and shared roster/MRT helper logic.

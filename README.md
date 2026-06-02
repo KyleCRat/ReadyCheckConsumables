@@ -30,6 +30,8 @@ entering instances.
   unavailable-item warnings.
 - Glow highlights missing or expiring consumables, with hover colors showing
   whether an action is available.
+- Closes immediately when you click Ready or Not Ready if Keep Open After
+  Response is disabled, or stays open for the configured duration when enabled.
 - Individual icons can be toggled in settings.
 
 ### Raid Status Frame
@@ -92,8 +94,8 @@ The settings panel can create marker-based macros that RCC keeps updated.
   available.
 - Food, flask, augment, Vantus, potion, and weapon enchant macros follow the
   same preferred selections used by the consumable frame.
-- Healing potion macros cast Recuperate out of combat and use a healing potion
-  in combat when one is available.
+- Healing potion macros cast Recuperate out of combat, stop your current cast in
+  combat, and use a healing potion when one is available.
 
 ## Slash Commands
 
