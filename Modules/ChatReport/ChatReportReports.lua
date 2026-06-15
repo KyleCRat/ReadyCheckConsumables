@@ -17,7 +17,7 @@ local format = format
 
 local CURRENT_AUGMENT_XPAC = db.currentAugmentXpac
 local FOOD_AURA_TYPE = FoodAuras.Type
-local RED_DURABILITY_THRESHOLD = 15
+local REPAIR_DURABILITY_THRESHOLD = 15
 
 local function appendEntries(target, source)
     for i = 1, #source do
@@ -277,7 +277,7 @@ local function reportRepairs(toChat)
         return
     end
 
-    local redRepair = {}
+    local repairs = {}
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
         if not online then return end
@@ -288,8 +288,8 @@ local function reportRepairs(toChat)
             return
         end
 
-        if pct < RED_DURABILITY_THRESHOLD then
-            redRepair[#redRepair + 1] = format(
+        if pct < REPAIR_DURABILITY_THRESHOLD then
+            repairs[#repairs + 1] = format(
                 "%s(%d%%)",
                 Output.ColorName(F.shortName(name), class),
                 floor(pct)
@@ -297,10 +297,10 @@ local function reportRepairs(toChat)
         end
     end)
 
-    if #redRepair > 0 then
+    if #repairs > 0 then
         Output.SendChunked(
-            format("Red Repair (%d): ", #redRepair),
-            redRepair,
+            format("Repair (%d): ", #repairs),
+            repairs,
             toChat
         )
     end
