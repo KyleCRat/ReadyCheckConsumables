@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
+local Broadcast      = RCC.RaidFrameBroadcast
 local db             = RCC.db
 local F              = RCC.F
 local FoodAuras      = RCC.FoodAuras
@@ -21,8 +22,8 @@ local DURABILITY_WIDTH           = 42
 local CAULDRON_WIDTH             = 58
 local CAULDRON_COUNT_WIDTH       = 28
 local NO_DURATION                = 0
-local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
 local FOOD_AURA_TYPE = FoodAuras.Type
+local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -375,13 +376,14 @@ local function isTempWeaponEnchantBad(member, context, column)
     local time = data and data.time
 
     if time == nil
-        or time == -1
-        or time == UNKNOWN_TEMP_WEAPON_ENCHANT_TIME
+        or time == TEMP_WEAPON_ENCHANT_STATUS.NO_WEAPON
+        or time == TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
     then
         return false
     end
 
-    return time == 0 or Timing.IsExpiringSoon(time)
+    return time == TEMP_WEAPON_ENCHANT_STATUS.MISSING
+        or Timing.IsExpiringSoon(time)
 end
 
 local tempWeaponEnchantColumn = {

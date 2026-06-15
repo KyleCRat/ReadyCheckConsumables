@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 
 local Renderers      = RCC.RaidFrameColumnRenderers
+local Broadcast      = RCC.RaidFrameBroadcast
 local F              = RCC.F
 local UI             = RCC.UI
 local Timing         = RCC.ConsumableTiming
@@ -20,7 +21,7 @@ local COLOR_EXACT       = { r = 0.2, g = 1,    b = 0.2 }
 local COLOR_OVER        = { r = 1,   g = 0.2,  b = 0.2 }
 local FONT_SIZE_TIME    = 14
 local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
-local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
+local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
 
 local function hasUsableAuraID(auraID)
     return auraID
@@ -344,10 +345,10 @@ local function renderTempWeaponEnchantCell(row, member, column, context)
     overlay.label  = nil
 
     local hasEnchant     = remaining and remaining > 0
-    local enchantMissing = remaining == 0
-    local hasNoWeapon    = remaining == -1
+    local enchantMissing = remaining == TEMP_WEAPON_ENCHANT_STATUS.MISSING
+    local hasNoWeapon    = remaining == TEMP_WEAPON_ENCHANT_STATUS.NO_WEAPON
     local noEnchantInfo  = remaining == nil
-        or remaining == UNKNOWN_TEMP_WEAPON_ENCHANT_TIME
+        or remaining == TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
 
     if hasEnchant then
         icon:SetDesaturated(false)

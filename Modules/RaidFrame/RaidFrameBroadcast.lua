@@ -15,15 +15,32 @@ local GetSpellInfo       = C_Spell.GetSpellInfo
 local ADDON_PREFIX = "RCC"
 local FOOD_MESSAGE_TYPE = "FOOD"
 local FLASK_MESSAGE_TYPE = "FLASK"
--- Enchant exists, but GetWeaponEnchantInfo() did not provide usable timing.
-local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
 -- Keep the legacy "OIL" message type so older RCC clients can still read the
 -- remaining time and item ID from the first two payload fields.
 local TEMP_WEAPON_ENCHANT_MESSAGE_TYPE = "OIL"
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
 
+Broadcast.TempWeaponEnchantStatus = {
+    MISSING   = 0,
+    NO_WEAPON = -1,
+    UNKNOWN   = -2,
+}
+
+local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
+
+local sharedData = {
+    foodData              = {},
+    flaskData             = {},
+    durabilityData        = {},
+    tempWeaponEnchantData = {},
+}
+
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
+
+function Broadcast.GetReportData()
+    return sharedData
+end
 
 local function getPlayerMinDurability()
     local minPct = 100
@@ -68,7 +85,7 @@ end
 
 local function getTempWeaponEnchantRemaining(expiration)
     if not F.IsSafeNumber(expiration) or expiration <= 0 then
-        return UNKNOWN_TEMP_WEAPON_ENCHANT_TIME
+        return TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
     end
 
     return expiration / 1000
@@ -130,7 +147,10 @@ local function getPlayerTempWeaponEnchantStatus()
                                               MAIN_HAND_INVENTORY_SLOT)
 
     if not mainHandItemID then
-        return createTempWeaponEnchantStatus(-1, 0)
+        return createTempWeaponEnchantStatus(
+            TEMP_WEAPON_ENCHANT_STATUS.NO_WEAPON,
+            0
+        )
     end
 
     local hasMainHandEnchant, mainHandExpiration, _,
@@ -138,7 +158,10 @@ local function getPlayerTempWeaponEnchantStatus()
           _, offHandEnchantID = GetWeaponEnchantInfo()
 
     if not hasMainHandEnchant then
-        return createTempWeaponEnchantStatus(0, 0)
+        return createTempWeaponEnchantStatus(
+            TEMP_WEAPON_ENCHANT_STATUS.MISSING,
+            0
+        )
     end
 
     local lowestTime = getTempWeaponEnchantRemaining(mainHandExpiration)
@@ -156,7 +179,10 @@ local function getPlayerTempWeaponEnchantStatus()
 
         if itemClassID == 2 then
             if not hasOffHandEnchant then
-                return createTempWeaponEnchantStatus(0, 0)
+                return createTempWeaponEnchantStatus(
+                    TEMP_WEAPON_ENCHANT_STATUS.MISSING,
+                    0
+                )
             end
 
             local ohTime = getTempWeaponEnchantRemaining(offHandExpiration)
@@ -180,10 +206,10 @@ end
 
 function Broadcast.Create()
     local broadcast = {
-        foodData              = {},
-        flaskData             = {},
-        durabilityData        = {},
-        tempWeaponEnchantData = {},
+        foodData              = sharedData.foodData,
+        flaskData             = sharedData.flaskData,
+        durabilityData        = sharedData.durabilityData,
+        tempWeaponEnchantData = sharedData.tempWeaponEnchantData,
     }
 
     function broadcast:Reset()

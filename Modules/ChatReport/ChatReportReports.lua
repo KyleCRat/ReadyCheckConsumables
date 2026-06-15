@@ -6,20 +6,27 @@ local Reports = RCC.ChatReportReports
 local F = RCC.F
 local FoodAuras = RCC.FoodAuras
 local Output = RCC.ChatReportOutput
+local Broadcast = RCC.RaidFrameBroadcast
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing = RCC.ConsumableTiming
 local db = RCC.db
 
 local GetTime = GetTime
+local floor = floor
 local format = format
 
 local CURRENT_AUGMENT_XPAC = db.currentAugmentXpac
 local FOOD_AURA_TYPE = FoodAuras.Type
+local RED_DURABILITY_THRESHOLD = 15
 
 local function appendEntries(target, source)
     for i = 1, #source do
         target[#target + 1] = source[i]
     end
+end
+
+local function getReportData()
+    return Broadcast and Broadcast.GetReportData and Broadcast.GetReportData()
 end
 
 local function isPreviousExpansionUnlimitedAugment(augmentData)
@@ -262,10 +269,100 @@ local function reportBuffs(toChat)
     Output.SendChunked(label .. " ", parts, toChat)
 end
 
+local function reportRepairs(toChat)
+    local reportData = getReportData()
+    local durabilityData = reportData and reportData.durabilityData
+
+    if not durabilityData then
+        return
+    end
+
+    local redRepair = {}
+
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
+        local pct = durabilityData[name]
+
+        if not F.IsSafeNumber(pct) then
+            return
+        end
+
+        if pct < RED_DURABILITY_THRESHOLD then
+            redRepair[#redRepair + 1] = format(
+                "%s(%d%%)",
+                Output.ColorName(F.shortName(name), class),
+                floor(pct)
+            )
+        end
+    end)
+
+    if #redRepair > 0 then
+        Output.SendChunked(
+            format("Red Repair (%d): ", #redRepair),
+            redRepair,
+            toChat
+        )
+    end
+end
+
+local function reportWeaponEnchants(toChat)
+    local reportData = getReportData()
+    local tempWeaponEnchantData =
+        reportData and reportData.tempWeaponEnchantData
+
+    if not tempWeaponEnchantData then
+        return
+    end
+
+    local missing = {}
+    local expiring = {}
+
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
+        local status = tempWeaponEnchantData[name]
+        local remaining = status and status.time
+
+        if not F.IsSafeNumber(remaining) then
+            return
+        end
+
+        local colored = Output.ColorName(F.shortName(name), class)
+
+        if remaining == Broadcast.TempWeaponEnchantStatus.MISSING then
+            missing[#missing + 1] = colored
+        elseif remaining > 0 and Timing.IsExpiringSoon(remaining) then
+            expiring[#expiring + 1] = format(
+                "%s(%s)",
+                colored,
+                F.FormatDuration(remaining)
+            )
+        end
+    end)
+
+    local totalBad = #missing + #expiring
+
+    if totalBad == 0 then
+        return
+    end
+
+    local entries = {}
+    appendEntries(entries, missing)
+    appendEntries(entries, expiring)
+    Output.SendChunked(
+        format("Weapon Enchant (%d): ", totalBad),
+        entries,
+        toChat
+    )
+end
+
 function Reports.SendAll(toChat)
     reportFood(toChat)
     reportFlasks(toChat)
     reportAugments(toChat)
     reportBuffs(toChat)
+    reportWeaponEnchants(toChat)
+    reportRepairs(toChat)
     reportOffline(toChat)
 end
