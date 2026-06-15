@@ -1,6 +1,7 @@
 local _, RCC = ...
 
 local Broadcast       = RCC.RaidFrameBroadcast
+local Cauldron        = RCC.RaidFrameCauldron
 local Columns         = RCC.RaidFrameColumns
 local Controls        = RCC.RaidFrameControls
 local FrameAnimations = RCC.FrameAnimations
@@ -18,6 +19,11 @@ local GetTime = GetTime
 
 local ADDON_REFRESH_DELAY = 0.25
 local FADE_OUT_DURATION   = 0.5
+
+local DISPLAY_MODE = {
+    READY_CHECK = "readyCheck",
+    CAULDRON    = "cauldron",
+}
 
 local LAYOUT = Columns.CreateLayout()
 
@@ -89,6 +95,32 @@ local renderContext = {
     },
     rules = Columns.RULES,
 }
+
+local function unregisterReadyCheckEvents()
+    frame:UnregisterEvent("UNIT_AURA")
+    frame:UnregisterEvent("READY_CHECK_CONFIRM")
+    frame:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
+    frame:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+end
+
+local function setDisplayMode(mode, options)
+    if mode ~= DISPLAY_MODE.READY_CHECK then
+        unregisterReadyCheckEvents()
+    end
+
+    if options and options.includeCauldrons ~= nil then
+        frame.includeCauldronColumns = options.includeCauldrons
+    elseif frame.includeCauldronColumns == nil then
+        frame.includeCauldronColumns = true
+    end
+
+    frame.displayMode = mode
+    Columns.ConfigureLayout(LAYOUT, mode, {
+        includeCauldrons = frame.includeCauldronColumns,
+    })
+    frame:SetWidth(LAYOUT.frameWidth)
+    titleBar:ApplyLayout(LAYOUT)
+end
 
 --------------------------------------------------------------------------------
 --- Ready check summary helpers
@@ -167,6 +199,7 @@ local function showFinishedSummary()
 end
 
 local function refreshRowAndTitle(index)
+    setDisplayMode(frame.displayMode or DISPLAY_MODE.READY_CHECK)
     Rows.RefreshRow(frame.rows[index], state.members[index], LAYOUT, renderContext)
     titleBar:RefreshFromMembers(
         state.members,
@@ -177,6 +210,7 @@ local function refreshRowAndTitle(index)
 end
 
 local function refreshAllRowsAndTitle()
+    setDisplayMode(frame.displayMode or DISPLAY_MODE.READY_CHECK)
     frame:SetHeight(Rows.RefreshAll(frame.rows, state, LAYOUT, renderContext))
     titleBar:RefreshFromMembers(
         state.members,
@@ -233,11 +267,12 @@ local function cancelSyntheticReadyCheck()
     end
 end
 
-local function beginReadyCheckDisplay(manualShow)
+local function beginReadyCheckDisplay(manualShow, options)
     cancelHideTimer()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
     state.readyAnnounced = false
+    setDisplayMode(DISPLAY_MODE.READY_CHECK, options)
 
     frame:RegisterEvent("UNIT_AURA")
     frame:RegisterEvent("READY_CHECK_CONFIRM")
@@ -263,6 +298,45 @@ local function showReadyCheckDisplay(duration, showProgress)
     frame:Show()
 end
 
+local function canShowCauldronOnly()
+    return Cauldron
+        and Cauldron.IsEnabled()
+        and Cauldron.HasActiveCauldron()
+        and Cauldron.ShouldShowOutsideReadyCheck()
+        and not InCombatLockdown()
+end
+
+local function beginCauldronDisplay()
+    cancelHideTimer()
+    cancelAddonRefreshTimer()
+    fadeOut:Cancel()
+    titleBar:StopProgress()
+    setDisplayMode(DISPLAY_MODE.CAULDRON, { includeCauldrons = true })
+    wipe(state.rcStatus)
+end
+
+local function showCauldronDisplayFromState()
+    titleBar:SetHeaderText("Cauldrons")
+    refreshAllRowsAndTitle()
+
+    controls:RestorePosition()
+    controls:SyncScale()
+    frame:Show()
+
+    return true
+end
+
+local function showCauldronDisplay()
+    if not canShowCauldronOnly() then
+        return false
+    end
+
+    beginCauldronDisplay()
+    Members.ScanAll(state, LAYOUT, renderContext)
+
+    return showCauldronDisplayFromState()
+end
+
 local function broadcastPlayerTimedConsumables()
     local columnData = Columns.ScanUnitData(
         "player",
@@ -280,7 +354,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     local enabled = RCC.GetSetting("raidFrame_enabled")
 
     if enabled then
-        beginReadyCheckDisplay(timeToHide == 0)
+        beginReadyCheckDisplay(timeToHide == 0, { includeCauldrons = true })
     else
         cancelHideTimer()
         cancelAddonRefreshTimer()
@@ -367,6 +441,38 @@ function frame:OnReadyCheckFinished()
     end)
 end
 
+function frame:ShowCauldronTracking()
+    showCauldronDisplay()
+end
+
+function frame:RefreshCauldronTracking()
+    if InCombatLockdown() then
+        return
+    end
+
+    if self.displayMode == DISPLAY_MODE.READY_CHECK and self:IsShown() then
+        refreshAllRowsAndTitle()
+
+        return
+    end
+
+    if showCauldronDisplay() then
+        return
+    end
+
+    if self.displayMode == DISPLAY_MODE.CAULDRON then
+        self:Hide()
+    end
+end
+
+function frame:HideCauldronTracking()
+    if self.displayMode == DISPLAY_MODE.CAULDRON then
+        self:Hide()
+    elseif self.displayMode == DISPLAY_MODE.READY_CHECK and self:IsShown() then
+        refreshAllRowsAndTitle()
+    end
+end
+
 function frame:OnCombat()
     cancelSyntheticReadyCheck()
 
@@ -394,14 +500,13 @@ end
 function frame:OnHide()
     cancelSyntheticReadyCheck()
 
-    self:UnregisterEvent("UNIT_AURA")
-    self:UnregisterEvent("READY_CHECK_CONFIRM")
-    self:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
-    self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+    unregisterReadyCheckEvents()
     cancelHideTimer()
     fadeOut:Cancel()
     titleBar:StopProgress()
     self.manualShow = false
+    self.displayMode = nil
+    self.includeCauldronColumns = nil
 end
 
 if Test then
@@ -413,6 +518,8 @@ if Test then
         broadcast        = broadcast,
         beginDisplay     = beginReadyCheckDisplay,
         showDisplay      = showReadyCheckDisplay,
+        beginCauldron    = beginCauldronDisplay,
+        showCauldron     = showCauldronDisplayFromState,
     })
 end
 

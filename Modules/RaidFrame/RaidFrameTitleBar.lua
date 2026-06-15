@@ -62,6 +62,7 @@ function TitleBar.Create(parent, layout, options)
     titleBar.timerText:SetText("")
 
     titleBar.colIcons = {}
+    titleBar.colIconsByKey = {}
 
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
@@ -70,23 +71,57 @@ function TitleBar.Create(parent, layout, options)
         icon:SetSize(layout.iconSize, layout.iconSize)
         icon:SetPoint("LEFT", titleBar, "LEFT", column.titleX, 0)
         icon:SetTexture(ReadyCheck.TEXTURES[ReadyCheck.PENDING])
+        icon:Hide()
         titleBar.colIcons[columnIndex] = icon
+        titleBar.colIconsByKey[column.key] = icon
+    end
+
+    function titleBar:ApplyLayout(layout)
+        self.progressWidth = layout.frameWidth - layout.framePad * 2
+
+        for columnIndex = 1, #layout.columns do
+            local column = layout.columns[columnIndex]
+            local icon = self.colIconsByKey[column.key]
+
+            if icon then
+                icon:Hide()
+            end
+        end
+
+        for columnIndex = 1, #layout.activeColumns do
+            local column = layout.activeColumns[columnIndex]
+            local icon = self.colIconsByKey[column.key]
+
+            if icon then
+                icon:ClearAllPoints()
+                icon:SetPoint("LEFT", self, "LEFT", column.titleX, 0)
+                icon:Show()
+            end
+        end
     end
 
     function titleBar:RefreshColumns(columnStates)
-        local numCols = #self.colIcons
+        local columns = self.layout and self.layout.activeColumns or {}
 
-        for columnIndex = 1, numCols do
-            self.colIcons[columnIndex]:SetTexture(
-                columnStates[columnIndex]
+        for columnIndex = 1, #columns do
+            local column = columns[columnIndex]
+            local icon = self.colIconsByKey[column.key]
+
+            if icon then
+                icon:SetTexture(
+                    columnStates[column.key]
                     and ReadyCheck.TITLE_TEXTURES.notReady
                     or ReadyCheck.TITLE_TEXTURES.ready
-            )
+                )
+            end
         end
     end
 
     function titleBar:RefreshFromMembers(members, activeCount, layout, context)
-        local columns = layout.columns
+        self.layout = layout
+        self:ApplyLayout(layout)
+
+        local columns = layout.activeColumns
         local columnStates = {}
 
         for columnIndex = 1, #columns do
@@ -97,7 +132,7 @@ function TitleBar.Create(parent, layout, options)
                 local member = members[memberIndex]
 
                 if member
-                    and member.online
+                    and (member.online or column.includeOfflineInTitle)
                     and column.IsBad(member, context, column)
                 then
                     anyBad = true
@@ -105,10 +140,16 @@ function TitleBar.Create(parent, layout, options)
                 end
             end
 
-            columnStates[columnIndex] = anyBad
+            columnStates[column.key] = anyBad
         end
 
         self:RefreshColumns(columnStates)
+    end
+
+    function titleBar:SetHeaderText(text)
+        self.countText:SetTextColor(1, 1, 1)
+        self.countText:SetText(text or "")
+        self.timerText:SetText("")
     end
 
     function titleBar:SetRespondedCount(respondedCount, activeCount)

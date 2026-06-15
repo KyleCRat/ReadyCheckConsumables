@@ -6,6 +6,7 @@ local Columns = RCC.RaidFrameColumns
 local db             = RCC.db
 local F              = RCC.F
 local FoodAuras      = RCC.FoodAuras
+local Cauldron       = RCC.RaidFrameCauldron
 local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing         = RCC.ConsumableTiming
@@ -17,6 +18,8 @@ local TIME_WIDTH                 = 30
 local H_PAD                      = 3
 local FRAME_PAD                  = 3
 local DURABILITY_WIDTH           = 42
+local CAULDRON_WIDTH             = 58
+local CAULDRON_COUNT_WIDTH       = 28
 local NO_DURATION                = 0
 local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
 local FOOD_AURA_TYPE = FoodAuras.Type
@@ -26,6 +29,7 @@ local COLUMN_TYPE = {
     ICON       = "icon",
     RAID_BUFF  = "raidBuff",
     DURABILITY = "durability",
+    CAULDRON   = "cauldron",
 }
 
 local DATA_SOURCE = {
@@ -33,6 +37,7 @@ local DATA_SOURCE = {
     TEMP_WEAPON_ENCHANT  = "tempWeaponEnchant",
     RAID_BUFF            = "raidBuff",
     DURABILITY           = "durability",
+    CAULDRON             = "cauldron",
 }
 
 Columns.COLUMN_TYPE = COLUMN_TYPE
@@ -47,6 +52,7 @@ local CREATE_CELL_BY_COLUMN_TYPE = {
     [COLUMN_TYPE.ICON]       = Renderers.ICON.CreateCell,
     [COLUMN_TYPE.RAID_BUFF]  = Renderers.RAID_BUFF.CreateCell,
     [COLUMN_TYPE.DURABILITY] = Renderers.DURABILITY.CreateCell,
+    [COLUMN_TYPE.CAULDRON]   = Renderers.CAULDRON.CreateCell,
 }
 
 local RENDER_CELL_BY_DATA_SOURCE = {
@@ -62,6 +68,9 @@ local RENDER_CELL_BY_DATA_SOURCE = {
     },
     [DATA_SOURCE.DURABILITY] = {
         [COLUMN_TYPE.DURABILITY] = Renderers.DURABILITY.RenderCell,
+    },
+    [DATA_SOURCE.CAULDRON] = {
+        [COLUMN_TYPE.CAULDRON] = Renderers.CAULDRON.RenderCell,
     },
 }
 
@@ -564,6 +573,49 @@ local durabilityColumn = {
 }
 
 --------------------------------------------------------------------------------
+--- Cauldron Columns
+--------------------------------------------------------------------------------
+
+local function isCauldronBad(member, _, column)
+    if not member or not member.key then
+        return true
+    end
+
+    return Cauldron.GetCount(member.key, column.cauldronKind)
+        ~= Cauldron.GetTarget(column.cauldronKind)
+end
+
+local cauldronFlaskColumn = {
+    columnType            = COLUMN_TYPE.CAULDRON,
+    dataSource            = DATA_SOURCE.CAULDRON,
+    key                   = "cauldronFlask",
+    cauldronKind          = Cauldron.KIND_FLASK,
+    countX                = 0,
+    iconX                 = 0,
+    titleX                = 0,
+    iconID                = db.flaskIconID,
+    label                 = "Flask Cauldron",
+    activeLabel           = "Flasks",
+    includeOfflineInTitle = true,
+    IsBad                 = isCauldronBad,
+}
+
+local cauldronPotionColumn = {
+    columnType            = COLUMN_TYPE.CAULDRON,
+    dataSource            = DATA_SOURCE.CAULDRON,
+    key                   = "cauldronPotion",
+    cauldronKind          = Cauldron.KIND_POTION,
+    countX                = 0,
+    iconX                 = 0,
+    titleX                = 0,
+    iconID                = db.combatPotionIconID,
+    label                 = "Potion Cauldron",
+    activeLabel           = "Potions",
+    includeOfflineInTitle = true,
+    IsBad                 = isCauldronBad,
+}
+
+--------------------------------------------------------------------------------
 --- Public API
 --------------------------------------------------------------------------------
 
@@ -606,6 +658,16 @@ function Columns.RenderCell(row, member, column, context)
     renderCell(row, member, column, context)
 end
 
+function Columns.SetCellShown(row, column, shown)
+    local cell = row.cells and row.cells[column.key]
+
+    Renderers.SetCellShown(cell, shown)
+end
+
+function Columns.PositionCell(row, column, layout)
+    Renderers.PositionCell(row, column, layout)
+end
+
 function Columns.ScanUnitData(unit, now, layout, context)
     local columnData = createColumnData(layout)
     local rules = context.rules
@@ -620,8 +682,8 @@ function Columns.ScanUnitData(unit, now, layout, context)
             now
         ) or rules.noDuration
 
-        for columnIndex = 1, #layout.columns do
-            local column = layout.columns[columnIndex]
+        for columnIndex = 1, #layout.activeColumns do
+            local column = layout.activeColumns[columnIndex]
 
             if column.CollectAura then
                 column.CollectAura(
@@ -644,8 +706,8 @@ function Columns.SyncExternalData(member, layout, context)
 
     member.columnData = member.columnData or createColumnData(layout)
 
-    for columnIndex = 1, #layout.columns do
-        local column = layout.columns[columnIndex]
+    for columnIndex = 1, #layout.activeColumns do
+        local column = layout.activeColumns[columnIndex]
 
         if column.SyncData then
             local data = member.columnData[column.key]
@@ -660,8 +722,85 @@ function Columns.SyncExternalData(member, layout, context)
     end
 end
 
+local function copyColumns(columns)
+    local copy = {}
+
+    for i = 1, #columns do
+        copy[i] = columns[i]
+    end
+
+    return copy
+end
+
+local function appendActiveCauldronColumns(columns)
+    if Cauldron.IsActive(Cauldron.KIND_FLASK) then
+        columns[#columns + 1] = cauldronFlaskColumn
+    end
+
+    if Cauldron.IsActive(Cauldron.KIND_POTION) then
+        columns[#columns + 1] = cauldronPotionColumn
+    end
+end
+
+local function positionCauldronColumns(columns, startX)
+    local nextX = startX
+
+    for columnIndex = 1, #columns do
+        local column = columns[columnIndex]
+
+        if column.columnType == COLUMN_TYPE.CAULDRON then
+            column.countX = nextX
+            column.iconX = nextX + CAULDRON_COUNT_WIDTH + 2
+            column.titleX = column.iconX
+
+            nextX = nextX + CAULDRON_WIDTH + H_PAD
+        end
+    end
+
+    return nextX
+end
+
+local function configureReadyCheckLayout(layout, options)
+    local activeColumns = copyColumns(layout.readyCheckColumns)
+    local rowWidth = FRAME_WIDTH - FRAME_PAD * 2
+
+    if not options or options.includeCauldrons ~= false then
+        appendActiveCauldronColumns(activeColumns)
+    end
+
+    if #activeColumns > #layout.readyCheckColumns then
+        rowWidth = positionCauldronColumns(activeColumns, rowWidth)
+    end
+
+    layout.showReadyIcon = true
+    layout.frameWidth = rowWidth + FRAME_PAD * 2
+    layout.x.name = NAME_X
+    layout.activeColumns = activeColumns
+end
+
+local function configureCauldronLayout(layout)
+    local activeColumns = {}
+    local rowWidth = NAME_WIDTH + H_PAD
+
+    appendActiveCauldronColumns(activeColumns)
+    rowWidth = positionCauldronColumns(activeColumns, rowWidth)
+
+    layout.showReadyIcon = false
+    layout.frameWidth = rowWidth + FRAME_PAD * 2
+    layout.x.name = 0
+    layout.activeColumns = activeColumns
+end
+
+function Columns.ConfigureLayout(layout, mode, options)
+    if mode == "cauldron" then
+        configureCauldronLayout(layout)
+    else
+        configureReadyCheckLayout(layout, options)
+    end
+end
+
 function Columns.CreateLayout()
-    local columns = {
+    local readyCheckColumns = {
         foodColumn,
         flaskColumn,
         tempWeaponEnchantColumn,
@@ -670,21 +809,35 @@ function Columns.CreateLayout()
     }
 
     for raidBuffIndex = 1, RAID_BUFF_COUNT do
-        columns[#columns + 1] = createRaidBuffColumn(raidBuffIndex)
+        readyCheckColumns[#readyCheckColumns + 1] =
+            createRaidBuffColumn(raidBuffIndex)
     end
 
-    columns[#columns + 1] = durabilityColumn
+    readyCheckColumns[#readyCheckColumns + 1] = durabilityColumn
 
-    return {
-        raidBuffCount   = RAID_BUFF_COUNT,
-        frameWidth      = FRAME_WIDTH,
-        framePad        = FRAME_PAD,
-        iconSize        = ICON_SIZE,
-        rcIconWidth     = RC_ICON_WIDTH,
-        nameWidth       = NAME_WIDTH,
-        timeWidth       = TIME_WIDTH,
-        durabilityWidth = DURABILITY_WIDTH,
-        x               = LAYOUT_X,
-        columns         = columns,
+    local columns = copyColumns(readyCheckColumns)
+    columns[#columns + 1] = cauldronFlaskColumn
+    columns[#columns + 1] = cauldronPotionColumn
+
+    local layout = {
+        raidBuffCount       = RAID_BUFF_COUNT,
+        frameWidth          = FRAME_WIDTH,
+        framePad            = FRAME_PAD,
+        iconSize            = ICON_SIZE,
+        rcIconWidth         = RC_ICON_WIDTH,
+        nameWidth           = NAME_WIDTH,
+        timeWidth           = TIME_WIDTH,
+        durabilityWidth     = DURABILITY_WIDTH,
+        cauldronWidth       = CAULDRON_WIDTH,
+        cauldronCountWidth  = CAULDRON_COUNT_WIDTH,
+        showReadyIcon       = true,
+        x                   = LAYOUT_X,
+        columns             = columns,
+        readyCheckColumns   = readyCheckColumns,
+        activeColumns       = readyCheckColumns,
     }
+
+    Columns.ConfigureLayout(layout, "readyCheck")
+
+    return layout
 end

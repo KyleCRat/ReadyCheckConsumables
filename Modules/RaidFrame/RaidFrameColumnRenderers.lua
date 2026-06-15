@@ -7,6 +7,7 @@ local F              = RCC.F
 local UI             = RCC.UI
 local Timing         = RCC.ConsumableTiming
 local formatDuration = F.FormatDuration
+local GetItemIcon    = C_Item.GetItemIconByID
 
 local MISSING_ALPHA     = 0.3
 local COLOR_DUR_GREEN   = { r = 0.2, g = 1,    b = 0.2 }
@@ -14,6 +15,9 @@ local COLOR_DUR_YELLOW  = { r = 1,   g = 0.82, b = 0   }
 local COLOR_DUR_RED     = { r = 1,   g = 0.2,  b = 0.2 }
 local COLOR_TIME_NORMAL = { r = 1,   g = 1,    b = 1   }
 local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
+local COLOR_UNDER       = { r = 1,   g = 0.82, b = 0   }
+local COLOR_EXACT       = { r = 0.2, g = 1,    b = 0.2 }
+local COLOR_OVER        = { r = 1,   g = 0.2,  b = 0.2 }
 local FONT_SIZE_TIME    = 14
 local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
 local UNKNOWN_TEMP_WEAPON_ENCHANT_TIME = -2
@@ -98,6 +102,8 @@ local function createIconBg(row, icon, color)
     bg:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
     bg:SetTexture("Interface\\Buttons\\WHITE8x8")
     bg:SetVertexColor(color.r, color.g, color.b, 1)
+
+    return bg
 end
 
 local function setCell(row, column, cell)
@@ -131,7 +137,7 @@ local function createTimedCell(row, column, layout, options)
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
-    createIconBg(row, icon, options.missingBg)
+    local bg = createIconBg(row, icon, options.missingBg)
 
     local overlay = createOverlay(row, icon)
     overlay.label = column.label
@@ -139,6 +145,7 @@ local function createTimedCell(row, column, layout, options)
     setCell(row, column, {
         timeText = timeText,
         icon     = icon,
+        bg       = bg,
         overlay  = overlay,
     })
 end
@@ -150,13 +157,14 @@ local function createIconCell(row, column, layout, options)
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
-    createIconBg(row, icon, options.missingBg)
+    local bg = createIconBg(row, icon, options.missingBg)
 
     local overlay = createOverlay(row, icon)
     overlay.label = column.label
 
     setCell(row, column, {
         icon    = icon,
+        bg      = bg,
         overlay = overlay,
     })
 end
@@ -168,14 +176,46 @@ local function createRaidBuffCell(row, column, layout, options)
     icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
     icon:SetSize(layout.iconSize, layout.iconSize)
     icon:SetTexture(column.iconID)
-    createIconBg(row, icon, options.missingBg)
+    local bg = createIconBg(row, icon, options.missingBg)
 
     local overlay = createOverlay(row, icon)
     overlay.spellID = column.spellID
 
     setCell(row, column, {
         icon    = icon,
+        bg      = bg,
         overlay = overlay,
+    })
+end
+
+local function createCauldronCell(row, column, layout, options)
+    options = options or {}
+
+    local countText = row:CreateFontString(nil, "ARTWORK")
+
+    countText:SetPoint("LEFT", row, "LEFT", column.countX, 0)
+    countText:SetFont(
+        options.font or UI.FONT,
+        options.fontSizeTime or FONT_SIZE_TIME,
+        "OUTLINE"
+    )
+    countText:SetWidth(layout.cauldronCountWidth)
+    countText:SetJustifyH("RIGHT")
+
+    local icon = row:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
+    icon:SetSize(layout.iconSize, layout.iconSize)
+    icon:SetTexture(column.iconID)
+    local bg = createIconBg(row, icon, options.missingBg)
+
+    local overlay = createOverlay(row, icon)
+    overlay.label = column.label
+
+    setCell(row, column, {
+        countText = countText,
+        icon      = icon,
+        bg        = bg,
+        overlay   = overlay,
     })
 end
 
@@ -214,6 +254,20 @@ end
 
 local function getColumnData(member, column)
     return member.columnData and member.columnData[column.key]
+end
+
+local function setTextColor(fontString, color)
+    fontString:SetTextColor(color.r, color.g, color.b)
+end
+
+local function getCountColor(count, target)
+    if count < target then
+        return COLOR_UNDER
+    elseif count > target then
+        return COLOR_OVER
+    end
+
+    return COLOR_EXACT
 end
 
 local function renderTimedAuraCell(row, member, column, context)
@@ -406,6 +460,79 @@ local function renderDurabilityCell(row, member, column, context)
     end
 end
 
+local function renderCauldronCell(row, member, column)
+    local Cauldron = RCC.RaidFrameCauldron
+    local kind = column.cauldronKind
+    local cell = getCell(row, column)
+    local count = Cauldron.GetCount(member.key, kind)
+    local target = Cauldron.GetTarget(kind)
+    local itemID = Cauldron.GetLastItemID(member.key, kind)
+    local icon = itemID and GetItemIcon(itemID) or column.iconID
+
+    cell.countText:SetText(tostring(count))
+    setTextColor(cell.countText, getCountColor(count, target))
+
+    cell.icon:SetTexture(icon or column.iconID)
+    cell.icon:SetDesaturated(count == 0)
+    cell.icon:SetVertexColor(1, 1, 1, count > 0 and 1 or MISSING_ALPHA)
+
+    cell.overlay.unit    = nil
+    cell.overlay.auraID  = nil
+    cell.overlay.spellID = nil
+    cell.overlay.itemID  = itemID
+    cell.overlay.label   = column.activeLabel or column.label
+end
+
+local function setRegionShown(region, shown)
+    if not region or not region.Show then
+        return
+    end
+
+    if shown then
+        region:Show()
+    else
+        region:Hide()
+    end
+end
+
+function Renderers.SetCellShown(cell, shown)
+    if not cell then
+        return
+    end
+
+    for _, region in pairs(cell) do
+        setRegionShown(region, shown)
+    end
+end
+
+local function positionIconCell(row, cell, column)
+    cell.icon:ClearAllPoints()
+    cell.icon:SetPoint("LEFT", row, "LEFT", column.iconX, 0)
+end
+
+function Renderers.PositionCell(row, column)
+    local cell = getCell(row, column)
+
+    if cell.timeText then
+        cell.timeText:ClearAllPoints()
+        cell.timeText:SetPoint("LEFT", row, "LEFT", column.timeX, 0)
+    end
+
+    if cell.countText then
+        cell.countText:ClearAllPoints()
+        cell.countText:SetPoint("LEFT", row, "LEFT", column.countX, 0)
+    end
+
+    if cell.icon then
+        positionIconCell(row, cell, column)
+    end
+
+    if cell.text then
+        cell.text:ClearAllPoints()
+        cell.text:SetPoint("LEFT", row, "LEFT", column.textX, 0)
+    end
+end
+
 Renderers.TIMED = {
     CreateCell                  = createTimedCell,
     RenderAuraCell              = renderTimedAuraCell,
@@ -425,4 +552,9 @@ Renderers.RAID_BUFF = {
 Renderers.DURABILITY = {
     CreateCell = createDurabilityCell,
     RenderCell = renderDurabilityCell,
+}
+
+Renderers.CAULDRON = {
+    CreateCell = createCauldronCell,
+    RenderCell = renderCauldronCell,
 }

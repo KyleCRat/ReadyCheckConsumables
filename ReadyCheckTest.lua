@@ -57,7 +57,7 @@ function Test:Stop()
     return wasActive
 end
 
-function Test:Start(permanent)
+function Test:Start(permanent, options)
     if InCombatLockdown() then
         return false
     end
@@ -72,7 +72,7 @@ function Test:Start(permanent)
     end
 
     if RCC.RaidFrameTest then
-        RCC.RaidFrameTest:Start(permanent or false, TEST_DURATION)
+        RCC.RaidFrameTest:Start(permanent or false, TEST_DURATION, options)
     end
 
     if not permanent then

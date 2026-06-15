@@ -4,6 +4,7 @@ RCC.RaidFrameTest = RCC.RaidFrameTest or {}
 local Test = RCC.RaidFrameTest
 
 local F = RCC.F
+local Cauldron = RCC.RaidFrameCauldron
 local Columns = RCC.RaidFrameColumns
 local COLUMN_TYPE = Columns.COLUMN_TYPE
 local DATA_SOURCE = Columns.DATA_SOURCE
@@ -191,6 +192,7 @@ local function populateSyntheticState(self)
     local layout = env.layout
     local context = env.context
     local broadcast = env.broadcast
+    local includeCauldrons = self.includeCauldrons == true
 
     wipe(state.members)
     wipe(state.unitToIndex)
@@ -211,6 +213,10 @@ local function populateSyntheticState(self)
     }
     state.unitToIndex["player"] = 1
     state.rcStatus["player"] = ReadyCheck.READY
+
+    if includeCauldrons and Cauldron then
+        Cauldron.SetSyntheticTestEntry(state.members[1].key, 1)
+    end
 
     local fakeMembers = generateSyntheticMembers(playerClass)
     local count = 1
@@ -234,6 +240,10 @@ local function populateSyntheticState(self)
 
         state.unitToIndex[fakeUnit] = count
         state.rcStatus[fakeUnit] = ReadyCheck.PENDING
+
+        if includeCauldrons and Cauldron then
+            Cauldron.SetSyntheticTestEntry(playerKey, count)
+        end
 
         broadcast:SetDurability(playerKey, member.durability)
 
@@ -317,7 +327,7 @@ function Test:Finish()
     end
 end
 
-function Test:Start(permanent, duration)
+function Test:Start(permanent, duration, options)
     local env = self.env
 
     if not env or InCombatLockdown() then
@@ -330,14 +340,50 @@ function Test:Start(permanent, duration)
 
     local runID = self.runID
     self.active = true
+    self.includeCauldrons = options
+        and options.includeCauldrons == true
+        and Cauldron
+        and Cauldron.BeginSyntheticTestData()
+        or false
 
-    env.beginDisplay(permanent or false)
+    env.beginDisplay(permanent or false, {
+        includeCauldrons = self.includeCauldrons,
+    })
     populateSyntheticState(self)
     env.broadcast:SendDurability()
     env.broadcast:SendTempWeaponEnchantStatus()
     env.showDisplay(duration, true)
 
     scheduleSyntheticResponses(self, runID, duration)
+
+    return true
+end
+
+function Test:StartCauldronOnly()
+    local env = self.env
+
+    if not env
+        or not env.beginCauldron
+        or not env.showCauldron
+        or InCombatLockdown()
+        or not Cauldron
+    then
+        return false
+    end
+
+    self:Cancel()
+    self.active = true
+    self.includeCauldrons = Cauldron.BeginSyntheticTestData()
+
+    if not self.includeCauldrons then
+        self.active = false
+
+        return false
+    end
+
+    env.beginCauldron()
+    populateSyntheticState(self)
+    env.showCauldron()
 
     return true
 end

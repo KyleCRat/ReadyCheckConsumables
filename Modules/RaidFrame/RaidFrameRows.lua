@@ -99,6 +99,14 @@ function Rows.Create(parent, titleBar, layout, options)
 end
 
 local function applyRcIcon(row, unit, member, layout, context)
+    if not layout.showReadyIcon then
+        row.rcIcon:Hide()
+
+        return
+    end
+
+    row.rcIcon:Show()
+
     local status = context.state.rcStatus[unit] or ReadyCheck.PENDING
 
     if status == ReadyCheck.NOT_READY and not member.online then
@@ -125,7 +133,10 @@ local function applyClassBackground(row, member)
     end
 end
 
-local function applyName(row, member)
+local function applyName(row, member, layout)
+    row.nameText:ClearAllPoints()
+    row.nameText:SetPoint("LEFT", row, "LEFT", layout.x.name, 0)
+
     if not member.online then
         row.nameText:SetTextColor(COLOR_NAME_OFFLINE.r, COLOR_NAME_OFFLINE.g, COLOR_NAME_OFFLINE.b)
     elseif member.isDead then
@@ -146,13 +157,22 @@ function Rows.ApplyData(row, member, layout, context)
 
     local unit = member.unit
 
+    row:SetWidth(layout.frameWidth - layout.framePad * 2)
     applyRcIcon(row, unit, member, layout, context)
     applyClassBackground(row, member)
-    applyName(row, member)
+    applyName(row, member, layout)
 
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
 
+        Columns.SetCellShown(row, column, false)
+    end
+
+    for columnIndex = 1, #layout.activeColumns do
+        local column = layout.activeColumns[columnIndex]
+
+        Columns.SetCellShown(row, column, true)
+        Columns.PositionCell(row, column, layout)
         Columns.RenderCell(row, member, column, context)
     end
 
@@ -172,6 +192,7 @@ function Rows.RefreshAll(rows, state, layout, context)
     local activeCount = state.activeCount
 
     for i = 1, activeCount do
+        rows[i]:SetWidth(layout.frameWidth - layout.framePad * 2)
         Rows.RefreshRow(rows[i], state.members[i], layout, context)
     end
 

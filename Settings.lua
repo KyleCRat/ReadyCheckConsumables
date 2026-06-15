@@ -38,6 +38,10 @@ local DEFAULTS = {
     raidFrame_minShow        = true,
     raidFrame_minShowTime    = 15,
 
+    -- Raid Frame Cauldron Columns
+    raidFrameCauldron_enabled               = true,
+    raidFrameCauldron_showOutsideReadyCheck = true,
+
     -- Chat Report
     chatReport_enabled       = true,
     chatReport_permission    = "assist",
@@ -548,6 +552,45 @@ local function registerPanel()
     )
     Settings.CreateSlider(rfCat, rfMinShowTime, rfMinShowOptions,
         "How long the raid status frame stays open after a ready check (1-40 seconds).")
+
+    ----------------------------------------------------------------------------
+    --- Raid Frame Cauldron Columns
+    ----------------------------------------------------------------------------
+
+    rfLayout:AddInitializer(
+        CreateSettingsListSectionHeaderInitializer("Cauldrons")
+    )
+
+    local ctEnabled = Settings.RegisterAddOnSetting(
+        rfCat, "raidFrameCauldron_enabled", "raidFrameCauldron_enabled",
+        db, "boolean", "Enabled", DEFAULTS.raidFrameCauldron_enabled
+    )
+    Settings.CreateCheckbox(rfCat, ctEnabled,
+        "Track flask and potion pickups from cauldrons.")
+
+    Settings.SetOnValueChangedCallback("raidFrameCauldron_enabled", function()
+        if RCC.RaidFrameCauldron then
+            RCC.RaidFrameCauldron.Refresh()
+        end
+    end)
+
+    local ctStandalone = Settings.RegisterAddOnSetting(
+        rfCat, "raidFrameCauldron_showOutsideReadyCheck",
+        "raidFrameCauldron_showOutsideReadyCheck",
+        db, "boolean", "Show Outside Ready Checks",
+        DEFAULTS.raidFrameCauldron_showOutsideReadyCheck
+    )
+    Settings.CreateCheckbox(rfCat, ctStandalone,
+        "Show the raid frame with only cauldron columns when a cauldron is detected outside ready checks.")
+
+    Settings.SetOnValueChangedCallback(
+        "raidFrameCauldron_showOutsideReadyCheck",
+        function()
+            if RCC.RaidFrameCauldron then
+                RCC.RaidFrameCauldron.Refresh()
+            end
+        end
+    )
 
     ----------------------------------------------------------------------------
     --- Chat Report (settings)
