@@ -96,11 +96,22 @@ local renderContext = {
     rules = Columns.RULES,
 }
 
+local function registerReadyCheckEvents()
+    frame:RegisterEvent("UNIT_AURA")
+    frame:RegisterEvent("READY_CHECK_CONFIRM")
+    frame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
+    frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    frame:RegisterEvent("WEAPON_ENCHANT_CHANGED")
+    frame:RegisterEvent("WEAPON_SLOT_CHANGED")
+end
+
 local function unregisterReadyCheckEvents()
     frame:UnregisterEvent("UNIT_AURA")
     frame:UnregisterEvent("READY_CHECK_CONFIRM")
     frame:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
     frame:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+    frame:UnregisterEvent("WEAPON_ENCHANT_CHANGED")
+    frame:UnregisterEvent("WEAPON_SLOT_CHANGED")
 end
 
 local function setDisplayMode(mode, options)
@@ -226,6 +237,7 @@ end
 
 local hideTimer
 local addonRefreshTimer
+local tempWeaponEnchantTimer
 local fadeOut = FrameAnimations.CreateFadeOut(frame, {
     duration = FADE_OUT_DURATION,
 })
@@ -235,6 +247,13 @@ local function cancelAddonRefreshTimer()
     if addonRefreshTimer then
         addonRefreshTimer:Cancel()
         addonRefreshTimer = nil
+    end
+end
+
+local function cancelTempWeaponEnchantTimer()
+    if tempWeaponEnchantTimer then
+        tempWeaponEnchantTimer:Cancel()
+        tempWeaponEnchantTimer = nil
     end
 end
 
@@ -273,11 +292,7 @@ local function beginReadyCheckDisplay(manualShow, options)
     fadeOut:Cancel()
     state.readyAnnounced = false
     setDisplayMode(DISPLAY_MODE.READY_CHECK, options)
-
-    frame:RegisterEvent("UNIT_AURA")
-    frame:RegisterEvent("READY_CHECK_CONFIRM")
-    frame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
-    frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    registerReadyCheckEvents()
 
     frame.manualShow = manualShow or false
     showStartTime = GetTime()
@@ -348,6 +363,19 @@ local function broadcastPlayerTimedConsumables()
     broadcast:SendTimedConsumableStatuses(columnData)
 end
 
+local function scheduleTempWeaponEnchantRefresh()
+    cancelTempWeaponEnchantTimer()
+
+    tempWeaponEnchantTimer = C_Timer.NewTimer(0.2, function()
+        tempWeaponEnchantTimer = nil
+        broadcast:SendTempWeaponEnchantStatus()
+
+        if frame:IsShown() then
+            refreshAllRowsAndTitle()
+        end
+    end)
+end
+
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
     cancelSyntheticReadyCheck()
 
@@ -356,6 +384,8 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     if enabled then
         beginReadyCheckDisplay(timeToHide == 0, { includeCauldrons = true })
     else
+        setDisplayMode(DISPLAY_MODE.READY_CHECK, { includeCauldrons = true })
+        registerReadyCheckEvents()
         cancelHideTimer()
         cancelAddonRefreshTimer()
         fadeOut:Cancel()
@@ -415,6 +445,15 @@ end
 function frame:OnReadyCheckFinished()
     titleBar:StopProgress()
     showFinishedSummary()
+
+    if not self:IsShown() then
+        unregisterReadyCheckEvents()
+        cancelTempWeaponEnchantTimer()
+        self.displayMode = nil
+        self.includeCauldronColumns = nil
+
+        return
+    end
 
     if self.manualShow then
         return
@@ -476,8 +515,10 @@ end
 function frame:OnCombat()
     cancelSyntheticReadyCheck()
 
+    unregisterReadyCheckEvents()
     cancelHideTimer()
     cancelAddonRefreshTimer()
+    cancelTempWeaponEnchantTimer()
     fadeOut:Cancel()
     self:Hide()
 end
@@ -502,6 +543,7 @@ function frame:OnHide()
 
     unregisterReadyCheckEvents()
     cancelHideTimer()
+    cancelTempWeaponEnchantTimer()
     fadeOut:Cancel()
     titleBar:StopProgress()
     self.manualShow = false
@@ -557,13 +599,11 @@ local function onUnitInventoryChanged(self, unit)
         return
     end
 
-    C_Timer.After(0.2, function()
-        broadcast:SendTempWeaponEnchantStatus()
+    scheduleTempWeaponEnchantRefresh()
+end
 
-        if self:IsShown() then
-            refreshAllRowsAndTitle()
-        end
-    end)
+local function onWeaponEnchantChanged()
+    scheduleTempWeaponEnchantRefresh()
 end
 
 local function onUnitAura(self, unit)
@@ -599,6 +639,8 @@ local EVENT_HANDLERS = {
     UNIT_AURA                   = onUnitAura,
     UNIT_INVENTORY_CHANGED      = onUnitInventoryChanged,
     UPDATE_INVENTORY_DURABILITY = onUpdateInventoryDurability,
+    WEAPON_ENCHANT_CHANGED      = onWeaponEnchantChanged,
+    WEAPON_SLOT_CHANGED         = onWeaponEnchantChanged,
 }
 
 frame:SetScript("OnEvent", function(self, event, ...)
