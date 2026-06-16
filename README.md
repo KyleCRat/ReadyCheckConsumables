@@ -3,7 +3,7 @@
 Ready Check Consumables is a World of Warcraft addon that shows personal and
 group consumable status during ready checks. It is built for raid leaders and
 raiders who want a quick view of missing buffs, expiring consumables, durability,
-and ready-check responses.
+cauldron pickups, and ready-check responses.
 
 ## Features
 
@@ -47,12 +47,19 @@ A raid overview frame appears alongside the ready check.
 - Reads local aura data and RCC broadcasts from other users for food, flask,
   weapon enchant, and durability status.
 - Reads Method Raid Tools durability broadcasts.
+- Tracks Midnight flask and potion cauldron pickups, showing each player's
+  pickup count and the most recent fleeting flask or potion icon they collected.
+- Opens with only cauldron columns when cauldrons are detected outside a ready
+  check, and appends active cauldron columns to the ready-check layout.
+- Colors cauldron pickup counts when players are under, at, or over the expected
+  pickup amount.
 - Shows title-bar summary icons for each tracked column.
 - Includes a ready-check countdown progress bar and finished summary text.
 - Announces when everyone in the active raid groups is ready, while ignoring
   benched players.
 - Includes an inline scale control, is draggable, and remembers position.
-- Hides on combat start to avoid protected-frame issues.
+- Hides on combat start to avoid protected-frame issues and clears cauldron
+  pickup tracking when combat begins.
 
 ### Chat Report
 
@@ -60,11 +67,14 @@ Chat reporting can automatically summarize missing consumables when a ready
 check starts.
 
 - Reports missing or expiring food and flasks.
+- Reports missing or expiring weapon enchants when RCC has known status data.
+- Reports players who need repairs when RCC has known durability data.
 - Reports missing or outdated augment runes.
 - Accepts previous-expansion unlimited augment runes as valid.
 - Reports missing raid buffs only when the providing class is present.
 - Reports offline players separately.
-- Skips offline players for consumable checks.
+- Skips offline players and unknown status data for consumable, repair, and
+  weapon-enchant checks.
 - Avoids reporting to `/say`; local output is used when no group chat is
   available.
 - Coordinates between RCC users so only one elected reporter posts.
@@ -101,8 +111,11 @@ The settings panel can create marker-based macros that RCC keeps updated.
 
 | Command | Cmd | Description |
 |---|---|---|
-| `/rcc test` | `/rcc t` | Show timed test frames that auto-hide |
-| `/rcc testp` | `/rcc tp` | Show permanent test frames |
+| `/rcc test` | `/rcc t` | Show timed combined test frames that auto-hide |
+| `/rcc testp` | `/rcc tp` | Show permanent combined test frames |
+| `/rcc readycheck test` | `/rcc readycheck t`, `/rcc rc test`, `/rcc rc t` | Show a timed ready-check-only test frame |
+| `/rcc readycheck testp` | `/rcc rc testp` | Show a permanent ready-check-only test frame |
+| `/rcc cauldron test` | `/rcc cauldron t`, `/rcc ct test`, `/rcc ct t` | Show a cauldron-only test frame |
 | `/rcc hide` | `/rcc h` | Hide all RCC frames |
 | `/rcc report` | `/rcc r` | Print a consumable report locally |
 | `/rcc reportchat` | `/rcc rc` | Send a consumable report to group chat |
@@ -116,6 +129,9 @@ Access settings through `/rcc settings` or the WoW AddOns settings panel.
 - Enable or disable the consumables frame and raid status frame.
 - Adjust consumables frame and raid status frame scale.
 - Keep frames visible for a configurable minimum time after ready checks.
+- Enable or disable cauldron tracking in the raid status frame.
+- Choose whether cauldron-only raid status frames can appear outside ready
+  checks.
 - Open the consumables frame when entering selected instance types.
 - Auto-hide the instance-opened consumables frame after a configurable delay.
 - Toggle individual consumable icons.
@@ -128,6 +144,9 @@ Access settings through `/rcc settings` or the WoW AddOns settings panel.
 - Reanchors the consumables frame for ElvUI and ShestakUI ready-check frames.
 - Shares and reads RCC addon messages for food, flask, weapon enchant, and
   durability data.
+- Shares lightweight cauldron-drop messages so other RCC users can open the
+  correct cauldron columns, while pickup counts are still driven by local loot
+  chat item IDs.
 - Reads Method Raid Tools durability broadcasts and defers chat reporting when
   MRT is already reporting.
 - Avoids protected frame work in combat and hides frames on combat start.
