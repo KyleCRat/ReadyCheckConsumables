@@ -48,6 +48,14 @@ local function invalidateRun(self)
     self.runID = (self.runID or 0) + 1
 end
 
+local function clearCauldronTestData(self)
+    if Cauldron and Cauldron.EndSyntheticTestData then
+        Cauldron.EndSyntheticTestData(true)
+    end
+
+    self.includeCauldrons = false
+end
+
 local function addTimer(self, runID, delay, callback)
     local timer = C_Timer.NewTimer(delay, function()
         if self.runID ~= runID or not self.active then
@@ -298,6 +306,7 @@ end
 function Test:Cancel()
     invalidateRun(self)
     cancelTimers(self)
+    clearCauldronTestData(self)
     self.active = false
 end
 

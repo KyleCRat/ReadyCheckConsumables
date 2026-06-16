@@ -16,13 +16,21 @@ local TRACKED_CAULDRON_TYPES = {
     KIND_POTION,
 }
 
-local counts = {}
-local activeKinds = {
-    [KIND_FLASK] = false,
-    [KIND_POTION] = false,
-}
-local activeTargets = {}
-local activePickupQuantities = {}
+local function createState()
+    return {
+        counts = {},
+        activeKinds = {
+            [KIND_FLASK] = false,
+            [KIND_POTION] = false,
+        },
+        activeTargets = {},
+        activePickupQuantities = {},
+    }
+end
+
+local liveState = createState()
+local syntheticState = createState()
+local syntheticActive = false
 local testFlaskItemID
 local testPotionItemID
 
@@ -44,29 +52,42 @@ local function refreshFrame()
     end
 end
 
-local function getOrCreateEntry(playerKey)
-    if not playerKey then return end
+local function getDisplayState()
+    return syntheticActive and syntheticState or liveState
+end
 
-    counts[playerKey] = counts[playerKey] or {
+local function getOrCreateEntry(state, playerKey)
+    if not state or not playerKey then return end
+
+    state.counts[playerKey] = state.counts[playerKey] or {
         flask = 0,
         flaskItemID = nil,
         potion = 0,
         potionItemID = nil,
     }
 
-    return counts[playerKey]
+    return state.counts[playerKey]
 end
 
-local function resetState()
-    wipe(counts)
+local function resetState(state)
+    if not state then return end
+
+    wipe(state.counts)
 
     for i = 1, #TRACKED_CAULDRON_TYPES do
         local kind = TRACKED_CAULDRON_TYPES[i]
 
-        activeKinds[kind] = false
-        activeTargets[kind] = nil
-        activePickupQuantities[kind] = nil
+        state.activeKinds[kind] = false
+        state.activeTargets[kind] = nil
+        state.activePickupQuantities[kind] = nil
     end
+end
+
+local function resetSyntheticState()
+    resetState(syntheticState)
+    syntheticActive = false
+    testFlaskItemID = nil
+    testPotionItemID = nil
 end
 
 local function isValidKind(kind)
@@ -85,9 +106,12 @@ local function getCauldronDataForPickupItem(itemID)
         and RCC.db.cauldronPickupItemData[itemID]
 end
 
-local function getPickupQuantity(kind, cauldronData)
-    return activePickupQuantities[kind]
-        or (cauldronData and cauldronData.pickupQuantity)
+local function getPickupQuantity(state, kind, cauldronData)
+    if state and state.activePickupQuantities[kind] then
+        return state.activePickupQuantities[kind]
+    end
+
+    return cauldronData and cauldronData.pickupQuantity
 end
 
 local function getCauldronDataForKind(kind)
@@ -108,7 +132,7 @@ local function parseItemID(message)
     return tonumber(message:match("item:(%d+)"))
 end
 
-local function parseQuantity(message, kind, cauldronData)
+local function parseQuantity(message, kind, cauldronData, state)
     local quantity = message
         and (
             message:match("|h|r[xX](%d+)")
@@ -122,7 +146,7 @@ local function parseQuantity(message, kind, cauldronData)
         return quantity
     end
 
-    return getPickupQuantity(kind, cauldronData)
+    return getPickupQuantity(state, kind, cauldronData)
 end
 
 local function stripChatColor(text)
@@ -214,15 +238,19 @@ function Cauldron.ShouldShowOutsideReadyCheck()
 end
 
 function Cauldron.GetTarget(kind)
-    return activeTargets[kind] or 0
+    local state = getDisplayState()
+
+    return state.activeTargets[kind] or 0
 end
 
 function Cauldron.GetCounts()
-    return counts
+    return getDisplayState().counts
 end
 
 function Cauldron.GetEntry(playerKey)
-    return playerKey and counts[playerKey]
+    local state = getDisplayState()
+
+    return playerKey and state.counts[playerKey]
 end
 
 function Cauldron.GetCount(playerKey, kind)
@@ -242,12 +270,16 @@ function Cauldron.GetLastItemID(playerKey, kind)
 end
 
 function Cauldron.IsActive(kind)
-    return activeKinds[kind] == true
+    local state = getDisplayState()
+
+    return state.activeKinds[kind] == true
 end
 
 function Cauldron.HasActiveCauldron()
+    local state = getDisplayState()
+
     for i = 1, #TRACKED_CAULDRON_TYPES do
-        if activeKinds[TRACKED_CAULDRON_TYPES[i]] then
+        if state.activeKinds[TRACKED_CAULDRON_TYPES[i]] then
             return true
         end
     end
@@ -257,11 +289,12 @@ end
 
 function Cauldron.GetActiveKinds()
     local active = {}
+    local state = getDisplayState()
 
     for i = 1, #TRACKED_CAULDRON_TYPES do
         local kind = TRACKED_CAULDRON_TYPES[i]
 
-        if activeKinds[kind] then
+        if state.activeKinds[kind] then
             active[#active + 1] = kind
         end
     end
@@ -273,8 +306,8 @@ function Cauldron.Refresh()
     refreshFrame()
 end
 
-function Cauldron.Activate(kind, cauldronData)
-    if InCombatLockdown() or not isEnabled() or not isValidKind(kind) then
+local function activateState(state, kind, cauldronData)
+    if not state or not isValidKind(kind) then
         return false
     end
 
@@ -296,16 +329,27 @@ function Cauldron.Activate(kind, cauldronData)
         return false
     end
 
-    activeTargets[kind] = target
-    activePickupQuantities[kind] = pickupQuantity
+    state.activeTargets[kind] = target
+    state.activePickupQuantities[kind] = pickupQuantity
 
-    if activeKinds[kind] then
-        refreshFrame()
-
+    if state.activeKinds[kind] then
         return true
     end
 
-    activeKinds[kind] = true
+    state.activeKinds[kind] = true
+
+    return true
+end
+
+function Cauldron.Activate(kind, cauldronData)
+    if InCombatLockdown() or not isEnabled() then
+        return false
+    end
+
+    if not activateState(liveState, kind, cauldronData) then
+        return false
+    end
+
     refreshFrame()
 
     return true
@@ -325,7 +369,7 @@ function Cauldron.RecordPickup(playerKey, cauldronData, itemID, quantity)
     quantity = tonumber(quantity) or 0
 
     if quantity <= 0 then
-        quantity = tonumber(getPickupQuantity(kind, cauldronData)) or 0
+        quantity = tonumber(getPickupQuantity(liveState, kind, cauldronData)) or 0
     end
 
     if quantity <= 0 then
@@ -336,7 +380,7 @@ function Cauldron.RecordPickup(playerKey, cauldronData, itemID, quantity)
         return false
     end
 
-    local entry = getOrCreateEntry(playerKey)
+    local entry = getOrCreateEntry(liveState, playerKey)
 
     if not entry then return false end
 
@@ -349,7 +393,8 @@ function Cauldron.RecordPickup(playerKey, cauldronData, itemID, quantity)
 end
 
 function Cauldron.Reset()
-    resetState()
+    resetState(liveState)
+    resetSyntheticState()
     refreshFrame()
 end
 
@@ -366,7 +411,7 @@ function Cauldron.BeginSyntheticTestData()
         return false
     end
 
-    resetState()
+    resetSyntheticState()
 
     local flaskCauldron = getCauldronDataForKind(KIND_FLASK)
     local potionCauldron = getCauldronDataForKind(KIND_POTION)
@@ -388,20 +433,39 @@ function Cauldron.BeginSyntheticTestData()
         return false
     end
 
-    activeKinds[KIND_FLASK] = true
-    activeKinds[KIND_POTION] = true
-    activeTargets[KIND_FLASK] = flaskTarget
-    activeTargets[KIND_POTION] = potionTarget
-    activePickupQuantities[KIND_FLASK] = flaskPickupQuantity
-    activePickupQuantities[KIND_POTION] = potionPickupQuantity
+    syntheticState.activeKinds[KIND_FLASK] = true
+    syntheticState.activeKinds[KIND_POTION] = true
+    syntheticState.activeTargets[KIND_FLASK] = flaskTarget
+    syntheticState.activeTargets[KIND_POTION] = potionTarget
+    syntheticState.activePickupQuantities[KIND_FLASK] = flaskPickupQuantity
+    syntheticState.activePickupQuantities[KIND_POTION] = potionPickupQuantity
     testFlaskItemID = firstPickupItemID(flaskCauldron)
     testPotionItemID = firstPickupItemID(potionCauldron)
+    syntheticActive = true
+
+    return true
+end
+
+function Cauldron.EndSyntheticTestData(suppressRefresh)
+    if not syntheticActive then
+        return false
+    end
+
+    resetSyntheticState()
+
+    if not suppressRefresh then
+        refreshFrame()
+    end
 
     return true
 end
 
 function Cauldron.SetSyntheticTestEntry(playerKey, index)
-    local entry = getOrCreateEntry(playerKey)
+    if not syntheticActive then
+        return false
+    end
+
+    local entry = getOrCreateEntry(syntheticState, playerKey)
 
     if not entry then
         return false
@@ -417,9 +481,9 @@ function Cauldron.SetSyntheticTestEntry(playerKey, index)
         entry.potion = Cauldron.GetTarget(KIND_POTION)
     else
         entry.flask = Cauldron.GetTarget(KIND_FLASK) +
-            getPickupQuantity(KIND_FLASK)
+            getPickupQuantity(syntheticState, KIND_FLASK)
         entry.potion = Cauldron.GetTarget(KIND_POTION) +
-            getPickupQuantity(KIND_POTION)
+            getPickupQuantity(syntheticState, KIND_POTION)
     end
 
     entry.flaskItemID = testFlaskItemID
@@ -502,7 +566,7 @@ local function onChatMsgLoot(_self, text, playerName, _languageName,
         playerKey,
         cauldronData,
         itemID,
-        parseQuantity(text, cauldronData.kind, cauldronData)
+        parseQuantity(text, cauldronData.kind, cauldronData, liveState)
     )
 end
 
