@@ -19,6 +19,7 @@ local TIME_WIDTH                 = 30
 local H_PAD                      = 3
 local FRAME_PAD                  = 3
 local DURABILITY_WIDTH           = 42
+local CAULDRON_NAME_X            = H_PAD
 local CAULDRON_WIDTH             = 58
 local CAULDRON_COUNT_WIDTH       = 28
 local NO_DURATION                = 0
@@ -782,14 +783,14 @@ end
 
 local function configureCauldronLayout(layout)
     local activeColumns = {}
-    local rowWidth = NAME_WIDTH + H_PAD
+    local rowWidth = CAULDRON_NAME_X + NAME_WIDTH + H_PAD
 
     appendActiveCauldronColumns(activeColumns)
     rowWidth = positionCauldronColumns(activeColumns, rowWidth)
 
     layout.showReadyIcon = false
     layout.frameWidth = rowWidth + FRAME_PAD * 2
-    layout.x.name = 0
+    layout.x.name = CAULDRON_NAME_X
     layout.activeColumns = activeColumns
 end
 
