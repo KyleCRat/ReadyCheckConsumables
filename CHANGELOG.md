@@ -1,5 +1,18 @@
 # Changelog
 
+## [12.0.7-16] - 2026-06-17
+
+### Added
+- Added Sporefall Vantus rune support, including Rotmire Vantus aura IDs and
+  standard Midnight Vantus rune items.
+- Added support for Mythic Flexible raid difficulty `233` as a 15-25 player
+  Mythic raid for active group filtering and chat-report settings.
+
+### Fixed
+- Fixed cauldron-only raid frames reopening on every pickup after the frame was
+  manually closed. Subsequent pickups now update active cauldron state without
+  forcing the frame back open.
+
 ## [12.0.7-15] - 2026-06-16
 
 ### Added
@@ -35,27 +48,3 @@
   wording.
 - Fixed weapon enchant status handling for missing enchants, missing weapons,
   and unknown timing values.
-
-## [12.0.7-14] - 2026-06-02
-
-### Added
-- Added inline marker automation for existing custom macros, including optional
-  macro condition selectors on inline marker lines.
-- Added more LibPopupSlider configuration for automatic sizing, padding, font
-  handling, and silent value updates.
-
-### Changed
-- Updated supported Interface metadata for WoW 12.0.7.
-- Renamed the embedded popup slider library folder to `LibPopupSlider-1.0` and
-  updated the embed path.
-- Removed obsolete internal refactor planning docs from the packaged project.
-
-### Fixed
-- Consumables frame now closes immediately when you click Ready or Not Ready on
-  the Blizzard ready-check prompt while Keep Open After Response is disabled.
-  The configured minimum-show timer is still respected when that setting is
-  enabled.
-- Non-initiator ready checks now hide the consumables frame anchor, drag handle,
-  and close button before reanchoring above the Blizzard ready-check listener.
-- Healing potion macros now stop the current cast before using a healing potion
-  in combat.
