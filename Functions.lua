@@ -33,6 +33,7 @@ local GROUP_COUNT_BY_CONTENT_TYPE = {
     [2]   = 1, -- Party Heroic
     [8]   = 1, -- Party Mythic
     [16]  = 4, -- Raid Mythic (20-player)
+    [233] = 5, -- Raid Mythic Flexible (15-25-player)
     [14]  = 6, -- Raid Normal (up to 30-player)
     [15]  = 6, -- Raid Heroic (up to 30-player)
     [17]  = 6, -- LFR

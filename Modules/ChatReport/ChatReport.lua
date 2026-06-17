@@ -10,6 +10,7 @@ local reportGeneration = 0
 
 local DIFFICULTY_TO_SETTING = {
     [16]  = "chatReport_mythicRaid",
+    [233] = "chatReport_mythicRaid",
     [15]  = "chatReport_heroicRaid",
     [14]  = "chatReport_normalRaid",
     [5]   = "chatReport_normalRaid",  -- Story mode (legacy)
