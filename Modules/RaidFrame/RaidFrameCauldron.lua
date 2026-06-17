@@ -44,11 +44,11 @@ local function isEnabled()
     return RCC.GetSetting("raidFrameCauldron_enabled") == true
 end
 
-local function refreshFrame()
+local function refreshFrame(allowAutoShow)
     local raidFrame = RCC.raidFrame
 
     if raidFrame and raidFrame.RefreshCauldronTracking then
-        raidFrame:RefreshCauldronTracking()
+        raidFrame:RefreshCauldronTracking(allowAutoShow == true)
     end
 end
 
@@ -346,11 +346,13 @@ function Cauldron.Activate(kind, cauldronData)
         return false
     end
 
+    local wasActive = liveState.activeKinds[kind] == true
+
     if not activateState(liveState, kind, cauldronData) then
         return false
     end
 
-    refreshFrame()
+    refreshFrame(not wasActive)
 
     return true
 end

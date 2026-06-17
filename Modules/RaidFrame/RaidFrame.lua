@@ -484,7 +484,7 @@ function frame:ShowCauldronTracking()
     showCauldronDisplay()
 end
 
-function frame:RefreshCauldronTracking()
+function frame:RefreshCauldronTracking(allowAutoShow)
     if InCombatLockdown() then
         return
     end
@@ -495,7 +495,20 @@ function frame:RefreshCauldronTracking()
         return
     end
 
-    if showCauldronDisplay() then
+    if self.displayMode == DISPLAY_MODE.CAULDRON and self:IsShown() then
+        if canShowCauldronOnly() then
+            Members.ScanAll(state, LAYOUT, renderContext)
+            showCauldronDisplayFromState()
+
+            return
+        end
+
+        self:Hide()
+
+        return
+    end
+
+    if allowAutoShow and showCauldronDisplay() then
         return
     end
 
