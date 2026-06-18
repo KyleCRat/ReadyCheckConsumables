@@ -486,13 +486,13 @@ end
 
 function frame:RefreshCauldronTracking(allowAutoShow)
     if InCombatLockdown() then
-        return
+        return false
     end
 
     if self.displayMode == DISPLAY_MODE.READY_CHECK and self:IsShown() then
         refreshAllRowsAndTitle()
 
-        return
+        return self.includeCauldronColumns == true
     end
 
     if self.displayMode == DISPLAY_MODE.CAULDRON and self:IsShown() then
@@ -500,21 +500,23 @@ function frame:RefreshCauldronTracking(allowAutoShow)
             Members.ScanAll(state, LAYOUT, renderContext)
             showCauldronDisplayFromState()
 
-            return
+            return true
         end
 
         self:Hide()
 
-        return
+        return false
     end
 
     if allowAutoShow and showCauldronDisplay() then
-        return
+        return true
     end
 
     if self.displayMode == DISPLAY_MODE.CAULDRON then
         self:Hide()
     end
+
+    return false
 end
 
 function frame:HideCauldronTracking()

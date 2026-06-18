@@ -31,6 +31,7 @@ end
 local liveState = createState()
 local syntheticState = createState()
 local syntheticActive = false
+local hasAutoOpenedThisSession = {}
 local testFlaskItemID
 local testPotionItemID
 
@@ -48,8 +49,10 @@ local function refreshFrame(allowAutoShow)
     local raidFrame = RCC.raidFrame
 
     if raidFrame and raidFrame.RefreshCauldronTracking then
-        raidFrame:RefreshCauldronTracking(allowAutoShow == true)
+        return raidFrame:RefreshCauldronTracking(allowAutoShow == true)
     end
+
+    return false
 end
 
 local function getDisplayState()
@@ -346,13 +349,13 @@ function Cauldron.Activate(kind, cauldronData)
         return false
     end
 
-    local wasActive = liveState.activeKinds[kind] == true
-
     if not activateState(liveState, kind, cauldronData) then
         return false
     end
 
-    refreshFrame(not wasActive)
+    if refreshFrame(hasAutoOpenedThisSession[kind] ~= true) then
+        hasAutoOpenedThisSession[kind] = true
+    end
 
     return true
 end
@@ -397,6 +400,7 @@ end
 function Cauldron.Reset()
     resetState(liveState)
     resetSyntheticState()
+    wipe(hasAutoOpenedThisSession)
     refreshFrame()
 end
 
