@@ -326,16 +326,24 @@ local function printMessage(message)
 end
 
 local function getMacroLimits()
-    return MAX_ACCOUNT_MACROS or DEFAULT_MAX_ACCOUNT_MACROS,
-           MAX_CHARACTER_MACROS or DEFAULT_MAX_CHARACTER_MACROS
+    local macroConsts = Constants and Constants.MacroConsts
+    local maxAccountMacros = macroConsts
+        and macroConsts.MAX_ACCOUNT_MACROS
+        or MAX_ACCOUNT_MACROS
+        or DEFAULT_MAX_ACCOUNT_MACROS
+    local maxCharacterMacros = macroConsts
+        and macroConsts.MAX_CHARACTER_MACROS
+        or MAX_CHARACTER_MACROS
+        or DEFAULT_MAX_CHARACTER_MACROS
+
+    return maxAccountMacros, maxCharacterMacros
 end
 
 local function getMacroRange(characterSpecific)
     if not GetNumMacros then return end
 
     local numAccountMacros, numCharacterMacros = GetNumMacros()
-    local maxAccountMacros = MAX_ACCOUNT_MACROS
-        or DEFAULT_MAX_ACCOUNT_MACROS
+    local maxAccountMacros = getMacroLimits()
 
     if characterSpecific then
         return maxAccountMacros + 1, maxAccountMacros + numCharacterMacros
@@ -686,8 +694,7 @@ function Macros.UpdateAll()
     if not GetNumMacros or not GetMacroInfo or not EditMacro then return end
 
     local numAccountMacros, numCharacterMacros = GetNumMacros()
-    local maxAccountMacros = MAX_ACCOUNT_MACROS
-        or DEFAULT_MAX_ACCOUNT_MACROS
+    local maxAccountMacros = getMacroLimits()
 
     updatingMacros = true
 

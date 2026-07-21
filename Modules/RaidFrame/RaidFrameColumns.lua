@@ -143,8 +143,8 @@ local storeAuraID = F.StoreAuraID
 local function setTimedAuraData(data, aura, remaining)
     data.has     = true
     data.time    = remaining
-    data.iconID  = aura.icon
-    data.spellID = aura.spellId
+    data.iconID  = F.GetPublicAuraField(aura, "icon")
+    data.spellID = F.GetPublicAuraField(aura, "spellId")
     data.source  = "aura"
     storeAuraID(data, aura)
 end
@@ -164,8 +164,8 @@ end
 
 local function setIconAuraData(data, aura)
     data.has     = true
-    data.iconID  = aura.icon
-    data.spellID = aura.spellId
+    data.iconID  = F.GetPublicAuraField(aura, "icon")
+    data.spellID = F.GetPublicAuraField(aura, "spellId")
     storeAuraID(data, aura)
 end
 

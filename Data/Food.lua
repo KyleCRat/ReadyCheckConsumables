@@ -4,6 +4,7 @@ RCC.db = RCC.db or {}
 RCC.FoodAuras = RCC.FoodAuras or {}
 
 local FoodAuras = RCC.FoodAuras
+local F = RCC.F
 
 FoodAuras.Type = FoodAuras.Type or {
     WELL_FED = "wellFed",
@@ -53,7 +54,7 @@ RCC.db.foodAuraIconTypes = {
 }
 
 function FoodAuras.GetType(aura)
-    local iconID = aura and aura.icon
+    local iconID = F.GetPublicAuraField(aura, "icon")
 
     if iconID then
         return RCC.db.foodAuraIconTypes[iconID]

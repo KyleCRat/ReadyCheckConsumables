@@ -98,6 +98,20 @@ function F.IsSafeNumber(value)
         and type(value) == "number"
 end
 
+function F.GetPublicAuraField(aura, field)
+    if not aura or issecretvalue(aura) then
+        return nil
+    end
+
+    local value = aura[field]
+
+    if issecretvalue(value) then
+        return nil
+    end
+
+    return value
+end
+
 function F.GetAuraRemaining(expiry, now)
     if not F.IsSafeNumber(expiry) then
         return nil
@@ -111,13 +125,48 @@ function F.GetAuraRemaining(expiry, now)
 end
 
 function F.StoreAuraID(data, aura)
-    local auraID = aura and aura.auraInstanceID
+    local auraID = F.GetPublicAuraField(aura, "auraInstanceID")
 
-    if auraID and not issecretvalue(auraID) then
+    if F.IsSafeNumber(auraID) and auraID > 0 then
         data.auraID = auraID
     else
         data.auraID = true
     end
+end
+
+function F.GetCurrentPublicAuraInstanceID(unit, auraInstanceID)
+    if issecretvalue(unit) or not unit
+        or not F.IsSafeNumber(auraInstanceID)
+        or auraInstanceID <= 0
+    then
+        return nil
+    end
+
+    local getAuraData = C_UnitAuras
+        and C_UnitAuras.GetAuraDataByAuraInstanceID
+
+    if not getAuraData then
+        return nil
+    end
+
+    local succeeded, aura = pcall(getAuraData, unit, auraInstanceID)
+
+    if not succeeded then
+        return nil
+    end
+
+    local currentAuraInstanceID = F.GetPublicAuraField(
+        aura,
+        "auraInstanceID"
+    )
+
+    if not F.IsSafeNumber(currentAuraInstanceID)
+        or currentAuraInstanceID ~= auraInstanceID
+    then
+        return nil
+    end
+
+    return currentAuraInstanceID
 end
 
 function F.UnitIsUnitSafe(unit, otherUnit)
@@ -286,7 +335,7 @@ end
 
 --------------------------------------------------------------------------------
 --- ForEachHelpfulAura(unit, callback)
---- Iterates helpful auras and skips secret spell IDs before callback.
+--- Iterates helpful auras and skips non-public spell IDs before callback.
 --- Callback receives aura, spellID, auraIndex.
 --- Return true from the callback to stop iteration early.
 --------------------------------------------------------------------------------
@@ -299,9 +348,13 @@ function F.ForEachHelpfulAura(unit, callback)
             break
         end
 
-        local spellID = aura.spellId or aura.spellID
+        local spellID = F.GetPublicAuraField(aura, "spellId")
 
-        if not issecretvalue(spellID)
+        if spellID == nil then
+            spellID = F.GetPublicAuraField(aura, "spellID")
+        end
+
+        if F.IsSafeNumber(spellID)
             and callback(aura, spellID, i) == true
         then
             break

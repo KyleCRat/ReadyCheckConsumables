@@ -39,10 +39,11 @@ local function onOverlayEnter(self)
     local spellID = self.spellID
     local itemID  = self.itemID
     local label   = self.label
+    local currentAuraID = F.GetCurrentPublicAuraInstanceID(unit, auraID)
 
-    if unit and hasUsableAuraID(auraID) then
+    if currentAuraID then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetUnitBuffByAuraInstanceID(unit, auraID)
+        GameTooltip:SetUnitBuffByAuraInstanceID(unit, currentAuraID)
         GameTooltip:Show()
 
         return

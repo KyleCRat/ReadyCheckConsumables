@@ -15,19 +15,6 @@
     item variant.
   - Confirm final effects, shared cooldown categories, and any separate aura
     spell IDs on a later PTR build or the final live client.
-- [ ] Normalize cached aura data field by field. Retain `icon`, `name`,
-  `duration`, `expirationTime`, and `auraInstanceID` only when each value is
-  public; do not assume that a public spell ID makes the other fields safe.
-- [ ] Make `FoodAuras.GetType` reject a secret icon before using it as a key in
-  `foodAuraIconTypes`, and make the Vantus presenter omit boss-name formatting
-  when the aura name is secret.
-- [ ] Recheck aura instance IDs immediately before
-  `SetUnitBuffByAuraInstanceID` tooltip calls and skip the aura tooltip when the
-  current value or access context is restricted.
-- [ ] Update managed-macro limit selection to prefer
-  `Constants.MacroConsts.MAX_ACCOUNT_MACROS` and
-  `Constants.MacroConsts.MAX_CHARACTER_MACROS`, then the legacy globals, then
-  the existing numeric fallbacks. Resolve the limits through one helper.
 - [ ] Run a restricted-context PTR test with Lua errors enabled: initiate a
   ready check in an active Mythic+ challenge, change food/flask/augment auras
   between pulls, hover aura-backed cells, enter combat, and verify that both

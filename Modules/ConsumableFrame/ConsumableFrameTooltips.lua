@@ -2,6 +2,7 @@ local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
 local State = RCC.ConsumableFrameButtonState
+local F = RCC.F
 local ActionType = RCC.ConsumableActionType
 local GetItemInfo = C_Item.GetItemInfo
 local GetSpellInfo = C_Spell.GetSpellInfo
@@ -131,16 +132,38 @@ local function showButtonTooltip(button, shoppingTooltip)
     end
 
     if state.tooltipAuraID and shoppingTooltip and shownTooltip then
-        ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
-        ShoppingTooltip1:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", 0, 4)
-        ShoppingTooltip1:SetUnitBuffByAuraInstanceID("player", state.tooltipAuraID)
-        ShoppingTooltip1:Show()
+        local auraInstanceID = F.GetCurrentPublicAuraInstanceID(
+            "player",
+            state.tooltipAuraID
+        )
 
+        if auraInstanceID then
+            ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
+            ShoppingTooltip1:SetPoint(
+                "BOTTOMLEFT",
+                GameTooltip,
+                "TOPLEFT",
+                0,
+                4
+            )
+            ShoppingTooltip1:SetUnitBuffByAuraInstanceID(
+                "player",
+                auraInstanceID
+            )
+            ShoppingTooltip1:Show()
+        end
     elseif state.tooltipAuraID then
-        setGameTooltipOwner(button)
-        GameTooltip:SetUnitBuffByAuraInstanceID("player", state.tooltipAuraID)
-        GameTooltip:Show()
-        shownTooltip = true
+        local auraInstanceID = F.GetCurrentPublicAuraInstanceID(
+            "player",
+            state.tooltipAuraID
+        )
+
+        if auraInstanceID then
+            setGameTooltipOwner(button)
+            GameTooltip:SetUnitBuffByAuraInstanceID("player", auraInstanceID)
+            GameTooltip:Show()
+            shownTooltip = true
+        end
     end
 
     return shownTooltip

@@ -7,6 +7,7 @@ local Vantus = RCC.Consumables.Vantus
 
 local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableFrameButtonState
+local F = RCC.F
 local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
@@ -15,14 +16,14 @@ local CacheKey = RCC.ConsumableItemCacheKey
 local OUT_OF_ITEMS = "No Vantus Runes found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Vantus Rune not found in Bags"
 
-local function getAuraBossName(state)
-    local aura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
+local function getAuraBossName(aura)
+    local name = F.GetPublicAuraField(aura, "name")
 
-    if not aura then return end
+    if not name then return end
 
-    local name = aura.name or ""
+    local bossName = name:gsub("^Vantus Rune: ", "")
 
-    return name:gsub("^Vantus Rune: ", "")
+    return bossName
 end
 
 function Vantus.Update(button, state)
@@ -34,7 +35,8 @@ function Vantus.Update(button, state)
         return
     end
 
-    local bossName = getAuraBossName(state)
+    local vantusAura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
+    local bossName = getAuraBossName(vantusAura)
     local candidate, candidates, outOfCachedItem =
         Vantus.GetItemCandidate(vantusRuneIDs, true)
 
@@ -51,8 +53,11 @@ function Vantus.Update(button, state)
     buttonState.icon = icon
     buttonState.tooltipItemID = itemID
 
-    if bossName then
-        buttonState.detailText = bossName
+    if vantusAura then
+        if bossName then
+            buttonState.detailText = bossName
+        end
+
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.hasConsumableBuff = true
         buttonState.desaturated = false

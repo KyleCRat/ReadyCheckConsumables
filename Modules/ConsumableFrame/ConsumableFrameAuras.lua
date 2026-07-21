@@ -70,22 +70,20 @@ function Auras.ScanPlayer(now)
     }
 
     F.ForEachHelpfulAura("player", function(auraData, spellID)
-        local expiry = auraData.expirationTime
+        local expiry = F.GetPublicAuraField(auraData, "expirationTime")
         local remaining = F.GetAuraRemaining(expiry, now)
         local aura = {
-            duration = auraData.duration,
+            auraInstanceID = F.GetPublicAuraField(
+                auraData,
+                "auraInstanceID"
+            ),
+            duration = F.GetPublicAuraField(auraData, "duration"),
             expiry = expiry,
-            icon = auraData.icon,
-            name = auraData.name,
+            icon = F.GetPublicAuraField(auraData, "icon"),
+            name = F.GetPublicAuraField(auraData, "name"),
             remaining = remaining,
             spellID = spellID,
         }
-
-        if auraData.auraInstanceID
-            and not issecretvalue(auraData.auraInstanceID)
-        then
-            aura.auraInstanceID = auraData.auraInstanceID
-        end
 
         state.auras[#state.auras + 1] = aura
     end)
