@@ -2,9 +2,6 @@
 
 ## 12.1.0 / Interface 120100 Upgrade
 
-- [ ] Add Interface `120100` to `ReadyCheckConsumables.toc` after confirming it
-  against the final 12.1.0 build. Keep the existing live Interface values while
-  both clients are supported.
 - [ ] Find and verify the remaining data for the provisional 12.1 consumables.
   RCC currently includes only the supplied PTR item IDs; combat-potion quality
   metadata is intentionally unset until it can be confirmed.
@@ -15,12 +12,8 @@
     item variant.
   - Confirm final effects, shared cooldown categories, and any separate aura
     spell IDs on a later PTR build or the final live client.
-- [ ] Run a restricted-context PTR test with Lua errors enabled: initiate a
-  ready check in an active Mythic+ challenge, change food/flask/augment auras
-  between pulls, hover aura-backed cells, enter combat, and verify that both
-  frames hide without secret-value or aura-access errors.
-- [ ] Repeat the restricted-aura checks in a raid encounter and PvP match when
-  practical, then re-export and re-audit the final 12.1.0 live build.
+- [ ] Re-export and re-audit the final 12.1.0 live build before removing the
+  compatibility fallbacks in `Docs/POST_120100_CLEANUP.md`.
 - [ ] Optional: evaluate `C_Spell.GetLastCategoryCooldownSource` for a future
   combat/healing-potion cooldown display. Do not implement it until RCC has a
   reliable source for the relevant spell-category IDs and secret cooldown
