@@ -574,6 +574,14 @@ local function onChatMsgLoot(_self, text, playerName, _languageName,
         itemID,
         parseQuantity(text, cauldronData.kind, cauldronData, liveState)
     )
+
+    if playerKey == F.unitFullName("player") then
+        local controller = RCC.ConsumableFrameController
+
+        if controller and controller.OpenForCauldronPickup then
+            controller.OpenForCauldronPickup()
+        end
+    end
 end
 
 local function onGroupRosterUpdate()

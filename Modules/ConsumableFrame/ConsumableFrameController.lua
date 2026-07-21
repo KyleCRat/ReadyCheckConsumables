@@ -418,6 +418,24 @@ function Controller.FinishReadyCheck()
     return onReadyCheckFinished(frame)
 end
 
+function Controller.OpenForCauldronPickup()
+    if not frame
+        or not RCC.GetSetting("consumables_enabled")
+        or not RCC.GetSetting("consumables_cauldronOpen")
+        or InCombatLockdown()
+    then
+        return false
+    end
+
+    if frame:IsShown() then
+        frame:Update()
+
+        return true
+    end
+
+    return showConsumableFrame(frame, true, false)
+end
+
 function Controller.HideImmediately()
     if not frame then return end
 

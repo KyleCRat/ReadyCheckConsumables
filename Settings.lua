@@ -10,6 +10,7 @@ local DEFAULTS = {
     consumables_scale        = 1.0,
     consumables_minShow      = false,
     consumables_minShowTime  = 15,
+    consumables_cauldronOpen = false,
     consumables_instanceOpen = false,
     consumables_instanceOpenParty = true,
     consumables_instanceOpenRaid = true,
@@ -361,6 +362,14 @@ local function registerPanel()
     )
     Settings.CreateSlider(cfCat, cfMinShowTime, minShowOptions,
         "How long the consumables frame stays open after a ready check (1-40 seconds).")
+
+    local cfCauldronOpen = Settings.RegisterAddOnSetting(
+        cfCat, "consumables_cauldronOpen", "consumables_cauldronOpen",
+        db, "boolean", "Open After Cauldron Pickup",
+        DEFAULTS.consumables_cauldronOpen
+    )
+    Settings.CreateCheckbox(cfCat, cfCauldronOpen,
+        "Show the consumables frame after you collect a known flask or potion from a cauldron.")
 
     cfLayout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Open When Entering Instance")

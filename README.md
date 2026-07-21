@@ -10,7 +10,7 @@ cauldron pickups, and ready-check responses.
 ### Consumables Frame
 
 A personal icon bar appears during ready checks and can optionally open when
-entering instances.
+entering instances or after collecting a consumable from a cauldron.
 
 - Tracks food, flasks, augment runes, Vantus runes, raid buffs, weapon enchants,
   healthstones, combat potions, healing potions, and optional Recuperate.
@@ -32,6 +32,8 @@ entering instances.
   whether an action is available.
 - Closes immediately when you click Ready or Not Ready if Keep Open After
   Response is disabled, or stays open for the configured duration when enabled.
+- Can optionally open after you collect a known flask or potion from a
+  cauldron.
 - Individual icons can be toggled in settings.
 
 ### Raid Status Frame
@@ -132,6 +134,8 @@ Access settings through `/rcc settings` or the WoW AddOns settings panel.
 - Enable or disable cauldron tracking in the raid status frame.
 - Choose whether cauldron-only raid status frames can appear outside ready
   checks.
+- Open the consumables frame after collecting a known flask or potion from a
+  cauldron.
 - Open the consumables frame when entering selected instance types.
 - Auto-hide the instance-opened consumables frame after a configurable delay.
 - Toggle individual consumable icons.
