@@ -6,6 +6,22 @@ local UTILITY  = RCC.CombatPotionType.UTILITY
 local FLEETING = RCC.CombatPotionVariant.FLEETING
 
 RCC.Data.AddCombatPotionItems({
+    {-- Liquid Luster (12.1 PTR; use spell 1295132)
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            -- TODO(12.1): Confirm quality and remaining regular/fleeting item IDs.
+            { itemID = 271887 },
+        },
+    },
+    {-- Alluring Nostrum (12.1 PTR; use spell 1295015)
+        type = DAMAGE,
+        xpac = RCC.MIDNIGHT,
+        items = {
+            -- TODO(12.1): Confirm quality and remaining regular/fleeting item IDs.
+            { itemID = 271890 },
+        },
+    },
     {-- Lightfused Mana Potion
         type = MANA,
         xpac = RCC.MIDNIGHT,
