@@ -15,10 +15,6 @@
     item variant.
   - Confirm final effects, shared cooldown categories, and any separate aura
     spell IDs on a later PTR build or the final live client.
-- [ ] Guard the raid-frame `UNIT_AURA` unit payload with
-  `issecretvalue(unit)` before comparing it with `"player"`, broadcasting player
-  status, passing it into the refresh pipeline, or using it to index
-  `state.unitToIndex`.
 - [ ] Normalize cached aura data field by field. Retain `icon`, `name`,
   `duration`, `expirationTime`, and `auraInstanceID` only when each value is
   public; do not assume that a public spell ID makes the other fields safe.
@@ -32,9 +28,6 @@
   `Constants.MacroConsts.MAX_ACCOUNT_MACROS` and
   `Constants.MacroConsts.MAX_CHARACTER_MACROS`, then the legacy globals, then
   the existing numeric fallbacks. Resolve the limits through one helper.
-- [ ] Copy current `main` to the PTR before the next smoke test. The tested PTR
-  checkout was release commit `128410c`, while current `main` is one commit
-  ahead at `7d595b4`; retest the cauldron auto-open session-tracking change.
 - [ ] Run a restricted-context PTR test with Lua errors enabled: initiate a
   ready check in an active Mythic+ challenge, change food/flask/augment auras
   between pulls, hover aura-backed cells, enter combat, and verify that both

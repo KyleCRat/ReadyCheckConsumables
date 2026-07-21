@@ -622,6 +622,10 @@ local function onWeaponEnchantChanged()
 end
 
 local function onUnitAura(self, unit)
+    if issecretvalue(unit) then
+        return
+    end
+
     if unit == "player" then
         broadcastPlayerTimedConsumables()
     end
