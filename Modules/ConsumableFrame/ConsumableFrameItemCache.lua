@@ -18,11 +18,7 @@ RCC.ConsumableItemCacheKey = RCC.ConsumableItemCacheKey or {
 local cachedItemIDs = {}
 
 local function scheduleMacroUpdate()
-    local Macros = RCC.ConsumableMacros
-
-    if Macros and Macros.ScheduleUpdate then
-        Macros.ScheduleUpdate()
-    end
+    RCC.ConsumableMacros.ScheduleUpdate()
 end
 
 local function getSavedCache()

@@ -28,18 +28,9 @@ SlashCmdList["RCC"] = function(msg)
 
     elseif msg == "hide" or msg == "h" then
         RCC.ReadyCheckTest:Cancel()
-
-        if RCC.ConsumableFrameController then
-            RCC.ConsumableFrameController.HideImmediately()
-        end
-
-        if RCC.raidFrame then
-            RCC.raidFrame:Hide()
-        end
-
-        if RCC.RaidFrameCauldron then
-            RCC.RaidFrameCauldron.Hide()
-        end
+        RCC.ConsumableFrameController.HideImmediately()
+        RCC.raidFrame:Hide()
+        RCC.RaidFrameCauldron.Hide()
 
     elseif msg == "report" or msg == "r" then
         RCC.chatReport.Test(false)
@@ -51,16 +42,12 @@ SlashCmdList["RCC"] = function(msg)
         or msg == "cauldrons test" or msg == "cauldrons t"
         or msg == "ct test" or msg == "ct t"
     then
-        if RCC.RaidFrameTest then
-            RCC.RaidFrameTest:StartCauldronOnly()
-        end
+        RCC.RaidFrameTest:StartCauldronOnly()
 
     elseif msg == "settings" or msg == "s"
         or msg == "options" or msg == "o"
     then
-        if RCC.settingsCategory then
-            Settings.OpenToCategory(RCC.settingsCategory:GetID())
-        end
+        Settings.OpenToCategory(RCC.settingsCategory:GetID())
 
     else
         print("|" .. RCC.color .. "ff" .. "ReadyCheckConsumables|r commands:")

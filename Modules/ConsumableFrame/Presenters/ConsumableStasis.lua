@@ -12,13 +12,12 @@ local Renderer = RCC.ConsumableFrameRenderer
 
 local ActionType = RCC.ConsumableActionType
 
-function ConsumableStasis.Update(button, showInLayout)
+function ConsumableStasis.Update(button)
     local candidate = ConsumableStasis.GetItemCandidate()
     local itemID = candidate and candidate.itemID
         or ConsumableStasis.GetDefaultItemID()
     local count = candidate and candidate.count or 0
     local state = ButtonState.Create({
-        showInLayout = showInLayout,
         showStatusTexture = false,
         countText = tostring(count),
         tooltipItemID = itemID,

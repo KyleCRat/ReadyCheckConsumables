@@ -49,8 +49,8 @@ local function invalidateRun(self)
 end
 
 local function clearCauldronTestData(self)
-    if Cauldron and Cauldron.EndSyntheticTestData then
-        Cauldron.EndSyntheticTestData(true)
+    if Cauldron.EndSyntheticTestData(true) then
+        self.env.syncProvision()
     end
 
     self.includeCauldrons = false
@@ -222,7 +222,7 @@ local function populateSyntheticState(self)
     state.unitToIndex["player"] = 1
     state.rcStatus["player"] = ReadyCheck.READY
 
-    if includeCauldrons and Cauldron then
+    if includeCauldrons then
         Cauldron.SetSyntheticTestEntry(state.members[1].key, 1)
     end
 
@@ -249,7 +249,7 @@ local function populateSyntheticState(self)
         state.unitToIndex[fakeUnit] = count
         state.rcStatus[fakeUnit] = ReadyCheck.PENDING
 
-        if includeCauldrons and Cauldron then
+        if includeCauldrons then
             Cauldron.SetSyntheticTestEntry(playerKey, count)
         end
 
@@ -315,9 +315,7 @@ function Test:Stop()
 
     self:Cancel()
 
-    if self.env and self.env.frame then
-        self.env.frame:Hide()
-    end
+    self.env.frame:Hide()
 
     return wasActive
 end
@@ -330,8 +328,9 @@ function Test:Finish()
     self.active = false
     invalidateRun(self)
     cancelTimers(self)
+    clearCauldronTestData(self)
 
-    if self.env and self.env.frame and self.env.frame:IsShown() then
+    if self.env.frame:IsShown() then
         self.env.frame:OnReadyCheckFinished()
     end
 end
@@ -351,7 +350,6 @@ function Test:Start(permanent, duration, options)
     self.active = true
     self.includeCauldrons = options
         and options.includeCauldrons == true
-        and Cauldron
         and Cauldron.BeginSyntheticTestData()
         or false
 
@@ -371,12 +369,7 @@ end
 function Test:StartCauldronOnly()
     local env = self.env
 
-    if not env
-        or not env.beginCauldron
-        or not env.showCauldron
-        or InCombatLockdown()
-        or not Cauldron
-    then
+    if not env or InCombatLockdown() then
         return false
     end
 

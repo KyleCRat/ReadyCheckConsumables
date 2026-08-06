@@ -19,7 +19,7 @@ function Healthstone.Update(button)
 
     if totalCount > 0 then
         Renderer.Apply(button, ButtonState.Create({
-            showInLayout = showHealthstone,
+            applicable = showHealthstone,
             countText = tostring(totalCount),
             statusTexture = ButtonState.READY_TEXTURE,
             desaturated = false,
@@ -27,7 +27,7 @@ function Healthstone.Update(button)
         }))
     else
         Renderer.Apply(button, ButtonState.Create({
-            showInLayout = showHealthstone,
+            applicable = showHealthstone,
             countText = "0",
         }))
     end

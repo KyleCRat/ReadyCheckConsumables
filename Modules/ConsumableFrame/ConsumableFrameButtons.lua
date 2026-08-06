@@ -3,6 +3,7 @@ local _, RCC = ...
 local UI = RCC.UI
 local Tooltips = RCC.ConsumableFrameTooltips
 local State = RCC.ConsumableFrameButtonState
+local Visibility = RCC.ContextualVisibility
 
 RCC.ConsumableFrameButtons = RCC.ConsumableFrameButtons or {}
 
@@ -19,6 +20,23 @@ local TIME_TEXT_BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
 local FLYOUT_HIDE_DELAY = 0.1
+
+local Reason = RCC.DisplayReason
+
+local STANDARD_VISIBILITY = {
+    reasons = {
+        [Reason.READY_CHECK] = true,
+        [Reason.INSTANCE_ENTRY] = true,
+        [Reason.CAULDRON_PICKUP] = true,
+        [Reason.BREAK_TIMER] = true,
+    },
+}
+
+local STASIS_VISIBILITY = {
+    reasons = {
+        [Reason.BREAK_TIMER] = true,
+    },
+}
 
 local GetItemReagentQualityInfo = C_TradeSkillUI.GetItemReagentQualityInfo
 
@@ -44,11 +62,12 @@ local BUTTON_DEFS = {
     },
     {
         key             = "consumableStasis",
-        settingKey      = "consumables_breakOpen",
+        settingKey      = "icon_consumableStasis",
         defaultIcon     = 134062,
         clickable       = true,
         tooltipAction   = "use",
         hiddenByDefault = true,
+        visibility      = STASIS_VISIBILITY,
     },
     {
         key           = "mainHandTempWeaponEnchant",
@@ -115,8 +134,18 @@ local BUTTON_DEFS = {
     },
 }
 
+for i = 1, #BUTTON_DEFS do
+    local definition = BUTTON_DEFS[i]
+
+    definition.visibility = definition.visibility or STANDARD_VISIBILITY
+end
+
 function Buttons.GetButtonCount()
     return #BUTTON_DEFS
+end
+
+function Buttons.GetDefinitions()
+    return BUTTON_DEFS
 end
 
 function Buttons.GetWidth(buttonCount)
@@ -615,14 +644,17 @@ function Buttons.CreateAll(parent)
     return buttons
 end
 
-function Buttons.ApplyLayout(parent, buttons)
+function Buttons.ApplyLayout(parent, buttons, context)
     local previous
     local visibleCount = 0
 
     for _, def in ipairs(BUTTON_DEFS) do
         local button = buttons[def.key]
-        local shouldShow = State.IsShownInLayout(button.consumableState)
-            and RCC.GetSetting(def.settingKey)
+        local shouldShow = Visibility.IsVisible(
+            def,
+            context or parent.displayContext,
+            button.consumableState
+        )
 
         button:ClearAllPoints()
 

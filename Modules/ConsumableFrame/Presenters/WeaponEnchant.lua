@@ -237,7 +237,7 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
         enchantID
     )
     local buttonState = ButtonState.Create({
-        showInLayout = slotState.canBeEnchanted,
+        applicable = slotState.canBeEnchanted,
         glow = false,
     })
 

@@ -4,6 +4,7 @@ local Broadcast       = RCC.RaidFrameBroadcast
 local Cauldron        = RCC.RaidFrameCauldron
 local Columns         = RCC.RaidFrameColumns
 local Controls        = RCC.RaidFrameControls
+local DisplayContext  = RCC.DisplayContext
 local Feast           = RCC.RaidFrameFeast
 local FrameAnimations = RCC.FrameAnimations
 local Members         = RCC.RaidFrameMembers
@@ -20,12 +21,10 @@ local GetTime = GetTime
 
 local ADDON_REFRESH_DELAY = 0.25
 local FADE_OUT_DURATION   = 0.5
+local FEAST_SOURCE        = "feast"
 
-local DISPLAY_MODE = {
-    READY_CHECK = "readyCheck",
-    PROVISION   = "provision",
-}
-
+local Reason = RCC.DisplayReason
+local displayContext = DisplayContext.Create(RCC.DisplaySurface.RAID_FRAME)
 local LAYOUT = Columns.CreateLayout()
 
 local broadcast             = Broadcast.Create()
@@ -88,6 +87,7 @@ local state = {
 
 local renderContext = {
     state  = state,
+    display = displayContext,
     shared = {
         foodData              = foodData,
         flaskData             = flaskData,
@@ -115,27 +115,63 @@ local function unregisterReadyCheckEvents()
     frame:UnregisterEvent("WEAPON_SLOT_CHANGED")
 end
 
-local function setDisplayMode(mode, options)
-    if mode ~= DISPLAY_MODE.READY_CHECK then
-        unregisterReadyCheckEvents()
+local function syncProvisionReasons()
+    if Feast.IsEnabled() and Feast.IsActive() then
+        DisplayContext.Activate(
+            displayContext,
+            Reason.FEAST_DROP,
+            FEAST_SOURCE
+        )
+    else
+        DisplayContext.Deactivate(
+            displayContext,
+            Reason.FEAST_DROP,
+            FEAST_SOURCE
+        )
     end
 
-    if mode == DISPLAY_MODE.PROVISION then
+    if Cauldron.IsEnabled() then
+        for i = 1, #Cauldron.TRACKED_CAULDRON_TYPES do
+            local kind = Cauldron.TRACKED_CAULDRON_TYPES[i]
+
+            if Cauldron.IsActive(kind) then
+                DisplayContext.Activate(
+                    displayContext,
+                    Reason.CAULDRON_DROP,
+                    kind
+                )
+            else
+                DisplayContext.Deactivate(
+                    displayContext,
+                    Reason.CAULDRON_DROP,
+                    kind
+                )
+            end
+        end
+    else
+        DisplayContext.Deactivate(displayContext, Reason.CAULDRON_DROP)
+    end
+end
+
+local function syncDisplayEvents()
+    if DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+        registerReadyCheckEvents()
+
+        return
+    end
+
+    unregisterReadyCheckEvents()
+
+    if frame:IsShown() and DisplayContext.HasAny(displayContext) then
         frame:RegisterEvent("UNIT_AURA")
     end
+end
 
-    if options and options.includeCauldrons ~= nil then
-        frame.includeCauldronColumns = options.includeCauldrons
-    elseif frame.includeCauldronColumns == nil then
-        frame.includeCauldronColumns = true
-    end
-
-    frame.displayMode = mode
-    Columns.ConfigureLayout(LAYOUT, mode, {
-        includeCauldrons = frame.includeCauldronColumns,
-    })
+local function configureDisplay()
+    Columns.ConfigureLayout(LAYOUT, displayContext)
     frame:SetWidth(LAYOUT.frameWidth)
     titleBar:ApplyLayout(LAYOUT)
+    syncDisplayEvents()
 end
 
 --------------------------------------------------------------------------------
@@ -208,14 +244,12 @@ local function showFinishedSummary()
     then
         state.readyAnnounced = true
 
-        if RCC.AnnounceAllReady then
-            RCC.AnnounceAllReady()
-        end
+        RCC.AnnounceAllReady()
     end
 end
 
 local function refreshRowAndTitle(index)
-    setDisplayMode(frame.displayMode or DISPLAY_MODE.READY_CHECK)
+    configureDisplay()
     Rows.RefreshRow(frame.rows[index], state.members[index], LAYOUT, renderContext)
     titleBar:RefreshFromMembers(
         state.members,
@@ -226,7 +260,7 @@ local function refreshRowAndTitle(index)
 end
 
 local function refreshAllRowsAndTitle()
-    setDisplayMode(frame.displayMode or DISPLAY_MODE.READY_CHECK)
+    configureDisplay()
     frame:SetHeight(Rows.RefreshAll(frame.rows, state, LAYOUT, renderContext))
     titleBar:RefreshFromMembers(
         state.members,
@@ -284,20 +318,17 @@ local function cancelHideTimer()
 end
 
 local function cancelSyntheticReadyCheck()
-    if RCC.ReadyCheckTest then
-        RCC.ReadyCheckTest:Cancel()
-    elseif Test then
-        Test:Cancel()
-    end
+    RCC.ReadyCheckTest:Cancel()
 end
 
-local function beginReadyCheckDisplay(manualShow, options)
+local function beginReadyCheckDisplay(manualShow)
     cancelHideTimer()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
     state.readyAnnounced = false
-    setDisplayMode(DISPLAY_MODE.READY_CHECK, options)
-    registerReadyCheckEvents()
+    DisplayContext.Activate(displayContext, Reason.READY_CHECK)
+    syncProvisionReasons()
+    configureDisplay()
 
     frame.manualShow = manualShow or false
     showStartTime = GetTime()
@@ -323,14 +354,16 @@ local function canShowProvisionOnly()
         return false
     end
 
-    local feastActive = Feast
-        and Feast.IsEnabled()
-        and Feast.IsActive()
+    local feastActive = DisplayContext.IsActive(
+        displayContext,
+        Reason.FEAST_DROP
+    )
         and Feast.ShouldShowOutsideReadyCheck()
 
-    local cauldronActive = Cauldron
-        and Cauldron.IsEnabled()
-        and Cauldron.HasActiveCauldron()
+    local cauldronActive = DisplayContext.IsActive(
+        displayContext,
+        Reason.CAULDRON_DROP
+    )
         and Cauldron.ShouldShowOutsideReadyCheck()
 
     return feastActive or cauldronActive
@@ -341,13 +374,14 @@ local function beginProvisionDisplay()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
     titleBar:StopProgress()
-    setDisplayMode(DISPLAY_MODE.PROVISION, { includeCauldrons = true })
+    syncProvisionReasons()
+    configureDisplay()
     wipe(state.rcStatus)
 end
 
 local function getProvisionHeaderText()
-    local feastActive = Feast and Feast.IsActive()
-    local cauldronActive = Cauldron and Cauldron.HasActiveCauldron()
+    local feastActive = Feast.IsActive()
+    local cauldronActive = Cauldron.HasActiveCauldron()
 
     if feastActive and cauldronActive then
         return "Feast & Cauldrons"
@@ -359,17 +393,21 @@ local function getProvisionHeaderText()
 end
 
 local function showProvisionDisplayFromState()
+    fadeOut:Cancel()
     titleBar:SetHeaderText(getProvisionHeaderText())
     refreshAllRowsAndTitle()
 
     controls:RestorePosition()
     controls:SyncScale()
     frame:Show()
+    syncDisplayEvents()
 
     return true
 end
 
 local function showProvisionDisplay()
+    syncProvisionReasons()
+
     if not canShowProvisionOnly() then
         return false
     end
@@ -385,7 +423,8 @@ local function broadcastPlayerTimedConsumables()
         "player",
         GetTime(),
         LAYOUT,
-        renderContext
+        renderContext,
+        LAYOUT.broadcastColumns
     )
 
     broadcast:SendTimedConsumableStatuses(columnData)
@@ -409,16 +448,7 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 
     local enabled = RCC.GetSetting("raidFrame_enabled")
 
-    if enabled then
-        beginReadyCheckDisplay(timeToHide == 0, { includeCauldrons = true })
-    else
-        setDisplayMode(DISPLAY_MODE.READY_CHECK, { includeCauldrons = true })
-        registerReadyCheckEvents()
-        cancelHideTimer()
-        cancelAddonRefreshTimer()
-        fadeOut:Cancel()
-        state.readyAnnounced = false
-    end
+    beginReadyCheckDisplay(timeToHide == 0)
 
     wipe(state.rcStatus)
     broadcast:Reset()
@@ -451,6 +481,10 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
+    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+        return
+    end
+
     if issecretvalue(unit) or issecretvalue(ready) then return end
 
     local index = state.unitToIndex[unit]
@@ -470,15 +504,43 @@ function frame:OnReadyCheckConfirm(unit, ready)
     end
 end
 
+local function releaseReadyCheckDisplay(self)
+    if not DisplayContext.Deactivate(displayContext, Reason.READY_CHECK) then
+        return
+    end
+
+    self.manualShow = false
+    syncProvisionReasons()
+
+    if not self:IsShown() then
+        syncDisplayEvents()
+
+        return
+    end
+
+    if canShowProvisionOnly() then
+        beginProvisionDisplay()
+        Members.ScanAll(state, LAYOUT, renderContext)
+        showProvisionDisplayFromState()
+
+        return
+    end
+
+    syncDisplayEvents()
+    fadeOut:Hide()
+end
+
 function frame:OnReadyCheckFinished()
+    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+        return
+    end
+
     titleBar:StopProgress()
     showFinishedSummary()
 
     if not self:IsShown() then
-        unregisterReadyCheckEvents()
         cancelTempWeaponEnchantTimer()
-        self.displayMode = nil
-        self.includeCauldronColumns = nil
+        releaseReadyCheckDisplay(self)
 
         return
     end
@@ -491,7 +553,7 @@ function frame:OnReadyCheckFinished()
 
     if not RCC.GetSetting("raidFrame_minShow") then
         if not InCombatLockdown() then
-            fadeOut:Hide()
+            releaseReadyCheckDisplay(self)
         end
 
         return
@@ -502,8 +564,15 @@ function frame:OnReadyCheckFinished()
     local delay = max(minShowTime - elapsed, 0)
 
     hideTimer = C_Timer.NewTimer(delay, function()
-        if not InCombatLockdown() then
-            fadeOut:Hide()
+        hideTimer = nil
+
+        if not InCombatLockdown()
+            and DisplayContext.IsActive(
+                displayContext,
+                Reason.READY_CHECK
+            )
+        then
+            releaseReadyCheckDisplay(self)
         end
     end)
 end
@@ -512,45 +581,165 @@ function frame:ShowProvisionTracking()
     return showProvisionDisplay()
 end
 
+local function refreshShownDisplay(self, rescanMembers)
+    if not self:IsShown() then
+        configureDisplay()
+
+        return false
+    end
+
+    fadeOut:Cancel()
+    configureDisplay()
+
+    if rescanMembers then
+        Members.ScanAll(state, LAYOUT, renderContext)
+    end
+
+    if DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+        refreshAllRowsAndTitle()
+
+        return true
+    end
+
+    if canShowProvisionOnly() then
+        return showProvisionDisplayFromState()
+    end
+
+    self:Hide()
+
+    return false
+end
+
+function frame:ActivateDisplayReason(reason, sourceKey, allowAutoShow)
+    if InCombatLockdown() then
+        return false
+    end
+
+    local shouldAutoOpen = DisplayContext.ShouldAutoOpen(
+        displayContext,
+        reason,
+        sourceKey
+    )
+
+    DisplayContext.Activate(displayContext, reason, sourceKey)
+
+    if self:IsShown() then
+        local refreshed = refreshShownDisplay(self, true)
+
+        if shouldAutoOpen then
+            DisplayContext.MarkAutoOpened(
+                displayContext,
+                reason,
+                sourceKey
+            )
+        end
+
+        return refreshed
+    end
+
+    if DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+        if shouldAutoOpen then
+            DisplayContext.MarkAutoOpened(
+                displayContext,
+                reason,
+                sourceKey
+            )
+        end
+
+        syncDisplayEvents()
+
+        return false
+    end
+
+    if allowAutoShow and shouldAutoOpen and showProvisionDisplay() then
+        DisplayContext.MarkAutoOpened(
+            displayContext,
+            reason,
+            sourceKey
+        )
+
+        return true
+    end
+
+    configureDisplay()
+
+    return false
+end
+
+function frame:DeactivateDisplayReason(reason, sourceKey)
+    if not DisplayContext.Deactivate(displayContext, reason, sourceKey) then
+        return false
+    end
+
+    syncProvisionReasons()
+
+    if self:IsShown() then
+        refreshShownDisplay(self, true)
+    else
+        configureDisplay()
+    end
+
+    return true
+end
+
+function frame:ResetDisplayReason(reason)
+    DisplayContext.ResetReason(displayContext, reason)
+
+    if InCombatLockdown() then
+        return
+    end
+
+    syncProvisionReasons()
+
+    if self:IsShown() then
+        refreshShownDisplay(self, true)
+    else
+        configureDisplay()
+    end
+end
+
+function frame:GetDisplayContext()
+    return displayContext
+end
+
+function frame:GetColumnDefinitions()
+    return Columns.GetDefinitions(LAYOUT)
+end
+
+function frame:RefreshContextualVisibility()
+    if InCombatLockdown() then
+        return false
+    end
+
+    syncProvisionReasons()
+
+    return refreshShownDisplay(self, true)
+end
+
 function frame:RefreshProvisionTracking(allowAutoShow)
     if InCombatLockdown() then
         return false
     end
 
-    if self.displayMode == DISPLAY_MODE.READY_CHECK and self:IsShown() then
-        refreshAllRowsAndTitle()
+    syncProvisionReasons()
 
-        return self.includeCauldronColumns == true
+    if self:IsShown() then
+        return refreshShownDisplay(self, true)
     end
 
-    if self.displayMode == DISPLAY_MODE.PROVISION and self:IsShown() then
-        if canShowProvisionOnly() then
-            Members.ScanAll(state, LAYOUT, renderContext)
-            showProvisionDisplayFromState()
-
-            return true
-        end
-
-        self:Hide()
-
-        return false
+    if allowAutoShow then
+        return showProvisionDisplay()
     end
 
-    if allowAutoShow and showProvisionDisplay() then
-        return true
-    end
-
-    if self.displayMode == DISPLAY_MODE.PROVISION then
-        self:Hide()
-    end
+    configureDisplay()
 
     return false
 end
 
 function frame:HideProvisionTracking()
-    if self.displayMode == DISPLAY_MODE.PROVISION then
+    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
         self:Hide()
-    elseif self.displayMode == DISPLAY_MODE.READY_CHECK and self:IsShown() then
+    elseif self:IsShown() then
         refreshAllRowsAndTitle()
     end
 end
@@ -570,6 +759,7 @@ end
 function frame:OnCombat()
     cancelSyntheticReadyCheck()
 
+    DisplayContext.Clear(displayContext)
     unregisterReadyCheckEvents()
     cancelHideTimer()
     cancelAddonRefreshTimer()
@@ -580,7 +770,7 @@ end
 
 function frame:OnUnitAura(unit)
     -- Synthetic rows are not live unit tokens; only the player row can update.
-    if Test and Test.active and unit ~= "player" then
+    if Test.active and unit ~= "player" then
         return
     end
 
@@ -596,29 +786,28 @@ end
 function frame:OnHide()
     cancelSyntheticReadyCheck()
 
+    DisplayContext.Deactivate(displayContext, Reason.READY_CHECK)
     unregisterReadyCheckEvents()
     cancelHideTimer()
+    cancelAddonRefreshTimer()
     cancelTempWeaponEnchantTimer()
     fadeOut:Cancel()
     titleBar:StopProgress()
     self.manualShow = false
-    self.displayMode = nil
-    self.includeCauldronColumns = nil
 end
 
-if Test then
-    Test:Attach({
-        frame            = frame,
-        state            = state,
-        layout           = LAYOUT,
-        context          = renderContext,
-        broadcast        = broadcast,
-        beginDisplay     = beginReadyCheckDisplay,
-        showDisplay      = showReadyCheckDisplay,
-        beginCauldron    = beginProvisionDisplay,
-        showCauldron     = showProvisionDisplayFromState,
-    })
-end
+Test:Attach({
+    frame            = frame,
+    state            = state,
+    layout           = LAYOUT,
+    context          = renderContext,
+    broadcast        = broadcast,
+    beginDisplay     = beginReadyCheckDisplay,
+    showDisplay      = showReadyCheckDisplay,
+    beginCauldron    = beginProvisionDisplay,
+    showCauldron     = showProvisionDisplayFromState,
+    syncProvision    = syncProvisionReasons,
+})
 
 --------------------------------------------------------------------------------
 --- Event wiring

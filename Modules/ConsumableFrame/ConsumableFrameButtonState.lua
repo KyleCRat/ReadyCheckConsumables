@@ -10,7 +10,7 @@ State.READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-Ready"
 State.NOT_READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 
 State.DEFAULTS = {
-    showInLayout = true,
+    applicable = true,
     statusTexture = State.NOT_READY_TEXTURE,
     showStatusTexture = true,
     desaturated = true,
@@ -107,14 +107,14 @@ function State.GetClickHintSpellID(state)
     return state.clickHintSpellID or (state.action and state.action.spellID)
 end
 
-function State.IsShownInLayout(state)
-    local showInLayout = state and state.showInLayout
+function State.IsApplicable(state)
+    local applicable = state and state.applicable
 
-    if showInLayout == nil then
-        showInLayout = State.DEFAULTS.showInLayout
+    if applicable == nil then
+        applicable = State.DEFAULTS.applicable
     end
 
-    return showInLayout == true
+    return applicable == true
 end
 
 function State.HasConsumableBuff(state)

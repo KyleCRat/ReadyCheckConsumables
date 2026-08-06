@@ -1,5 +1,10 @@
 # TODO
 
+## Contextual Visibility
+
+- [ ] Add a Consumable Frame button matrix so users can configure which
+  buttons appear for each display reason.
+
 ## 12.1.0 / Interface 120100 Upgrade
 
 - [ ] Find and verify the remaining data for the provisional 12.1 consumables.

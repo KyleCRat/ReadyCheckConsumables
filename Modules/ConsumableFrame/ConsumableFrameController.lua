@@ -5,6 +5,7 @@ RCC.ConsumableFrameController = RCC.ConsumableFrameController or {}
 local Controller = RCC.ConsumableFrameController
 local Auras = RCC.ConsumableFrameAuras
 local Buttons = RCC.ConsumableFrameButtons
+local DisplayContext = RCC.DisplayContext
 local Food = RCC.Consumables.Food
 local Flask = RCC.Consumables.Flask
 local Augment = RCC.Consumables.Augment
@@ -24,29 +25,25 @@ local GetTime = GetTime
 --------------------------------------------------------------------------------
 
 local frame
-local consumablesShowStart = 0
+local readyCheckShowStart = 0
 local wasInInstance
 local instanceOpenPending
 local readyCheckButtonsHooked
-local displayMode
+local displayContext = DisplayContext.Create(
+    RCC.DisplaySurface.CONSUMABLE_FRAME
+)
 
+local Reason = RCC.DisplayReason
 local INSTANCE_OPEN_DELAY = 0.5
-
-local DISPLAY_MODE = {
-    READY_CHECK = "readyCheck",
-    INSTANCE = "instance",
-    CAULDRON = "cauldron",
-    BREAK = "break",
-}
 
 --------------------------------------------------------------------------------
 --- Timer lifecycle
 --------------------------------------------------------------------------------
 
-local function cancelMinShowDelay(self)
-    if self.cancelDelay then
-        self.cancelDelay:Cancel()
-        self.cancelDelay = nil
+local function cancelReadyCheckHideDelay(self)
+    if self.readyCheckHideDelay then
+        self.readyCheckHideDelay:Cancel()
+        self.readyCheckHideDelay = nil
     end
 end
 
@@ -55,6 +52,38 @@ local function cancelInstanceHideDelay(self)
         self.instanceHideDelay:Cancel()
         self.instanceHideDelay = nil
     end
+end
+
+local function updateOrHideAfterReasonChange(self)
+    if not DisplayContext.HasAny(displayContext) then
+        self:Hide()
+
+        return
+    end
+
+    if InCombatLockdown() then
+        return
+    end
+
+    self:Update()
+
+    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+        self:Repos(true)
+    end
+end
+
+local function deactivateReason(self, reason)
+    if not DisplayContext.Deactivate(displayContext, reason) then
+        return false
+    end
+
+    if reason == Reason.READY_CHECK then
+        self:UnregisterEvent("READY_CHECK_CONFIRM")
+    end
+
+    updateOrHideAfterReasonChange(self)
+
+    return true
 end
 
 local function startInstanceHideDelay(self)
@@ -67,25 +96,27 @@ local function startInstanceHideDelay(self)
     local delay = RCC.GetSetting("consumables_instanceHideTime")
 
     self.instanceHideDelay = C_Timer.NewTimer(delay, function()
+        self.instanceHideDelay = nil
+
         if not InCombatLockdown() then
-            self:Hide()
+            deactivateReason(self, Reason.INSTANCE_ENTRY)
         end
     end)
 end
 
-local function startMinShowDelay(self)
+local function startReadyCheckHideDelay(self)
     if not RCC.GetSetting("consumables_minShow") then
-        self:Hide()
+        deactivateReason(self, Reason.READY_CHECK)
 
         return
     end
 
     local minShowTime = RCC.GetSetting("consumables_minShowTime")
-    local elapsed = GetTime() - consumablesShowStart
+    local elapsed = GetTime() - readyCheckShowStart
     local delay = max(minShowTime - elapsed, 0)
 
     if delay == 0 then
-        self:Hide()
+        deactivateReason(self, Reason.READY_CHECK)
 
         return
     end
@@ -93,9 +124,11 @@ local function startMinShowDelay(self)
     self.drag:Show()
     self.close:Show()
 
-    self.cancelDelay = C_Timer.NewTimer(delay, function()
+    self.readyCheckHideDelay = C_Timer.NewTimer(delay, function()
+        self.readyCheckHideDelay = nil
+
         if not InCombatLockdown() then
-            self:Hide()
+            deactivateReason(self, Reason.READY_CHECK)
         end
     end)
 end
@@ -104,7 +137,8 @@ end
 --- Frame visibility
 --------------------------------------------------------------------------------
 
-local function showConsumableFrame(self, isInitiator, registerConfirm)
+local function showConsumableFrame(self, isInitiator, registerConfirm,
+                                   forceRepos)
     if InCombatLockdown() then
         return false
     end
@@ -115,7 +149,7 @@ local function showConsumableFrame(self, isInitiator, registerConfirm)
         return false
     end
 
-    consumablesShowStart = GetTime()
+    local wasShown = self:IsShown()
 
     self:SetScale(RCC.GetSetting("consumables_scale"))
     self:Show()
@@ -128,16 +162,34 @@ local function showConsumableFrame(self, isInitiator, registerConfirm)
         self:RegisterEvent("READY_CHECK_CONFIRM")
     end
 
-    cancelMinShowDelay(self)
-    cancelInstanceHideDelay(self)
-    self:Repos(isInitiator)
+    if forceRepos or not wasShown then
+        self:Repos(isInitiator)
+    end
 
     return true
 end
 
+local function activateAndShow(self, reason, isInitiator, registerConfirm,
+                               forceRepos)
+    DisplayContext.Activate(displayContext, reason)
+
+    if showConsumableFrame(
+        self,
+        isInitiator,
+        registerConfirm,
+        forceRepos
+    ) then
+        return true
+    end
+
+    DisplayContext.Deactivate(displayContext, reason)
+
+    return false
+end
+
 local function hideImmediately(self)
     instanceOpenPending = false
-    cancelMinShowDelay(self)
+    cancelReadyCheckHideDelay(self)
     cancelInstanceHideDelay(self)
     self.anchor:Hide()
 
@@ -150,12 +202,13 @@ local function hideImmediately(self)
 end
 
 local function handleLocalReadyCheckResponse(self)
-    if displayMode ~= DISPLAY_MODE.READY_CHECK then
+    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
         return
     end
 
     if not self:IsShown() then
-        cancelMinShowDelay(self)
+        cancelReadyCheckHideDelay(self)
+        DisplayContext.Deactivate(displayContext, Reason.READY_CHECK)
 
         return
     end
@@ -168,11 +221,11 @@ local function handleLocalReadyCheckResponse(self)
 
     self:UnregisterEvent("READY_CHECK_CONFIRM")
 
-    if self.cancelDelay then
+    if self.readyCheckHideDelay then
         return
     end
 
-    startMinShowDelay(self)
+    startReadyCheckHideDelay(self)
 end
 
 local function hookBlizzardReadyCheckButtons()
@@ -208,8 +261,8 @@ end
 
 function RCC.consumables:Update()
     self:UpdateReadyCheckAnchor()
-    local buttons = self.buttons
 
+    local buttons = self.buttons
     local now = GetTime()
     local auraState = Auras.ScanPlayer(now)
 
@@ -221,15 +274,12 @@ function RCC.consumables:Update()
     RaidBuff.Update(buttons.raidBuff)
     CombatPotion.Update(buttons.combatpot)
     HealingPotion.Update(buttons.healpot)
-    ConsumableStasis.Update(
-        buttons.consumableStasis,
-        displayMode == DISPLAY_MODE.BREAK
-    )
+    ConsumableStasis.Update(buttons.consumableStasis)
     Recuperate.Update(buttons.recuperate)
     Vantus.Update(buttons.vantus, auraState)
 
     if not InCombatLockdown() then
-        Buttons.ApplyLayout(self, buttons)
+        Buttons.ApplyLayout(self, buttons, displayContext)
     end
 
     Buttons.UpdateUnavailableOverlays(buttons)
@@ -241,21 +291,29 @@ end
 
 local function onReadyCheck(self, initiatorUnit)
     instanceOpenPending = false
-    displayMode = DISPLAY_MODE.READY_CHECK
+    readyCheckShowStart = GetTime()
+    cancelReadyCheckHideDelay(self)
     hookBlizzardReadyCheckButtons()
 
     local isInitiator = RCC.F.UnitIsUnitSafe(initiatorUnit, "player")
 
-    return showConsumableFrame(self, isInitiator, true)
+    return activateAndShow(
+        self,
+        Reason.READY_CHECK,
+        isInitiator,
+        true,
+        true
+    )
 end
 
 local function onReadyCheckFinished(self)
-    if displayMode ~= DISPLAY_MODE.READY_CHECK then
+    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
         return
     end
 
     if not self:IsShown() then
-        cancelMinShowDelay(self)
+        cancelReadyCheckHideDelay(self)
+        DisplayContext.Deactivate(displayContext, Reason.READY_CHECK)
 
         return
     end
@@ -266,11 +324,11 @@ local function onReadyCheckFinished(self)
         return
     end
 
-    if self.cancelDelay then
+    if self.readyCheckHideDelay then
         return
     end
 
-    startMinShowDelay(self)
+    startReadyCheckHideDelay(self)
 end
 
 local function onReadyCheckConfirm(self, unit)
@@ -312,15 +370,10 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
 
     wasInInstance = inInstance
 
-    if not enteredInstance then
-        return
-    end
-
-    if not RCC.GetSetting("consumables_instanceOpen") then
-        return
-    end
-
-    if not shouldOpenForInstanceType(instanceType) then
+    if not enteredInstance
+        or not RCC.GetSetting("consumables_instanceOpen")
+        or not shouldOpenForInstanceType(instanceType)
+    then
         return
     end
 
@@ -341,9 +394,13 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
             return
         end
 
-        displayMode = DISPLAY_MODE.INSTANCE
-
-        if showConsumableFrame(self, true, false) then
+        if activateAndShow(
+            self,
+            Reason.INSTANCE_ENTRY,
+            true,
+            false,
+            false
+        ) then
             startInstanceHideDelay(self)
         end
     end)
@@ -386,7 +443,7 @@ local eventHandlers = {
     READY_CHECK_FINISHED   = onReadyCheckFinished,
     READY_CHECK_CONFIRM    = onReadyCheckConfirm,
     PLAYER_REGEN_DISABLED  = onCombat,
-    PLAYER_ENTERING_WORLD   = onPlayerEnteringWorld,
+    PLAYER_ENTERING_WORLD  = onPlayerEnteringWorld,
     UNIT_AURA              = onUnitAura,
     UNIT_INVENTORY_CHANGED = onInventoryChanged,
     BAG_UPDATE_DELAYED     = onBagUpdateDelayed,
@@ -402,10 +459,10 @@ end
 
 local function onHide(self)
     instanceOpenPending = false
-    displayMode = nil
+    DisplayContext.Clear(displayContext)
     unregisterLiveEvents(self)
     self.anchor:Hide()
-    cancelMinShowDelay(self)
+    cancelReadyCheckHideDelay(self)
     cancelInstanceHideDelay(self)
 
     if not InCombatLockdown() then
@@ -420,6 +477,7 @@ end
 
 function Controller.Attach(consumablesFrame)
     frame = consumablesFrame
+    frame.displayContext = displayContext
     hookBlizzardReadyCheckButtons()
 
     frame:SetScript("OnEvent", onEvent)
@@ -452,15 +510,13 @@ function Controller.OpenForCauldronPickup()
         return false
     end
 
-    displayMode = DISPLAY_MODE.CAULDRON
-
-    if frame:IsShown() then
-        frame:Update()
-
-        return true
-    end
-
-    return showConsumableFrame(frame, true, false)
+    return activateAndShow(
+        frame,
+        Reason.CAULDRON_PICKUP,
+        true,
+        false,
+        false
+    )
 end
 
 function Controller.OpenForBreakTimer()
@@ -472,9 +528,17 @@ function Controller.OpenForBreakTimer()
         return false
     end
 
-    displayMode = DISPLAY_MODE.BREAK
+    return activateAndShow(
+        frame,
+        Reason.BREAK_TIMER,
+        true,
+        false,
+        false
+    )
+end
 
-    return showConsumableFrame(frame, true, false)
+function Controller.GetDisplayContext()
+    return displayContext
 end
 
 function Controller.HideImmediately()

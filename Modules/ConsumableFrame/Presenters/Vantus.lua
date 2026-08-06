@@ -30,7 +30,7 @@ function Vantus.Update(button, state)
     local vantusRuneIDs = Vantus.GetRuneIDsForCurrentRaid()
 
     if not vantusRuneIDs then
-        Renderer.Apply(button, ButtonState.Create({ showInLayout = false }))
+        Renderer.Apply(button, ButtonState.Create({ applicable = false }))
 
         return
     end
@@ -49,7 +49,6 @@ function Vantus.Update(button, state)
     end
 
     local buttonState = ButtonState.Create()
-    buttonState.showInLayout = true
     buttonState.icon = icon
     buttonState.tooltipItemID = itemID
 

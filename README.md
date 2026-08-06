@@ -34,6 +34,8 @@ entering instances or after collecting a consumable from a cauldron.
   Response is disabled, or stays open for the configured duration when enabled.
 - Can optionally open after you collect a known flask or potion from a
   cauldron.
+- Can optionally open with a consumable stasis item when BigWigs or DBM starts
+  a break timer.
 - Individual icons can be toggled in settings.
 
 ### Raid Status Frame
@@ -139,6 +141,7 @@ Access settings through `/rcc settings` or the WoW AddOns settings panel.
   their placed consumables are detected.
 - Open the consumables frame after collecting a known flask or potion from a
   cauldron.
+- Open the consumables frame on BigWigs or DBM break timers.
 - Open the consumables frame when entering selected instance types.
 - Auto-hide the instance-opened consumables frame after a configurable delay.
 - Toggle individual consumable icons.

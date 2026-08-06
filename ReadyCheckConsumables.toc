@@ -83,6 +83,9 @@ Data/ConsumableTiming.lua
 # Settings and SavedVariables
 Settings.lua
 
+# Shared contextual visibility
+Modules/ContextualVisibility.lua
+
 # Shared status helpers
 Modules/RaidBuffStatus.lua
 

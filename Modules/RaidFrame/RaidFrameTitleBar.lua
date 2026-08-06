@@ -194,9 +194,8 @@ function TitleBar.Create(parent, layout, options)
         self:StopProgress()
 
         local endTime = GetTime() + duration
-        local barWidth = self.progressWidth
 
-        self.progress:SetWidth(barWidth)
+        self.progress:SetWidth(self.progressWidth)
         self.progress:Show()
         self.timerText:SetText(ceil(duration) .. "s")
 
@@ -209,7 +208,10 @@ function TitleBar.Create(parent, layout, options)
                 return
             end
 
-            self.progress:SetWidth(math.max(1, barWidth * remaining / duration))
+            self.progress:SetWidth(math.max(
+                1,
+                self.progressWidth * remaining / duration
+            ))
         end)
 
         self.progressTextTimer = C_Timer.NewTicker(1, function(ticker)

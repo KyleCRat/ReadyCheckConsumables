@@ -47,7 +47,7 @@ function RaidBuff.Update(button)
     local info = RaidBuff.GetPlayerRaidBuffInfo()
 
     if not info then
-        Renderer.Apply(button, ButtonState.Create({ showInLayout = false }))
+        Renderer.Apply(button, ButtonState.Create({ applicable = false }))
 
         return
     end
@@ -55,7 +55,6 @@ function RaidBuff.Update(button)
     local missingCount, minRemaining = getGroupStatus(info.index)
     local hasMissing = missingCount > 0
     local buttonState = ButtonState.Create({
-        showInLayout = true,
         icon = info.iconID,
         tooltipSpellID = info.spellID,
         clickHintSpellID = info.spellID,

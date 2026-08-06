@@ -20,13 +20,8 @@ local function finish(self, runID)
     self.active = false
     cancelFinishTimer(self)
 
-    if RCC.RaidFrameTest then
-        RCC.RaidFrameTest:Finish()
-    end
-
-    if RCC.ConsumableFrameController then
-        RCC.ConsumableFrameController.FinishReadyCheck()
-    end
+    RCC.RaidFrameTest:Finish()
+    RCC.ConsumableFrameController.FinishReadyCheck()
 end
 
 function Test:Cancel()
@@ -34,9 +29,7 @@ function Test:Cancel()
     self.active = false
     cancelFinishTimer(self)
 
-    if RCC.RaidFrameTest then
-        RCC.RaidFrameTest:Cancel()
-    end
+    RCC.RaidFrameTest:Cancel()
 end
 
 function Test:Stop()
@@ -45,13 +38,8 @@ function Test:Stop()
     self:Cancel()
 
     if wasActive then
-        if RCC.ConsumableFrameController then
-            RCC.ConsumableFrameController.FinishReadyCheck()
-        end
-
-        if RCC.RaidFrameTest then
-            RCC.RaidFrameTest:Stop()
-        end
+        RCC.ConsumableFrameController.FinishReadyCheck()
+        RCC.RaidFrameTest:Stop()
     end
 
     return wasActive
@@ -67,13 +55,8 @@ function Test:Start(permanent, options)
 
     local runID = self.runID
 
-    if RCC.ConsumableFrameController then
-        RCC.ConsumableFrameController.StartReadyCheck("player")
-    end
-
-    if RCC.RaidFrameTest then
-        RCC.RaidFrameTest:Start(permanent or false, TEST_DURATION, options)
-    end
+    RCC.ConsumableFrameController.StartReadyCheck("player")
+    RCC.RaidFrameTest:Start(permanent or false, TEST_DURATION, options)
 
     if not permanent then
         self.finishTimer = C_Timer.NewTimer(TEST_DURATION, function()

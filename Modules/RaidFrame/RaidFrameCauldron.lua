@@ -31,7 +31,6 @@ end
 local liveState = createState()
 local syntheticState = createState()
 local syntheticActive = false
-local hasAutoOpenedThisSession = {}
 local testFlaskItemID
 local testPotionItemID
 
@@ -46,13 +45,15 @@ local function isEnabled()
 end
 
 local function refreshFrame(allowAutoShow)
-    local raidFrame = RCC.raidFrame
+    return RCC.raidFrame:RefreshProvisionTracking(allowAutoShow == true)
+end
 
-    if raidFrame and raidFrame.RefreshProvisionTracking then
-        return raidFrame:RefreshProvisionTracking(allowAutoShow == true)
-    end
-
-    return false
+local function activateFrameReason(kind)
+    return RCC.raidFrame:ActivateDisplayReason(
+        RCC.DisplayReason.CAULDRON_DROP,
+        kind,
+        Cauldron.ShouldShowOutsideReadyCheck()
+    )
 end
 
 local function getDisplayState()
@@ -353,9 +354,7 @@ function Cauldron.Activate(kind, cauldronData)
         return false
     end
 
-    if refreshFrame(hasAutoOpenedThisSession[kind] ~= true) then
-        hasAutoOpenedThisSession[kind] = true
-    end
+    activateFrameReason(kind)
 
     return true
 end
@@ -400,16 +399,11 @@ end
 function Cauldron.Reset()
     resetState(liveState)
     resetSyntheticState()
-    wipe(hasAutoOpenedThisSession)
-    refreshFrame()
+    RCC.raidFrame:ResetDisplayReason(RCC.DisplayReason.CAULDRON_DROP)
 end
 
 function Cauldron.Hide()
-    local raidFrame = RCC.raidFrame
-
-    if raidFrame and raidFrame.HideProvisionTracking then
-        raidFrame:HideProvisionTracking()
-    end
+    RCC.raidFrame:HideProvisionTracking()
 end
 
 function Cauldron.BeginSyntheticTestData()
@@ -576,11 +570,7 @@ local function onChatMsgLoot(_self, text, playerName, _languageName,
     )
 
     if playerKey == F.unitFullName("player") then
-        local controller = RCC.ConsumableFrameController
-
-        if controller and controller.OpenForCauldronPickup then
-            controller.OpenForCauldronPickup()
-        end
+        RCC.ConsumableFrameController.OpenForCauldronPickup()
     end
 end
 

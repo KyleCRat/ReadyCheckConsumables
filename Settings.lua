@@ -29,6 +29,7 @@ local DEFAULTS = {
     icon_healthstone         = true,
     icon_combatPotion        = true,
     icon_healPotion          = true,
+    icon_consumableStasis    = true,
     icon_recuperate          = false,
     icon_augment             = true,
     icon_raidBuff            = true,
@@ -76,6 +77,131 @@ function RCC.GetSetting(key)
     return val
 end
 
+local function getContextualVisibilityOverrides()
+    local db = ReadyCheckConsumablesDB
+
+    if not db or type(db.contextualVisibility) ~= "table" then
+        return
+    end
+
+    return db.contextualVisibility
+end
+
+function RCC.GetContextualVisibilityOverride(surface, elementKey, reason)
+    local overrides = getContextualVisibilityOverrides()
+    local surfaceOverrides = overrides and overrides[surface]
+
+    if type(surfaceOverrides) ~= "table" then
+        return
+    end
+
+    local elementOverrides = surfaceOverrides[elementKey]
+
+    if type(elementOverrides) ~= "table" then
+        return
+    end
+
+    local value = elementOverrides[reason]
+
+    if type(value) == "boolean" then
+        return value
+    end
+end
+
+function RCC.GetContextualVisibility(surface, elementKey, reason, defaultValue)
+    local override = RCC.GetContextualVisibilityOverride(
+        surface,
+        elementKey,
+        reason
+    )
+
+    if override ~= nil then
+        return override
+    end
+
+    return defaultValue == true
+end
+
+local function removeEmptyOverrideTables(overrides, surface, elementKey)
+    local surfaceOverrides = overrides[surface]
+
+    if type(surfaceOverrides) ~= "table" then
+        overrides[surface] = nil
+
+        return
+    end
+
+    local elementOverrides = surfaceOverrides[elementKey]
+
+    if type(elementOverrides) ~= "table" then
+        surfaceOverrides[elementKey] = nil
+    elseif next(elementOverrides) == nil then
+        surfaceOverrides[elementKey] = nil
+    end
+
+    if next(surfaceOverrides) == nil then
+        overrides[surface] = nil
+    end
+end
+
+local function refreshContextualVisibility()
+    if InCombatLockdown() then return end
+
+    if RCC.consumables:IsShown() then
+        RCC.consumables:Update()
+    end
+
+    RCC.raidFrame:RefreshContextualVisibility()
+end
+
+function RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)
+    if not surface or not elementKey or not reason then
+        return false
+    end
+
+    if value ~= nil and type(value) ~= "boolean" then
+        return false
+    end
+
+    local db = ReadyCheckConsumablesDB
+
+    if not db then
+        return false
+    end
+
+    db.contextualVisibility = type(db.contextualVisibility) == "table"
+        and db.contextualVisibility
+        or {}
+
+    local overrides = db.contextualVisibility
+
+    if value == nil then
+        local surfaceOverrides = overrides[surface]
+        local elementOverrides = type(surfaceOverrides) == "table"
+            and surfaceOverrides[elementKey]
+            or nil
+
+        if type(elementOverrides) == "table" then
+            elementOverrides[reason] = nil
+            removeEmptyOverrideTables(overrides, surface, elementKey)
+        end
+    else
+        if type(overrides[surface]) ~= "table" then
+            overrides[surface] = {}
+        end
+
+        if type(overrides[surface][elementKey]) ~= "table" then
+            overrides[surface][elementKey] = {}
+        end
+
+        overrides[surface][elementKey][reason] = value
+    end
+
+    refreshContextualVisibility()
+
+    return true
+end
+
 --------------------------------------------------------------------------------
 --- Macro settings canvas
 --------------------------------------------------------------------------------
@@ -101,9 +227,7 @@ local function createMacroButton(parent, text, key, label, characterSpecific)
     button:SetScript("OnClick", function()
         local Macros = RCC.ConsumableMacros
 
-        if Macros and Macros.CreateManagedMacro then
-            Macros.CreateManagedMacro(key, characterSpecific)
-        end
+        Macros.CreateManagedMacro(key, characterSpecific)
     end)
 
     return button
@@ -378,14 +502,7 @@ local function registerPanel()
         DEFAULTS.consumables_breakOpen
     )
     Settings.CreateCheckbox(cfCat, cfBreakOpen,
-        "Show the consumables frame with a consumable stasis item when BigWigs or DBM starts a break timer.")
-    Settings.SetOnValueChangedCallback("consumables_breakOpen", function()
-        if RCC.consumables and RCC.consumables:IsShown()
-            and not InCombatLockdown()
-        then
-            RCC.consumables:Update()
-        end
-    end)
+        "Show the consumables frame when BigWigs or DBM starts a break timer.")
 
     cfLayout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Open When Entering Instance")
@@ -481,8 +598,7 @@ local function registerPanel()
     Settings.SetOnValueChangedCallback(
         "consumables_preferUnlimitedAugment",
         function()
-            if RCC.consumables and RCC.consumables:IsShown()
-                and not InCombatLockdown()
+            if RCC.consumables:IsShown() and not InCombatLockdown()
             then
                 RCC.consumables:Update()
             end
@@ -501,6 +617,7 @@ local function registerPanel()
         { "icon_healthstone", "Healthstone"    },
         { "icon_combatPotion", "Combat Potion" },
         { "icon_healPotion",  "Healing Potion" },
+        { "icon_consumableStasis", "Consumable Stasis" },
         { "icon_recuperate",  "Recuperate"     },
         { "icon_augment",     "Augment Rune"   },
         { "icon_raidBuff",    "Raid Buff"      },
@@ -514,8 +631,7 @@ local function registerPanel()
         )
         Settings.CreateCheckbox(cfCat, s, "Show " .. label .. " icon.")
         Settings.SetOnValueChangedCallback(key, function()
-            if RCC.consumables and RCC.consumables:IsShown()
-                and not InCombatLockdown()
+            if RCC.consumables:IsShown() and not InCombatLockdown()
             then
                 RCC.consumables:Update()
             end
@@ -549,11 +665,7 @@ local function registerPanel()
         "Scale of the raid status frame.")
 
     Settings.SetOnValueChangedCallback("raidFrame_scale", function()
-        if RCC.raidFrame.SyncScaleControl then
-            RCC.raidFrame:SyncScaleControl()
-        else
-            RCC.raidFrame:SetScale(db.raidFrame_scale)
-        end
+        RCC.raidFrame:SyncScaleControl()
     end)
 
     rfLayout:AddInitializer(
@@ -594,9 +706,7 @@ local function registerPanel()
         "Track feast drops and flask or potion pickups from cauldrons.")
 
     Settings.SetOnValueChangedCallback("raidFrameCauldron_enabled", function()
-        if RCC.RaidFrameCauldron then
-            RCC.RaidFrameCauldron.Refresh()
-        end
+        RCC.RaidFrameCauldron.Refresh()
     end)
 
     local ctStandalone = Settings.RegisterAddOnSetting(
@@ -611,9 +721,7 @@ local function registerPanel()
     Settings.SetOnValueChangedCallback(
         "raidFrameCauldron_showOutsideReadyCheck",
         function()
-            if RCC.RaidFrameCauldron then
-                RCC.RaidFrameCauldron.Refresh()
-            end
+            RCC.RaidFrameCauldron.Refresh()
         end
     )
 

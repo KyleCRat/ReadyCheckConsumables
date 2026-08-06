@@ -7,9 +7,9 @@ local F = RCC.F
 
 local ADDON_PREFIX = "RCC"
 local MESSAGE_TYPE = "FEAST"
+local SOURCE_KEY = "feast"
 
 local active = false
-local hasAutoOpenedThisSession = false
 
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
 
@@ -20,13 +20,15 @@ local function isEnabled()
 end
 
 local function refreshFrame(allowAutoShow)
-    local raidFrame = RCC.raidFrame
+    return RCC.raidFrame:RefreshProvisionTracking(allowAutoShow == true)
+end
 
-    if raidFrame and raidFrame.RefreshProvisionTracking then
-        return raidFrame:RefreshProvisionTracking(allowAutoShow == true)
-    end
-
-    return false
+local function activateFrameReason()
+    return RCC.raidFrame:ActivateDisplayReason(
+        RCC.DisplayReason.FEAST_DROP,
+        SOURCE_KEY,
+        Feast.ShouldShowOutsideReadyCheck()
+    )
 end
 
 local function addItemSpell(itemID)
@@ -93,10 +95,7 @@ function Feast.Activate()
     end
 
     active = true
-
-    if refreshFrame(not hasAutoOpenedThisSession) then
-        hasAutoOpenedThisSession = true
-    end
+    activateFrameReason()
 
     return true
 end
@@ -107,8 +106,7 @@ end
 
 function Feast.Reset()
     active = false
-    hasAutoOpenedThisSession = false
-    refreshFrame()
+    RCC.raidFrame:ResetDisplayReason(RCC.DisplayReason.FEAST_DROP)
 end
 
 local function onUnitSpellcastSucceeded(_self, unit, _castGUID, spellID)

@@ -4,14 +4,15 @@ RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
 local Broadcast      = RCC.RaidFrameBroadcast
+local DisplayContext = RCC.DisplayContext
 local db             = RCC.db
 local F              = RCC.F
 local FoodAuras      = RCC.FoodAuras
 local Cauldron       = RCC.RaidFrameCauldron
-local Feast          = RCC.RaidFrameFeast
 local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing         = RCC.ConsumableTiming
+local Visibility     = RCC.ContextualVisibility
 
 local ICON_SIZE                  = 26
 local NAME_WIDTH                 = 150
@@ -26,6 +27,7 @@ local CAULDRON_COUNT_WIDTH       = 28
 local NO_DURATION                = 0
 local FOOD_AURA_TYPE = FoodAuras.Type
 local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
+local Reason = RCC.DisplayReason
 
 local COLUMN_TYPE = {
     TIMED      = "timed",
@@ -78,57 +80,28 @@ local RENDER_CELL_BY_DATA_SOURCE = {
 }
 
 local RAID_BUFF_COUNT = RaidBuffStatus.GetCount()
-local ICON_STEP       = ICON_SIZE + H_PAD
 
-local READY_ICON_CENTER_X        = RC_ICON_WIDTH / 2
-local NAME_X                     = RC_ICON_WIDTH + H_PAD
-local FOOD_ICON_X                = NAME_X + NAME_WIDTH + H_PAD + TIME_WIDTH
-local FOOD_TIME_X                = FOOD_ICON_X - TIME_WIDTH
-local FLASK_ICON_X               = FOOD_ICON_X + ICON_STEP + TIME_WIDTH
-local FLASK_TIME_X               = FLASK_ICON_X - TIME_WIDTH
-local TEMP_WEAPON_ENCHANT_ICON_X = FLASK_ICON_X + ICON_STEP + TIME_WIDTH
-local TEMP_WEAPON_ENCHANT_TIME_X = TEMP_WEAPON_ENCHANT_ICON_X - TIME_WIDTH
-local AUGMENT_ICON_X             = TEMP_WEAPON_ENCHANT_ICON_X + ICON_STEP
-local VANTUS_ICON_X              = AUGMENT_ICON_X + ICON_STEP
+local READY_CHECK_VISIBILITY = {
+    reasons = {
+        [Reason.READY_CHECK] = true,
+    },
+}
 
-local function getRaidBuffX(raidBuffIndex)
-    return VANTUS_ICON_X + raidBuffIndex * ICON_STEP
-end
+local FOOD_VISIBILITY = {
+    reasons = {
+        [Reason.READY_CHECK] = true,
+        [Reason.FEAST_DROP] = true,
+    },
+}
 
-local RAID_BUFF_X = {}
-
-for raidBuffIndex = 1, RAID_BUFF_COUNT do
-    RAID_BUFF_X[raidBuffIndex] = getRaidBuffX(raidBuffIndex)
-end
-
-local DURABILITY_X       = getRaidBuffX(RAID_BUFF_COUNT) + ICON_STEP
-local DURABILITY_TITLE_X = DURABILITY_X + (DURABILITY_WIDTH - ICON_SIZE) / 2
-
-local FRAME_WIDTH = FRAME_PAD
-    + RC_ICON_WIDTH + H_PAD
-    + NAME_WIDTH + H_PAD
-    + TIME_WIDTH + ICON_SIZE + H_PAD      -- food
-    + TIME_WIDTH + ICON_SIZE + H_PAD      -- flask
-    + TIME_WIDTH + ICON_SIZE + H_PAD      -- temp weapon enchant
-    + ICON_SIZE + H_PAD                   -- augment
-    + ICON_SIZE + H_PAD                   -- vantus
-    + ICON_STEP * RAID_BUFF_COUNT         -- raid buffs
-    + DURABILITY_WIDTH + H_PAD
-    + FRAME_PAD
-
-local LAYOUT_X = {
-    readyIconCenter       = READY_ICON_CENTER_X,
-    name                  = NAME_X,
-    food                  = FOOD_ICON_X,
-    foodTime              = FOOD_TIME_X,
-    flask                 = FLASK_ICON_X,
-    flaskTime             = FLASK_TIME_X,
-    tempWeaponEnchant     = TEMP_WEAPON_ENCHANT_ICON_X,
-    tempWeaponEnchantTime = TEMP_WEAPON_ENCHANT_TIME_X,
-    augment               = AUGMENT_ICON_X,
-    vantus                = VANTUS_ICON_X,
-    raidBuff              = RAID_BUFF_X,
-    durability            = DURABILITY_X,
+local CAULDRON_VISIBILITY = {
+    reasons = {
+        [Reason.READY_CHECK] = true,
+        [Reason.CAULDRON_DROP] = true,
+    },
+    IsApplicable = function(_, _, definition)
+        return Cauldron.IsActive(definition.cauldronKind)
+    end,
 }
 
 --------------------------------------------------------------------------------
@@ -265,9 +238,7 @@ local foodColumn = {
     columnType   = COLUMN_TYPE.TIMED,
     dataSource   = DATA_SOURCE.AURA,
     key          = "food",
-    timeX        = FOOD_TIME_X,
-    iconX        = FOOD_ICON_X,
-    titleX       = FOOD_ICON_X,
+    visibility   = FOOD_VISIBILITY,
     iconID       = db.foodIconID,
     label        = "Food: Missing",
     activeLabel  = "Food",
@@ -321,9 +292,7 @@ local flaskColumn = {
     columnType   = COLUMN_TYPE.TIMED,
     dataSource   = DATA_SOURCE.AURA,
     key          = "flask",
-    timeX        = FLASK_TIME_X,
-    iconX        = FLASK_ICON_X,
-    titleX       = FLASK_ICON_X,
+    visibility   = READY_CHECK_VISIBILITY,
     iconID       = db.flaskIconID,
     label        = "Flask: Missing",
     activeLabel  = "Flask",
@@ -392,9 +361,7 @@ local tempWeaponEnchantColumn = {
     columnType      = COLUMN_TYPE.TIMED,
     dataSource      = DATA_SOURCE.TEMP_WEAPON_ENCHANT,
     key             = "tempWeaponEnchant",
-    timeX           = TEMP_WEAPON_ENCHANT_TIME_X,
-    iconX           = TEMP_WEAPON_ENCHANT_ICON_X,
-    titleX          = TEMP_WEAPON_ENCHANT_ICON_X,
+    visibility      = READY_CHECK_VISIBILITY,
     iconID          = db.weaponEnchantIconID,
     label           = "Weapon Enchant",
     labelMissing    = "Weapon Enchant: Missing",
@@ -438,8 +405,7 @@ local augmentColumn = {
     columnType   = COLUMN_TYPE.ICON,
     dataSource   = DATA_SOURCE.AURA,
     key          = "augment",
-    iconX        = AUGMENT_ICON_X,
-    titleX       = AUGMENT_ICON_X,
+    visibility   = READY_CHECK_VISIBILITY,
     iconID       = db.augmentIconID,
     label        = "Augment Rune: Missing",
     activeLabel  = "Augment Rune",
@@ -481,8 +447,7 @@ local vantusColumn = {
     columnType   = COLUMN_TYPE.ICON,
     dataSource   = DATA_SOURCE.AURA,
     key          = "vantus",
-    iconX        = VANTUS_ICON_X,
-    titleX       = VANTUS_ICON_X,
+    visibility   = READY_CHECK_VISIBILITY,
     iconID       = db.vantusIconID,
     label        = "Vantus Rune: Missing",
     activeLabel  = "Vantus Rune",
@@ -517,8 +482,7 @@ local function createRaidBuffColumn(raidBuffIndex)
         dataSource         = DATA_SOURCE.RAID_BUFF,
         key                = "raidBuff" .. raidBuffIndex,
         index              = raidBuffIndex,
-        iconX              = RAID_BUFF_X[raidBuffIndex],
-        titleX             = RAID_BUFF_X[raidBuffIndex],
+        visibility         = READY_CHECK_VISIBILITY,
         iconID             = buffInfo.iconID,
         spellID            = buffInfo.spellID,
         CreateData         = createRaidBuffData,
@@ -569,8 +533,7 @@ local durabilityColumn = {
     columnType = COLUMN_TYPE.DURABILITY,
     dataSource = DATA_SOURCE.DURABILITY,
     key        = "durability",
-    textX      = DURABILITY_X,
-    titleX     = DURABILITY_TITLE_X,
+    visibility = READY_CHECK_VISIBILITY,
     CreateData = createDurabilityData,
     SyncData   = syncDurabilityData,
     IsBad      = isDurabilityBad,
@@ -593,10 +556,8 @@ local cauldronFlaskColumn = {
     columnType            = COLUMN_TYPE.CAULDRON,
     dataSource            = DATA_SOURCE.CAULDRON,
     key                   = "cauldronFlask",
+    visibility            = CAULDRON_VISIBILITY,
     cauldronKind          = Cauldron.KIND_FLASK,
-    countX                = 0,
-    iconX                 = 0,
-    titleX                = 0,
     iconID                = db.flaskIconID,
     label                 = "Flask Cauldron",
     activeLabel           = "Flasks",
@@ -608,10 +569,8 @@ local cauldronPotionColumn = {
     columnType            = COLUMN_TYPE.CAULDRON,
     dataSource            = DATA_SOURCE.CAULDRON,
     key                   = "cauldronPotion",
+    visibility            = CAULDRON_VISIBILITY,
     cauldronKind          = Cauldron.KIND_POTION,
-    countX                = 0,
-    iconX                 = 0,
-    titleX                = 0,
     iconID                = db.combatPotionIconID,
     label                 = "Potion Cauldron",
     activeLabel           = "Potions",
@@ -639,6 +598,10 @@ end
 
 function Columns.CreateColumnData(layout)
     return createColumnData(layout)
+end
+
+function Columns.GetDefinitions(layout)
+    return layout.columns
 end
 
 function Columns.CreateCell(row, column, layout, options)
@@ -672,9 +635,10 @@ function Columns.PositionCell(row, column, layout)
     Renderers.PositionCell(row, column, layout)
 end
 
-function Columns.ScanUnitData(unit, now, layout, context)
+function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
     local columnData = createColumnData(layout)
     local rules = context.rules
+    local columns = scanColumns or layout.activeColumns
     local scanContext = {
         remaining = rules.noDuration,
         rules     = rules,
@@ -686,8 +650,8 @@ function Columns.ScanUnitData(unit, now, layout, context)
             now
         ) or rules.noDuration
 
-        for columnIndex = 1, #layout.activeColumns do
-            local column = layout.activeColumns[columnIndex]
+        for columnIndex = 1, #columns do
+            local column = columns[columnIndex]
 
             if column.CollectAura then
                 column.CollectAura(
@@ -726,106 +690,18 @@ function Columns.SyncExternalData(member, layout, context)
     end
 end
 
-local function copyColumns(columns)
+local function copyColumn(definition)
     local copy = {}
 
-    for i = 1, #columns do
-        copy[i] = columns[i]
+    for key, value in pairs(definition) do
+        copy[key] = value
     end
 
     return copy
 end
 
-local function appendActiveCauldronColumns(columns)
-    if Cauldron.IsActive(Cauldron.KIND_FLASK) then
-        columns[#columns + 1] = cauldronFlaskColumn
-    end
-
-    if Cauldron.IsActive(Cauldron.KIND_POTION) then
-        columns[#columns + 1] = cauldronPotionColumn
-    end
-end
-
-local function positionFoodColumn(startX)
-    foodColumn.timeX = startX
-    foodColumn.iconX = startX + TIME_WIDTH
-    foodColumn.titleX = foodColumn.iconX
-
-    return foodColumn.iconX + ICON_SIZE + H_PAD
-end
-
-local function resetFoodColumnPosition()
-    foodColumn.timeX = FOOD_TIME_X
-    foodColumn.iconX = FOOD_ICON_X
-    foodColumn.titleX = FOOD_ICON_X
-end
-
-local function positionCauldronColumns(columns, startX)
-    local nextX = startX
-
-    for columnIndex = 1, #columns do
-        local column = columns[columnIndex]
-
-        if column.columnType == COLUMN_TYPE.CAULDRON then
-            column.countX = nextX
-            column.iconX = nextX + CAULDRON_COUNT_WIDTH + 2
-            column.titleX = column.iconX
-
-            nextX = nextX + CAULDRON_WIDTH + H_PAD
-        end
-    end
-
-    return nextX
-end
-
-local function configureReadyCheckLayout(layout, options)
-    resetFoodColumnPosition()
-
-    local activeColumns = copyColumns(layout.readyCheckColumns)
-    local rowWidth = FRAME_WIDTH - FRAME_PAD * 2
-
-    if not options or options.includeCauldrons ~= false then
-        appendActiveCauldronColumns(activeColumns)
-    end
-
-    if #activeColumns > #layout.readyCheckColumns then
-        rowWidth = positionCauldronColumns(activeColumns, rowWidth)
-    end
-
-    layout.showReadyIcon = true
-    layout.frameWidth = rowWidth + FRAME_PAD * 2
-    layout.x.name = NAME_X
-    layout.activeColumns = activeColumns
-end
-
-local function configureProvisionLayout(layout)
-    local activeColumns = {}
-    local rowWidth = PROVISION_NAME_X + NAME_WIDTH + H_PAD
-
-    if Feast and Feast.IsActive() then
-        activeColumns[#activeColumns + 1] = foodColumn
-        rowWidth = positionFoodColumn(rowWidth)
-    end
-
-    appendActiveCauldronColumns(activeColumns)
-    rowWidth = positionCauldronColumns(activeColumns, rowWidth)
-
-    layout.showReadyIcon = false
-    layout.frameWidth = rowWidth + FRAME_PAD * 2
-    layout.x.name = PROVISION_NAME_X
-    layout.activeColumns = activeColumns
-end
-
-function Columns.ConfigureLayout(layout, mode, options)
-    if mode == "provision" then
-        configureProvisionLayout(layout)
-    else
-        configureReadyCheckLayout(layout, options)
-    end
-end
-
-function Columns.CreateLayout()
-    local readyCheckColumns = {
+local function createColumns()
+    local definitions = {
         foodColumn,
         flaskColumn,
         tempWeaponEnchantColumn,
@@ -834,19 +710,88 @@ function Columns.CreateLayout()
     }
 
     for raidBuffIndex = 1, RAID_BUFF_COUNT do
-        readyCheckColumns[#readyCheckColumns + 1] =
+        definitions[#definitions + 1] =
             createRaidBuffColumn(raidBuffIndex)
     end
 
-    readyCheckColumns[#readyCheckColumns + 1] = durabilityColumn
+    definitions[#definitions + 1] = durabilityColumn
+    definitions[#definitions + 1] = cauldronFlaskColumn
+    definitions[#definitions + 1] = cauldronPotionColumn
 
-    local columns = copyColumns(readyCheckColumns)
-    columns[#columns + 1] = cauldronFlaskColumn
-    columns[#columns + 1] = cauldronPotionColumn
+    local columns = {}
+
+    for i = 1, #definitions do
+        columns[i] = copyColumn(definitions[i])
+    end
+
+    return columns
+end
+
+local function positionColumn(layout, column, startX)
+    if column.columnType == COLUMN_TYPE.TIMED then
+        column.timeX = startX
+        column.iconX = startX + layout.timeWidth
+        column.titleX = column.iconX
+
+        return column.iconX + layout.iconSize + H_PAD
+    elseif column.columnType == COLUMN_TYPE.CAULDRON then
+        column.countX = startX
+        column.iconX = startX + layout.cauldronCountWidth + 2
+        column.titleX = column.iconX
+
+        return startX + layout.cauldronWidth + H_PAD
+    elseif column.columnType == COLUMN_TYPE.DURABILITY then
+        column.textX = startX
+        column.titleX = startX
+            + (layout.durabilityWidth - layout.iconSize) / 2
+
+        return startX + layout.durabilityWidth + H_PAD
+    end
+
+    column.iconX = startX
+    column.titleX = startX
+
+    return startX + layout.iconSize + H_PAD
+end
+
+function Columns.ConfigureLayout(layout, context)
+    local showReadyIcon = DisplayContext.IsActive(
+        context,
+        Reason.READY_CHECK
+    )
+    local nameX = showReadyIcon
+        and layout.rcIconWidth + H_PAD
+        or PROVISION_NAME_X
+    local nextX = nameX + layout.nameWidth + H_PAD
+
+    wipe(layout.activeColumns)
+
+    for columnIndex = 1, #layout.columns do
+        local column = layout.columns[columnIndex]
+
+        if Visibility.IsVisible(column, context) then
+            layout.activeColumns[#layout.activeColumns + 1] = column
+            nextX = positionColumn(layout, column, nextX)
+        end
+    end
+
+    layout.showReadyIcon = showReadyIcon
+    layout.frameWidth = nextX + layout.framePad * 2
+    layout.x.readyIconCenter = layout.rcIconWidth / 2
+    layout.x.name = nameX
+end
+
+function Columns.CreateLayout(context)
+    local columns = createColumns()
+    local columnsByKey = {}
+
+    for i = 1, #columns do
+        columnsByKey[columns[i].key] = columns[i]
+    end
 
     local layout = {
         raidBuffCount       = RAID_BUFF_COUNT,
-        frameWidth          = FRAME_WIDTH,
+        frameWidth          = 0,
         framePad            = FRAME_PAD,
         iconSize            = ICON_SIZE,
         rcIconWidth         = RC_ICON_WIDTH,
@@ -855,14 +800,36 @@ function Columns.CreateLayout()
         durabilityWidth     = DURABILITY_WIDTH,
         cauldronWidth       = CAULDRON_WIDTH,
         cauldronCountWidth  = CAULDRON_COUNT_WIDTH,
-        showReadyIcon       = true,
-        x                   = LAYOUT_X,
+        showReadyIcon       = false,
+        x                   = {},
         columns             = columns,
-        readyCheckColumns   = readyCheckColumns,
-        activeColumns       = readyCheckColumns,
+        columnsByKey        = columnsByKey,
+        broadcastColumns    = {
+            columnsByKey.food,
+            columnsByKey.flask,
+        },
+        activeColumns       = {},
     }
 
-    Columns.ConfigureLayout(layout, "readyCheck")
+    local constructionX = layout.rcIconWidth
+        + H_PAD
+        + layout.nameWidth
+        + H_PAD
+
+    for i = 1, #layout.columns do
+        constructionX = positionColumn(
+            layout,
+            layout.columns[i],
+            constructionX
+        )
+    end
+
+    if not context then
+        context = DisplayContext.Create(RCC.DisplaySurface.RAID_FRAME)
+        DisplayContext.Activate(context, Reason.READY_CHECK)
+    end
+
+    Columns.ConfigureLayout(layout, context)
 
     return layout
 end
