@@ -206,9 +206,42 @@ end
 --- Macro settings canvas
 --------------------------------------------------------------------------------
 
+local function createMacroButtonState(button, layer, atlas)
+    local texture = button:CreateTexture(nil, layer)
+
+    texture:SetAllPoints(button)
+    texture:SetAtlas(atlas, false)
+
+    return texture
+end
+
 local function createMacroButton(parent, text, key, label, characterSpecific)
-    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    local button = CreateFrame("Button", nil, parent)
+
     button:SetSize(86, 22)
+    button:SetNormalFontObject(GameFontNormalSmall)
+    button:SetHighlightFontObject(GameFontHighlightSmall)
+    button:SetDisabledFontObject(GameFontDisableSmall)
+    button:SetNormalTexture(createMacroButtonState(
+        button,
+        "BACKGROUND",
+        "common-button-tertiary-normal-small"
+    ))
+    button:SetHighlightTexture(createMacroButtonState(
+        button,
+        "HIGHLIGHT",
+        "common-button-tertiary-hover-small"
+    ))
+    button:SetPushedTexture(createMacroButtonState(
+        button,
+        "BACKGROUND",
+        "common-button-tertiary-pressed-small"
+    ))
+    button:SetDisabledTexture(createMacroButtonState(
+        button,
+        "BACKGROUND",
+        "common-button-tertiary-disabled-small"
+    ))
     button:SetText(text)
 
     local macroTab = characterSpecific
@@ -235,6 +268,45 @@ end
 
 local function getMacroMarker(key)
     return "#RCC:" .. key
+end
+
+local function getInlineMacroMarker(key)
+    return "#RCCI:" .. key
+end
+
+local function getMacroShorthand(definition)
+    local aliases = definition.aliases
+
+    if not aliases then return definition.key end
+
+    local shorthand = aliases[1]
+
+    for aliasIndex = 2, #aliases do
+        local alias = aliases[aliasIndex]
+
+        if #alias < #shorthand then
+            shorthand = alias
+        end
+    end
+
+    return shorthand
+end
+
+local function getMacroKeyText(definition)
+    local marker = getMacroMarker(definition.key)
+    local shorthand = getMacroShorthand(definition)
+
+    if shorthand ~= definition.key then
+        return marker .. " (" .. shorthand .. ")"
+    end
+
+    return marker
+end
+
+local function getInlineMacroText(definition)
+    if not definition.inlineGetAction then return "-" end
+
+    return getInlineMacroMarker(getMacroShorthand(definition))
 end
 
 local function createMacroText(parent, fontObject, text, width)
@@ -267,39 +339,49 @@ local function createMacrosSettingsFrame()
     local body = createMacroText(
         frame,
         GameFontHighlight,
-        "Managed macros are ordinary WoW macros containing a marker like "
-        .. "#RCC:combatpot. RCC keeps the marker, adds an automated comment, "
-        .. "and rewrites the generated /use or /cast lines when bags, "
-        .. "preferred selections, equipment, spells, zone, or macros change.\n\n"
-        .. "Food, flask, augment, Vantus, and weapon enchant macros follow "
-        .. "the same preferred selection used by the consumable frame. The "
-        .. "preference changes when you choose or use a preferred consumable "
-        .. "from RCC's consumable buttons. If a preferred item is out of bags, RCC "
-        .. "still writes that item ID into the macro so the action bar shows "
-        .. "it as unavailable. Combat and healing potion macros use the "
-        .. "preferred potion when available and otherwise use the best "
-        .. "available potion. The healing potion macro also casts "
-        .. "Recuperate out of combat. Healthstones use the current available "
-        .. "item list.",
+        "RCC macros keep action-bar buttons linked to your preferred "
+        .. "consumables. Right-click an item in a Consumables Frame button's "
+        .. "flyout to select it as your preferred consumable. RCC keeps that "
+        .. "preference until you right-click another item, even when the "
+        .. "selected item is temporarily missing from your bags. If you have "
+        .. "not selected a preferred item, RCC uses the best available "
+        .. "option.\n\n"
+        .. "Managed macros are complete macros created and maintained by RCC. "
+        .. "The #RCC:<key> marker identifies what each macro should use. Choose "
+        .. "Shared or Character below to create one. The Healing Potion macro "
+        .. "casts Recuperate out of combat and uses a potion in combat.\n\n"
+        .. "Inline markers update one line inside a custom macro without "
+        .. "changing the rest of it. Put an inline marker shown below on its "
+        .. "own line. Macro conditions can follow the marker, for example "
+        .. "#RCCI:cp [combat].",
         600
     )
     body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
 
-    local keyHeader = createMacroText(frame, GameFontNormal, "Name", 120)
-    keyHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -176)
+    local nameHeader = createMacroText(frame, GameFontNormal, "Name", 120)
+    nameHeader:SetPoint("TOPLEFT", body, "BOTTOMLEFT", 0, -20)
 
-    local markerHeader = createMacroText(frame, GameFontNormal, "Key", 120)
-    markerHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 180, -176)
+    local keyHeader = createMacroText(
+        frame,
+        GameFontNormal,
+        "Key (Shorthand)",
+        190
+    )
+    keyHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 160, 0)
 
-    local sharedHeader = createMacroText(frame, GameFontNormal, "Create", 190)
-    sharedHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", 360, -176)
+    local inlineHeader = createMacroText(
+        frame,
+        GameFontNormal,
+        "Inline",
+        95
+    )
+    inlineHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 355, 0)
 
-    local rowTop = -204
+    local createHeader = createMacroText(frame, GameFontNormal, "Create", 180)
+    createHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 455, 0)
+
     local rowHeight = 28
-    local definitions = RCC.ConsumableMacros
-        and RCC.ConsumableMacros.GetDefinitions
-        and RCC.ConsumableMacros.GetDefinitions()
-        or {}
+    local definitions = RCC.ConsumableMacros.GetDefinitions()
 
     for i = 1, #definitions do
         local definition = definitions[i]
@@ -312,19 +394,27 @@ local function createMacrosSettingsFrame()
         )
         label:SetPoint(
             "TOPLEFT",
-            frame,
-            "TOPLEFT",
+            nameHeader,
+            "BOTTOMLEFT",
             0,
-            rowTop - ((i - 1) * rowHeight)
+            -14 - ((i - 1) * rowHeight)
         )
 
         local marker = createMacroText(
             frame,
             GameFontHighlight,
-            getMacroMarker(key),
-            150
+            getMacroKeyText(definition),
+            190
         )
-        marker:SetPoint("TOPLEFT", label, "TOPLEFT", 180, 0)
+        marker:SetPoint("TOPLEFT", label, "TOPLEFT", 160, 0)
+
+        local inlineMarker = createMacroText(
+            frame,
+            GameFontHighlight,
+            getInlineMacroText(definition),
+            95
+        )
+        inlineMarker:SetPoint("TOPLEFT", label, "TOPLEFT", 355, 0)
 
         local sharedButton = createMacroButton(
             frame,
@@ -333,7 +423,7 @@ local function createMacrosSettingsFrame()
             definition.label,
             false
         )
-        sharedButton:SetPoint("TOPLEFT", label, "TOPLEFT", 360, -2)
+        sharedButton:SetPoint("TOPLEFT", label, "TOPLEFT", 455, -2)
 
         local characterButton = createMacroButton(
             frame,
