@@ -40,7 +40,7 @@ local DEFAULTS = {
     raidFrame_minShow        = true,
     raidFrame_minShowTime    = 15,
 
-    -- Raid Frame Cauldron Columns
+    -- Raid Frame Feast and Cauldron Columns
     raidFrameCauldron_enabled               = true,
     raidFrameCauldron_showOutsideReadyCheck = true,
 
@@ -579,11 +579,11 @@ local function registerPanel()
         "How long the raid status frame stays open after a ready check (1-40 seconds).")
 
     ----------------------------------------------------------------------------
-    --- Raid Frame Cauldron Columns
+    --- Raid Frame Feast and Cauldron Columns
     ----------------------------------------------------------------------------
 
     rfLayout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Cauldrons")
+        CreateSettingsListSectionHeaderInitializer("Feasts & Cauldrons")
     )
 
     local ctEnabled = Settings.RegisterAddOnSetting(
@@ -591,7 +591,7 @@ local function registerPanel()
         db, "boolean", "Enabled", DEFAULTS.raidFrameCauldron_enabled
     )
     Settings.CreateCheckbox(rfCat, ctEnabled,
-        "Track flask and potion pickups from cauldrons.")
+        "Track feast drops and flask or potion pickups from cauldrons.")
 
     Settings.SetOnValueChangedCallback("raidFrameCauldron_enabled", function()
         if RCC.RaidFrameCauldron then
@@ -606,7 +606,7 @@ local function registerPanel()
         DEFAULTS.raidFrameCauldron_showOutsideReadyCheck
     )
     Settings.CreateCheckbox(rfCat, ctStandalone,
-        "Show the raid frame with only cauldron columns when a cauldron is detected outside ready checks.")
+        "Show the raid frame with the relevant food and cauldron columns when a feast or cauldron is detected outside ready checks.")
 
     Settings.SetOnValueChangedCallback(
         "raidFrameCauldron_showOutsideReadyCheck",

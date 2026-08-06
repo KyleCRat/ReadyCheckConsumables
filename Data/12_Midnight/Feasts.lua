@@ -13,3 +13,16 @@ RCC.Data.AddFeastItems({
     255845, -- [Rare] Silvermoon Parade      | 98 Stam, 50 Primary Stat
     255847, -- [Rare] Impossibly Royal Roast | 98 Stam, 50 Primary Stat
 })
+
+-- Placement spells observed by Northern Sky Raid Tools. Keeping explicit IDs
+-- makes detection available before the client has cached the feast item data.
+RCC.Data.AddFeastSpells({
+    1259657, -- Quel'dorei Medley
+    1278915, -- Hearty Quel'dorei Medley
+    1259658, -- Harandar Celebration
+    1278929, -- Hearty Harandar Celebration
+    1237104, -- Blooming Feast
+    1278909, -- Hearty Blooming Feast
+    1259659, -- Silvermoon Parade
+    1278895, -- Hearty Silvermoon Parade
+})

@@ -51,8 +51,11 @@ A raid overview frame appears alongside the ready check.
 - Reads Method Raid Tools durability broadcasts.
 - Tracks Midnight flask and potion cauldron pickups, showing each player's
   pickup count and the most recent fleeting flask or potion icon they collected.
-- Opens with only cauldron columns when cauldrons are detected outside a ready
-  check, and appends active cauldron columns to the ready-check layout.
+- Detects Midnight feast placements and opens with only the food column outside
+  a ready check.
+- Combines the food column with active cauldron columns when feasts and
+  cauldrons are detected together, and appends active cauldron columns to the
+  ready-check layout.
 - Colors cauldron pickup counts when players are under, at, or over the expected
   pickup amount.
 - Shows title-bar summary icons for each tracked column.
@@ -60,8 +63,8 @@ A raid overview frame appears alongside the ready check.
 - Announces when everyone in the active raid groups is ready, while ignoring
   benched players.
 - Includes an inline scale control, is draggable, and remembers position.
-- Hides on combat start to avoid protected-frame issues and clears cauldron
-  pickup tracking when combat begins.
+- Hides on combat start to avoid protected-frame issues and clears feast and
+  cauldron tracking when combat begins.
 
 ### Chat Report
 
@@ -131,9 +134,9 @@ Access settings through `/rcc settings` or the WoW AddOns settings panel.
 - Enable or disable the consumables frame and raid status frame.
 - Adjust consumables frame and raid status frame scale.
 - Keep frames visible for a configurable minimum time after ready checks.
-- Enable or disable cauldron tracking in the raid status frame.
-- Choose whether cauldron-only raid status frames can appear outside ready
-  checks.
+- Enable or disable feast and cauldron tracking in the raid status frame.
+- Choose whether food and cauldron columns can appear outside ready checks when
+  their placed consumables are detected.
 - Open the consumables frame after collecting a known flask or potion from a
   cauldron.
 - Open the consumables frame when entering selected instance types.

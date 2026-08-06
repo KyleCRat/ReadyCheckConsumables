@@ -8,6 +8,7 @@ local db             = RCC.db
 local F              = RCC.F
 local FoodAuras      = RCC.FoodAuras
 local Cauldron       = RCC.RaidFrameCauldron
+local Feast          = RCC.RaidFrameFeast
 local Renderers      = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
 local Timing         = RCC.ConsumableTiming
@@ -19,7 +20,7 @@ local TIME_WIDTH                 = 30
 local H_PAD                      = 3
 local FRAME_PAD                  = 3
 local DURABILITY_WIDTH           = 42
-local CAULDRON_NAME_X            = H_PAD
+local PROVISION_NAME_X           = H_PAD
 local CAULDRON_WIDTH             = 58
 local CAULDRON_COUNT_WIDTH       = 28
 local NO_DURATION                = 0
@@ -745,6 +746,20 @@ local function appendActiveCauldronColumns(columns)
     end
 end
 
+local function positionFoodColumn(startX)
+    foodColumn.timeX = startX
+    foodColumn.iconX = startX + TIME_WIDTH
+    foodColumn.titleX = foodColumn.iconX
+
+    return foodColumn.iconX + ICON_SIZE + H_PAD
+end
+
+local function resetFoodColumnPosition()
+    foodColumn.timeX = FOOD_TIME_X
+    foodColumn.iconX = FOOD_ICON_X
+    foodColumn.titleX = FOOD_ICON_X
+end
+
 local function positionCauldronColumns(columns, startX)
     local nextX = startX
 
@@ -764,6 +779,8 @@ local function positionCauldronColumns(columns, startX)
 end
 
 local function configureReadyCheckLayout(layout, options)
+    resetFoodColumnPosition()
+
     local activeColumns = copyColumns(layout.readyCheckColumns)
     local rowWidth = FRAME_WIDTH - FRAME_PAD * 2
 
@@ -781,22 +798,27 @@ local function configureReadyCheckLayout(layout, options)
     layout.activeColumns = activeColumns
 end
 
-local function configureCauldronLayout(layout)
+local function configureProvisionLayout(layout)
     local activeColumns = {}
-    local rowWidth = CAULDRON_NAME_X + NAME_WIDTH + H_PAD
+    local rowWidth = PROVISION_NAME_X + NAME_WIDTH + H_PAD
+
+    if Feast and Feast.IsActive() then
+        activeColumns[#activeColumns + 1] = foodColumn
+        rowWidth = positionFoodColumn(rowWidth)
+    end
 
     appendActiveCauldronColumns(activeColumns)
     rowWidth = positionCauldronColumns(activeColumns, rowWidth)
 
     layout.showReadyIcon = false
     layout.frameWidth = rowWidth + FRAME_PAD * 2
-    layout.x.name = CAULDRON_NAME_X
+    layout.x.name = PROVISION_NAME_X
     layout.activeColumns = activeColumns
 end
 
 function Columns.ConfigureLayout(layout, mode, options)
-    if mode == "cauldron" then
-        configureCauldronLayout(layout)
+    if mode == "provision" then
+        configureProvisionLayout(layout)
     else
         configureReadyCheckLayout(layout, options)
     end

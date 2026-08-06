@@ -134,6 +134,7 @@ Modules/ConsumableMacros/ConsumableMacros.lua
 # Raid Frame
 Modules/RaidFrame/RaidFrameReadyCheck.lua
 Modules/RaidFrame/RaidFrameCauldron.lua
+Modules/RaidFrame/RaidFrameFeast.lua
 Modules/RaidFrame/RaidFrameBroadcast.lua
 Modules/RaidFrame/RaidFrameColumnRenderers.lua
 Modules/RaidFrame/RaidFrameColumns.lua

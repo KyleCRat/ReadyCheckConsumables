@@ -4,6 +4,7 @@ local Broadcast       = RCC.RaidFrameBroadcast
 local Cauldron        = RCC.RaidFrameCauldron
 local Columns         = RCC.RaidFrameColumns
 local Controls        = RCC.RaidFrameControls
+local Feast           = RCC.RaidFrameFeast
 local FrameAnimations = RCC.FrameAnimations
 local Members         = RCC.RaidFrameMembers
 local ReadyCheck      = RCC.RaidFrameReadyCheck
@@ -22,7 +23,7 @@ local FADE_OUT_DURATION   = 0.5
 
 local DISPLAY_MODE = {
     READY_CHECK = "readyCheck",
-    CAULDRON    = "cauldron",
+    PROVISION   = "provision",
 }
 
 local LAYOUT = Columns.CreateLayout()
@@ -117,6 +118,10 @@ end
 local function setDisplayMode(mode, options)
     if mode ~= DISPLAY_MODE.READY_CHECK then
         unregisterReadyCheckEvents()
+    end
+
+    if mode == DISPLAY_MODE.PROVISION then
+        frame:RegisterEvent("UNIT_AURA")
     end
 
     if options and options.includeCauldrons ~= nil then
@@ -313,25 +318,48 @@ local function showReadyCheckDisplay(duration, showProgress)
     frame:Show()
 end
 
-local function canShowCauldronOnly()
-    return Cauldron
+local function canShowProvisionOnly()
+    if InCombatLockdown() then
+        return false
+    end
+
+    local feastActive = Feast
+        and Feast.IsEnabled()
+        and Feast.IsActive()
+        and Feast.ShouldShowOutsideReadyCheck()
+
+    local cauldronActive = Cauldron
         and Cauldron.IsEnabled()
         and Cauldron.HasActiveCauldron()
         and Cauldron.ShouldShowOutsideReadyCheck()
-        and not InCombatLockdown()
+
+    return feastActive or cauldronActive
 end
 
-local function beginCauldronDisplay()
+local function beginProvisionDisplay()
     cancelHideTimer()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
     titleBar:StopProgress()
-    setDisplayMode(DISPLAY_MODE.CAULDRON, { includeCauldrons = true })
+    setDisplayMode(DISPLAY_MODE.PROVISION, { includeCauldrons = true })
     wipe(state.rcStatus)
 end
 
-local function showCauldronDisplayFromState()
-    titleBar:SetHeaderText("Cauldrons")
+local function getProvisionHeaderText()
+    local feastActive = Feast and Feast.IsActive()
+    local cauldronActive = Cauldron and Cauldron.HasActiveCauldron()
+
+    if feastActive and cauldronActive then
+        return "Feast & Cauldrons"
+    elseif feastActive then
+        return "Feast"
+    end
+
+    return "Cauldrons"
+end
+
+local function showProvisionDisplayFromState()
+    titleBar:SetHeaderText(getProvisionHeaderText())
     refreshAllRowsAndTitle()
 
     controls:RestorePosition()
@@ -341,15 +369,15 @@ local function showCauldronDisplayFromState()
     return true
 end
 
-local function showCauldronDisplay()
-    if not canShowCauldronOnly() then
+local function showProvisionDisplay()
+    if not canShowProvisionOnly() then
         return false
     end
 
-    beginCauldronDisplay()
+    beginProvisionDisplay()
     Members.ScanAll(state, LAYOUT, renderContext)
 
-    return showCauldronDisplayFromState()
+    return showProvisionDisplayFromState()
 end
 
 local function broadcastPlayerTimedConsumables()
@@ -480,11 +508,11 @@ function frame:OnReadyCheckFinished()
     end)
 end
 
-function frame:ShowCauldronTracking()
-    showCauldronDisplay()
+function frame:ShowProvisionTracking()
+    return showProvisionDisplay()
 end
 
-function frame:RefreshCauldronTracking(allowAutoShow)
+function frame:RefreshProvisionTracking(allowAutoShow)
     if InCombatLockdown() then
         return false
     end
@@ -495,10 +523,10 @@ function frame:RefreshCauldronTracking(allowAutoShow)
         return self.includeCauldronColumns == true
     end
 
-    if self.displayMode == DISPLAY_MODE.CAULDRON and self:IsShown() then
-        if canShowCauldronOnly() then
+    if self.displayMode == DISPLAY_MODE.PROVISION and self:IsShown() then
+        if canShowProvisionOnly() then
             Members.ScanAll(state, LAYOUT, renderContext)
-            showCauldronDisplayFromState()
+            showProvisionDisplayFromState()
 
             return true
         end
@@ -508,23 +536,35 @@ function frame:RefreshCauldronTracking(allowAutoShow)
         return false
     end
 
-    if allowAutoShow and showCauldronDisplay() then
+    if allowAutoShow and showProvisionDisplay() then
         return true
     end
 
-    if self.displayMode == DISPLAY_MODE.CAULDRON then
+    if self.displayMode == DISPLAY_MODE.PROVISION then
         self:Hide()
     end
 
     return false
 end
 
-function frame:HideCauldronTracking()
-    if self.displayMode == DISPLAY_MODE.CAULDRON then
+function frame:HideProvisionTracking()
+    if self.displayMode == DISPLAY_MODE.PROVISION then
         self:Hide()
     elseif self.displayMode == DISPLAY_MODE.READY_CHECK and self:IsShown() then
         refreshAllRowsAndTitle()
     end
+end
+
+function frame:ShowCauldronTracking()
+    return self:ShowProvisionTracking()
+end
+
+function frame:RefreshCauldronTracking(allowAutoShow)
+    return self:RefreshProvisionTracking(allowAutoShow)
+end
+
+function frame:HideCauldronTracking()
+    self:HideProvisionTracking()
 end
 
 function frame:OnCombat()
@@ -575,8 +615,8 @@ if Test then
         broadcast        = broadcast,
         beginDisplay     = beginReadyCheckDisplay,
         showDisplay      = showReadyCheckDisplay,
-        beginCauldron    = beginCauldronDisplay,
-        showCauldron     = showCauldronDisplayFromState,
+        beginCauldron    = beginProvisionDisplay,
+        showCauldron     = showProvisionDisplayFromState,
     })
 end
 

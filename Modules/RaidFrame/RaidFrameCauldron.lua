@@ -48,8 +48,8 @@ end
 local function refreshFrame(allowAutoShow)
     local raidFrame = RCC.raidFrame
 
-    if raidFrame and raidFrame.RefreshCauldronTracking then
-        return raidFrame:RefreshCauldronTracking(allowAutoShow == true)
+    if raidFrame and raidFrame.RefreshProvisionTracking then
+        return raidFrame:RefreshProvisionTracking(allowAutoShow == true)
     end
 
     return false
@@ -407,8 +407,8 @@ end
 function Cauldron.Hide()
     local raidFrame = RCC.raidFrame
 
-    if raidFrame and raidFrame.HideCauldronTracking then
-        raidFrame:HideCauldronTracking()
+    if raidFrame and raidFrame.HideProvisionTracking then
+        raidFrame:HideProvisionTracking()
     end
 end
 
