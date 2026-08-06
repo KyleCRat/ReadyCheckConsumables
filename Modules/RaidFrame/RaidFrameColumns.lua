@@ -491,6 +491,14 @@ local function createRaidBuffColumn(raidBuffIndex)
     }
 end
 
+local raidBuffColumns = {
+    isColumnGroup = true,
+}
+
+for raidBuffIndex = 1, RAID_BUFF_COUNT do
+    raidBuffColumns[#raidBuffColumns + 1] = createRaidBuffColumn(raidBuffIndex)
+end
+
 --------------------------------------------------------------------------------
 --- Durability Column
 --------------------------------------------------------------------------------
@@ -701,27 +709,33 @@ local function copyColumn(definition)
 end
 
 local function createColumns()
+    -- This list is the raid-frame column order from left to right.
     local definitions = {
         foodColumn,
         flaskColumn,
         tempWeaponEnchantColumn,
         augmentColumn,
         vantusColumn,
+        raidBuffColumns,
+        durabilityColumn,
+        cauldronFlaskColumn,
+        cauldronPotionColumn,
     }
-
-    for raidBuffIndex = 1, RAID_BUFF_COUNT do
-        definitions[#definitions + 1] =
-            createRaidBuffColumn(raidBuffIndex)
-    end
-
-    definitions[#definitions + 1] = durabilityColumn
-    definitions[#definitions + 1] = cauldronFlaskColumn
-    definitions[#definitions + 1] = cauldronPotionColumn
 
     local columns = {}
 
-    for i = 1, #definitions do
-        columns[i] = copyColumn(definitions[i])
+    for definitionIndex = 1, #definitions do
+        local definition = definitions[definitionIndex]
+
+        if definition.isColumnGroup then
+            for groupIndex = 1, #definition do
+                columns[#columns + 1] = copyColumn(
+                    definition[groupIndex]
+                )
+            end
+        else
+            columns[#columns + 1] = copyColumn(definition)
+        end
     end
 
     return columns
