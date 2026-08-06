@@ -11,6 +11,7 @@ local DEFAULTS = {
     consumables_minShow      = false,
     consumables_minShowTime  = 15,
     consumables_cauldronOpen = false,
+    consumables_breakOpen    = false,
     consumables_instanceOpen = false,
     consumables_instanceOpenParty = true,
     consumables_instanceOpenRaid = true,
@@ -370,6 +371,21 @@ local function registerPanel()
     )
     Settings.CreateCheckbox(cfCat, cfCauldronOpen,
         "Show the consumables frame after you collect a known flask or potion from a cauldron.")
+
+    local cfBreakOpen = Settings.RegisterAddOnSetting(
+        cfCat, "consumables_breakOpen", "consumables_breakOpen",
+        db, "boolean", "Open on Break Timer",
+        DEFAULTS.consumables_breakOpen
+    )
+    Settings.CreateCheckbox(cfCat, cfBreakOpen,
+        "Show the consumables frame with a consumable stasis item when BigWigs or DBM starts a break timer.")
+    Settings.SetOnValueChangedCallback("consumables_breakOpen", function()
+        if RCC.consumables and RCC.consumables:IsShown()
+            and not InCombatLockdown()
+        then
+            RCC.consumables:Update()
+        end
+    end)
 
     cfLayout:AddInitializer(
         CreateSettingsListSectionHeaderInitializer("Open When Entering Instance")

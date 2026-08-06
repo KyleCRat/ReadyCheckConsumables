@@ -11,6 +11,7 @@ local Augment = RCC.Consumables.Augment
 local Healthstone = RCC.Consumables.Healthstone
 local CombatPotion = RCC.Consumables.CombatPotion
 local HealingPotion = RCC.Consumables.HealingPotion
+local ConsumableStasis = RCC.Consumables.ConsumableStasis
 local Recuperate = RCC.Consumables.Recuperate
 local RaidBuff = RCC.Consumables.RaidBuff
 local Vantus = RCC.Consumables.Vantus
@@ -27,8 +28,16 @@ local consumablesShowStart = 0
 local wasInInstance
 local instanceOpenPending
 local readyCheckButtonsHooked
+local displayMode
 
 local INSTANCE_OPEN_DELAY = 0.5
+
+local DISPLAY_MODE = {
+    READY_CHECK = "readyCheck",
+    INSTANCE = "instance",
+    CAULDRON = "cauldron",
+    BREAK = "break",
+}
 
 --------------------------------------------------------------------------------
 --- Timer lifecycle
@@ -141,6 +150,10 @@ local function hideImmediately(self)
 end
 
 local function handleLocalReadyCheckResponse(self)
+    if displayMode ~= DISPLAY_MODE.READY_CHECK then
+        return
+    end
+
     if not self:IsShown() then
         cancelMinShowDelay(self)
 
@@ -208,6 +221,10 @@ function RCC.consumables:Update()
     RaidBuff.Update(buttons.raidBuff)
     CombatPotion.Update(buttons.combatpot)
     HealingPotion.Update(buttons.healpot)
+    ConsumableStasis.Update(
+        buttons.consumableStasis,
+        displayMode == DISPLAY_MODE.BREAK
+    )
     Recuperate.Update(buttons.recuperate)
     Vantus.Update(buttons.vantus, auraState)
 
@@ -224,6 +241,7 @@ end
 
 local function onReadyCheck(self, initiatorUnit)
     instanceOpenPending = false
+    displayMode = DISPLAY_MODE.READY_CHECK
     hookBlizzardReadyCheckButtons()
 
     local isInitiator = RCC.F.UnitIsUnitSafe(initiatorUnit, "player")
@@ -232,6 +250,10 @@ local function onReadyCheck(self, initiatorUnit)
 end
 
 local function onReadyCheckFinished(self)
+    if displayMode ~= DISPLAY_MODE.READY_CHECK then
+        return
+    end
+
     if not self:IsShown() then
         cancelMinShowDelay(self)
 
@@ -319,6 +341,8 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
             return
         end
 
+        displayMode = DISPLAY_MODE.INSTANCE
+
         if showConsumableFrame(self, true, false) then
             startInstanceHideDelay(self)
         end
@@ -378,6 +402,7 @@ end
 
 local function onHide(self)
     instanceOpenPending = false
+    displayMode = nil
     unregisterLiveEvents(self)
     self.anchor:Hide()
     cancelMinShowDelay(self)
@@ -427,11 +452,27 @@ function Controller.OpenForCauldronPickup()
         return false
     end
 
+    displayMode = DISPLAY_MODE.CAULDRON
+
     if frame:IsShown() then
         frame:Update()
 
         return true
     end
+
+    return showConsumableFrame(frame, true, false)
+end
+
+function Controller.OpenForBreakTimer()
+    if not frame
+        or not RCC.GetSetting("consumables_enabled")
+        or not RCC.GetSetting("consumables_breakOpen")
+        or InCombatLockdown()
+    then
+        return false
+    end
+
+    displayMode = DISPLAY_MODE.BREAK
 
     return showConsumableFrame(frame, true, false)
 end

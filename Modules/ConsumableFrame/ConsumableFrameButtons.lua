@@ -43,6 +43,14 @@ local BUTTON_DEFS = {
         tooltipAction = "use",
     },
     {
+        key             = "consumableStasis",
+        settingKey      = "consumables_breakOpen",
+        defaultIcon     = 134062,
+        clickable       = true,
+        tooltipAction   = "use",
+        hiddenByDefault = true,
+    },
+    {
         key           = "mainHandTempWeaponEnchant",
         weaponSlot    = MAIN_HAND_INVENTORY_SLOT,
         settingKey    = "icon_mhTempWeaponEnchant",

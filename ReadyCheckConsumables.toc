@@ -5,6 +5,7 @@
 ## Version: 12.1.0-17
 ## Category: Raid
 ## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
+## OptionalDeps: BigWigs, DBM-Core
 ## SavedVariables: ReadyCheckConsumablesDB
 
 embeds.xml
@@ -31,6 +32,10 @@ Data/11_TheWarWithin/Flasks.lua
 
 Data/Cauldrons.lua
 Data/12_Midnight/Cauldrons.lua
+
+Data/ConsumableStasis.lua
+Data/12_Midnight/ConsumableStasis.lua
+Data/11_TheWarWithin/ConsumableStasis.lua
 
 Data/Gems.lua
 Data/12_Midnight/Gems.lua
@@ -99,6 +104,7 @@ Modules/Consumables/Augment.lua
 Modules/Consumables/Healthstone.lua
 Modules/Consumables/CombatPotion.lua
 Modules/Consumables/HealingPotion.lua
+Modules/Consumables/ConsumableStasis.lua
 Modules/Consumables/RaidBuff.lua
 Modules/Consumables/Vantus.lua
 Modules/Consumables/WeaponEnchant.lua
@@ -110,6 +116,7 @@ Modules/ConsumableFrame/Presenters/Augment.lua
 Modules/ConsumableFrame/Presenters/Healthstone.lua
 Modules/ConsumableFrame/Presenters/CombatPotion.lua
 Modules/ConsumableFrame/Presenters/HealingPotion.lua
+Modules/ConsumableFrame/Presenters/ConsumableStasis.lua
 Modules/ConsumableFrame/Presenters/Recuperate.lua
 Modules/ConsumableFrame/Presenters/RaidBuff.lua
 Modules/ConsumableFrame/Presenters/Vantus.lua
@@ -117,6 +124,7 @@ Modules/ConsumableFrame/Presenters/WeaponEnchant.lua
 
 Modules/ConsumableFrame/ConsumableFrame.lua
 Modules/ConsumableFrame/ConsumableFrameController.lua
+Modules/ConsumableFrame/ConsumableFrameBreakTimers.lua
 
 ################################################################################
 # Managed macros
