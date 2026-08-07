@@ -5,6 +5,18 @@
 - [ ] Add a Consumable Frame button matrix so users can configure which
   buttons appear for each display reason.
 
+## Modern Settings Canvas
+
+- [ ] Holistically review the completed modern settings canvas. Audit the
+  shared controls, page layouts, tooltips, disabled and dependent states,
+  value synchronization, callback ownership, naming, and duplicated page
+  helpers now that the full RCC settings interface exercises the system.
+- [ ] After the review, extract the generic canvas controls into a reusable
+  LibStub library for other addons. Keep RCC-specific settings keys, storage,
+  page content, and runtime callbacks in RCC; define the public API from actual
+  consumer needs, then verify Lua 5.1 behavior, mixed embedded-version load
+  order, RCC migration, and at least one additional addon consumer.
+
 ## 12.1.0 / Interface 120100 Upgrade
 
 - [ ] Once 12.1.0 is the live minimum, replace the slider tooltip
