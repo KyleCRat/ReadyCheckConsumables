@@ -1,5 +1,7 @@
 local _, RCC = ...
 
+local CanvasControls = RCC.SettingsCanvasControls
+
 --------------------------------------------------------------------------------
 --- Defaults
 --------------------------------------------------------------------------------
@@ -75,6 +77,20 @@ function RCC.GetSetting(key)
     end
 
     return val
+end
+
+function RCC.GetSettingDefault(key)
+    return DEFAULTS[key]
+end
+
+function RCC.SetSettingValue(key, value)
+    if not ReadyCheckConsumablesDB or DEFAULTS[key] == nil then
+        return false
+    end
+
+    ReadyCheckConsumablesDB[key] = value
+
+    return true
 end
 
 local function getContextualVisibilityOverrides()
@@ -202,47 +218,37 @@ function RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)
     return true
 end
 
+function RCC.ClearContextualVisibilityOverrides(surface)
+    if not ReadyCheckConsumablesDB or not surface then
+        return false
+    end
+
+    local overrides = getContextualVisibilityOverrides()
+
+    if overrides then
+        overrides[surface] = nil
+
+        if next(overrides) == nil then
+            ReadyCheckConsumablesDB.contextualVisibility = nil
+        end
+    end
+
+    refreshContextualVisibility()
+
+    return true
+end
+
 --------------------------------------------------------------------------------
 --- Macro settings canvas
 --------------------------------------------------------------------------------
 
-local function createMacroButtonState(button, layer, atlas)
-    local texture = button:CreateTexture(nil, layer)
-
-    texture:SetAllPoints(button)
-    texture:SetAtlas(atlas, false)
-
-    return texture
-end
-
 local function createMacroButton(parent, text, key, label, characterSpecific)
-    local button = CreateFrame("Button", nil, parent)
-
-    button:SetSize(86, 22)
-    button:SetNormalFontObject(GameFontNormalSmall)
-    button:SetHighlightFontObject(GameFontHighlightSmall)
-    button:SetDisabledFontObject(GameFontDisableSmall)
-    button:SetNormalTexture(createMacroButtonState(
-        button,
-        "BACKGROUND",
-        "common-button-tertiary-normal-small"
-    ))
-    button:SetHighlightTexture(createMacroButtonState(
-        button,
-        "HIGHLIGHT",
-        "common-button-tertiary-hover-small"
-    ))
-    button:SetPushedTexture(createMacroButtonState(
-        button,
-        "BACKGROUND",
-        "common-button-tertiary-pressed-small"
-    ))
-    button:SetDisabledTexture(createMacroButtonState(
-        button,
-        "BACKGROUND",
-        "common-button-tertiary-disabled-small"
-    ))
-    button:SetText(text)
+    local button = CanvasControls.CreateSmallTertiaryButton(
+        parent,
+        text,
+        86,
+        22
+    )
 
     local macroTab = characterSpecific
         and "Character Specific Macro tab"
@@ -438,6 +444,87 @@ local function createMacrosSettingsFrame()
     return frame
 end
 
+local function openSettingsDestination(button)
+    Settings.OpenToCategory(button.settingsCategoryID)
+end
+
+local function populateMainSettingsFrame(frame, destinations)
+    local Controls = RCC.SettingsCanvasControls
+    local positions = {
+        { x = 0, y = -126 },
+        { x = 300, y = -126 },
+        { x = 0, y = -230 },
+        { x = 300, y = -230 },
+    }
+
+    frame:SetSize(640, 560)
+
+    local title = Controls.CreateText(
+        frame,
+        GameFontNormalLarge,
+        "Ready Check Consumables",
+        580
+    )
+    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
+
+    local description = Controls.CreateText(
+        frame,
+        GameFontHighlight,
+        "Configure RCC's personal consumable bar, raid status frame, "
+            .. "chat reporting, and managed macros.",
+        570
+    )
+    description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+
+    local sectionTitle = Controls.CreateText(
+        frame,
+        GameFontNormal,
+        "Settings",
+        570
+    )
+    sectionTitle:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -96)
+
+    for i = 1, #destinations do
+        local destination = destinations[i]
+        local position = positions[i]
+        local button = Controls.CreateTertiaryButton(
+            frame,
+            destination.label,
+            270,
+            34,
+            openSettingsDestination
+        )
+        button.settingsCategoryID = destination.category:GetID()
+        button:SetPoint(
+            "TOPLEFT",
+            frame,
+            "TOPLEFT",
+            position.x,
+            position.y
+        )
+
+        local detail = Controls.CreateText(
+            frame,
+            GameFontHighlight,
+            destination.description,
+            270
+        )
+        detail:SetPoint("TOPLEFT", button, "BOTTOMLEFT", 8, -8)
+    end
+
+    local version = C_AddOns.GetAddOnMetadata(
+        "ReadyCheckConsumables",
+        "Version"
+    ) or "Unknown"
+    local versionText = Controls.CreateText(
+        frame,
+        GameFontDisableSmall,
+        "Version " .. version,
+        570
+    )
+    versionText:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -360)
+end
+
 --------------------------------------------------------------------------------
 --- Panel registration (ADDON_LOADED)
 --------------------------------------------------------------------------------
@@ -451,17 +538,24 @@ local function registerPanel()
         end
     end
 
-    local category, layout = Settings.RegisterVerticalLayoutCategory(
+    local mainFrame = CreateFrame("Frame")
+    local category, layout = Settings.RegisterCanvasLayoutCategory(
+        mainFrame,
         "Ready Check Consumables"
     )
+    layout:AddAnchorPoint("TOPLEFT", 35, -35)
+    layout:AddAnchorPoint("BOTTOMRIGHT", -35, 35)
 
     ----------------------------------------------------------------------------
     --- Consumables Frame (subcategory)
     ----------------------------------------------------------------------------
 
-    local cfCat, cfLayout = Settings.RegisterVerticalLayoutSubcategory(
-        category, "Consumables Frame"
+    local cfFrame = RCC.ConsumableFrameSettings.CreateFrame()
+    local cfCat, cfLayout = Settings.RegisterCanvasLayoutSubcategory(
+        category, cfFrame, "Consumables Frame"
     )
+    cfLayout:AddAnchorPoint("TOPLEFT", 35, -35)
+    cfLayout:AddAnchorPoint("BOTTOMRIGHT", -35, 35)
 
     ----------------------------------------------------------------------------
     --- Raid Frame (subcategory — declared early for parent page buttons)
@@ -494,239 +588,32 @@ local function registerPanel()
     --- Parent page
     ----------------------------------------------------------------------------
 
-    local cfButton = CreateSettingsButtonInitializer(
-        "", "Consumables Frame",
-        function() Settings.OpenToCategory(cfCat:GetID()) end,
-        "Personal consumable icon bar shown during ready checks.",
-        false
-    )
-    layout:AddInitializer(cfButton)
-
-    local rfButton = CreateSettingsButtonInitializer(
-        "", "Raid Frame",
-        function() Settings.OpenToCategory(rfCat:GetID()) end,
-        "Per-member consumable status grid shown during ready checks.",
-        false
-    )
-    layout:AddInitializer(rfButton)
-
-    local crButton = CreateSettingsButtonInitializer(
-        "", "Chat Report",
-        function() Settings.OpenToCategory(crCat:GetID()) end,
-        "Automatic missing consumable reports sent to chat.",
-        false
-    )
-    layout:AddInitializer(crButton)
-
-    local macroButton = CreateSettingsButtonInitializer(
-        "", "Macros",
-        function() Settings.OpenToCategory(macroCat:GetID()) end,
-        "Create and manage RCC marker macros.",
-        false
-    )
-    layout:AddInitializer(macroButton)
-
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
-        "Version: " .. (C_AddOns.GetAddOnMetadata("ReadyCheckConsumables", "Version") or "Unknown")
-    ))
-
-    local cfEnabled = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_enabled", "consumables_enabled",
-        db, "boolean", "Enabled", DEFAULTS.consumables_enabled
-    )
-    Settings.CreateCheckbox(cfCat, cfEnabled,
-        "Show the consumable icon bar during ready checks.")
-
-    cfLayout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Display")
-    )
-
-    local scaleOptions = Settings.CreateSliderOptions(0.5, 2.0, 0.1)
-    scaleOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
-        function(value) return string.format("%.1f", value) end)
-
-    local cfScale = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_scale", "consumables_scale",
-        db, "number", "Scale", DEFAULTS.consumables_scale
-    )
-    Settings.CreateSlider(cfCat, cfScale, scaleOptions,
-        "Scale of the consumable icon bar.")
-
-    Settings.SetOnValueChangedCallback("consumables_scale", function()
-        RCC.consumables:SetScale(db.consumables_scale)
-    end)
-
-    cfLayout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Visibility")
-    )
-
-    local cfMinShow = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_minShow", "consumables_minShow",
-        db, "boolean", "Keep Open After Response", DEFAULTS.consumables_minShow
-    )
-    Settings.CreateCheckbox(cfCat, cfMinShow,
-        "Keep the consumables frame open for a minimum duration after you respond to a ready check.")
-
-    local minShowOptions = Settings.CreateSliderOptions(1, 40, 1)
-    minShowOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right,
-        function(value) return string.format("%ds", value) end)
-
-    local cfMinShowTime = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_minShowTime", "consumables_minShowTime",
-        db, "number", "Keep Open Duration", DEFAULTS.consumables_minShowTime
-    )
-    Settings.CreateSlider(cfCat, cfMinShowTime, minShowOptions,
-        "How long the consumables frame stays open after a ready check (1-40 seconds).")
-
-    local cfCauldronOpen = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_cauldronOpen", "consumables_cauldronOpen",
-        db, "boolean", "Open After Cauldron Pickup",
-        DEFAULTS.consumables_cauldronOpen
-    )
-    Settings.CreateCheckbox(cfCat, cfCauldronOpen,
-        "Show the consumables frame after you collect a known flask or potion from a cauldron.")
-
-    local cfBreakOpen = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_breakOpen", "consumables_breakOpen",
-        db, "boolean", "Open on Break Timer",
-        DEFAULTS.consumables_breakOpen
-    )
-    Settings.CreateCheckbox(cfCat, cfBreakOpen,
-        "Show the consumables frame when BigWigs or DBM starts a break timer.")
-
-    cfLayout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Open When Entering Instance")
-    )
-
-    local cfInstanceOpen = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_instanceOpen", "consumables_instanceOpen",
-        db, "boolean", "Open When Entering Instance",
-        DEFAULTS.consumables_instanceOpen
-    )
-    Settings.CreateCheckbox(cfCat, cfInstanceOpen,
-        "Show the consumables frame when you enter instanced content.")
-
-    local instanceTypeSettings = {
+    populateMainSettingsFrame(mainFrame, {
         {
-            "consumables_instanceOpenParty",
-            "Dungeons",
-            "Open when entering dungeon instances.",
+            label = "Consumables Frame",
+            description = "Choose when the personal consumable bar opens "
+                .. "and which buttons each event displays.",
+            category = cfCat,
         },
         {
-            "consumables_instanceOpenRaid",
-            "Raids",
-            "Open when entering raid instances.",
+            label = "Raid Frame",
+            description = "Configure the group consumable status grid, "
+                .. "timing, and feast or cauldron tracking.",
+            category = rfCat,
         },
         {
-            "consumables_instanceOpenScenario",
-            "Scenarios",
-            "Open when entering scenario instances.",
+            label = "Chat Report",
+            description = "Choose when RCC reports missing consumables "
+                .. "and who can trigger reports.",
+            category = crCat,
         },
         {
-            "consumables_instanceOpenPvp",
-            "Battlegrounds",
-            "Open when entering battleground instances.",
+            label = "Managed Macros",
+            description = "Create RCC macros that keep their selected "
+                .. "consumable or spell actions up to date.",
+            category = macroCat,
         },
-        {
-            "consumables_instanceOpenArena",
-            "Arenas",
-            "Open when entering arena instances.",
-        },
-    }
-
-    for _, option in ipairs(instanceTypeSettings) do
-        local key, label, tooltip = option[1], option[2], option[3]
-        local setting = Settings.RegisterAddOnSetting(
-            cfCat, key, key, db, "boolean", label, DEFAULTS[key]
-        )
-        Settings.CreateCheckbox(cfCat, setting, tooltip)
-    end
-
-    -- Future option:
-    -- local cfInstanceOnlyIfMissing = Settings.RegisterAddOnSetting(
-    --     cfCat, "consumables_instanceOnlyIfMissing",
-    --     "consumables_instanceOnlyIfMissing",
-    --     db, "boolean", "Only Open When Consumables Are Complete",
-    --     db.consumables_instanceOnlyIfMissing
-    -- )
-    -- Settings.CreateCheckbox(cfCat, cfInstanceOnlyIfMissing,
-    --     "Only show on instance entry when all tracked buffs have 30 minutes or more remaining and all required items are in your inventory.")
-
-    local cfInstanceHide = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_instanceHide", "consumables_instanceHide",
-        db, "boolean", "Auto-Hide After Delay", DEFAULTS.consumables_instanceHide
-    )
-    Settings.CreateCheckbox(cfCat, cfInstanceHide,
-        "Hide the consumables frame automatically after the auto-hide delay.")
-
-    local instanceHideOptions = Settings.CreateSliderOptions(5, 120, 5)
-    instanceHideOptions:SetLabelFormatter(
-        MinimalSliderWithSteppersMixin.Label.Right,
-        function(value) return string.format("%ds", value) end
-    )
-
-    local cfInstanceHideTime = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_instanceHideTime", "consumables_instanceHideTime",
-        db, "number", "Auto-Hide Delay Duration", DEFAULTS.consumables_instanceHideTime
-    )
-    Settings.CreateSlider(cfCat, cfInstanceHideTime, instanceHideOptions,
-        "How long the consumables frame stays open when Auto-Hide After Delay is enabled (5-120 seconds).")
-
-    cfLayout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Augment Runes")
-    )
-
-    local cfPreferUnlimitedAugment = Settings.RegisterAddOnSetting(
-        cfCat, "consumables_preferUnlimitedAugment",
-        "consumables_preferUnlimitedAugment",
-        db, "boolean", "Prefer Unlimited Augment Runes",
-        DEFAULTS.consumables_preferUnlimitedAugment
-    )
-    Settings.CreateCheckbox(cfCat, cfPreferUnlimitedAugment,
-        "Use unlimited augment runes before higher-expansion consumable augment runes.")
-
-    Settings.SetOnValueChangedCallback(
-        "consumables_preferUnlimitedAugment",
-        function()
-            if RCC.consumables:IsShown() and not InCombatLockdown()
-            then
-                RCC.consumables:Update()
-            end
-        end
-    )
-
-    cfLayout:AddInitializer(
-        CreateSettingsListSectionHeaderInitializer("Icons")
-    )
-
-    local iconKeys = {
-        { "icon_food",        "Food"           },
-        { "icon_flask",       "Flask"          },
-        { "icon_mhTempWeaponEnchant", "MH Weapon Enchant" },
-        { "icon_ohTempWeaponEnchant", "OH Weapon Enchant" },
-        { "icon_healthstone", "Healthstone"    },
-        { "icon_combatPotion", "Combat Potion" },
-        { "icon_healPotion",  "Healing Potion" },
-        { "icon_consumableStasis", "Consumable Stasis" },
-        { "icon_recuperate",  "Recuperate"     },
-        { "icon_augment",     "Augment Rune"   },
-        { "icon_raidBuff",    "Raid Buff"      },
-        { "icon_vantus",      "Vantus Rune"    },
-    }
-
-    for _, pair in ipairs(iconKeys) do
-        local key, label = pair[1], pair[2]
-        local s = Settings.RegisterAddOnSetting(
-            cfCat, key, key, db, "boolean", label, DEFAULTS[key]
-        )
-        Settings.CreateCheckbox(cfCat, s, "Show " .. label .. " icon.")
-        Settings.SetOnValueChangedCallback(key, function()
-            if RCC.consumables:IsShown() and not InCombatLockdown()
-            then
-                RCC.consumables:Update()
-            end
-        end)
-    end
+    })
 
     ----------------------------------------------------------------------------
     --- Raid Frame (settings)

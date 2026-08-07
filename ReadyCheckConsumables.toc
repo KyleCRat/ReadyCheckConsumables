@@ -14,6 +14,7 @@ embeds.xml
 ReadyCheckConsumables.lua
 Functions.lua
 UI.lua
+Modules/SettingsCanvasControls.lua
 FrameAnimations.lua
 
 ################################################################################
@@ -97,6 +98,7 @@ Modules/ConsumableFrame/ConsumableFrameItemCache.lua
 Modules/ConsumableFrame/ConsumableFrameActions.lua
 Modules/ConsumableFrame/ConsumableFrameTooltips.lua
 Modules/ConsumableFrame/ConsumableFrameButtons.lua
+Modules/ConsumableFrame/ConsumableFrameSettings.lua
 Modules/ConsumableFrame/ConsumableFrameRenderer.lua
 Modules/ConsumableFrame/ConsumableFrameItemCandidates.lua
 Modules/ConsumableFrame/ConsumableFrameAuras.lua

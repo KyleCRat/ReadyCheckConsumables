@@ -47,6 +47,7 @@ Buttons.SPACING = SPACING
 local BUTTON_DEFS = {
     {
         key           = "food",
+        label         = "Food",
         settingKey    = "icon_food",
         defaultIcon   = RCC.db.foodIconID,
         clickable     = true,
@@ -55,6 +56,7 @@ local BUTTON_DEFS = {
     },
     {
         key           = "flask",
+        label         = "Flask",
         settingKey    = "icon_flask",
         defaultIcon   = RCC.db.flaskIconID,
         clickable     = true,
@@ -62,15 +64,20 @@ local BUTTON_DEFS = {
     },
     {
         key             = "consumableStasis",
+        label           = "Consumable Stasis",
         settingKey      = "icon_consumableStasis",
         defaultIcon     = 134062,
         clickable       = true,
         tooltipAction   = "use",
         hiddenByDefault = true,
         visibility      = STASIS_VISIBILITY,
+        settingsTooltip = "Consumable Stasis items pause the expiration of "
+            .. "active consumable buffs during a break. Examples include "
+            .. "Pausing Pylon and W-47CH D0G.",
     },
     {
         key           = "mainHandTempWeaponEnchant",
+        label         = "Main-hand Enchant",
         weaponSlot    = MAIN_HAND_INVENTORY_SLOT,
         settingKey    = "icon_mhTempWeaponEnchant",
         defaultIcon   = RCC.db.weaponEnchantIconID,
@@ -79,6 +86,7 @@ local BUTTON_DEFS = {
     },
     {
         key             = "offHandTempWeaponEnchant",
+        label           = "Off-hand Enchant",
         weaponSlot      = OFF_HAND_INVENTORY_SLOT,
         settingKey      = "icon_ohTempWeaponEnchant",
         defaultIcon     = RCC.db.weaponEnchantIconID,
@@ -88,6 +96,7 @@ local BUTTON_DEFS = {
     },
     {
         key           = "augment",
+        label         = "Augment Rune",
         settingKey    = "icon_augment",
         defaultIcon   = RCC.db.augmentIconID,
         clickable     = true,
@@ -95,6 +104,7 @@ local BUTTON_DEFS = {
     },
     {
         key           = "raidBuff",
+        label         = "Raid Buff",
         settingKey    = "icon_raidBuff",
         defaultIcon   = RCC.db.raidBuffIconID,
         clickable     = true,
@@ -102,23 +112,27 @@ local BUTTON_DEFS = {
     },
     {
         key         = "hs",
+        label       = "Healthstone",
         settingKey  = "icon_healthstone",
         defaultIcon = RCC.db.healthstoneIconID,
     },
     {
         key           = "combatpot",
+        label         = "Combat Potion",
         settingKey    = "icon_combatPotion",
         defaultIcon   = RCC.db.combatPotionIconID,
         clickable     = true,
     },
     {
         key           = "healpot",
+        label         = "Healing Potion",
         settingKey    = "icon_healPotion",
         defaultIcon   = RCC.db.healingPotionIconID,
         clickable     = true,
     },
     {
         key           = "recuperate",
+        label         = "Recuperate",
         settingKey    = "icon_recuperate",
         defaultIcon   = RCC.db.recuperateIconID,
         clickable     = true,
@@ -126,6 +140,7 @@ local BUTTON_DEFS = {
     },
     {
         key             = "vantus",
+        label           = "Vantus Rune",
         settingKey      = "icon_vantus",
         defaultIcon     = RCC.db.vantusIconID,
         clickable       = true,

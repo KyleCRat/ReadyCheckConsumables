@@ -7,6 +7,11 @@
 
 ## 12.1.0 / Interface 120100 Upgrade
 
+- [ ] Once 12.1.0 is the live minimum, replace the slider tooltip
+  `OnEnter`/`OnLeave` hooks in `Modules/SettingsCanvasControls.lua` with
+  `Slider:SetTooltipFunc` and `Settings.InitTooltip`. Confirm the method exists
+  on the live `MinimalSliderWithSteppersTemplate` slider before removing the
+  12.0.7-compatible hooks.
 - [ ] Find and verify the remaining data for the provisional 12.1 consumables.
   RCC currently includes only the supplied PTR item IDs; combat-potion quality
   metadata is intentionally unset until it can be confirmed.

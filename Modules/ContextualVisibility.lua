@@ -195,14 +195,23 @@ local function isApplicable(definition, context, state)
     return true
 end
 
-function Visibility.IsReasonAllowed(definition, context, reason)
-    if not definition or not context or not reason then
+function Visibility.GetReasonDefault(definition, reason)
+    if not definition or not reason then
         return false
     end
 
     local policy = definition.visibility
     local reasons = policy and policy.reasons
-    local defaultAllowed = reasons and reasons[reason] == true or false
+
+    return reasons and reasons[reason] == true or false
+end
+
+function Visibility.IsReasonAllowed(definition, context, reason)
+    if not definition or not context or not reason then
+        return false
+    end
+
+    local defaultAllowed = Visibility.GetReasonDefault(definition, reason)
 
     return RCC.GetContextualVisibility(
         context.surface,
