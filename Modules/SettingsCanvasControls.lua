@@ -180,6 +180,104 @@ function Controls.CreateCheckbox(parent, label, width, tooltip, onChanged)
     return checkbox
 end
 
+function Controls.CreateDropdown(parent, options)
+    local control = CreateFrame("Frame", nil, parent)
+    local controlWidth = options.width or 270
+
+    control:SetSize(controlWidth, 60)
+
+    local label = Controls.CreateText(
+        control,
+        GameFontHighlight,
+        options.label,
+        controlWidth
+    )
+    label:SetPoint("TOPLEFT", control, "TOPLEFT", 0, 0)
+
+    local dropdown = CreateFrame(
+        "DropdownButton",
+        nil,
+        control,
+        "WowStyle1DropdownTemplate"
+    )
+    dropdown:SetWidth(controlWidth - 16)
+    dropdown:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 8, -7)
+    dropdown:SetMotionScriptsWhileDisabled(true)
+
+    local function isSelected(value)
+        return control.currentValue == value
+    end
+
+    local function setSelected(value)
+        control.currentValue = value
+        options.onChanged(value)
+    end
+
+    dropdown:SetupMenu(function(_, rootDescription)
+        for i = 1, #options.choices do
+            local choice = options.choices[i]
+
+            rootDescription:CreateRadio(
+                choice.label,
+                isSelected,
+                setSelected,
+                choice.value
+            )
+        end
+    end)
+
+    if options.tooltip then
+        control.enabledTooltipText = options.tooltip
+        control.tooltipText = options.tooltip
+        control:EnableMouse(true)
+
+        local function showTooltip(owner)
+            if not control.tooltipText then return end
+
+            GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(options.label, 1, 1, 1)
+            GameTooltip:AddLine(
+                control.tooltipText,
+                nil,
+                nil,
+                nil,
+                true
+            )
+            GameTooltip:Show()
+        end
+
+        local function hideTooltip()
+            GameTooltip:Hide()
+        end
+
+        control:HookScript("OnEnter", showTooltip)
+        control:HookScript("OnLeave", hideTooltip)
+        dropdown:HookScript("OnEnter", showTooltip)
+        dropdown:HookScript("OnLeave", hideTooltip)
+    end
+
+    function control:SetValue(value)
+        self.currentValue = value
+        dropdown:GenerateMenu()
+    end
+
+    function control:SetControlEnabled(enabled)
+        dropdown:SetEnabled(enabled)
+        label:SetTextColor(
+            enabled and HIGHLIGHT_FONT_COLOR.r or GRAY_FONT_COLOR.r,
+            enabled and HIGHLIGHT_FONT_COLOR.g or GRAY_FONT_COLOR.g,
+            enabled and HIGHLIGHT_FONT_COLOR.b or GRAY_FONT_COLOR.b
+        )
+    end
+
+    control.label = label
+    control.dropdown = dropdown
+
+    control:SetValue(options.value)
+
+    return control
+end
+
 function Controls.CreateSlider(parent, options)
     local control = CreateFrame("Frame", nil, parent)
     local controlWidth = options.width or 270

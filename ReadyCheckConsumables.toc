@@ -149,6 +149,7 @@ Modules/RaidFrame/RaidFrameRows.lua
 Modules/RaidFrame/RaidFrameTitleBar.lua
 Modules/RaidFrame/RaidFrameControls.lua
 Modules/RaidFrame/RaidFrame.lua
+Modules/RaidFrame/RaidFrameSettings.lua
 
 ################################################################################
 # Chat reporting
@@ -156,6 +157,7 @@ Modules/ChatReport/ChatReportOutput.lua
 Modules/ChatReport/ChatReportReports.lua
 Modules/ChatReport/ChatReportElection.lua
 Modules/ChatReport/ChatReport.lua
+Modules/ChatReport/ChatReportSettings.lua
 
 ################################################################################
 
