@@ -1,0 +1,3 @@
+[submodule "Libs/LibModernSettings-1.0"]
+	path = Libs/LibModernSettings-1.0
+	url = git@github.com:KyleCRat/LibModernSettings.git
