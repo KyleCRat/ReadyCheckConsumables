@@ -1,6 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
   <Script file="Libs\LibStub\LibStub.lua"/>
+  <Include file="Libs\LibModernSettings-1.0\embed.xml"/>
   <Include file="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.xml"/>
   <Include file="Libs\LibPopupSlider-1.0\LibPopupSlider-1.0.xml"/>
 </Ui>

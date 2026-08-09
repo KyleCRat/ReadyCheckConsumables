@@ -3,7 +3,7 @@ local _, RCC = ...
 RCC.ChatReportSettings = RCC.ChatReportSettings or {}
 
 local Page = RCC.ChatReportSettings
-local Controls = RCC.SettingsCanvasControls
+local Controls = LibStub("LibModernSettings-1.0")
 
 local FEATURE_DISABLED_TOOLTIP =
     "Chat Report is disabled. Enable it to edit."
@@ -79,12 +79,11 @@ local INSTANCE_SETTINGS = {
 }
 
 local function createSectionHeader(parent, text, x, y)
-    local header = Controls.CreateText(
-        parent,
-        GameFontNormal,
-        text,
-        280
-    )
+    local header = Controls:CreateText(parent, {
+        fontObject = GameFontNormal,
+        text = text,
+        width = 280,
+    })
 
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
 
@@ -92,16 +91,15 @@ local function createSectionHeader(parent, text, x, y)
 end
 
 local function addSettingCheckbox(frame, parent, options)
-    local checkbox = Controls.CreateCheckbox(
-        parent,
-        options.label,
-        options.width or 280,
-        options.tooltip,
-        function(checked)
+    local checkbox = Controls:CreateCheckbox(parent, {
+        label = options.label,
+        width = options.width or 280,
+        tooltip = options.tooltip,
+        onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
             frame:Sync()
-        end
-    )
+        end,
+    })
 
     checkbox:SetPoint(
         "TOPLEFT",
@@ -121,21 +119,19 @@ function Page.CreateFrame()
     frame:SetSize(640, 560)
     frame.settingControls = {}
 
-    local title = Controls.CreateText(
-        frame,
-        GameFontNormalLarge,
-        "Chat Report",
-        580
-    )
+    local title = Controls:CreateText(frame, {
+        fontObject = GameFontNormalLarge,
+        text = "Chat Report",
+        width = 580,
+    })
     title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
 
-    local description = Controls.CreateText(
-        frame,
-        GameFontHighlight,
-        "Configure automatic reports for players who are missing required "
-            .. "consumables after a ready check.",
-        580
-    )
+    local description = Controls:CreateText(frame, {
+        fontObject = GameFontHighlight,
+        text = "Configure automatic reports for players who are missing "
+            .. "required consumables after a ready check.",
+        width = 580,
+    })
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
     addSettingCheckbox(frame, frame, {
@@ -148,7 +144,7 @@ function Page.CreateFrame()
 
     createSectionHeader(frame, "Reporting Permission", 0, -124)
 
-    local permission = Controls.CreateDropdown(frame, {
+    local permission = Controls:CreateDropdown(frame, {
         label = "Who Can Report",
         tooltip = "Choose the minimum raid role allowed to send RCC's "
             .. "automatic report. This restriction does not apply outside "
@@ -176,13 +172,8 @@ function Page.CreateFrame()
         for i = 1, #SETTING_KEYS do
             local key = SETTING_KEYS[i]
             local control = self.settingControls[key]
-            local value = RCC.GetSetting(key)
 
-            if control.SetValue then
-                control:SetValue(value)
-            else
-                control:SetChecked(value == true)
-            end
+            control:SetValue(RCC.GetSetting(key))
         end
 
         local enabled = RCC.GetSetting("chatReport_enabled") == true
@@ -190,10 +181,7 @@ function Page.CreateFrame()
         for i = 2, #SETTING_KEYS do
             local control = self.settingControls[SETTING_KEYS[i]]
 
-            control:SetControlEnabled(enabled)
-            control.tooltipText = enabled
-                and control.enabledTooltipText
-                or FEATURE_DISABLED_TOOLTIP
+            control:SetControlEnabled(enabled, FEATURE_DISABLED_TOOLTIP)
         end
     end
 

@@ -1,6 +1,6 @@
 local _, RCC = ...
 
-local CanvasControls = RCC.SettingsCanvasControls
+local CanvasControls = LibStub("LibModernSettings-1.0")
 
 --------------------------------------------------------------------------------
 --- Defaults
@@ -243,33 +243,20 @@ end
 --------------------------------------------------------------------------------
 
 local function createMacroButton(parent, text, key, label, characterSpecific)
-    local button = CanvasControls.CreateSmallTertiaryButton(
-        parent,
-        text,
-        86,
-        22
-    )
-
     local macroTab = characterSpecific
         and "Character Specific Macro tab"
         or "Shared Macro tab"
-    button.tooltipText = "Create " .. label .. " macro in the " .. macroTab .. "."
 
-    button:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(self.tooltipText, 1, 1, 1, true)
-        GameTooltip:Show()
-    end)
-    button:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-    button:SetScript("OnClick", function()
-        local Macros = RCC.ConsumableMacros
-
-        Macros.CreateManagedMacro(key, characterSpecific)
-    end)
-
-    return button
+    return CanvasControls:CreateButton(parent, {
+        text = text,
+        width = 86,
+        height = 22,
+        variant = "small",
+        tooltip = "Create " .. label .. " macro in the " .. macroTab .. ".",
+        onClick = function()
+            RCC.ConsumableMacros.CreateManagedMacro(key, characterSpecific)
+        end,
+    })
 end
 
 local function getMacroMarker(key)
@@ -315,37 +302,20 @@ local function getInlineMacroText(definition)
     return getInlineMacroMarker(getMacroShorthand(definition))
 end
 
-local function createMacroText(parent, fontObject, text, width)
-    local fontString = parent:CreateFontString(nil, "ARTWORK")
-
-    if fontObject then
-        fontString:SetFontObject(fontObject)
-    end
-
-    fontString:SetJustifyH("LEFT")
-    fontString:SetJustifyV("TOP")
-    fontString:SetWidth(width)
-    fontString:SetText(text)
-
-    return fontString
-end
-
 local function createMacrosSettingsFrame()
     local frame = CreateFrame("Frame")
     frame:SetSize(640, 560)
 
-    local title = createMacroText(
-        frame,
-        GameFontNormalLarge,
-        "Managed Macros",
-        600
-    )
+    local title = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormalLarge,
+        text = "Managed Macros",
+        width = 600,
+    })
     title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
 
-    local body = createMacroText(
-        frame,
-        GameFontHighlight,
-        "RCC macros keep action-bar buttons linked to your preferred "
+    local body = CanvasControls:CreateText(frame, {
+        fontObject = GameFontHighlight,
+        text = "RCC macros keep action-bar buttons linked to your preferred "
         .. "consumables. Right-click an item in a Consumables Frame button's "
         .. "flyout to select it as your preferred consumable. RCC keeps that "
         .. "preference until you right-click another item, even when the "
@@ -360,30 +330,36 @@ local function createMacrosSettingsFrame()
         .. "changing the rest of it. Put an inline marker shown below on its "
         .. "own line. Macro conditions can follow the marker, for example "
         .. "#RCCI:cp [combat].",
-        600
-    )
+        width = 600,
+    })
     body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
 
-    local nameHeader = createMacroText(frame, GameFontNormal, "Name", 120)
+    local nameHeader = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormal,
+        text = "Name",
+        width = 120,
+    })
     nameHeader:SetPoint("TOPLEFT", body, "BOTTOMLEFT", 0, -20)
 
-    local keyHeader = createMacroText(
-        frame,
-        GameFontNormal,
-        "Key (Shorthand)",
-        190
-    )
+    local keyHeader = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormal,
+        text = "Key (Shorthand)",
+        width = 190,
+    })
     keyHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 160, 0)
 
-    local inlineHeader = createMacroText(
-        frame,
-        GameFontNormal,
-        "Inline",
-        95
-    )
+    local inlineHeader = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormal,
+        text = "Inline",
+        width = 95,
+    })
     inlineHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 355, 0)
 
-    local createHeader = createMacroText(frame, GameFontNormal, "Create", 180)
+    local createHeader = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormal,
+        text = "Create",
+        width = 180,
+    })
     createHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 455, 0)
 
     local rowHeight = 28
@@ -392,12 +368,11 @@ local function createMacrosSettingsFrame()
     for i = 1, #definitions do
         local definition = definitions[i]
         local key = definition.key
-        local label = createMacroText(
-            frame,
-            GameFontHighlight,
-            definition.label,
-            170
-        )
+        local label = CanvasControls:CreateText(frame, {
+            fontObject = GameFontHighlight,
+            text = definition.label,
+            width = 170,
+        })
         label:SetPoint(
             "TOPLEFT",
             nameHeader,
@@ -406,20 +381,18 @@ local function createMacrosSettingsFrame()
             -14 - ((i - 1) * rowHeight)
         )
 
-        local marker = createMacroText(
-            frame,
-            GameFontHighlight,
-            getMacroKeyText(definition),
-            190
-        )
+        local marker = CanvasControls:CreateText(frame, {
+            fontObject = GameFontHighlight,
+            text = getMacroKeyText(definition),
+            width = 190,
+        })
         marker:SetPoint("TOPLEFT", label, "TOPLEFT", 160, 0)
 
-        local inlineMarker = createMacroText(
-            frame,
-            GameFontHighlight,
-            getInlineMacroText(definition),
-            95
-        )
+        local inlineMarker = CanvasControls:CreateText(frame, {
+            fontObject = GameFontHighlight,
+            text = getInlineMacroText(definition),
+            width = 95,
+        })
         inlineMarker:SetPoint("TOPLEFT", label, "TOPLEFT", 355, 0)
 
         local sharedButton = createMacroButton(
@@ -449,7 +422,6 @@ local function openSettingsDestination(button)
 end
 
 local function populateMainSettingsFrame(frame, destinations)
-    local Controls = RCC.SettingsCanvasControls
     local positions = {
         { x = 0, y = -126 },
         { x = 300, y = -126 },
@@ -459,41 +431,37 @@ local function populateMainSettingsFrame(frame, destinations)
 
     frame:SetSize(640, 560)
 
-    local title = Controls.CreateText(
-        frame,
-        GameFontNormalLarge,
-        "Ready Check Consumables",
-        580
-    )
+    local title = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormalLarge,
+        text = "Ready Check Consumables",
+        width = 580,
+    })
     title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
 
-    local description = Controls.CreateText(
-        frame,
-        GameFontHighlight,
-        "Configure RCC's personal consumable bar, raid status frame, "
+    local description = CanvasControls:CreateText(frame, {
+        fontObject = GameFontHighlight,
+        text = "Configure RCC's personal consumable bar, raid status frame, "
             .. "chat reporting, and managed macros.",
-        570
-    )
+        width = 570,
+    })
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
-    local sectionTitle = Controls.CreateText(
-        frame,
-        GameFontNormal,
-        "Settings",
-        570
-    )
+    local sectionTitle = CanvasControls:CreateText(frame, {
+        fontObject = GameFontNormal,
+        text = "Settings",
+        width = 570,
+    })
     sectionTitle:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -96)
 
     for i = 1, #destinations do
         local destination = destinations[i]
         local position = positions[i]
-        local button = Controls.CreateTertiaryButton(
-            frame,
-            destination.label,
-            270,
-            34,
-            openSettingsDestination
-        )
+        local button = CanvasControls:CreateButton(frame, {
+            text = destination.label,
+            width = 270,
+            height = 34,
+            onClick = openSettingsDestination,
+        })
         button.settingsCategoryID = destination.category:GetID()
         button:SetPoint(
             "TOPLEFT",
@@ -503,12 +471,11 @@ local function populateMainSettingsFrame(frame, destinations)
             position.y
         )
 
-        local detail = Controls.CreateText(
-            frame,
-            GameFontHighlight,
-            destination.description,
-            270
-        )
+        local detail = CanvasControls:CreateText(frame, {
+            fontObject = GameFontHighlight,
+            text = destination.description,
+            width = 270,
+        })
         detail:SetPoint("TOPLEFT", button, "BOTTOMLEFT", 8, -8)
     end
 
@@ -516,12 +483,11 @@ local function populateMainSettingsFrame(frame, destinations)
         "ReadyCheckConsumables",
         "Version"
     ) or "Unknown"
-    local versionText = Controls.CreateText(
-        frame,
-        GameFontDisableSmall,
-        "Version " .. version,
-        570
-    )
+    local versionText = CanvasControls:CreateText(frame, {
+        fontObject = GameFontDisableSmall,
+        text = "Version " .. version,
+        width = 570,
+    })
     versionText:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -360)
 end
 

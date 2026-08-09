@@ -3,7 +3,7 @@ local _, RCC = ...
 RCC.RaidFrameSettings = RCC.RaidFrameSettings or {}
 
 local Page = RCC.RaidFrameSettings
-local Controls = RCC.SettingsCanvasControls
+local Controls = LibStub("LibModernSettings-1.0")
 
 local FEATURE_DISABLED_TOOLTIP =
     "The Raid Frame is disabled. Enable it to edit."
@@ -22,12 +22,11 @@ local SETTING_KEYS = {
 }
 
 local function createSectionHeader(parent, text, x, y)
-    local header = Controls.CreateText(
-        parent,
-        GameFontNormal,
-        text,
-        280
-    )
+    local header = Controls:CreateText(parent, {
+        fontObject = GameFontNormal,
+        text = text,
+        width = 280,
+    })
 
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
 
@@ -35,19 +34,15 @@ local function createSectionHeader(parent, text, x, y)
 end
 
 local function setControlState(control, enabled, disabledTooltip)
-    control:SetControlEnabled(enabled)
-    control.tooltipText = enabled
-        and control.enabledTooltipText
-        or disabledTooltip
+    control:SetControlEnabled(enabled, disabledTooltip)
 end
 
 local function addSettingCheckbox(frame, parent, options)
-    local checkbox = Controls.CreateCheckbox(
-        parent,
-        options.label,
-        options.width or 280,
-        options.tooltip,
-        function(checked)
+    local checkbox = Controls:CreateCheckbox(parent, {
+        label = options.label,
+        width = options.width or 280,
+        tooltip = options.tooltip,
+        onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
 
             if options.onChanged then
@@ -55,8 +50,8 @@ local function addSettingCheckbox(frame, parent, options)
             end
 
             frame:Sync()
-        end
-    )
+        end,
+    })
 
     checkbox:SetPoint(
         "TOPLEFT",
@@ -80,7 +75,7 @@ local function addSettingSlider(frame, parent, options)
         end
     end
 
-    local slider = Controls.CreateSlider(parent, options)
+    local slider = Controls:CreateSlider(parent, options)
 
     slider:SetPoint(
         "TOPLEFT",
@@ -100,21 +95,19 @@ function Page.CreateFrame()
     frame:SetSize(640, 560)
     frame.settingControls = {}
 
-    local title = Controls.CreateText(
-        frame,
-        GameFontNormalLarge,
-        "Raid Frame",
-        580
-    )
+    local title = Controls:CreateText(frame, {
+        fontObject = GameFontNormalLarge,
+        text = "Raid Frame",
+        width = 580,
+    })
     title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
 
-    local description = Controls.CreateText(
-        frame,
-        GameFontHighlight,
-        "Configure the group consumable status frame shown during ready "
-            .. "checks and provision events.",
-        580
-    )
+    local description = Controls:CreateText(frame, {
+        fontObject = GameFontHighlight,
+        text = "Configure the group consumable status frame shown during "
+            .. "ready checks and provision events.",
+        width = 580,
+    })
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
     addSettingCheckbox(frame, frame, {
@@ -140,6 +133,11 @@ function Page.CreateFrame()
         step = 0.05,
         inputFormatter = function(value)
             return string.format("%d", math.floor(value * 100 + 0.5))
+        end,
+        inputParser = function(text)
+            local numericText = text:match("^%s*([+-]?%d*%.?%d+)")
+
+            return numericText and tonumber(numericText) / 100 or nil
         end,
         suffix = "%",
         x = 0,
@@ -208,13 +206,8 @@ function Page.CreateFrame()
         for i = 1, #SETTING_KEYS do
             local key = SETTING_KEYS[i]
             local control = self.settingControls[key]
-            local value = RCC.GetSetting(key)
 
-            if control.SetValue then
-                control:SetValue(value)
-            else
-                control:SetChecked(value == true)
-            end
+            control:SetValue(RCC.GetSetting(key))
         end
 
         local enabled = RCC.GetSetting("raidFrame_enabled") == true

@@ -4,7 +4,7 @@ RCC.ConsumableFrameSettings = RCC.ConsumableFrameSettings or {}
 
 local Page = RCC.ConsumableFrameSettings
 local Buttons = RCC.ConsumableFrameButtons
-local Controls = RCC.SettingsCanvasControls
+local Controls = LibStub("LibModernSettings-1.0")
 local Visibility = RCC.ContextualVisibility
 local Reason = RCC.DisplayReason
 local Surface = RCC.DisplaySurface.CONSUMABLE_FRAME
@@ -14,6 +14,12 @@ local CONTENT_HEIGHT = 1040
 local MATRIX_ROW_HEIGHT = 36
 local FEATURE_DISABLED_TOOLTIP =
     "The Consumables Frame is disabled. Enable it to edit."
+local KEEP_OPEN_DISABLED_TOOLTIP =
+    "Keep Open After Ready Response is disabled."
+local INSTANCE_OPEN_DISABLED_TOOLTIP =
+    "Open When Entering an Instance is disabled."
+local INSTANCE_HIDE_DISABLED_TOOLTIP =
+    "Auto-Hide After Instance Entry is disabled."
 
 local OPEN_EVENTS = {
     {
@@ -105,12 +111,11 @@ local function refreshConsumableFrame()
 end
 
 local function createSectionHeader(parent, text, x, y)
-    local header = Controls.CreateText(
-        parent,
-        GameFontNormal,
-        text,
-        280
-    )
+    local header = Controls:CreateText(parent, {
+        fontObject = GameFontNormal,
+        text = text,
+        width = 280,
+    })
 
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
 
@@ -118,12 +123,11 @@ local function createSectionHeader(parent, text, x, y)
 end
 
 local function addSettingCheckbox(frame, parent, options)
-    local checkbox = Controls.CreateCheckbox(
-        parent,
-        options.label,
-        options.width or 280,
-        options.tooltip,
-        function(checked)
+    local checkbox = Controls:CreateCheckbox(parent, {
+        label = options.label,
+        width = options.width or 280,
+        tooltip = options.tooltip,
+        onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
 
             if options.onChanged then
@@ -131,8 +135,8 @@ local function addSettingCheckbox(frame, parent, options)
             end
 
             frame:Sync()
-        end
-    )
+        end,
+    })
 
     checkbox:SetPoint(
         "TOPLEFT",
@@ -156,7 +160,7 @@ local function addSettingSlider(frame, parent, options)
         end
     end
 
-    local slider = Controls.CreateSlider(parent, options)
+    local slider = Controls:CreateSlider(parent, options)
 
     slider:SetPoint(
         "TOPLEFT",
@@ -337,12 +341,11 @@ local function createGeneralSettings(frame, content)
 end
 
 local function createMatrixHeader(content, text, x, y, width)
-    local header = Controls.CreateText(
-        content,
-        GameFontNormalSmall,
-        text,
-        width
-    )
+    local header = Controls:CreateText(content, {
+        fontObject = GameFontNormalSmall,
+        text = text,
+        width = width,
+    })
 
     header:SetPoint("TOPLEFT", content, "TOPLEFT", x, y)
     header:SetJustifyH("CENTER")
@@ -361,31 +364,27 @@ local function createVisibilityMatrix(frame, content)
     )
     matrixTitle:SetWidth(220)
 
-    local resetButton = Controls.CreateTertiaryButton(
-        content,
-        "Reset Matrix",
-        112,
-        30,
-        function()
+    local resetButton = Controls:CreateButton(content, {
+        text = "Reset Matrix",
+        width = 112,
+        height = 30,
+        tooltip = "Restore every button and open-event combination to its "
+            .. "addon default.",
+        onClick = function()
             RCC.ClearContextualVisibilityOverrides(Surface)
             frame:Sync()
-        end
-    )
+        end,
+    })
     resetButton:SetPoint("TOPRIGHT", content, "TOPRIGHT", -16, matrixTop + 5)
     frame.resetMatrixButton = resetButton
-    Controls.SetTooltip(
-        resetButton,
-        "Restore every button and open-event combination to its addon default."
-    )
-    resetButton.enabledTooltipText = resetButton.tooltipText
 
-    local description = Controls.CreateText(
-        content,
-        GameFontHighlightSmall,
-        "Enabled is the global switch for a button. Event columns choose "
-        .. "which enabled buttons each type of frame opening displays.",
-        570
-    )
+    local description = Controls:CreateText(content, {
+        fontObject = GameFontHighlightSmall,
+        text = "Enabled is the global switch for a button. Event columns "
+            .. "choose which enabled buttons each type of frame opening "
+            .. "displays.",
+        width = 570,
+    })
     description:SetPoint("TOPLEFT", content, "TOPLEFT", 0, matrixTop - 32)
 
     local headerY = matrixTop - 66
@@ -420,12 +419,11 @@ local function createVisibilityMatrix(frame, content)
             stripe:SetSize(575, MATRIX_ROW_HEIGHT)
         end
 
-        local rowLabel = Controls.CreateText(
-            content,
-            GameFontHighlight,
-            definition.label,
-            labelWidth
-        )
+        local rowLabel = Controls:CreateText(content, {
+            fontObject = GameFontHighlight,
+            text = definition.label,
+            width = labelWidth,
+        })
         rowLabel:SetPoint(
             "LEFT",
             content,
@@ -448,7 +446,7 @@ local function createVisibilityMatrix(frame, content)
             )
             tooltipRegion:SetSize(labelWidth, MATRIX_ROW_HEIGHT)
             tooltipRegion:EnableMouse(true)
-            Controls.SetTooltip(tooltipRegion, definition.settingsTooltip)
+            Controls:SetTooltip(tooltipRegion, definition.settingsTooltip)
         end
 
         local enabledTooltip = "Enable " .. definition.label
@@ -459,17 +457,14 @@ local function createVisibilityMatrix(frame, content)
                 .. enabledTooltip
         end
 
-        local enabledCheckbox = Controls.CreateCheckbox(
-            content,
-            nil,
-            nil,
-            enabledTooltip,
-            function(checked)
+        local enabledCheckbox = Controls:CreateCheckbox(content, {
+            tooltip = enabledTooltip,
+            onChanged = function(checked)
                 RCC.SetSettingValue(definition.settingKey, checked)
                 refreshConsumableFrame()
                 frame:Sync()
-            end
-        )
+            end,
+        })
         enabledCheckbox:SetPoint(
             "TOPLEFT",
             content,
@@ -487,20 +482,17 @@ local function createVisibilityMatrix(frame, content)
                 event.tooltip,
                 definition.label
             )
-            local checkbox = Controls.CreateCheckbox(
-                content,
-                nil,
-                nil,
-                enabledTooltip,
-                function(checked)
+            local checkbox = Controls:CreateCheckbox(content, {
+                tooltip = enabledTooltip,
+                onChanged = function(checked)
                     Page.SetMatrixValue(
                         definition,
                         event.reason,
                         checked
                     )
                     frame:Sync()
-                end
-            )
+                end,
+            })
 
             checkbox:SetPoint(
                 "TOPLEFT",
@@ -513,7 +505,6 @@ local function createVisibilityMatrix(frame, content)
                 control = checkbox,
                 definition = definition,
                 reason = event.reason,
-                enabledTooltip = enabledTooltip,
                 disabledTooltip = definition.label .. " is disabled.",
             }
         end
@@ -543,22 +534,20 @@ function Page.CreateFrame()
     content:SetSize(CONTENT_WIDTH, CONTENT_HEIGHT)
     scrollFrame:SetScrollChild(content)
 
-    local title = Controls.CreateText(
-        content,
-        GameFontNormalLarge,
-        "Consumables Frame",
-        580
-    )
+    local title = Controls:CreateText(content, {
+        fontObject = GameFontNormalLarge,
+        text = "Consumables Frame",
+        width = 580,
+    })
     title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -4)
 
-    local description = Controls.CreateText(
-        content,
-        GameFontHighlight,
-        "Choose when the personal consumable bar opens and which buttons "
-        .. "appear for each open event. Open-event options start the frame; "
-        .. "the matrix controls its contents.",
-        580
-    )
+    local description = Controls:CreateText(content, {
+        fontObject = GameFontHighlight,
+        text = "Choose when the personal consumable bar opens and which "
+            .. "buttons appear for each open event. Open-event options start "
+            .. "the frame; the matrix controls its contents.",
+        width = 580,
+    })
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
     createGeneralSettings(frame, content)
@@ -568,17 +557,13 @@ function Page.CreateFrame()
         local pageEnabled = RCC.GetSetting("consumables_enabled") == true
 
         for key, control in pairs(self.settingControls) do
-            if control.SetValue then
-                control:SetValue(RCC.GetSetting(key))
-            else
-                control:SetChecked(RCC.GetSetting(key) == true)
-            end
+            control:SetValue(RCC.GetSetting(key))
 
             if key ~= "consumables_enabled" then
-                control:SetControlEnabled(pageEnabled)
-                control.tooltipText = pageEnabled
-                    and control.enabledTooltipText
-                    or FEATURE_DISABLED_TOOLTIP
+                control:SetControlEnabled(
+                    pageEnabled,
+                    FEATURE_DISABLED_TOOLTIP
+                )
             end
         end
 
@@ -587,26 +572,40 @@ function Page.CreateFrame()
         local instanceHide = RCC.GetSetting("consumables_instanceHide") == true
 
         self.settingControls.consumables_minShowTime:SetControlEnabled(
-            pageEnabled and minShowEnabled
+            pageEnabled and minShowEnabled,
+            not pageEnabled
+                and FEATURE_DISABLED_TOOLTIP
+                or KEEP_OPEN_DISABLED_TOOLTIP
         )
 
         for i = 1, #self.instanceTypeControls do
             self.instanceTypeControls[i]:SetControlEnabled(
-                pageEnabled and instanceOpen
+                pageEnabled and instanceOpen,
+                not pageEnabled
+                    and FEATURE_DISABLED_TOOLTIP
+                    or INSTANCE_OPEN_DISABLED_TOOLTIP
             )
         end
 
         self.settingControls.consumables_instanceHide:SetControlEnabled(
-            pageEnabled and instanceOpen
+            pageEnabled and instanceOpen,
+            not pageEnabled
+                and FEATURE_DISABLED_TOOLTIP
+                or INSTANCE_OPEN_DISABLED_TOOLTIP
         )
         self.settingControls.consumables_instanceHideTime:SetControlEnabled(
-            pageEnabled and instanceOpen and instanceHide
+            pageEnabled and instanceOpen and instanceHide,
+            not pageEnabled
+                and FEATURE_DISABLED_TOOLTIP
+                or not instanceOpen
+                    and INSTANCE_OPEN_DISABLED_TOOLTIP
+                    or INSTANCE_HIDE_DISABLED_TOOLTIP
         )
 
-        self.resetMatrixButton:SetEnabled(pageEnabled)
-        self.resetMatrixButton.tooltipText = pageEnabled
-            and self.resetMatrixButton.enabledTooltipText
-            or FEATURE_DISABLED_TOOLTIP
+        self.resetMatrixButton:SetControlEnabled(
+            pageEnabled,
+            FEATURE_DISABLED_TOOLTIP
+        )
 
         for i = 1, #self.matrixRowLabels do
             local rowLabel = self.matrixRowLabels[i]
@@ -623,19 +622,16 @@ function Page.CreateFrame()
                 entry.definition.settingKey
             ) == true
 
-            entry.control:SetChecked(Page.GetMatrixValue(
+            entry.control:SetValue(Page.GetMatrixValue(
                 entry.definition,
                 entry.reason
             ))
-            entry.control:SetControlEnabled(pageEnabled and globallyEnabled)
-
-            if not pageEnabled then
-                entry.control.tooltipText = FEATURE_DISABLED_TOOLTIP
-            elseif not globallyEnabled then
-                entry.control.tooltipText = entry.disabledTooltip
-            else
-                entry.control.tooltipText = entry.enabledTooltip
-            end
+            entry.control:SetControlEnabled(
+                pageEnabled and globallyEnabled,
+                not pageEnabled
+                    and FEATURE_DISABLED_TOOLTIP
+                    or entry.disabledTooltip
+            )
         end
     end
 
