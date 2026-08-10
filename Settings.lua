@@ -401,7 +401,7 @@ local function createMacrosSettingsFrame(measurementFrame)
 end
 
 local function openSettingsDestination(button)
-    Settings.OpenToCategory(button.settingsCategoryID)
+    RCC.OpenSettings(button.settingsCategoryID)
 end
 
 local function populateMainSettingsFrame(
@@ -562,11 +562,55 @@ end
 --------------------------------------------------------------------------------
 
 local settingsFrame = CreateFrame("Frame")
+local pendingSettingsCategoryID
+
+local function openSettingsCategory(categoryID)
+    pendingSettingsCategoryID = nil
+    settingsFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    Settings.OpenToCategory(categoryID)
+end
+
+function RCC.OpenSettings(categoryID)
+    categoryID = categoryID or RCC.settingsCategory:GetID()
+
+    if InCombatLockdown() then
+        pendingSettingsCategoryID = categoryID
+        settingsFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+        print(
+            "|" .. RCC.color .. "ffReadyCheckConsumables|r: "
+                .. "Can't open settings in combat. They will open when "
+                .. "combat ends."
+        )
+
+        return false
+    end
+
+    openSettingsCategory(categoryID)
+
+    return true
+end
+
 settingsFrame:RegisterEvent("ADDON_LOADED")
-settingsFrame:SetScript("OnEvent", function(self, event, addonName)
-    if addonName ~= "ReadyCheckConsumables" then
+settingsFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_REGEN_ENABLED" then
+        if InCombatLockdown() then
+            return
+        end
+
+        local categoryID = pendingSettingsCategoryID
+
+        if categoryID then
+            openSettingsCategory(categoryID)
+        else
+            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        end
+
         return
     end
+
+    local addonName = ...
+
+    if addonName ~= "ReadyCheckConsumables" then return end
 
     self:UnregisterEvent("ADDON_LOADED")
     ReadyCheckConsumablesDB = ReadyCheckConsumablesDB or {}

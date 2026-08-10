@@ -47,7 +47,7 @@ SlashCmdList["RCC"] = function(msg)
     elseif msg == "settings" or msg == "s"
         or msg == "options" or msg == "o"
     then
-        Settings.OpenToCategory(RCC.settingsCategory:GetID())
+        RCC.OpenSettings()
 
     else
         print("|" .. RCC.color .. "ff" .. "ReadyCheckConsumables|r commands:")
