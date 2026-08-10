@@ -1,63 +1,139 @@
 local _, RCC = ...
 
-local TIMED_TEST     = false
+local TIMED_TEST = false
 local PERMANENT_TEST = true
 local COMBINED_TEST = { includeCauldrons = true }
 local READY_CHECK_ONLY_TEST = { includeCauldrons = false }
 
-SLASH_RCC1 = "/rcc"
-SlashCmdList["RCC"] = function(msg)
-    msg = strlower(strtrim(msg))
+local function printMessage(message)
+    print("|" .. RCC.color .. "ffReadyCheckConsumables|r: " .. message)
+end
 
-    if msg == "test" or msg == "t" then
-        RCC.ReadyCheckTest:Start(TIMED_TEST, COMBINED_TEST)
+local function hideFrames()
+    RCC.ReadyCheckTest:Cancel()
+    RCC.ConsumableFrameController.HideImmediately()
+    RCC.raidFrame:Hide()
+    RCC.RaidFrameCauldron.Hide()
+end
 
-    elseif msg == "testp" or msg == "tp" then
-        RCC.ReadyCheckTest:Start(PERMANENT_TEST, COMBINED_TEST)
+local function openConsumablesFrame()
+    if InCombatLockdown() then
+        printMessage("Can't open the Consumables Frame in combat.")
 
-    elseif msg == "readycheck test" or msg == "readycheck t"
-        or msg == "ready check test" or msg == "ready check t"
-        or msg == "rc test" or msg == "rc t"
-    then
-        RCC.ReadyCheckTest:Start(TIMED_TEST, READY_CHECK_ONLY_TEST)
-
-    elseif msg == "readycheck testp" or msg == "ready check testp"
-        or msg == "rc testp"
-    then
-        RCC.ReadyCheckTest:Start(PERMANENT_TEST, READY_CHECK_ONLY_TEST)
-
-    elseif msg == "hide" or msg == "h" then
-        RCC.ReadyCheckTest:Cancel()
-        RCC.ConsumableFrameController.HideImmediately()
-        RCC.raidFrame:Hide()
-        RCC.RaidFrameCauldron.Hide()
-
-    elseif msg == "report" or msg == "r" then
-        RCC.chatReport.Test(false)
-
-    elseif msg == "reportchat" or msg == "rc" then
-        RCC.chatReport.Test(true)
-
-    elseif msg == "cauldron test" or msg == "cauldron t"
-        or msg == "cauldrons test" or msg == "cauldrons t"
-        or msg == "ct test" or msg == "ct t"
-    then
-        RCC.RaidFrameTest:StartCauldronOnly()
-
-    elseif msg == "settings" or msg == "s"
-        or msg == "options" or msg == "o"
-    then
-        RCC.OpenSettings()
-
-    else
-        print("|" .. RCC.color .. "ff" .. "ReadyCheckConsumables|r commands:")
-        print("  /rcc test, t - Show a timed combined test frame (auto-hides)")
-        print("  /rcc testp, tp - Show a permanent combined test frame")
-        print("  /rcc readycheck test, readycheck t - Show ready-check-only test frame")
-        print("  /rcc hide, h - Immediately hide the frames")
-        print("  /rcc report, r - Print consumable report locally")
-        print("  /rcc reportchat, rc - Send consumable report to chat")
-        print("  /rcc cauldron test, cauldron t - Show cauldron-only test frame")
-        print("  /rcc settings, s, options, o - Open settings panel")
+        return
     end
+
+    if not RCC.GetSetting("consumables_enabled") then
+        printMessage("The Consumables Frame is disabled.")
+
+        return
+    end
+
+    RCC.ConsumableFrameController.OpenManually()
+end
+
+local COMMANDS = {
+    {
+        triggers = { "t", "test" },
+        description = "Show a timed combined test",
+        run = function()
+            RCC.ReadyCheckTest:Start(TIMED_TEST, COMBINED_TEST)
+        end,
+    },
+    {
+        triggers = { "tp", "test permanent" },
+        description = "Show a permanent combined test",
+        run = function()
+            RCC.ReadyCheckTest:Start(PERMANENT_TEST, COMBINED_TEST)
+        end,
+    },
+    {
+        triggers = { "rt", "ready check test", "readycheck test" },
+        description = "Show a timed ready-check-only test",
+        run = function()
+            RCC.ReadyCheckTest:Start(TIMED_TEST, READY_CHECK_ONLY_TEST)
+        end,
+    },
+    {
+        triggers = {
+            "rtp",
+            "ready check test permanent",
+            "readycheck test permanent",
+        },
+        description = "Show a permanent ready-check-only test",
+        run = function()
+            RCC.ReadyCheckTest:Start(PERMANENT_TEST, READY_CHECK_ONLY_TEST)
+        end,
+    },
+    {
+        triggers = { "ct", "cauldron test" },
+        description = "Show the cauldron-only test",
+        run = function()
+            RCC.RaidFrameTest:StartCauldronOnly()
+        end,
+    },
+    {
+        triggers = { "h", "hide" },
+        description = "Immediately hide all RCC frames",
+        run = hideFrames,
+    },
+    {
+        triggers = { "r", "report" },
+        description = "Print the consumable report locally",
+        run = function()
+            RCC.chatReport.Test(false)
+        end,
+    },
+    {
+        triggers = { "rc", "report chat", "reportchat" },
+        description = "Send the consumable report to group chat",
+        run = function()
+            RCC.chatReport.Test(true)
+        end,
+    },
+    {
+        triggers = { "c", "consume", "consumables" },
+        description = "Open the Consumables Frame",
+        run = openConsumablesFrame,
+    },
+    {
+        triggers = { "s", "settings", "options" },
+        description = "Open the settings panel",
+        run = RCC.OpenSettings,
+    },
+}
+
+local COMMAND_LOOKUP = {}
+
+for i = 1, #COMMANDS do
+    local command = COMMANDS[i]
+
+    for j = 1, #command.triggers do
+        COMMAND_LOOKUP[command.triggers[j]] = command.run
+    end
+end
+
+local function printHelp()
+    print("|" .. RCC.color .. "ffReadyCheckConsumables|r commands:")
+
+    for i = 1, #COMMANDS do
+        local command = COMMANDS[i]
+
+        print("  /rcc " .. command.triggers[1]
+            .. " (" .. command.triggers[2] .. ") - "
+            .. command.description)
+    end
+end
+
+SLASH_RCC1 = "/rcc"
+SlashCmdList["RCC"] = function(message)
+    local command = COMMAND_LOOKUP[strlower(strtrim(message))]
+
+    if command then
+        command()
+
+        return
+    end
+
+    printHelp()
 end

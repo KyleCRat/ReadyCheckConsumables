@@ -116,22 +116,22 @@ The settings panel can create marker-based macros that RCC keeps updated.
 
 ## Slash Commands
 
-| Command | Cmd | Description |
+| Short | Long | Description |
 |---|---|---|
-| `/rcc test` | `/rcc t` | Show timed combined test frames that auto-hide |
-| `/rcc testp` | `/rcc tp` | Show permanent combined test frames |
-| `/rcc readycheck test` | `/rcc readycheck t`, `/rcc rc test`, `/rcc rc t` | Show a timed ready-check-only test frame |
-| `/rcc readycheck testp` | `/rcc rc testp` | Show a permanent ready-check-only test frame |
-| `/rcc cauldron test` | `/rcc cauldron t`, `/rcc ct test`, `/rcc ct t` | Show a cauldron-only test frame |
-| `/rcc hide` | `/rcc h` | Hide all RCC frames |
-| `/rcc report` | `/rcc r` | Print a consumable report locally |
-| `/rcc reportchat` | `/rcc rc` | Send a consumable report to group chat |
-| `/rcc settings` | `/rcc s` | Open the settings panel |
-| `/rcc options` | `/rcc o` | Open the settings panel |
+| `/rcc t` | `/rcc test` | Show a timed combined test that auto-hides |
+| `/rcc tp` | `/rcc test permanent` | Show a permanent combined test |
+| `/rcc rt` | `/rcc ready check test` | Show a timed ready-check-only test |
+| `/rcc rtp` | `/rcc ready check test permanent` | Show a permanent ready-check-only test |
+| `/rcc ct` | `/rcc cauldron test` | Show the cauldron-only test |
+| `/rcc h` | `/rcc hide` | Hide all RCC frames |
+| `/rcc r` | `/rcc report` | Print a consumable report locally |
+| `/rcc rc` | `/rcc report chat` | Send a consumable report to group chat |
+| `/rcc c` | `/rcc consume` | Open the Consumables Frame |
+| `/rcc s` | `/rcc settings` | Open the settings panel |
 
 ## Settings
 
-Access settings through `/rcc settings` or the WoW AddOns settings panel.
+Access settings through `/rcc s` or the WoW AddOns settings panel.
 
 - Enable or disable the consumables frame and raid status frame.
 - Adjust consumables frame and raid status frame scale.

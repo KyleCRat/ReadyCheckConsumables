@@ -7,7 +7,7 @@ RCC.DisplayReason = RCC.DisplayReason or {
     BREAK_TIMER     = "breakTimer",
     FEAST_DROP      = "feastDrop",
     CAULDRON_DROP   = "cauldronDrop",
-    MANUAL_TEST     = "manualTest",
+    MANUAL_OPEN     = "manualOpen",
 }
 
 RCC.DisplaySurface = RCC.DisplaySurface or {
@@ -29,7 +29,7 @@ local PRIMARY_REASON_ORDER = {
     Reason.INSTANCE_ENTRY,
     Reason.FEAST_DROP,
     Reason.CAULDRON_DROP,
-    Reason.MANUAL_TEST,
+    Reason.MANUAL_OPEN,
 }
 
 local function updatePrimaryReason(context)

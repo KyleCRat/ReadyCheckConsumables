@@ -537,6 +537,18 @@ function Controller.OpenForBreakTimer()
     )
 end
 
+function Controller.OpenManually()
+    if not frame then return false end
+
+    return activateAndShow(
+        frame,
+        Reason.MANUAL_OPEN,
+        true,
+        false,
+        true
+    )
+end
+
 function Controller.GetDisplayContext()
     return displayContext
 end

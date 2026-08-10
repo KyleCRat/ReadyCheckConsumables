@@ -29,6 +29,7 @@ local STANDARD_VISIBILITY = {
         [Reason.INSTANCE_ENTRY] = true,
         [Reason.CAULDRON_PICKUP] = true,
         [Reason.BREAK_TIMER] = true,
+        [Reason.MANUAL_OPEN] = true,
     },
 }
 
