@@ -4,7 +4,6 @@ RCC.ChatReportSettings = RCC.ChatReportSettings or {}
 
 local Page = RCC.ChatReportSettings
 local Controls = LibStub("LibModernSettings-1.0")
-local Layout = RCC.SettingsLayout
 
 local FEATURE_DISABLED_TOOLTIP =
     "Chat Report is disabled. Enable it to edit."
@@ -28,73 +27,50 @@ local PERMISSION_CHOICES = {
 }
 
 local INSTANCE_SETTINGS = {
-    {
-        key = "chatReport_mythicRaid",
-        label = "Mythic",
-        tooltip = "Report after ready checks in Mythic raids.",
-        x = 0,
-        y = -264,
+    raid = {
+        {
+            key = "chatReport_mythicRaid",
+            label = "Mythic",
+            tooltip = "Report after ready checks in Mythic raids.",
+        },
+        {
+            key = "chatReport_heroicRaid",
+            label = "Heroic",
+            tooltip = "Report after ready checks in Heroic raids.",
+        },
+        {
+            key = "chatReport_normalRaid",
+            label = "Normal",
+            tooltip = "Report after ready checks in Normal raids.",
+        },
+        {
+            key = "chatReport_lfr",
+            label = "Raid Finder",
+            tooltip = "Report after ready checks in Raid Finder.",
+        },
     },
-    {
-        key = "chatReport_heroicRaid",
-        label = "Heroic",
-        tooltip = "Report after ready checks in Heroic raids.",
-        x = 0,
-        y = -300,
-    },
-    {
-        key = "chatReport_normalRaid",
-        label = "Normal",
-        tooltip = "Report after ready checks in Normal raids.",
-        x = 0,
-        y = -336,
-    },
-    {
-        key = "chatReport_lfr",
-        label = "Raid Finder",
-        tooltip = "Report after ready checks in Raid Finder.",
-        x = 0,
-        y = -372,
-    },
-    {
-        key = "chatReport_mythicDungeon",
-        label = "Mythic",
-        tooltip = "Report after ready checks in Mythic dungeons.",
-        rightColumn = true,
-        y = -264,
-    },
-    {
-        key = "chatReport_heroicDungeon",
-        label = "Heroic",
-        tooltip = "Report after ready checks in Heroic dungeons.",
-        rightColumn = true,
-        y = -300,
-    },
-    {
-        key = "chatReport_normalDungeon",
-        label = "Normal",
-        tooltip = "Report after ready checks in Normal dungeons.",
-        rightColumn = true,
-        y = -336,
+    dungeon = {
+        {
+            key = "chatReport_mythicDungeon",
+            label = "Mythic",
+            tooltip = "Report after ready checks in Mythic dungeons.",
+        },
+        {
+            key = "chatReport_heroicDungeon",
+            label = "Heroic",
+            tooltip = "Report after ready checks in Heroic dungeons.",
+        },
+        {
+            key = "chatReport_normalDungeon",
+            label = "Normal",
+            tooltip = "Report after ready checks in Normal dungeons.",
+        },
     },
 }
 
-local function createSectionHeader(parent, text, x, y)
-    local header = Controls:CreateText(parent, {
-        fontObject = GameFontNormal,
-        text = text,
-        width = Layout.COLUMN_WIDTH,
-    })
-
-    header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-
-    return header
-end
-
-local function addSettingCheckbox(frame, parent, options)
-    local checkbox = Controls:CreateCheckbox(parent, {
+local function addSettingCheckbox(frame, flow, options)
+    local checkbox = flow:AddControl("checkbox", {
         label = options.label,
-        width = options.width or Layout.COLUMN_WIDTH,
         tooltip = options.tooltip,
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
@@ -102,79 +78,69 @@ local function addSettingCheckbox(frame, parent, options)
         end,
     })
 
-    checkbox:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        options.rightColumn and Layout.RIGHT_COLUMN_X or options.x,
-        options.y
-    )
     frame.settingControls[options.key] = checkbox
 
     return checkbox
 end
 
-function Page.CreateFrame()
+function Page.CreateFrame(measurementFrame)
     local frame = CreateFrame("Frame")
 
-    frame:SetSize(Layout.CANVAS_WIDTH, Layout.CANVAS_HEIGHT)
     frame.settingControls = {}
 
-    local content = Layout.CreateContentFrame(frame)
-
-    local title = Controls:CreateText(content, {
-        fontObject = GameFontNormalLarge,
-        text = "Chat Report",
-        width = Layout.CONTENT_WIDTH,
+    local layout = Controls:CreateCanvasLayout(frame, {
+        measurementFrame = measurementFrame,
     })
-    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
+    local root = layout:GetRootFlow()
 
-    local description = Controls:CreateText(content, {
-        fontObject = GameFontHighlight,
-        text = "Configure automatic reports for players who are missing "
-            .. "required consumables after a ready check.",
-        width = Layout.CONTENT_WIDTH,
-    })
-    description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-
-    addSettingCheckbox(frame, content, {
+    layout:AddHeader(
+        "Chat Report",
+        "Configure automatic reports for players who are missing "
+            .. "required consumables after a ready check."
+    )
+    addSettingCheckbox(frame, root, {
         key = "chatReport_enabled",
         label = "Enabled",
         tooltip = "Enable automatic missing-consumable chat reports.",
-        x = 0,
-        y = -76,
     })
 
-    createSectionHeader(content, "Reporting Permission", 0, -124)
+    local permissionColumns = root:BeginColumns()
+    local permissionFlow = permissionColumns.left
 
-    local permission = Controls:CreateDropdown(content, {
+    permissionFlow:AddSection("Reporting Permission")
+
+    local permission = permissionFlow:AddControl("dropdown", {
         label = "Who Can Report",
         tooltip = "Choose the minimum raid role allowed to send RCC's "
             .. "automatic report. This restriction does not apply outside "
             .. "raids.",
-        width = Layout.COLUMN_WIDTH,
         value = RCC.GetSetting("chatReport_permission"),
         choices = PERMISSION_CHOICES,
         onChanged = function(value)
             RCC.SetSettingValue("chatReport_permission", value)
         end,
     })
-    permission:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -150)
     frame.settingControls.chatReport_permission = permission
+    permissionColumns:Finish()
 
-    createSectionHeader(content, "Raid Instances", 0, -238)
-    createSectionHeader(
-        content,
-        "Dungeon Instances",
-        Layout.RIGHT_COLUMN_X,
-        -238
-    )
+    local instanceColumns = root:BeginColumns()
+    local raidFlow = instanceColumns.left
+    local dungeonFlow = instanceColumns.right
 
-    for i = 1, #INSTANCE_SETTINGS do
-        local options = INSTANCE_SETTINGS[i]
+    raidFlow:AddSection("Raid Instances")
+    dungeonFlow:AddSection("Dungeon Instances")
 
-        addSettingCheckbox(frame, content, options)
+    for i = 1, #INSTANCE_SETTINGS.raid do
+        addSettingCheckbox(frame, raidFlow, INSTANCE_SETTINGS.raid[i])
     end
+
+    for i = 1, #INSTANCE_SETTINGS.dungeon do
+        addSettingCheckbox(frame, dungeonFlow, INSTANCE_SETTINGS.dungeon[i])
+    end
+
+    instanceColumns:Finish()
+    layout:Finalize()
+    frame.layout = layout
 
     function frame:Sync()
         for i = 1, #SETTING_KEYS do

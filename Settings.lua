@@ -3,139 +3,6 @@ local _, RCC = ...
 local CanvasControls = LibStub("LibModernSettings-1.0")
 
 --------------------------------------------------------------------------------
---- Shared settings layout
---------------------------------------------------------------------------------
-
-local SettingsLayout = {
-    CANVAS_WIDTH = 716,
-    CANVAS_HEIGHT = 633,
-    CONTENT_INSET = 8,
-    SCROLLBAR_GAP = 8,
-    SCROLLBAR_WIDTH = 17,
-    COLUMN_GAP = 15,
-    INDENT = 16,
-    NESTED_GAP = 8,
-    TABLE_PADDING = 8,
-}
-
-local function calculateSettingsLayout()
-    SettingsLayout.CONTENT_WIDTH = SettingsLayout.CANVAS_WIDTH
-        - SettingsLayout.CONTENT_INSET
-        - SettingsLayout.SCROLLBAR_GAP
-        - SettingsLayout.SCROLLBAR_WIDTH
-    SettingsLayout.COLUMN_WIDTH =
-        (SettingsLayout.CONTENT_WIDTH - SettingsLayout.COLUMN_GAP) / 2
-    SettingsLayout.RIGHT_COLUMN_X = SettingsLayout.COLUMN_WIDTH
-        + SettingsLayout.COLUMN_GAP
-    SettingsLayout.INDENTED_COLUMN_WIDTH = SettingsLayout.COLUMN_WIDTH
-        - SettingsLayout.INDENT
-    SettingsLayout.NESTED_COLUMN_WIDTH =
-        (SettingsLayout.INDENTED_COLUMN_WIDTH - SettingsLayout.NESTED_GAP) / 2
-end
-
-function SettingsLayout.ConfigureForCanvas(canvas)
-    -- Blizzard's Settings canvas is fixed-size. Measure it once while the
-    -- categories are registered; pages do not switch or collapse columns.
-    if canvas then
-        local width = canvas:GetWidth()
-        local height = canvas:GetHeight()
-
-        if width and width > 0 then
-            SettingsLayout.CANVAS_WIDTH = width
-        end
-        if height and height > 0 then
-            SettingsLayout.CANVAS_HEIGHT = height
-        end
-    end
-
-    calculateSettingsLayout()
-end
-
-calculateSettingsLayout()
-
-function SettingsLayout.CreateContentFrame(parent, height)
-    local content = CreateFrame("Frame", nil, parent)
-
-    content:SetSize(
-        SettingsLayout.CONTENT_WIDTH,
-        height or SettingsLayout.CANVAS_HEIGHT
-    )
-    content:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        SettingsLayout.CONTENT_INSET,
-        0
-    )
-
-    return content
-end
-
-function SettingsLayout.CreateScrollBox(
-    parent,
-    contentHeight,
-    topInset,
-    bottomInset
-)
-    topInset = topInset or 0
-    bottomInset = bottomInset or 0
-
-    local scrollBox = CreateFrame("Frame", nil, parent, "WowScrollBox")
-
-    scrollBox:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        SettingsLayout.CONTENT_INSET,
-        -topInset
-    )
-    scrollBox:SetPoint(
-        "BOTTOMRIGHT",
-        parent,
-        "BOTTOMRIGHT",
-        -(SettingsLayout.SCROLLBAR_GAP + SettingsLayout.SCROLLBAR_WIDTH),
-        bottomInset
-    )
-
-    local scrollBar = CreateFrame(
-        "EventFrame",
-        nil,
-        parent,
-        "MinimalScrollBar"
-    )
-
-    scrollBar:SetWidth(SettingsLayout.SCROLLBAR_WIDTH)
-    scrollBar:SetPoint(
-        "TOPLEFT",
-        scrollBox,
-        "TOPRIGHT",
-        SettingsLayout.SCROLLBAR_GAP,
-        0
-    )
-    scrollBar:SetPoint(
-        "BOTTOMLEFT",
-        scrollBox,
-        "BOTTOMRIGHT",
-        SettingsLayout.SCROLLBAR_GAP,
-        0
-    )
-
-    local content = CreateFrame("Frame", nil, scrollBox)
-
-    content.scrollable = true
-    content:SetSize(SettingsLayout.CONTENT_WIDTH, contentHeight)
-
-    local view = CreateScrollBoxLinearView()
-
-    view:SetPanExtent(40)
-    ScrollUtil.InitScrollBoxWithScrollBar(scrollBox, scrollBar, view)
-
-    return scrollBox, content, scrollBar
-end
-
-RCC.SettingsLayout = SettingsLayout
-
---------------------------------------------------------------------------------
 --- Defaults
 --------------------------------------------------------------------------------
 
@@ -435,22 +302,14 @@ local function getInlineMacroText(definition)
     return getInlineMacroMarker(getMacroShorthand(definition))
 end
 
-local function createMacrosSettingsFrame()
+local function createMacrosSettingsFrame(measurementFrame)
     local frame = CreateFrame("Frame")
-    frame:SetSize(SettingsLayout.CANVAS_WIDTH, SettingsLayout.CANVAS_HEIGHT)
-
-    local content = SettingsLayout.CreateContentFrame(frame)
-
-    local title = CanvasControls:CreateText(content, {
-        fontObject = GameFontNormalLarge,
-        text = "Managed Macros",
-        width = SettingsLayout.CONTENT_WIDTH,
+    local layout = CanvasControls:CreateCanvasLayout(frame, {
+        measurementFrame = measurementFrame,
     })
-    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
-
-    local body = CanvasControls:CreateText(content, {
-        fontObject = GameFontHighlight,
-        text = "RCC macros keep action-bar buttons linked to your preferred "
+    local content = layout:GetContent()
+    local flow = layout:GetRootFlow()
+    local bodyText = "RCC macros keep action-bar buttons linked to your preferred "
         .. "consumables. Right-click an item in a Consumables Frame button's "
         .. "flyout to select it as your preferred consumable. RCC keeps that "
         .. "preference until you right-click another item, even when the "
@@ -464,83 +323,66 @@ local function createMacrosSettingsFrame()
         .. "Inline markers update one line inside a custom macro without "
         .. "changing the rest of it. Put an inline marker shown below on its "
         .. "own line. Macro conditions can follow the marker, for example "
-        .. "#RCCI:cp [combat].",
-        width = SettingsLayout.CONTENT_WIDTH,
-    })
-    body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
+        .. "#RCCI:cp [combat]."
 
-    local nameHeader = CanvasControls:CreateText(content, {
+    layout:AddHeader("Managed Macros", bodyText, {
+        marginBottom = 18,
+    })
+
+    local macroTable = CanvasControls:CreateSettingsTable(content, {
+        width = flow:GetWidth(),
+        padding = layout:GetStyleValue("tablePadding"),
+        headerHeight = 28,
+        rowHeight = 32,
+        columns = {
+            { key = "name", width = 150, justifyH = "LEFT" },
+            { key = "key", width = 190, justifyH = "LEFT" },
+            { key = "inline", width = 85, justifyH = "LEFT" },
+            { key = "create", weight = 1 },
+        },
+    })
+
+    macroTable:AddHeaderText("name", "Name", {
         fontObject = GameFontNormal,
-        text = "Name",
-        width = 150,
     })
-    nameHeader:SetPoint("TOPLEFT", body, "BOTTOMLEFT", 0, -20)
-
-    local keyHeader = CanvasControls:CreateText(content, {
+    macroTable:AddHeaderText("key", "Key (Shorthand)", {
         fontObject = GameFontNormal,
-        text = "Key (Shorthand)",
-        width = 190,
     })
-    keyHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 150, 0)
-
-    local inlineHeader = CanvasControls:CreateText(content, {
+    macroTable:AddHeaderText("inline", "Inline", {
         fontObject = GameFontNormal,
-        text = "Inline",
-        width = 85,
     })
-    inlineHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 340, 0)
-
-    local createHeader = CanvasControls:CreateText(content, {
+    macroTable:AddHeaderText("create", "Create", {
         fontObject = GameFontNormal,
-        text = "Create",
-        width = 202,
     })
-    createHeader:SetPoint("TOPLEFT", nameHeader, "TOPLEFT", 425, 0)
 
-    local rowHeight = 28
     local definitions = RCC.ConsumableMacros.GetDefinitions()
 
     for i = 1, #definitions do
         local definition = definitions[i]
         local key = definition.key
-        local label = CanvasControls:CreateText(content, {
-            fontObject = GameFontHighlight,
-            text = definition.label,
-            width = 150,
-        })
-        label:SetPoint(
-            "TOPLEFT",
-            nameHeader,
-            "BOTTOMLEFT",
-            0,
-            -14 - ((i - 1) * rowHeight)
-        )
+        local row = macroTable:AddRow()
 
-        local marker = CanvasControls:CreateText(content, {
-            fontObject = GameFontHighlight,
-            text = getMacroKeyText(definition),
-            width = 190,
-        })
-        marker:SetPoint("TOPLEFT", label, "TOPLEFT", 150, 0)
+        row:AddText("name", definition.label)
+        row:AddText("key", getMacroKeyText(definition))
+        row:AddText("inline", getInlineMacroText(definition))
 
-        local inlineMarker = CanvasControls:CreateText(content, {
-            fontObject = GameFontHighlight,
-            text = getInlineMacroText(definition),
-            width = 85,
-        })
-        inlineMarker:SetPoint("TOPLEFT", label, "TOPLEFT", 340, 0)
+        local createCell = row:GetCell("create")
+        local buttonWidth = 86
+        local buttonGap = 8
+        local buttonsWidth = (buttonWidth * 2) + buttonGap
+        local buttonOffset = (createCell:GetWidth() - buttonsWidth) / 2
 
         local sharedButton = createMacroButton(
-            content,
+            createCell,
             "Shared",
             key,
             definition.label,
             false
         )
-        sharedButton:SetPoint("TOPLEFT", label, "TOPLEFT", 425, -2)
+        sharedButton:SetPoint("LEFT", createCell, "LEFT", buttonOffset, 0)
 
         local characterButton = createMacroButton(
-            content,
+            createCell,
             "Character",
             key,
             definition.label,
@@ -549,6 +391,12 @@ local function createMacrosSettingsFrame()
         characterButton:SetPoint("LEFT", sharedButton, "RIGHT", 8, 0)
     end
 
+    flow:AddFrame(macroTable:GetFrame(), {
+        marginBottom = 12,
+    })
+    layout:Finalize()
+    frame.layout = layout
+
     return frame
 end
 
@@ -556,82 +404,66 @@ local function openSettingsDestination(button)
     Settings.OpenToCategory(button.settingsCategoryID)
 end
 
-local function populateMainSettingsFrame(frame, destinations)
-    local positions = {
-        { x = 0, y = -126 },
-        { x = SettingsLayout.RIGHT_COLUMN_X, y = -126 },
-        { x = 0, y = -230 },
-        { x = SettingsLayout.RIGHT_COLUMN_X, y = -230 },
-    }
-
-    frame:SetSize(SettingsLayout.CANVAS_WIDTH, SettingsLayout.CANVAS_HEIGHT)
-
-    local content = SettingsLayout.CreateContentFrame(frame)
-
-    local title = CanvasControls:CreateText(content, {
-        fontObject = GameFontNormalLarge,
-        text = "Ready Check Consumables",
-        width = SettingsLayout.CONTENT_WIDTH,
+local function populateMainSettingsFrame(
+    frame,
+    destinations,
+    measurementFrame
+)
+    local layout = CanvasControls:CreateCanvasLayout(frame, {
+        measurementFrame = measurementFrame,
     })
-    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
+    local root = layout:GetRootFlow()
 
-    local description = CanvasControls:CreateText(content, {
-        fontObject = GameFontHighlight,
-        text = "Configure RCC's personal consumable bar, raid status frame, "
-            .. "chat reporting, and managed macros.",
-        width = SettingsLayout.CONTENT_WIDTH,
-    })
-    description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+    layout:AddHeader(
+        "Ready Check Consumables",
+        "Configure RCC's personal consumable bar, raid status frame, "
+            .. "chat reporting, and managed macros."
+    )
+    root:AddSection("Settings")
 
-    local sectionTitle = CanvasControls:CreateText(content, {
-        fontObject = GameFontNormal,
-        text = "Settings",
-        width = SettingsLayout.CONTENT_WIDTH,
-    })
-    sectionTitle:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -96)
+    for firstIndex = 1, #destinations, 2 do
+        local columns = root:BeginColumns()
 
-    for i = 1, #destinations do
-        local destination = destinations[i]
-        local position = positions[i]
-        local button = CanvasControls:CreateButton(content, {
-            text = destination.label,
-            width = SettingsLayout.COLUMN_WIDTH,
-            height = 34,
-            onClick = openSettingsDestination,
-        })
-        button.settingsCategoryID = destination.category:GetID()
-        button:SetPoint(
-            "TOPLEFT",
-            content,
-            "TOPLEFT",
-            position.x,
-            position.y
-        )
+        for columnIndex = 1, 2 do
+            local destination = destinations[firstIndex + columnIndex - 1]
 
-        local detail = CanvasControls:CreateText(content, {
-            fontObject = GameFontHighlight,
-            text = destination.description,
-            width = SettingsLayout.INDENTED_COLUMN_WIDTH,
-        })
-        detail:SetPoint(
-            "TOPLEFT",
-            button,
-            "BOTTOMLEFT",
-            SettingsLayout.INDENT,
-            -8
-        )
+            if destination then
+                local column = columns[columnIndex]
+                local button = column:AddControl("button", {
+                    text = destination.label,
+                    height = 34,
+                    onClick = openSettingsDestination,
+                }, {
+                    marginBottom = 8,
+                })
+
+                button.settingsCategoryID = destination.category:GetID()
+                column:AddText({
+                    fontObject = GameFontHighlight,
+                    text = destination.description,
+                }, {
+                    indent = 1,
+                    marginBottom = 18,
+                })
+            end
+        end
+
+        columns:Finish()
     end
 
     local version = C_AddOns.GetAddOnMetadata(
         "ReadyCheckConsumables",
         "Version"
     ) or "Unknown"
-    local versionText = CanvasControls:CreateText(content, {
+    root:AddText({
         fontObject = GameFontDisableSmall,
         text = "Version " .. version,
-        width = SettingsLayout.CONTENT_WIDTH,
+    }, {
+        marginTop = 20,
+        marginBottom = 0,
     })
-    versionText:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -360)
+    layout:Finalize()
+    frame.layout = layout
 end
 
 --------------------------------------------------------------------------------
@@ -640,10 +472,7 @@ end
 
 local function registerPanel()
     local db = ReadyCheckConsumablesDB
-
-    SettingsLayout.ConfigureForCanvas(
-        SettingsPanel and SettingsPanel:GetSettingsCanvas()
-    )
+    local measurementFrame = SettingsPanel:GetSettingsCanvas()
 
     for key, default in pairs(DEFAULTS) do
         if db[key] == nil then
@@ -661,7 +490,7 @@ local function registerPanel()
     --- Consumables Frame (subcategory)
     ----------------------------------------------------------------------------
 
-    local cfFrame = RCC.ConsumableFrameSettings.CreateFrame()
+    local cfFrame = RCC.ConsumableFrameSettings.CreateFrame(measurementFrame)
     local cfCat = Settings.RegisterCanvasLayoutSubcategory(
         category, cfFrame, "Consumables Frame"
     )
@@ -670,7 +499,7 @@ local function registerPanel()
     --- Raid Frame (subcategory — declared early for parent page buttons)
     ----------------------------------------------------------------------------
 
-    local rfFrame = RCC.RaidFrameSettings.CreateFrame()
+    local rfFrame = RCC.RaidFrameSettings.CreateFrame(measurementFrame)
     local rfCat = Settings.RegisterCanvasLayoutSubcategory(
         category, rfFrame, "Raid Frame"
     )
@@ -679,7 +508,7 @@ local function registerPanel()
     --- Chat Report (subcategory — declared early for parent page buttons)
     ----------------------------------------------------------------------------
 
-    local crFrame = RCC.ChatReportSettings.CreateFrame()
+    local crFrame = RCC.ChatReportSettings.CreateFrame(measurementFrame)
     local crCat = Settings.RegisterCanvasLayoutSubcategory(
         category, crFrame, "Chat Report"
     )
@@ -688,7 +517,7 @@ local function registerPanel()
     --- Macros (subcategory - canvas)
     ----------------------------------------------------------------------------
 
-    local macroFrame = createMacrosSettingsFrame()
+    local macroFrame = createMacrosSettingsFrame(measurementFrame)
     local macroCat = Settings.RegisterCanvasLayoutSubcategory(
         category, macroFrame, "Macros"
     )
@@ -722,7 +551,7 @@ local function registerPanel()
                 .. "consumable or spell actions up to date.",
             category = macroCat,
         },
-    })
+    }, measurementFrame)
 
     Settings.RegisterAddOnCategory(category)
     RCC.settingsCategory = category

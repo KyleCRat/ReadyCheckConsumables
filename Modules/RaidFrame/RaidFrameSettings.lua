@@ -4,7 +4,6 @@ RCC.RaidFrameSettings = RCC.RaidFrameSettings or {}
 
 local Page = RCC.RaidFrameSettings
 local Controls = LibStub("LibModernSettings-1.0")
-local Layout = RCC.SettingsLayout
 
 local FEATURE_DISABLED_TOOLTIP =
     "The Raid Frame is disabled. Enable it to edit."
@@ -22,26 +21,13 @@ local SETTING_KEYS = {
     "raidFrameCauldron_showOutsideReadyCheck",
 }
 
-local function createSectionHeader(parent, text, x, y)
-    local header = Controls:CreateText(parent, {
-        fontObject = GameFontNormal,
-        text = text,
-        width = Layout.COLUMN_WIDTH,
-    })
-
-    header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-
-    return header
-end
-
 local function setControlState(control, enabled, disabledTooltip)
     control:SetControlEnabled(enabled, disabledTooltip)
 end
 
-local function addSettingCheckbox(frame, parent, options)
-    local checkbox = Controls:CreateCheckbox(parent, {
+local function addSettingCheckbox(frame, flow, options, placement)
+    local checkbox = flow:AddControl("checkbox", {
         label = options.label,
-        width = options.width or Layout.COLUMN_WIDTH,
         tooltip = options.tooltip,
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
@@ -52,85 +38,69 @@ local function addSettingCheckbox(frame, parent, options)
 
             frame:Sync()
         end,
-    })
-
-    checkbox:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        options.x,
-        options.y
-    )
+    }, placement)
     frame.settingControls[options.key] = checkbox
 
     return checkbox
 end
 
-local function addSettingSlider(frame, parent, options)
-    options.value = RCC.GetSetting(options.key)
-    options.onChanged = function(value)
-        RCC.SetSettingValue(options.key, value)
+local function addSettingSlider(frame, flow, options, placement)
+    local controlOptions = {}
 
-        if options.afterChanged then
-            options.afterChanged(value)
+    for key, value in pairs(options) do
+        controlOptions[key] = value
+    end
+
+    controlOptions.value = RCC.GetSetting(options.key)
+    controlOptions.onChanged = function(value)
+        RCC.SetSettingValue(controlOptions.key, value)
+
+        if controlOptions.afterChanged then
+            controlOptions.afterChanged(value)
         end
     end
 
-    local slider = Controls:CreateSlider(parent, options)
+    local slider = flow:AddControl("slider", controlOptions, placement)
 
-    slider:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        options.x,
-        options.y
-    )
     frame.settingControls[options.key] = slider
 
     return slider
 end
 
-function Page.CreateFrame()
+function Page.CreateFrame(measurementFrame)
     local frame = CreateFrame("Frame")
 
-    frame:SetSize(Layout.CANVAS_WIDTH, Layout.CANVAS_HEIGHT)
     frame.settingControls = {}
 
-    local content = Layout.CreateContentFrame(frame)
-
-    local title = Controls:CreateText(content, {
-        fontObject = GameFontNormalLarge,
-        text = "Raid Frame",
-        width = Layout.CONTENT_WIDTH,
+    local layout = Controls:CreateCanvasLayout(frame, {
+        measurementFrame = measurementFrame,
     })
-    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
+    local root = layout:GetRootFlow()
 
-    local description = Controls:CreateText(content, {
-        fontObject = GameFontHighlight,
-        text = "Configure the group consumable status frame shown during "
-            .. "ready checks and provision events.",
-        width = Layout.CONTENT_WIDTH,
-    })
-    description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-
-    addSettingCheckbox(frame, content, {
+    layout:AddHeader(
+        "Raid Frame",
+        "Configure the group consumable status frame shown during "
+            .. "ready checks and provision events."
+    )
+    addSettingCheckbox(frame, root, {
         key = "raidFrame_enabled",
         label = "Enabled",
         tooltip = "Enable the group consumable status frame.",
-        x = 0,
-        y = -76,
         onChanged = function()
             RCC.raidFrame:RefreshContextualVisibility()
         end,
     })
 
-    createSectionHeader(content, "Display", 0, -124)
+    local columns = root:BeginColumns()
+    local left = columns.left
+    local right = columns.right
 
-    addSettingSlider(frame, content, {
+    left:AddSection("Display")
+
+    addSettingSlider(frame, left, {
         key = "raidFrame_scale",
         label = "Scale",
         tooltip = "Scale the Raid Frame.",
-        width = Layout.COLUMN_WIDTH,
         minValue = 0.5,
         maxValue = 1.5,
         step = 0.05,
@@ -143,30 +113,25 @@ function Page.CreateFrame()
             return numericText and tonumber(numericText) / 100 or nil
         end,
         suffix = "%",
-        x = 0,
-        y = -150,
         afterChanged = function()
             RCC.raidFrame:SyncScaleControl()
         end,
     })
 
-    createSectionHeader(content, "Ready Check", 0, -230)
+    left:AddSection("Ready Check")
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, left, {
         key = "raidFrame_minShow",
         label = "Keep Open After Finished",
         tooltip = "Keep the Raid Frame open briefly after a ready check "
             .. "finishes.",
-        x = 0,
-        y = -256,
     })
 
-    addSettingSlider(frame, content, {
+    addSettingSlider(frame, left, {
         key = "raidFrame_minShowTime",
         label = "Keep Open Duration",
         tooltip = "How long the Raid Frame remains open after a ready "
             .. "check finishes.",
-        width = Layout.INDENTED_COLUMN_WIDTH,
         minValue = 1,
         maxValue = 40,
         step = 1,
@@ -174,41 +139,37 @@ function Page.CreateFrame()
             return string.format("%d", value)
         end,
         suffix = "s",
-        x = Layout.INDENT,
-        y = -294,
+    }, {
+        indent = 1,
     })
 
-    createSectionHeader(
-        content,
-        "Feasts & Cauldrons",
-        Layout.RIGHT_COLUMN_X,
-        -124
-    )
+    right:AddSection("Feasts & Cauldrons")
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, right, {
         key = "raidFrameCauldron_enabled",
         label = "Track Feasts and Cauldrons",
         tooltip = "Track feast drops and flask or potion pickups from "
             .. "cauldrons.",
-        x = Layout.RIGHT_COLUMN_X,
-        y = -150,
         onChanged = function()
             RCC.RaidFrameCauldron.Refresh()
         end,
     })
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, right, {
         key = "raidFrameCauldron_showOutsideReadyCheck",
         label = "Show Outside Ready Checks",
         tooltip = "Show the relevant food and cauldron columns when a "
             .. "feast or cauldron is detected outside ready checks.",
-        width = Layout.INDENTED_COLUMN_WIDTH,
-        x = Layout.RIGHT_COLUMN_X + Layout.INDENT,
-        y = -188,
         onChanged = function()
             RCC.RaidFrameCauldron.Refresh()
         end,
+    }, {
+        indent = 1,
     })
+
+    columns:Finish()
+    layout:Finalize()
+    frame.layout = layout
 
     function frame:Sync()
         for i = 1, #SETTING_KEYS do

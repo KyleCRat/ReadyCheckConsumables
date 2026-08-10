@@ -5,12 +5,10 @@ RCC.ConsumableFrameSettings = RCC.ConsumableFrameSettings or {}
 local Page = RCC.ConsumableFrameSettings
 local Buttons = RCC.ConsumableFrameButtons
 local Controls = LibStub("LibModernSettings-1.0")
-local Layout = RCC.SettingsLayout
 local Visibility = RCC.ContextualVisibility
 local Reason = RCC.DisplayReason
 local Surface = RCC.DisplaySurface.CONSUMABLE_FRAME
 
-local CONTENT_HEIGHT = 1040
 local MATRIX_ROW_HEIGHT = 36
 local FEATURE_DISABLED_TOOLTIP =
     "The Consumables Frame is disabled. Enable it to edit."
@@ -110,22 +108,9 @@ local function refreshConsumableFrame()
     RCC.consumables:Update()
 end
 
-local function createSectionHeader(parent, text, x, y)
-    local header = Controls:CreateText(parent, {
-        fontObject = GameFontNormal,
-        text = text,
-        width = Layout.COLUMN_WIDTH,
-    })
-
-    header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-
-    return header
-end
-
-local function addSettingCheckbox(frame, parent, options)
-    local checkbox = Controls:CreateCheckbox(parent, {
+local function addSettingCheckbox(frame, flow, options, placement)
+    local checkbox = flow:AddControl("checkbox", {
         label = options.label,
-        width = options.width or Layout.COLUMN_WIDTH,
         tooltip = options.tooltip,
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
@@ -136,51 +121,42 @@ local function addSettingCheckbox(frame, parent, options)
 
             frame:Sync()
         end,
-    })
-
-    checkbox:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        options.x,
-        options.y
-    )
+    }, placement)
     frame.settingControls[options.key] = checkbox
 
     return checkbox
 end
 
-local function addSettingSlider(frame, parent, options)
-    options.value = RCC.GetSetting(options.key)
-    options.onChanged = function(value)
-        RCC.SetSettingValue(options.key, value)
+local function addSettingSlider(frame, flow, options, placement)
+    local controlOptions = {}
 
-        if options.afterChanged then
-            options.afterChanged(value)
+    for key, value in pairs(options) do
+        controlOptions[key] = value
+    end
+
+    controlOptions.value = RCC.GetSetting(options.key)
+    controlOptions.onChanged = function(value)
+        RCC.SetSettingValue(controlOptions.key, value)
+
+        if controlOptions.afterChanged then
+            controlOptions.afterChanged(value)
         end
     end
 
-    local slider = Controls:CreateSlider(parent, options)
+    local slider = flow:AddControl("slider", controlOptions, placement)
 
-    slider:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        options.x,
-        options.y
-    )
     frame.settingControls[options.key] = slider
 
     return slider
 end
 
-local function createGeneralSettings(frame, content)
-    addSettingCheckbox(frame, content, {
+local function createGeneralSettings(frame, layout)
+    local root = layout:GetRootFlow()
+
+    addSettingCheckbox(frame, root, {
         key = "consumables_enabled",
         label = "Enabled",
         tooltip = "Enable the personal Consumables Frame.",
-        x = 0,
-        y = -76,
         onChanged = function(enabled)
             if not enabled and not InCombatLockdown() then
                 RCC.consumables:Hide()
@@ -188,45 +164,38 @@ local function createGeneralSettings(frame, content)
         end,
     })
 
-    createSectionHeader(content, "Display", 0, -118)
-    createSectionHeader(
-        content,
-        "Automatic Open Events",
-        Layout.RIGHT_COLUMN_X,
-        -118
-    )
+    local columns = root:BeginColumns()
+    local displayFlow = columns.left
+    local eventsFlow = columns.right
 
-    addSettingSlider(frame, content, {
+    displayFlow:AddSection("Display")
+    eventsFlow:AddSection("Automatic Open Events")
+
+    addSettingSlider(frame, displayFlow, {
         key = "consumables_scale",
         label = "Scale",
         tooltip = "Scale the personal Consumables Frame.",
-        width = Layout.COLUMN_WIDTH,
         minValue = 0.5,
         maxValue = 2.0,
         step = 0.1,
         inputFormatter = function(value)
             return string.format("%.1f", value)
         end,
-        x = 0,
-        y = -144,
         afterChanged = function(value)
             RCC.consumables:SetScale(value)
         end,
     })
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, displayFlow, {
         key = "consumables_minShow",
         label = "Keep Open After Ready Response",
         tooltip = "Keep the frame open briefly after you answer a ready check.",
-        x = 0,
-        y = -202,
     })
 
-    addSettingSlider(frame, content, {
+    addSettingSlider(frame, displayFlow, {
         key = "consumables_minShowTime",
         label = "Ready Check Duration",
         tooltip = "How long the frame remains open after your ready-check response.",
-        width = Layout.COLUMN_WIDTH,
         minValue = 1,
         maxValue = 40,
         step = 1,
@@ -234,109 +203,106 @@ local function createGeneralSettings(frame, content)
             return string.format("%d", value)
         end,
         suffix = "s",
-        x = 0,
-        y = -240,
     })
 
-    createSectionHeader(content, "Augment Runes", 0, -299)
+    displayFlow:AddSection("Augment Runes")
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, displayFlow, {
         key = "consumables_preferUnlimitedAugment",
         label = "Prefer Unlimited Augment Runes",
         tooltip = "Use unlimited augment runes before consumable runes from newer expansions.",
-        x = 0,
-        y = -321,
         onChanged = refreshConsumableFrame,
     })
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, eventsFlow, {
         key = "consumables_cauldronOpen",
         label = "Open After Cauldron Pickup",
         tooltip = "Open after collecting a known flask or potion from a cauldron.",
-        x = Layout.RIGHT_COLUMN_X,
-        y = -144,
     })
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, eventsFlow, {
         key = "consumables_breakOpen",
         label = "Open on Break Timer",
         tooltip = "Open when BigWigs or DBM starts a break timer.",
-        x = Layout.RIGHT_COLUMN_X,
-        y = -180,
     })
 
-    addSettingCheckbox(frame, content, {
+    addSettingCheckbox(frame, eventsFlow, {
         key = "consumables_instanceOpen",
         label = "Open When Entering an Instance",
         tooltip = "Open when entering one of the selected instance types.",
-        x = Layout.RIGHT_COLUMN_X,
-        y = -216,
     })
 
     local instanceTypes = {
-        {
-            key = "consumables_instanceOpenParty",
-            label = "Dungeons",
-            tooltip = "Open when entering a dungeon instance.",
-            x = Layout.RIGHT_COLUMN_X + Layout.INDENT,
-            y = -252,
+        left = {
+            {
+                key = "consumables_instanceOpenParty",
+                label = "Dungeons",
+                tooltip = "Open when entering a dungeon instance.",
+            },
+            {
+                key = "consumables_instanceOpenScenario",
+                label = "Scenarios",
+                tooltip = "Open when entering a scenario instance.",
+            },
+            {
+                key = "consumables_instanceOpenArena",
+                label = "Arenas",
+                tooltip = "Open when entering an arena instance.",
+            },
         },
-        {
-            key = "consumables_instanceOpenRaid",
-            label = "Raids",
-            tooltip = "Open when entering a raid instance.",
-            x = Layout.RIGHT_COLUMN_X + Layout.INDENT
-                + Layout.NESTED_COLUMN_WIDTH
-                + Layout.NESTED_GAP,
-            y = -252,
-        },
-        {
-            key = "consumables_instanceOpenScenario",
-            label = "Scenarios",
-            tooltip = "Open when entering a scenario instance.",
-            x = Layout.RIGHT_COLUMN_X + Layout.INDENT,
-            y = -288,
-        },
-        {
-            key = "consumables_instanceOpenPvp",
-            label = "Battlegrounds",
-            tooltip = "Open when entering a battleground instance.",
-            x = Layout.RIGHT_COLUMN_X + Layout.INDENT
-                + Layout.NESTED_COLUMN_WIDTH
-                + Layout.NESTED_GAP,
-            y = -288,
-        },
-        {
-            key = "consumables_instanceOpenArena",
-            label = "Arenas",
-            tooltip = "Open when entering an arena instance.",
-            x = Layout.RIGHT_COLUMN_X + Layout.INDENT,
-            y = -324,
+        right = {
+            {
+                key = "consumables_instanceOpenRaid",
+                label = "Raids",
+                tooltip = "Open when entering a raid instance.",
+            },
+            {
+                key = "consumables_instanceOpenPvp",
+                label = "Battlegrounds",
+                tooltip = "Open when entering a battleground instance.",
+            },
         },
     }
 
-    for i = 1, #instanceTypes do
-        local option = instanceTypes[i]
+    local instanceColumns = eventsFlow:BeginColumns({
+        indent = 1,
+        columnGap = layout:GetStyleValue("nestedColumnGap"),
+    })
 
-        option.width = Layout.NESTED_COLUMN_WIDTH
-        addSettingCheckbox(frame, content, option)
-        frame.instanceTypeControls[#frame.instanceTypeControls + 1] =
-            frame.settingControls[option.key]
+    for i = 1, #instanceTypes.left do
+        local option = instanceTypes.left[i]
+        local control = addSettingCheckbox(
+            frame,
+            instanceColumns.left,
+            option
+        )
+
+        frame.instanceTypeControls[#frame.instanceTypeControls + 1] = control
     end
 
-    addSettingCheckbox(frame, content, {
+    for i = 1, #instanceTypes.right do
+        local option = instanceTypes.right[i]
+        local control = addSettingCheckbox(
+            frame,
+            instanceColumns.right,
+            option
+        )
+
+        frame.instanceTypeControls[#frame.instanceTypeControls + 1] = control
+    end
+
+    instanceColumns:Finish()
+
+    addSettingCheckbox(frame, eventsFlow, {
         key = "consumables_instanceHide",
         label = "Auto-Hide After Instance Entry",
         tooltip = "Hide the frame automatically after its instance-entry delay.",
-        x = Layout.RIGHT_COLUMN_X,
-        y = -360,
     })
 
-    addSettingSlider(frame, content, {
+    addSettingSlider(frame, eventsFlow, {
         key = "consumables_instanceHideTime",
         label = "Instance Auto-Hide Delay",
         tooltip = "How long the frame remains open after entering an instance.",
-        width = Layout.INDENTED_COLUMN_WIDTH,
         minValue = 5,
         maxValue = 120,
         step = 5,
@@ -344,36 +310,31 @@ local function createGeneralSettings(frame, content)
             return string.format("%d", value)
         end,
         suffix = "s",
-        x = Layout.RIGHT_COLUMN_X + Layout.INDENT,
-        y = -396,
-    })
-end
-
-local function createMatrixHeader(content, text, x, y, width)
-    local header = Controls:CreateText(content, {
-        fontObject = GameFontNormalSmall,
-        text = text,
-        width = width,
+    }, {
+        indent = 1,
     })
 
-    header:SetPoint("TOPLEFT", content, "TOPLEFT", x, y)
-    header:SetJustifyH("CENTER")
-    header:SetJustifyV("MIDDLE")
-
-    return header
+    columns:Finish()
 end
 
-local function createVisibilityMatrix(frame, content)
-    local matrixTop = -464
-    local matrixTitle = createSectionHeader(
-        content,
-        "Buttons by Open Event",
-        0,
-        matrixTop
-    )
-    matrixTitle:SetWidth(220)
+local function createVisibilityMatrix(frame, layout)
+    local content = layout:GetContent()
+    local flow = layout:GetRootFlow()
+    local heading = flow:AddCustom(30, {
+        marginTop = 14,
+        marginBottom = 2,
+    })
+    local matrixTitle = Controls:CreateText(heading, {
+        fontObject = GameFontNormal,
+        text = "Buttons by Open Event",
+        width = 220,
+        height = 30,
+        justifyV = "MIDDLE",
+    })
 
-    local resetButton = Controls:CreateButton(content, {
+    matrixTitle:SetPoint("LEFT", heading, "LEFT", 0, 0)
+
+    local resetButton = Controls:CreateButton(heading, {
         text = "Reset Matrix",
         width = 112,
         height = 30,
@@ -384,94 +345,62 @@ local function createVisibilityMatrix(frame, content)
             frame:Sync()
         end,
     })
-    resetButton:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, matrixTop + 5)
+    resetButton:SetPoint("RIGHT", heading, "RIGHT", 0, 0)
     frame.resetMatrixButton = resetButton
 
-    local description = Controls:CreateText(content, {
+    flow:AddText({
         fontObject = GameFontHighlightSmall,
         text = "Enabled is the global switch for a button. Event columns "
             .. "choose which enabled buttons each type of frame opening "
             .. "displays.",
-        width = Layout.CONTENT_WIDTH,
+    }, {
+        marginBottom = 8,
     })
-    description:SetPoint("TOPLEFT", content, "TOPLEFT", 0, matrixTop - 32)
 
-    local headerY = matrixTop - 66
-    local matrixPadding = Layout.TABLE_PADDING
-    local matrixLeft = matrixPadding
-    local labelWidth = 160
-    local enabledX = matrixLeft + labelWidth
-    local enabledWidth = 67
-    local eventStartX = enabledX + enabledWidth
-    local eventWidth = (
-        Layout.CONTENT_WIDTH - matrixPadding - eventStartX
-    ) / #OPEN_EVENTS
-
-    createMatrixHeader(
-        content,
-        "Button",
-        matrixLeft,
-        headerY,
-        labelWidth
-    ):SetJustifyH("LEFT")
-    createMatrixHeader(
-        content,
-        "Enabled",
-        enabledX,
-        headerY,
-        enabledWidth
-    )
+    local columns = {
+        { key = "button", width = 160, justifyH = "LEFT" },
+        { key = "enabled", width = 67 },
+    }
 
     for eventIndex = 1, #OPEN_EVENTS do
-        local event = OPEN_EVENTS[eventIndex]
-        local x = eventStartX + ((eventIndex - 1) * eventWidth)
+        columns[#columns + 1] = {
+            key = "event" .. eventIndex,
+            weight = 1,
+        }
+    end
 
-        createMatrixHeader(content, event.label, x, headerY, eventWidth)
+    local matrix = Controls:CreateSettingsTable(content, {
+        width = flow:GetWidth(),
+        padding = layout:GetStyleValue("tablePadding"),
+        headerHeight = 42,
+        rowHeight = MATRIX_ROW_HEIGHT,
+        columns = columns,
+    })
+
+    matrix:AddHeaderText("button", "Button")
+    matrix:AddHeaderText("enabled", "Enabled")
+
+    for eventIndex = 1, #OPEN_EVENTS do
+        matrix:AddHeaderText(
+            "event" .. eventIndex,
+            OPEN_EVENTS[eventIndex].label
+        )
     end
 
     local definitions = Buttons.GetDefinitions()
-    local firstRowY = headerY - 42
 
     for definitionIndex = 1, #definitions do
         local definition = definitions[definitionIndex]
-        local rowY = firstRowY - ((definitionIndex - 1) * MATRIX_ROW_HEIGHT)
+        local row = matrix:AddRow()
+        local rowLabel = row:AddText("button", definition.label)
 
-        if definitionIndex % 2 == 0 then
-            local stripe = content:CreateTexture(nil, "BACKGROUND")
-
-            stripe:SetColorTexture(1, 1, 1, 0.035)
-            stripe:SetPoint("TOPLEFT", content, "TOPLEFT", 0, rowY)
-            stripe:SetSize(Layout.CONTENT_WIDTH, MATRIX_ROW_HEIGHT)
-        end
-
-        local rowLabel = Controls:CreateText(content, {
-            fontObject = GameFontHighlight,
-            text = definition.label,
-            width = labelWidth,
-        })
-        rowLabel:SetPoint(
-            "LEFT",
-            content,
-            "TOPLEFT",
-            matrixLeft,
-            rowY - (MATRIX_ROW_HEIGHT / 2)
-        )
-        rowLabel:SetJustifyV("MIDDLE")
         frame.matrixRowLabels[#frame.matrixRowLabels + 1] = rowLabel
 
         if definition.settingsTooltip then
-            local tooltipRegion = CreateFrame("Frame", nil, content)
-
-            tooltipRegion:SetPoint(
-                "TOPLEFT",
-                content,
-                "TOPLEFT",
-                matrixLeft,
-                rowY
+            Controls:SetTooltip(
+                row:GetCell("button"),
+                definition.settingsTooltip
             )
-            tooltipRegion:SetSize(labelWidth, MATRIX_ROW_HEIGHT)
-            tooltipRegion:EnableMouse(true)
-            Controls:SetTooltip(tooltipRegion, definition.settingsTooltip)
         end
 
         local enabledTooltip = "Enable " .. definition.label
@@ -482,7 +411,7 @@ local function createVisibilityMatrix(frame, content)
                 .. enabledTooltip
         end
 
-        local enabledCheckbox = Controls:CreateCheckbox(content, {
+        local enabledCheckbox = row:AddControl("enabled", "checkbox", {
             tooltip = enabledTooltip,
             onChanged = function(checked)
                 RCC.SetSettingValue(definition.settingKey, checked)
@@ -490,41 +419,28 @@ local function createVisibilityMatrix(frame, content)
                 frame:Sync()
             end,
         })
-        enabledCheckbox:SetPoint(
-            "TOPLEFT",
-            content,
-            "TOPLEFT",
-            enabledX
-                + ((eventStartX - enabledX - enabledCheckbox:GetWidth()) / 2),
-            rowY - 1
-        )
         frame.settingControls[definition.settingKey] = enabledCheckbox
 
         for eventIndex = 1, #OPEN_EVENTS do
             local event = OPEN_EVENTS[eventIndex]
-            local x = eventStartX + ((eventIndex - 1) * eventWidth)
             local enabledTooltip = string.format(
                 event.tooltip,
                 definition.label
             )
-            local checkbox = Controls:CreateCheckbox(content, {
-                tooltip = enabledTooltip,
-                onChanged = function(checked)
-                    Page.SetMatrixValue(
-                        definition,
-                        event.reason,
-                        checked
-                    )
-                    frame:Sync()
-                end,
-            })
-
-            checkbox:SetPoint(
-                "TOPLEFT",
-                content,
-                "TOPLEFT",
-                x + ((eventWidth - checkbox:GetWidth()) / 2),
-                rowY - 1
+            local checkbox = row:AddControl(
+                "event" .. eventIndex,
+                "checkbox",
+                {
+                    tooltip = enabledTooltip,
+                    onChanged = function(checked)
+                        Page.SetMatrixValue(
+                            definition,
+                            event.reason,
+                            checked
+                        )
+                        frame:Sync()
+                    end,
+                }
             )
             frame.matrixControls[#frame.matrixControls + 1] = {
                 control = checkbox,
@@ -534,42 +450,38 @@ local function createVisibilityMatrix(frame, content)
             }
         end
     end
+
+    flow:AddFrame(matrix:GetFrame(), {
+        marginBottom = 12,
+    })
+    frame.visibilityMatrix = matrix
 end
 
-function Page.CreateFrame()
+function Page.CreateFrame(measurementFrame)
     local frame = CreateFrame("Frame")
 
-    frame:SetSize(Layout.CANVAS_WIDTH, Layout.CANVAS_HEIGHT)
     frame.settingControls = {}
     frame.instanceTypeControls = {}
     frame.matrixControls = {}
     frame.matrixRowLabels = {}
 
-    local scrollBox, content = Layout.CreateScrollBox(
-        frame,
-        CONTENT_HEIGHT
+    local layout = Controls:CreateCanvasLayout(frame, {
+        measurementFrame = measurementFrame,
+        scrollable = true,
+    })
+
+    layout:AddHeader(
+        "Consumables Frame",
+        "Choose when the personal consumable bar opens and which "
+            .. "buttons appear for each open event. Open-event options start "
+            .. "the frame; the matrix controls its contents."
     )
 
-    frame.scrollBox = scrollBox
-
-    local title = Controls:CreateText(content, {
-        fontObject = GameFontNormalLarge,
-        text = "Consumables Frame",
-        width = Layout.CONTENT_WIDTH,
-    })
-    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
-
-    local description = Controls:CreateText(content, {
-        fontObject = GameFontHighlight,
-        text = "Choose when the personal consumable bar opens and which "
-            .. "buttons appear for each open event. Open-event options start "
-            .. "the frame; the matrix controls its contents.",
-        width = Layout.CONTENT_WIDTH,
-    })
-    description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-
-    createGeneralSettings(frame, content)
-    createVisibilityMatrix(frame, content)
+    createGeneralSettings(frame, layout)
+    createVisibilityMatrix(frame, layout)
+    layout:Finalize()
+    frame.layout = layout
+    frame.scrollBox = layout:GetScrollBox()
 
     function frame:Sync()
         local pageEnabled = RCC.GetSetting("consumables_enabled") == true
