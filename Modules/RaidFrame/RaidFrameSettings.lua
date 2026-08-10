@@ -4,6 +4,7 @@ RCC.RaidFrameSettings = RCC.RaidFrameSettings or {}
 
 local Page = RCC.RaidFrameSettings
 local Controls = LibStub("LibModernSettings-1.0")
+local Layout = RCC.SettingsLayout
 
 local FEATURE_DISABLED_TOOLTIP =
     "The Raid Frame is disabled. Enable it to edit."
@@ -25,7 +26,7 @@ local function createSectionHeader(parent, text, x, y)
     local header = Controls:CreateText(parent, {
         fontObject = GameFontNormal,
         text = text,
-        width = 280,
+        width = Layout.COLUMN_WIDTH,
     })
 
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -40,7 +41,7 @@ end
 local function addSettingCheckbox(frame, parent, options)
     local checkbox = Controls:CreateCheckbox(parent, {
         label = options.label,
-        width = options.width or 280,
+        width = options.width or Layout.COLUMN_WIDTH,
         tooltip = options.tooltip,
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
@@ -92,25 +93,27 @@ end
 function Page.CreateFrame()
     local frame = CreateFrame("Frame")
 
-    frame:SetSize(640, 560)
+    frame:SetSize(Layout.CANVAS_WIDTH, Layout.CANVAS_HEIGHT)
     frame.settingControls = {}
 
-    local title = Controls:CreateText(frame, {
+    local content = Layout.CreateContentFrame(frame)
+
+    local title = Controls:CreateText(content, {
         fontObject = GameFontNormalLarge,
         text = "Raid Frame",
-        width = 580,
+        width = Layout.CONTENT_WIDTH,
     })
-    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
+    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
 
-    local description = Controls:CreateText(frame, {
+    local description = Controls:CreateText(content, {
         fontObject = GameFontHighlight,
         text = "Configure the group consumable status frame shown during "
             .. "ready checks and provision events.",
-        width = 580,
+        width = Layout.CONTENT_WIDTH,
     })
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
-    addSettingCheckbox(frame, frame, {
+    addSettingCheckbox(frame, content, {
         key = "raidFrame_enabled",
         label = "Enabled",
         tooltip = "Enable the group consumable status frame.",
@@ -121,13 +124,13 @@ function Page.CreateFrame()
         end,
     })
 
-    createSectionHeader(frame, "Display", 0, -124)
+    createSectionHeader(content, "Display", 0, -124)
 
-    addSettingSlider(frame, frame, {
+    addSettingSlider(frame, content, {
         key = "raidFrame_scale",
         label = "Scale",
         tooltip = "Scale the Raid Frame.",
-        width = 270,
+        width = Layout.COLUMN_WIDTH,
         minValue = 0.5,
         maxValue = 1.5,
         step = 0.05,
@@ -147,9 +150,9 @@ function Page.CreateFrame()
         end,
     })
 
-    createSectionHeader(frame, "Ready Check", 0, -230)
+    createSectionHeader(content, "Ready Check", 0, -230)
 
-    addSettingCheckbox(frame, frame, {
+    addSettingCheckbox(frame, content, {
         key = "raidFrame_minShow",
         label = "Keep Open After Finished",
         tooltip = "Keep the Raid Frame open briefly after a ready check "
@@ -158,12 +161,12 @@ function Page.CreateFrame()
         y = -256,
     })
 
-    addSettingSlider(frame, frame, {
+    addSettingSlider(frame, content, {
         key = "raidFrame_minShowTime",
         label = "Keep Open Duration",
         tooltip = "How long the Raid Frame remains open after a ready "
             .. "check finishes.",
-        width = 254,
+        width = Layout.INDENTED_COLUMN_WIDTH,
         minValue = 1,
         maxValue = 40,
         step = 1,
@@ -171,31 +174,36 @@ function Page.CreateFrame()
             return string.format("%d", value)
         end,
         suffix = "s",
-        x = 16,
+        x = Layout.INDENT,
         y = -294,
     })
 
-    createSectionHeader(frame, "Feasts & Cauldrons", 310, -124)
+    createSectionHeader(
+        content,
+        "Feasts & Cauldrons",
+        Layout.RIGHT_COLUMN_X,
+        -124
+    )
 
-    addSettingCheckbox(frame, frame, {
+    addSettingCheckbox(frame, content, {
         key = "raidFrameCauldron_enabled",
         label = "Track Feasts and Cauldrons",
         tooltip = "Track feast drops and flask or potion pickups from "
             .. "cauldrons.",
-        x = 310,
+        x = Layout.RIGHT_COLUMN_X,
         y = -150,
         onChanged = function()
             RCC.RaidFrameCauldron.Refresh()
         end,
     })
 
-    addSettingCheckbox(frame, frame, {
+    addSettingCheckbox(frame, content, {
         key = "raidFrameCauldron_showOutsideReadyCheck",
         label = "Show Outside Ready Checks",
         tooltip = "Show the relevant food and cauldron columns when a "
             .. "feast or cauldron is detected outside ready checks.",
-        width = 264,
-        x = 326,
+        width = Layout.INDENTED_COLUMN_WIDTH,
+        x = Layout.RIGHT_COLUMN_X + Layout.INDENT,
         y = -188,
         onChanged = function()
             RCC.RaidFrameCauldron.Refresh()

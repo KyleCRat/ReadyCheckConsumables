@@ -4,6 +4,7 @@ RCC.ChatReportSettings = RCC.ChatReportSettings or {}
 
 local Page = RCC.ChatReportSettings
 local Controls = LibStub("LibModernSettings-1.0")
+local Layout = RCC.SettingsLayout
 
 local FEATURE_DISABLED_TOOLTIP =
     "Chat Report is disabled. Enable it to edit."
@@ -59,21 +60,21 @@ local INSTANCE_SETTINGS = {
         key = "chatReport_mythicDungeon",
         label = "Mythic",
         tooltip = "Report after ready checks in Mythic dungeons.",
-        x = 310,
+        rightColumn = true,
         y = -264,
     },
     {
         key = "chatReport_heroicDungeon",
         label = "Heroic",
         tooltip = "Report after ready checks in Heroic dungeons.",
-        x = 310,
+        rightColumn = true,
         y = -300,
     },
     {
         key = "chatReport_normalDungeon",
         label = "Normal",
         tooltip = "Report after ready checks in Normal dungeons.",
-        x = 310,
+        rightColumn = true,
         y = -336,
     },
 }
@@ -82,7 +83,7 @@ local function createSectionHeader(parent, text, x, y)
     local header = Controls:CreateText(parent, {
         fontObject = GameFontNormal,
         text = text,
-        width = 280,
+        width = Layout.COLUMN_WIDTH,
     })
 
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -93,7 +94,7 @@ end
 local function addSettingCheckbox(frame, parent, options)
     local checkbox = Controls:CreateCheckbox(parent, {
         label = options.label,
-        width = options.width or 280,
+        width = options.width or Layout.COLUMN_WIDTH,
         tooltip = options.tooltip,
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
@@ -105,7 +106,7 @@ local function addSettingCheckbox(frame, parent, options)
         "TOPLEFT",
         parent,
         "TOPLEFT",
-        options.x,
+        options.rightColumn and Layout.RIGHT_COLUMN_X or options.x,
         options.y
     )
     frame.settingControls[options.key] = checkbox
@@ -116,25 +117,27 @@ end
 function Page.CreateFrame()
     local frame = CreateFrame("Frame")
 
-    frame:SetSize(640, 560)
+    frame:SetSize(Layout.CANVAS_WIDTH, Layout.CANVAS_HEIGHT)
     frame.settingControls = {}
 
-    local title = Controls:CreateText(frame, {
+    local content = Layout.CreateContentFrame(frame)
+
+    local title = Controls:CreateText(content, {
         fontObject = GameFontNormalLarge,
         text = "Chat Report",
-        width = 580,
+        width = Layout.CONTENT_WIDTH,
     })
-    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
+    title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -8)
 
-    local description = Controls:CreateText(frame, {
+    local description = Controls:CreateText(content, {
         fontObject = GameFontHighlight,
         text = "Configure automatic reports for players who are missing "
             .. "required consumables after a ready check.",
-        width = 580,
+        width = Layout.CONTENT_WIDTH,
     })
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
-    addSettingCheckbox(frame, frame, {
+    addSettingCheckbox(frame, content, {
         key = "chatReport_enabled",
         label = "Enabled",
         tooltip = "Enable automatic missing-consumable chat reports.",
@@ -142,30 +145,35 @@ function Page.CreateFrame()
         y = -76,
     })
 
-    createSectionHeader(frame, "Reporting Permission", 0, -124)
+    createSectionHeader(content, "Reporting Permission", 0, -124)
 
-    local permission = Controls:CreateDropdown(frame, {
+    local permission = Controls:CreateDropdown(content, {
         label = "Who Can Report",
         tooltip = "Choose the minimum raid role allowed to send RCC's "
             .. "automatic report. This restriction does not apply outside "
             .. "raids.",
-        width = 270,
+        width = Layout.COLUMN_WIDTH,
         value = RCC.GetSetting("chatReport_permission"),
         choices = PERMISSION_CHOICES,
         onChanged = function(value)
             RCC.SetSettingValue("chatReport_permission", value)
         end,
     })
-    permission:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -150)
+    permission:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -150)
     frame.settingControls.chatReport_permission = permission
 
-    createSectionHeader(frame, "Raid Instances", 0, -238)
-    createSectionHeader(frame, "Dungeon Instances", 310, -238)
+    createSectionHeader(content, "Raid Instances", 0, -238)
+    createSectionHeader(
+        content,
+        "Dungeon Instances",
+        Layout.RIGHT_COLUMN_X,
+        -238
+    )
 
     for i = 1, #INSTANCE_SETTINGS do
         local options = INSTANCE_SETTINGS[i]
 
-        addSettingCheckbox(frame, frame, options)
+        addSettingCheckbox(frame, content, options)
     end
 
     function frame:Sync()
