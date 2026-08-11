@@ -1,15 +1,15 @@
 package-as: ReadyCheckConsumables
 
 manual-changelog:
-  filename: CHANGELOG.md
-  markup-type: markdown
+    filename: CHANGELOG.md
+    markup-type: markdown
 
 externals:
-  Libs/LibModernSettings-1.0:
-    url: https://github.com/KyleCRat/LibModernSettings.git
-    tag: 1.0.0
+    Libs/LibModernSettings-1.0:
+        url: https://github.com/KyleCRat/LibModernSettings.git
+        tag: 1.0.0
 
 ignore:
-    - .pkgmeta
-    - .git
+    - Docs
+    - Tests
     - "*.png"
