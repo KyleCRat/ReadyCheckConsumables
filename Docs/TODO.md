@@ -13,12 +13,12 @@
 
 ## 12.1.0 / Interface 120100 Upgrade
 
-- [ ] Once 12.1.0 is the live minimum, replace the slider tooltip
-  hooks in `Libs/LibModernSettings-1.0/Controls/Slider.lua` with
+- [ ] In the next LibModernSettings release, replace the slider tooltip hooks
+  in `Libs/LibModernSettings-1.0/Controls/Slider.lua` with
   `Slider:SetTooltipFunc` and `Settings.InitTooltip`. Release the library
   update, then advance RCC's pinned library commit. Confirm the method exists
-  on the live `MinimalSliderWithSteppersTemplate` slider before removing the
-  12.0.7-compatible hooks.
+  on the live `MinimalSliderWithSteppersTemplate` slider as part of that
+  library change.
 - [ ] Find and verify the remaining data for the provisional 12.1 consumables.
   RCC currently includes only the supplied PTR item IDs; combat-potion quality
   metadata is intentionally unset until it can be confirmed.
@@ -29,8 +29,6 @@
     item variant.
   - Confirm final effects, shared cooldown categories, and any separate aura
     spell IDs on a later PTR build or the final live client.
-- [ ] Re-export and re-audit the final 12.1.0 live build before removing the
-  compatibility fallbacks in `Docs/POST_120100_CLEANUP.md`.
 - [ ] Optional: evaluate `C_Spell.GetLastCategoryCooldownSource` for a future
   combat/healing-potion cooldown display. Do not implement it until RCC has a
   reliable source for the relevant spell-category IDs and secret cooldown

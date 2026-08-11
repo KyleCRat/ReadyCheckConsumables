@@ -15,6 +15,8 @@ local CacheKey = RCC.ConsumableItemCacheKey
 local GetSpellInfo = C_Spell.GetSpellInfo
 local IsSpellKnown = C_SpellBook.IsSpellKnown
 local GetItemInfoInstant = C_Item.GetItemInfoInstant
+local GetTemporaryEnchantmentInfo =
+    C_PaperDollInfo.GetTemporaryEnchantmentInfo
 
 local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
@@ -97,21 +99,66 @@ function WeaponEnchant.CanSlotBeEnchanted(slotID)
     return itemClassID == 2
 end
 
-function WeaponEnchant.BuildSlotState(slotID, hasEnchant, expiration, enchantID)
+local function getPublicEnchantField(enchantInfo, field)
+    if not enchantInfo
+        or issecretvalue(enchantInfo)
+        or type(enchantInfo) ~= "table"
+    then
+        return nil
+    end
+
+    local value = enchantInfo[field]
+
+    if issecretvalue(value) then
+        return nil
+    end
+
+    return value
+end
+
+function WeaponEnchant.BuildSlotState(slotID, enchantInfo)
     local canBeEnchanted = WeaponEnchant.CanSlotBeEnchanted(slotID)
+    local hasEnchant = canBeEnchanted
+        and enchantInfo ~= nil
+        and not issecretvalue(enchantInfo)
+        and type(enchantInfo) == "table"
+    local remainingTimeMs = hasEnchant
+        and getPublicEnchantField(enchantInfo, "remainingTimeMs")
+    local enchantID = hasEnchant
+        and getPublicEnchantField(enchantInfo, "enchantID")
+    local chargesRemaining = hasEnchant
+        and getPublicEnchantField(enchantInfo, "chargesRemaining")
+    local hasExpirationTime = hasEnchant
+        and getPublicEnchantField(enchantInfo, "hasExpirationTime") == true
+
+    if not F.IsSafeNumber(remainingTimeMs) then
+        remainingTimeMs = nil
+    end
+
+    if not F.IsSafeNumber(enchantID) or enchantID <= 0 then
+        enchantID = nil
+    end
+
+    if not F.IsSafeNumber(chargesRemaining) then
+        chargesRemaining = nil
+    end
 
     return {
         canBeEnchanted = canBeEnchanted,
-        hasEnchant = canBeEnchanted and hasEnchant == true,
-        expiration = canBeEnchanted and expiration or nil,
-        enchantID = canBeEnchanted and enchantID or nil,
+        hasEnchant = hasEnchant,
+        remainingTimeMs = remainingTimeMs,
+        enchantID = enchantID,
+        chargesRemaining = chargesRemaining,
+        hasExpirationTime = hasExpirationTime,
         slotID = slotID,
     }
 end
 
 function WeaponEnchant.IsExpiringSoon(slotState)
-    return slotState.expiration ~= nil
-           and Timing.IsExpiringSoon(slotState.expiration / 1000)
+    return slotState
+           and slotState.hasExpirationTime == true
+           and F.IsSafeNumber(slotState.remainingTimeMs)
+           and Timing.IsExpiringSoon(slotState.remainingTimeMs / 1000)
 end
 
 local function playerKnowsSpellEnchantData(enchantData)
@@ -289,25 +336,16 @@ function WeaponEnchant.ResolveAction(slotState, activeEnchantData,
 end
 
 function WeaponEnchant.GetCurrentSlotState(slotID)
-    local hasMainHandEnchant, mainHandExpiration, _, mainHandEnchantID,
-          hasOffHandEnchant, offHandExpiration, _, offHandEnchantID =
-          GetWeaponEnchantInfo()
-
-    if slotID == MAIN_HAND_INVENTORY_SLOT then
-        return WeaponEnchant.BuildSlotState(
-            slotID,
-            hasMainHandEnchant,
-            mainHandExpiration,
-            mainHandEnchantID
-        )
-    elseif slotID == OFF_HAND_INVENTORY_SLOT then
-        return WeaponEnchant.BuildSlotState(
-            slotID,
-            hasOffHandEnchant,
-            offHandExpiration,
-            offHandEnchantID
-        )
+    if slotID ~= MAIN_HAND_INVENTORY_SLOT
+        and slotID ~= OFF_HAND_INVENTORY_SLOT
+    then
+        return nil
     end
+
+    return WeaponEnchant.BuildSlotState(
+        slotID,
+        GetTemporaryEnchantmentInfo(slotID)
+    )
 end
 
 function WeaponEnchant.GetActionForSlot(slotID)

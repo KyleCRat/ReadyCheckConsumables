@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Made ReadyCheckConsumables require Interface `120100` and use the final 12.1
+  macro-limit constants directly.
+- Migrated temporary weapon-enchant detection to
+  `C_PaperDollInfo.GetTemporaryEnchantmentInfo` through one shared slot-state
+  adapter.
+
+### Fixed
+- Made helpful-aura scans fail closed when 12.1 restricts aura access, with
+  unavailable scans omitted from reports, raid-frame status, and missing-buff
+  prompts instead of being treated as empty aura lists.
+
 ## [12.1.0-18] - 2026-08-10
 
 ### Added

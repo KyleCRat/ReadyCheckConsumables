@@ -121,6 +121,7 @@ end
 local function applySyntheticAuraData(data, column)
     local hasAura = randomBool()
 
+    data.available = true
     data.has = hasAura
     data.auraID = nil
 
@@ -134,6 +135,7 @@ local function applySyntheticAuraData(data, column)
 end
 
 local function applySyntheticRaidBuffData(data)
+    data.available = true
     data.has = randomBool()
     data.auraID = nil
 end
@@ -170,6 +172,8 @@ end
 local function createSyntheticColumnData(layout, context, playerMember)
     local columnData = Columns.CreateColumnData(layout)
 
+    columnData.auraScanAvailable = true
+
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
         local data = columnData[column.key]
@@ -180,6 +184,7 @@ local function createSyntheticColumnData(layout, context, playerMember)
         if data then
             if shouldMirrorPlayerColumn(column)
                 and playerData
+                and playerData.available == true
                 and playerColumnIsGood(playerMember, context, column)
             then
                 columnData[column.key] = copySyntheticColumnData(playerData)

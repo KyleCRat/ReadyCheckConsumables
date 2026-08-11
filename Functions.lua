@@ -138,18 +138,16 @@ function F.GetCurrentPublicAuraInstanceID(unit, auraInstanceID)
     if issecretvalue(unit) or not unit
         or not F.IsSafeNumber(auraInstanceID)
         or auraInstanceID <= 0
+        or C_Secrets.ShouldAurasBeSecret()
     then
         return nil
     end
 
-    local getAuraData = C_UnitAuras
-        and C_UnitAuras.GetAuraDataByAuraInstanceID
-
-    if not getAuraData then
-        return nil
-    end
-
-    local succeeded, aura = pcall(getAuraData, unit, auraInstanceID)
+    local succeeded, aura = pcall(
+        C_UnitAuras.GetAuraDataByAuraInstanceID,
+        unit,
+        auraInstanceID
+    )
 
     if not succeeded then
         return nil
@@ -335,31 +333,79 @@ end
 
 --------------------------------------------------------------------------------
 --- ForEachHelpfulAura(unit, callback)
---- Iterates helpful auras and skips non-public spell IDs before callback.
+--- Iterates helpful auras using only normalized public fields.
 --- Callback receives aura, spellID, auraIndex.
 --- Return true from the callback to stop iteration early.
+--- Returns true when the requested scan completed, or false when aura access
+--- was denied or a required identifying field was restricted.
 --------------------------------------------------------------------------------
+
+local function queryHelpfulAura(unit, index)
+    if issecretvalue(unit) or not unit
+        or C_Secrets.ShouldAurasBeSecret()
+    then
+        return false, nil
+    end
+
+    local succeeded, aura = pcall(
+        C_UnitAuras.GetAuraDataByIndex,
+        unit,
+        index,
+        "HELPFUL"
+    )
+
+    if not succeeded then
+        return false, nil
+    end
+
+    return true, aura
+end
+
+local function createPublicHelpfulAura(aura)
+    if not aura or issecretvalue(aura) then
+        return nil
+    end
+
+    local spellID = F.GetPublicAuraField(aura, "spellId")
+
+    if not F.IsSafeNumber(spellID) then
+        return nil
+    end
+
+    return {
+        auraInstanceID = F.GetPublicAuraField(aura, "auraInstanceID"),
+        duration = F.GetPublicAuraField(aura, "duration"),
+        expirationTime = F.GetPublicAuraField(aura, "expirationTime"),
+        icon = F.GetPublicAuraField(aura, "icon"),
+        name = F.GetPublicAuraField(aura, "name"),
+        spellId = spellID,
+    }
+end
 
 function F.ForEachHelpfulAura(unit, callback)
     for i = 1, RCC.MAX_AURAS do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+        local querySucceeded, rawAura = queryHelpfulAura(unit, i)
+
+        if not querySucceeded then
+            return false
+        end
+
+        if not rawAura then
+            return true
+        end
+
+        local aura = createPublicHelpfulAura(rawAura)
 
         if not aura then
-            break
+            return false
         end
 
-        local spellID = F.GetPublicAuraField(aura, "spellId")
-
-        if spellID == nil then
-            spellID = F.GetPublicAuraField(aura, "spellID")
-        end
-
-        if F.IsSafeNumber(spellID)
-            and callback(aura, spellID, i) == true
-        then
-            break
+        if callback(aura, aura.spellId, i) == true then
+            return true
         end
     end
+
+    return true
 end
 
 --------------------------------------------------------------------------------

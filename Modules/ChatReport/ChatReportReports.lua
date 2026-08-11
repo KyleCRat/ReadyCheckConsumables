@@ -56,6 +56,7 @@ end
 local function reportFood(toChat)
     local missing = {}
     local expiring = {}
+    local scanUnavailable = false
     local now = GetTime()
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
@@ -64,7 +65,8 @@ local function reportFood(toChat)
         local hasFood = false
         local colored = Output.ColorName(F.shortName(name), class)
 
-        F.ForEachHelpfulAura(unit, function(aura, spellID)
+        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura,
+                                                                  spellID)
             local auraType = FoodAuras.GetType(aura)
 
             if auraType == FOOD_AURA_TYPE.WELL_FED then
@@ -87,10 +89,18 @@ local function reportFood(toChat)
             end
         end)
 
-        if not hasFood then
+        if not scanAvailable then
+            scanUnavailable = true
+
+            return false
+        elseif not hasFood then
             missing[#missing + 1] = colored
         end
     end)
+
+    if scanUnavailable then
+        return
+    end
 
     local totalBad = #missing + #expiring
 
@@ -109,6 +119,7 @@ end
 local function reportFlasks(toChat)
     local missing = {}
     local expiring = {}
+    local scanUnavailable = false
     local now = GetTime()
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
@@ -117,7 +128,8 @@ local function reportFlasks(toChat)
         local hasFlask = false
         local colored = Output.ColorName(F.shortName(name), class)
 
-        F.ForEachHelpfulAura(unit, function(aura, spellID)
+        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura,
+                                                                  spellID)
             if db.flaskBuffIDs[spellID] then
                 hasFlask = true
 
@@ -138,10 +150,18 @@ local function reportFlasks(toChat)
             end
         end)
 
-        if not hasFlask then
+        if not scanAvailable then
+            scanUnavailable = true
+
+            return false
+        elseif not hasFlask then
             missing[#missing + 1] = colored
         end
     end)
+
+    if scanUnavailable then
+        return
+    end
 
     local totalBad = #missing + #expiring
 
@@ -160,6 +180,7 @@ end
 local function reportAugments(toChat)
     local missing = {}
     local lowXpac = {}
+    local scanUnavailable = false
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
         if not online then return end
@@ -167,7 +188,8 @@ local function reportAugments(toChat)
         local hasAugment = false
         local colored = Output.ColorName(F.shortName(name), class)
 
-        F.ForEachHelpfulAura(unit, function(aura, spellID)
+        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura,
+                                                                  spellID)
             local augmentData = db.augmentBuffIDs[spellID]
 
             if augmentData then
@@ -187,10 +209,18 @@ local function reportAugments(toChat)
             end
         end)
 
-        if not hasAugment then
+        if not scanAvailable then
+            scanUnavailable = true
+
+            return false
+        elseif not hasAugment then
             missing[#missing + 1] = colored
         end
     end)
+
+    if scanUnavailable then
+        return
+    end
 
     local totalBad = #missing + #lowXpac
 
@@ -211,6 +241,7 @@ local function reportBuffs(toChat)
     local buffInfos = {}
     local classPresent = {}
     local missingCount = {}
+    local scanUnavailable = false
 
     for k = 1, buffsCount do
         buffInfos[k] = RaidBuffStatus.GetInfo(k)
@@ -230,7 +261,7 @@ local function reportBuffs(toChat)
 
         local hasBuff = {}
 
-        F.ForEachHelpfulAura(unit, function(aura)
+        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura)
             for k = 1, buffsCount do
                 if RaidBuffStatus.AuraMatches(k, aura) then
                     hasBuff[k] = true
@@ -238,12 +269,22 @@ local function reportBuffs(toChat)
             end
         end)
 
-        for k = 1, buffsCount do
-            if not hasBuff[k] then
-                missingCount[k] = missingCount[k] + 1
+        if not scanAvailable then
+            scanUnavailable = true
+
+            return false
+        else
+            for k = 1, buffsCount do
+                if not hasBuff[k] then
+                    missingCount[k] = missingCount[k] + 1
+                end
             end
         end
     end)
+
+    if scanUnavailable then
+        return
+    end
 
     local parts = {}
 

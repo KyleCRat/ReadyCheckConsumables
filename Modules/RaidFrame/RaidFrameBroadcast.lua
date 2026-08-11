@@ -5,10 +5,10 @@ local Broadcast = RCC.RaidFrameBroadcast
 
 local F  = RCC.F
 local db = RCC.db
+local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
 local floor              = floor
 local strsplit           = strsplit
-local GetItemInfoInstant = C_Item.GetItemInfoInstant
 local GetItemIconByID    = C_Item.GetItemIconByID
 local GetSpellInfo       = C_Spell.GetSpellInfo
 
@@ -18,8 +18,8 @@ local FLASK_MESSAGE_TYPE = "FLASK"
 -- Keep the legacy "OIL" message type so older RCC clients can still read the
 -- remaining time and item ID from the first two payload fields.
 local TEMP_WEAPON_ENCHANT_MESSAGE_TYPE = "OIL"
-local MAIN_HAND_INVENTORY_SLOT = 16
-local OFF_HAND_INVENTORY_SLOT = 17
+local MAIN_HAND_INVENTORY_SLOT = WeaponEnchant.MAIN_HAND_INVENTORY_SLOT
+local OFF_HAND_INVENTORY_SLOT = WeaponEnchant.OFF_HAND_INVENTORY_SLOT
 
 Broadcast.TempWeaponEnchantStatus = {
     MISSING   = 0,
@@ -83,12 +83,18 @@ local function getTempWeaponEnchantData(enchantID)
     return itemID, iconID or 0, spellID
 end
 
-local function getTempWeaponEnchantRemaining(expiration)
-    if not F.IsSafeNumber(expiration) or expiration <= 0 then
+local function getTempWeaponEnchantRemaining(slotState)
+    local remainingTimeMs = slotState and slotState.remainingTimeMs
+
+    if not slotState
+        or slotState.hasExpirationTime ~= true
+        or not F.IsSafeNumber(remainingTimeMs)
+        or remainingTimeMs <= 0
+    then
         return TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
     end
 
-    return expiration / 1000
+    return remainingTimeMs / 1000
 end
 
 local function getTimedStatusFields(data)
@@ -143,61 +149,43 @@ local function createTempWeaponEnchantStatus(time, enchantID)
 end
 
 local function getPlayerTempWeaponEnchantStatus()
-    local mainHandItemID = GetInventoryItemID("player",
-                                              MAIN_HAND_INVENTORY_SLOT)
+    local mainHandState = WeaponEnchant.GetCurrentSlotState(
+        MAIN_HAND_INVENTORY_SLOT
+    )
 
-    if not mainHandItemID then
+    if not mainHandState or not mainHandState.canBeEnchanted then
         return createTempWeaponEnchantStatus(
             TEMP_WEAPON_ENCHANT_STATUS.NO_WEAPON,
             0
         )
     end
 
-    local hasMainHandEnchant, mainHandExpiration, _,
-          mainHandEnchantID, hasOffHandEnchant, offHandExpiration,
-          _, offHandEnchantID = GetWeaponEnchantInfo()
-
-    if not hasMainHandEnchant then
+    if not mainHandState.hasEnchant then
         return createTempWeaponEnchantStatus(
             TEMP_WEAPON_ENCHANT_STATUS.MISSING,
             0
         )
     end
 
-    local lowestTime = getTempWeaponEnchantRemaining(mainHandExpiration)
-    local enchantID = 0
+    local lowestTime = getTempWeaponEnchantRemaining(mainHandState)
+    local enchantID = mainHandState.enchantID or 0
+    local offHandState = WeaponEnchant.GetCurrentSlotState(
+        OFF_HAND_INVENTORY_SLOT
+    )
 
-    if F.IsSafeNumber(mainHandEnchantID) and mainHandEnchantID > 0 then
-        enchantID = mainHandEnchantID
-    end
+    if offHandState and offHandState.canBeEnchanted then
+        if not offHandState.hasEnchant then
+            return createTempWeaponEnchantStatus(
+                TEMP_WEAPON_ENCHANT_STATUS.MISSING,
+                0
+            )
+        end
 
-    local offhandItemID = GetInventoryItemID("player",
-                                             OFF_HAND_INVENTORY_SLOT)
+        local offHandTime = getTempWeaponEnchantRemaining(offHandState)
 
-    if offhandItemID then
-        local itemClassID = select(6, GetItemInfoInstant(offhandItemID))
-
-        if itemClassID == 2 then
-            if not hasOffHandEnchant then
-                return createTempWeaponEnchantStatus(
-                    TEMP_WEAPON_ENCHANT_STATUS.MISSING,
-                    0
-                )
-            end
-
-            local ohTime = getTempWeaponEnchantRemaining(offHandExpiration)
-
-            if ohTime < lowestTime then
-                lowestTime = ohTime
-
-                if F.IsSafeNumber(offHandEnchantID)
-                    and offHandEnchantID > 0
-                then
-                    enchantID = offHandEnchantID
-                else
-                    enchantID = 0
-                end
-            end
+        if offHandTime < lowestTime then
+            lowestTime = offHandTime
+            enchantID = offHandState.enchantID or 0
         end
     end
 
@@ -338,10 +326,14 @@ function Broadcast.Create()
     end
 
     function broadcast:SendTimedConsumableStatuses(columnData)
+        if not columnData or columnData.auraScanAvailable ~= true then
+            return
+        end
+
         local chatType = F.chatType()
 
-        self:SendFoodStatus(columnData and columnData.food, chatType)
-        self:SendFlaskStatus(columnData and columnData.flask, chatType)
+        self:SendFoodStatus(columnData.food, chatType)
+        self:SendFlaskStatus(columnData.flask, chatType)
     end
 
     function broadcast:SendTempWeaponEnchantStatus()

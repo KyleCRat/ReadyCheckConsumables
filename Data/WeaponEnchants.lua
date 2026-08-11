@@ -6,7 +6,8 @@ RCC.db = RCC.db or {}
 --- Weapon Enchant / Oil Lookup
 --- Maps enchant ID -> { item, spellID, [icon], [q], [xpac] }.
 --- Used by the consumable frame to detect and display weapon buffs.
---- Detected via GetWeaponEnchantInfo(); only weapon-slot enchants belong here.
+--- Detected via C_PaperDollInfo.GetTemporaryEnchantmentInfo(); only
+--- weapon-slot enchants belong here.
 --- Spell-based weapon enchants stay in this root file. Item-based weapon
 --- enchants are appended by expansion files.
 --------------------------------------------------------------------------------

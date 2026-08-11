@@ -67,26 +67,31 @@ end
 function Auras.ScanPlayer(now)
     local state = {
         auras = {},
+        available = false,
     }
 
-    F.ForEachHelpfulAura("player", function(auraData, spellID)
-        local expiry = F.GetPublicAuraField(auraData, "expirationTime")
+    local scanAvailable = F.ForEachHelpfulAura("player", function(auraData,
+                                                                   spellID)
+        local expiry = auraData.expirationTime
         local remaining = F.GetAuraRemaining(expiry, now)
         local aura = {
-            auraInstanceID = F.GetPublicAuraField(
-                auraData,
-                "auraInstanceID"
-            ),
-            duration = F.GetPublicAuraField(auraData, "duration"),
+            auraInstanceID = auraData.auraInstanceID,
+            duration = auraData.duration,
             expiry = expiry,
-            icon = F.GetPublicAuraField(auraData, "icon"),
-            name = F.GetPublicAuraField(auraData, "name"),
+            icon = auraData.icon,
+            name = auraData.name,
             remaining = remaining,
             spellID = spellID,
         }
 
         state.auras[#state.auras + 1] = aura
     end)
+
+    if not scanAvailable then
+        wipe(state.auras)
+    end
+
+    state.available = scanAvailable
 
     return state
 end

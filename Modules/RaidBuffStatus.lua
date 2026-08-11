@@ -18,7 +18,7 @@ end
 local function getAuraSpellID(aura)
     if not aura then return end
 
-    return aura.spellId or aura.spellID
+    return aura.spellId
 end
 
 function Status.GetCount()
@@ -60,6 +60,7 @@ end
 
 function Status.CreateData()
     return {
+        available = false,
         has = false,
         auraID = nil,
         time = nil,
@@ -99,7 +100,7 @@ function Status.CollectAura(data, aura, index, remaining)
 end
 
 function Status.IsMissing(data)
-    return not data or not data.has
+    return data and data.available == true and not data.has
 end
 
 function Status.ScanUnit(unit, now)
@@ -114,7 +115,7 @@ function Status.ScanUnit(unit, now)
         return statuses
     end
 
-    F.ForEachHelpfulAura(unit, function(aura, spellID)
+    local scanAvailable = F.ForEachHelpfulAura(unit, function(aura, spellID)
         if spellID then
             local remaining = now and F.GetAuraRemaining(
                 aura.expirationTime,
@@ -127,6 +128,18 @@ function Status.ScanUnit(unit, now)
         end
     end)
 
+    if not scanAvailable then
+        for index = 1, count do
+            statuses[index] = Status.CreateData()
+        end
+
+        return statuses
+    end
+
+    for index = 1, count do
+        statuses[index].available = true
+    end
+
     return statuses
 end
 
@@ -137,7 +150,7 @@ function Status.GetUnitStatus(unit, index, now)
         return data
     end
 
-    F.ForEachHelpfulAura(unit, function(aura, spellID)
+    local scanAvailable = F.ForEachHelpfulAura(unit, function(aura, spellID)
         if spellID then
             local remaining = now and F.GetAuraRemaining(
                 aura.expirationTime,
@@ -151,6 +164,12 @@ function Status.GetUnitStatus(unit, index, now)
             end
         end
     end)
+
+    if not scanAvailable then
+        return Status.CreateData()
+    end
+
+    data.available = true
 
     return data
 end

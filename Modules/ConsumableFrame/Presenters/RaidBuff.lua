@@ -24,13 +24,18 @@ end
 local function getGroupStatus(raidBuffIndex)
     local missingCount = 0
     local minRemaining
+    local statusAvailable = true
     local now = GetTime()
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
         if shouldCheckUnit(unit, online) then
             local data = RaidBuffStatus.GetUnitStatus(unit, raidBuffIndex, now)
 
-            if RaidBuffStatus.IsMissing(data) then
+            if data.available ~= true then
+                statusAvailable = false
+
+                return false
+            elseif RaidBuffStatus.IsMissing(data) then
                 missingCount = missingCount + 1
             elseif F.IsSafeNumber(data.time) and data.time > 0 then
                 if not minRemaining or data.time < minRemaining then
@@ -40,7 +45,7 @@ local function getGroupStatus(raidBuffIndex)
         end
     end)
 
-    return missingCount, minRemaining
+    return missingCount, minRemaining, statusAvailable
 end
 
 function RaidBuff.Update(button)
@@ -52,17 +57,23 @@ function RaidBuff.Update(button)
         return
     end
 
-    local missingCount, minRemaining = getGroupStatus(info.index)
-    local hasMissing = missingCount > 0
+    local missingCount, minRemaining, statusAvailable = getGroupStatus(
+        info.index
+    )
+    local hasMissing = statusAvailable and missingCount > 0
     local buttonState = ButtonState.Create({
         icon = info.iconID,
         tooltipSpellID = info.spellID,
         clickHintSpellID = info.spellID,
-        detailText = minRemaining and F.FormatDuration(minRemaining) or "",
-        detailTextIsBad = Timing.IsExpiringSoon(minRemaining),
+        detailText = statusAvailable and minRemaining
+            and F.FormatDuration(minRemaining)
+            or "",
+        detailTextIsBad = statusAvailable
+            and Timing.IsExpiringSoon(minRemaining),
         countText = hasMissing and tostring(missingCount) or "",
         countTextIsBad = hasMissing,
-        glow = info.spellID ~= nil
+        glow = statusAvailable
+            and info.spellID ~= nil
             and (hasMissing or Timing.IsExpiringSoon(minRemaining)),
     })
 
@@ -76,7 +87,7 @@ function RaidBuff.Update(button)
         ButtonState.SetUnavailable(buttonState, UNAVAILABLE_SPELL)
     end
 
-    if not hasMissing then
+    if statusAvailable and not hasMissing then
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.hasConsumableBuff = true
         buttonState.desaturated = false

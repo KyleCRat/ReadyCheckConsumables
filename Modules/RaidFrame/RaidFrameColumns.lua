@@ -115,6 +115,7 @@ end
 local storeAuraID = F.StoreAuraID
 
 local function setTimedAuraData(data, aura, remaining)
+    data.available = true
     data.has     = true
     data.time    = remaining
     data.iconID  = F.GetPublicAuraField(aura, "icon")
@@ -128,6 +129,7 @@ local function setTimedExternalData(data, source)
         return
     end
 
+    data.available = true
     data.has     = source ~= nil and source.has == true
     data.time    = source and source.time or 0
     data.iconID  = source and source.iconID or nil
@@ -137,6 +139,7 @@ local function setTimedExternalData(data, source)
 end
 
 local function setIconAuraData(data, aura)
+    data.available = true
     data.has     = true
     data.iconID  = F.GetPublicAuraField(aura, "icon")
     data.spellID = F.GetPublicAuraField(aura, "spellId")
@@ -161,6 +164,7 @@ end
 
 local function createFoodData()
     return {
+        available = false,
         has     = false,
         time    = 0,
         auraID  = nil,
@@ -187,6 +191,7 @@ local function refreshFoodDisplayData(data, rules)
     data.spellID  = displayData.spellID
     data.source   = displayData.source
     data.isEating = isEating
+    data.available = displayData.available == true
 end
 
 local function collectFoodAura(data, aura, scanContext)
@@ -210,6 +215,10 @@ end
 
 local function isFoodBad(member, context, column)
     local data = getColumnData(member, column)
+
+    if not data or data.available ~= true then
+        return false
+    end
 
     if data and data.wellFed then
         return isTimedDataBad(data.wellFed, context.rules)
@@ -254,6 +263,7 @@ local foodColumn = {
 
 local function createFlaskData()
     return {
+        available = false,
         has     = false,
         time    = 0,
         auraID  = nil,
@@ -274,7 +284,10 @@ local function collectFlaskAura(data, aura, scanContext)
 end
 
 local function isFlaskBad(member, context, column)
-    return isTimedDataBad(getColumnData(member, column), context.rules)
+    local data = getColumnData(member, column)
+
+    return data and data.available == true
+        and isTimedDataBad(data, context.rules)
 end
 
 local function syncFlaskData(data, member, context)
@@ -378,6 +391,7 @@ local tempWeaponEnchantColumn = {
 
 local function createAugmentData()
     return {
+        available = false,
         has     = false,
         auraID  = nil,
         iconID  = nil,
@@ -398,7 +412,7 @@ end
 local function isAugmentBad(member, context, column)
     local data = getColumnData(member, column)
 
-    return not data or not data.has
+    return data and data.available == true and not data.has
 end
 
 local augmentColumn = {
@@ -420,6 +434,7 @@ local augmentColumn = {
 
 local function createVantusData()
     return {
+        available = false,
         has     = false,
         auraID  = nil,
         iconID  = nil,
@@ -440,7 +455,7 @@ end
 local function isVantusBad(member, context, column)
     local data = getColumnData(member, column)
 
-    return not data or not data.has
+    return data and data.available == true and not data.has
 end
 
 local vantusColumn = {
@@ -591,7 +606,9 @@ local cauldronPotionColumn = {
 --------------------------------------------------------------------------------
 
 local function createColumnData(layout)
-    local columnData = {}
+    local columnData = {
+        auraScanAvailable = false,
+    }
 
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
@@ -652,7 +669,7 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
         rules     = rules,
     }
 
-    F.ForEachHelpfulAura(unit, function(aura)
+    local scanAvailable = F.ForEachHelpfulAura(unit, function(aura)
         scanContext.remaining = F.GetAuraRemaining(
             aura.expirationTime,
             now
@@ -672,6 +689,35 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
         end
     end)
 
+    if not scanAvailable then
+        columnData = createColumnData(layout)
+        columnData.auraScanAvailable = false
+
+        return columnData
+    end
+
+    columnData.auraScanAvailable = true
+
+    for columnIndex = 1, #columns do
+        local column = columns[columnIndex]
+
+        if column.CollectAura then
+            local data = columnData[column.key]
+
+            if data then
+                data.available = true
+
+                if data.wellFed then
+                    data.wellFed.available = true
+                end
+
+                if data.eating then
+                    data.eating.available = true
+                end
+            end
+        end
+    end
+
     return columnData
 end
 
@@ -685,7 +731,10 @@ function Columns.SyncExternalData(member, layout, context)
     for columnIndex = 1, #layout.activeColumns do
         local column = layout.activeColumns[columnIndex]
 
-        if column.SyncData then
+        local canSync = column.dataSource ~= DATA_SOURCE.AURA
+            or member.columnData.auraScanAvailable == true
+
+        if column.SyncData and canSync then
             local data = member.columnData[column.key]
 
             if not data then

@@ -35,6 +35,7 @@ function Vantus.Update(button, state)
         return
     end
 
+    local auraScanAvailable = state and state.available == true
     local vantusAura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
     local bossName = getAuraBossName(vantusAura)
     local candidate, candidates, outOfCachedItem =
@@ -75,7 +76,7 @@ function Vantus.Update(button, state)
     elseif count > 0 then
         buttonState.countText = tostring(count)
         buttonState.qualityItemID = itemID
-        buttonState.glow = true
+        buttonState.glow = auraScanAvailable
         buttonState.action = {
             type = ActionType.ITEM_MACRO,
             itemID = itemID,

@@ -14,8 +14,6 @@ local MAIN_HAND_INVENTORY_SLOT = 16
 local OFF_HAND_INVENTORY_SLOT = 17
 local RECUPERATE_SPELL_ID = 1231411
 local UPDATE_DELAY = 0.2
-local DEFAULT_MAX_ACCOUNT_MACROS = 120
-local DEFAULT_MAX_CHARACTER_MACROS = 30
 local DEFAULT_MACRO_ICON = 134400
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
 local INLINE_MARKER_LINE_PATTERN = "^%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
@@ -326,17 +324,8 @@ local function printMessage(message)
 end
 
 local function getMacroLimits()
-    local macroConsts = Constants and Constants.MacroConsts
-    local maxAccountMacros = macroConsts
-        and macroConsts.MAX_ACCOUNT_MACROS
-        or MAX_ACCOUNT_MACROS
-        or DEFAULT_MAX_ACCOUNT_MACROS
-    local maxCharacterMacros = macroConsts
-        and macroConsts.MAX_CHARACTER_MACROS
-        or MAX_CHARACTER_MACROS
-        or DEFAULT_MAX_CHARACTER_MACROS
-
-    return maxAccountMacros, maxCharacterMacros
+    return Constants.MacroConsts.MAX_ACCOUNT_MACROS,
+           Constants.MacroConsts.MAX_CHARACTER_MACROS
 end
 
 local function getMacroRange(characterSpecific)

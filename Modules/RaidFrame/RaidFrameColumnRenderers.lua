@@ -279,6 +279,26 @@ local function renderTimedAuraCell(row, member, column, context)
     local timeText = cell.timeText
     local overlay = cell.overlay
 
+    overlay.unit    = nil
+    overlay.auraID  = nil
+    overlay.spellID = nil
+    overlay.itemID  = nil
+    overlay.label   = nil
+
+    if not data or data.available ~= true then
+        icon:SetTexture(column.iconID)
+        icon:SetDesaturated(true)
+        icon:SetVertexColor(1, 1, 1, 0)
+        cell.bg:SetAlpha(0)
+        timeText:SetText("")
+        overlay:EnableMouse(false)
+
+        return
+    end
+
+    cell.bg:SetAlpha(1)
+    overlay:EnableMouse(true)
+
     if data and data.has then
         icon:SetDesaturated(false)
         icon:SetVertexColor(1, 1, 1, 1)
@@ -297,11 +317,7 @@ local function renderTimedAuraCell(row, member, column, context)
         timeText:SetText("")
     end
 
-    overlay.unit    = member.unit
-    overlay.auraID  = nil
-    overlay.spellID = nil
-    overlay.itemID  = nil
-    overlay.label   = nil
+    overlay.unit = member.unit
 
     if data and data.has then
         overlay.auraID  = data.auraID
@@ -391,15 +407,30 @@ local function renderIconAuraCell(row, member, column)
     local overlay = cell.overlay
     local hasAura = data and data.has
 
-    icon:SetTexture((data and data.iconID) or column.iconID)
-    icon:SetDesaturated(not hasAura)
-    icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
-
-    overlay.unit    = member.unit
+    overlay.unit    = nil
     overlay.auraID  = nil
     overlay.spellID = nil
     overlay.itemID  = nil
     overlay.label   = nil
+
+    if not data or data.available ~= true then
+        icon:SetTexture(column.iconID)
+        icon:SetDesaturated(true)
+        icon:SetVertexColor(1, 1, 1, 0)
+        cell.bg:SetAlpha(0)
+        overlay:EnableMouse(false)
+
+        return
+    end
+
+    cell.bg:SetAlpha(1)
+    overlay:EnableMouse(true)
+
+    icon:SetTexture((data and data.iconID) or column.iconID)
+    icon:SetDesaturated(not hasAura)
+    icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
+
+    overlay.unit = member.unit
 
     if hasAura then
         overlay.auraID = data.auraID
@@ -422,6 +453,21 @@ local function renderRaidBuffCell(row, member, column)
     local cell = getCell(row, column)
     local icon = cell.icon
     local overlay = cell.overlay
+
+    overlay.unit = nil
+    overlay.auraID = nil
+
+    if not data or data.available ~= true then
+        icon:SetDesaturated(true)
+        icon:SetVertexColor(1, 1, 1, 0)
+        cell.bg:SetAlpha(0)
+        overlay:EnableMouse(false)
+
+        return
+    end
+
+    cell.bg:SetAlpha(1)
+    overlay:EnableMouse(true)
 
     icon:SetDesaturated(not hasAura)
     icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)

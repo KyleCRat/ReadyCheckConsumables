@@ -32,11 +32,13 @@ local function addActiveEnchantToState(buttonState, slotID, slotState)
     buttonState.statusTexture = ButtonState.READY_TEXTURE
     buttonState.hasConsumableBuff = true
     buttonState.desaturated = false
-    buttonState.detailText = F.FormatDuration(
-        (slotState.expiration or 0) / 1000
-    )
 
-    if slotState.expiration ~= nil then
+    if slotState.hasExpirationTime == true
+        and F.IsSafeNumber(slotState.remainingTimeMs)
+    then
+        buttonState.detailText = F.FormatDuration(
+            slotState.remainingTimeMs / 1000
+        )
         buttonState.detailTextIsBad = WeaponEnchant.IsExpiringSoon(slotState)
     end
 
@@ -227,15 +229,8 @@ local function configureItemEnchantForSlot(buttonState, slotState,
     )
 end
 
-local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
-                                       enchantID, showMissingHint,
+local function updateWeaponEnchantSlot(button, slotState, showMissingHint,
                                        itemCandidates)
-    local slotState = WeaponEnchant.BuildSlotState(
-        slotID,
-        hasEnchant,
-        expiration,
-        enchantID
-    )
     local buttonState = ButtonState.Create({
         applicable = slotState.canBeEnchanted,
         glow = false,
@@ -249,7 +244,7 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
 
     local activeEnchantData = addActiveEnchantToState(
         buttonState,
-        slotID,
+        slotState.slotID,
         slotState
     )
     local resolution = WeaponEnchant.ResolveAction(
@@ -280,42 +275,37 @@ local function updateWeaponEnchantSlot(button, slotID, hasEnchant, expiration,
     Renderer.Apply(button, buttonState)
 end
 
-local function updateWeaponEnchantButton(button, hasEnchant, expiration,
-                                         enchantID, showMissingHint,
+local function updateWeaponEnchantButton(button, slotState, showMissingHint,
                                          itemCandidates)
-    if not button or not button.weaponSlot then return end
+    if not button or not slotState then return end
 
     updateWeaponEnchantSlot(
         button,
-        button.weaponSlot,
-        hasEnchant,
-        expiration,
-        enchantID,
+        slotState,
         showMissingHint,
         itemCandidates
     )
 end
 
 function WeaponEnchant.Update(buttons)
-    local hasMainHandEnchant, mainHandExpiration, _, mainHandEnchantID,
-          hasOffHandEnchant, offHandExpiration, _, offHandEnchantID =
-          GetWeaponEnchantInfo()
+    local mainHandState = WeaponEnchant.GetCurrentSlotState(
+        MAIN_HAND_INVENTORY_SLOT
+    )
+    local offHandState = WeaponEnchant.GetCurrentSlotState(
+        OFF_HAND_INVENTORY_SLOT
+    )
     local itemCandidates = WeaponEnchant.CollectItemCandidatesInBags()
 
     updateWeaponEnchantButton(
         buttons.mainHandTempWeaponEnchant,
-        hasMainHandEnchant,
-        mainHandExpiration,
-        mainHandEnchantID,
+        mainHandState,
         true,
         itemCandidates
     )
 
     updateWeaponEnchantButton(
         buttons.offHandTempWeaponEnchant,
-        hasOffHandEnchant,
-        offHandExpiration,
-        offHandEnchantID,
+        offHandState,
         true,
         itemCandidates
     )
