@@ -15,8 +15,9 @@ local GetSpellInfo       = C_Spell.GetSpellInfo
 local ADDON_PREFIX = "RCC"
 local FOOD_MESSAGE_TYPE = "FOOD"
 local FLASK_MESSAGE_TYPE = "FLASK"
--- Keep the legacy "OIL" message type so older RCC clients can still read the
--- remaining time and item ID from the first two payload fields.
+-- "OIL" is the stable RCC wire-protocol signal for temporary weapon enchants.
+-- Renaming it without a staged dual-protocol rollout would break released RCC
+-- clients, even though the payload now supports generalized enchant data.
 local TEMP_WEAPON_ENCHANT_MESSAGE_TYPE = "OIL"
 local MAIN_HAND_INVENTORY_SLOT = WeaponEnchant.MAIN_HAND_INVENTORY_SLOT
 local OFF_HAND_INVENTORY_SLOT = WeaponEnchant.OFF_HAND_INVENTORY_SLOT
