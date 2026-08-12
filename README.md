@@ -28,6 +28,8 @@ entering instances or after collecting a consumable from a cauldron.
 - Item quality badges appear on quality-ranked consumable buttons.
 - Tooltips show the relevant item, spell, or aura, plus click hints and
   unavailable-item warnings.
+- Shows a desaturated question mark with an explanatory tooltip when WoW
+  restricts aura information, rather than treating an unknown buff as missing.
 - Glow highlights missing or expiring consumables, with hover colors showing
   whether an action is available.
 - Closes immediately when you click Ready or Not Ready if Keep Open After

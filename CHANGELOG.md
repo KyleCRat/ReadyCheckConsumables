@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [12.1.0-19] - 2026-08-11
 
 ### Changed
 - Made ReadyCheckConsumables require Interface `120100` and use the final 12.1
@@ -10,6 +10,7 @@
   adapter.
 - Consolidated aura-backed chat reports around one point-in-time roster scan
   instead of rescanning every player for each report category.
+- Updated the embedded LibModernSettings dependency to 1.1.0.
 
 ### Fixed
 - Made helpful-aura scans fail closed when 12.1 restricts aura access, with
@@ -39,21 +40,3 @@
 ### Fixed
 - Prevented `/rcc settings` from calling the protected Settings API in combat;
   the panel now opens after combat ends.
-
-## [12.1.0-17] - 2026-07-21
-
-### Added
-- Added initial World of Warcraft 12.1.0 support.
-- Added provisional support for Concentrated Silvermoon Health Potion, Liquid
-  Luster, and Alluring Nostrum.
-- Added a disabled-by-default option to open the Consumables Frame after
-  collecting a known flask or potion from a cauldron.
-
-### Changed
-- Updated managed-macro limit discovery for 12.1 while retaining compatibility
-  with the legacy 12.0.7 limits.
-
-### Fixed
-- Hardened aura caching, tooltips, food and Vantus handling, and `UNIT_AURA`
-  processing against restricted values.
-- Corrected per-cauldron-type auto-open session tracking.

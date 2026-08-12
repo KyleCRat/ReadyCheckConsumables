@@ -7,7 +7,7 @@ manual-changelog:
 externals:
     Libs/LibModernSettings-1.0:
         url: https://github.com/KyleCRat/LibModernSettings.git
-        tag: 1.0.0
+        tag: 1.1.0
 
 ignore:
     - Docs
