@@ -8,11 +8,15 @@
 - Migrated temporary weapon-enchant detection to
   `C_PaperDollInfo.GetTemporaryEnchantmentInfo` through one shared slot-state
   adapter.
+- Consolidated aura-backed chat reports around one point-in-time roster scan
+  instead of rescanning every player for each report category.
 
 ### Fixed
 - Made helpful-aura scans fail closed when 12.1 restricts aura access, with
   unavailable scans omitted from reports, raid-frame status, and missing-buff
   prompts instead of being treated as empty aura lists.
+- Added an explicit grey question-mark state and explanatory tooltip when the
+  Consumables Frame cannot read aura status.
 
 ## [12.1.0-18] - 2026-08-10
 

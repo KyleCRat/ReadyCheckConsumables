@@ -4,6 +4,7 @@ RCC.ChatReportReports = RCC.ChatReportReports or {}
 local Reports = RCC.ChatReportReports
 
 local F = RCC.F
+local AuraScan = RCC.HelpfulAuraScan
 local FoodAuras = RCC.FoodAuras
 local Output = RCC.ChatReportOutput
 local Broadcast = RCC.RaidFrameBroadcast
@@ -25,8 +26,36 @@ local function appendEntries(target, source)
     end
 end
 
+local function scanAuraRoster(now)
+    local result = {
+        available = true,
+        members = {},
+    }
+
+    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+        if not online then return end
+
+        local scan = AuraScan.ScanUnit(unit, now)
+
+        if not scan.available then
+            result.available = false
+            result.members = nil
+
+            return false
+        end
+
+        result.members[#result.members + 1] = {
+            auras = scan.auras,
+            class = class,
+            name = name,
+        }
+    end)
+
+    return result
+end
+
 local function getReportData()
-    return Broadcast and Broadcast.GetReportData and Broadcast.GetReportData()
+    return Broadcast.GetReportData()
 end
 
 local function isPreviousExpansionUnlimitedAugment(augmentData)
@@ -53,29 +82,25 @@ local function reportOffline(toChat)
     end
 end
 
-local function reportFood(toChat)
+local function reportFood(toChat, members)
     local missing = {}
     local expiring = {}
-    local scanUnavailable = false
-    local now = GetTime()
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
-        if not online then return end
-
+    for memberIndex = 1, #members do
+        local member = members[memberIndex]
         local hasFood = false
-        local colored = Output.ColorName(F.shortName(name), class)
+        local colored = Output.ColorName(
+            F.shortName(member.name),
+            member.class
+        )
 
-        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura,
-                                                                  spellID)
+        for auraIndex = 1, #member.auras do
+            local aura = member.auras[auraIndex]
             local auraType = FoodAuras.GetType(aura)
 
             if auraType == FOOD_AURA_TYPE.WELL_FED then
                 hasFood = true
-
-                local remaining = F.GetAuraRemaining(
-                    aura.expirationTime,
-                    now
-                )
+                local remaining = aura.remaining
 
                 if Timing.IsExpiringSoon(remaining) then
                     expiring[#expiring + 1] = format(
@@ -85,21 +110,13 @@ local function reportFood(toChat)
                     )
                 end
 
-                return true
+                break
             end
-        end)
+        end
 
-        if not scanAvailable then
-            scanUnavailable = true
-
-            return false
-        elseif not hasFood then
+        if not hasFood then
             missing[#missing + 1] = colored
         end
-    end)
-
-    if scanUnavailable then
-        return
     end
 
     local totalBad = #missing + #expiring
@@ -116,27 +133,25 @@ local function reportFood(toChat)
     Output.SendChunked(format("No Food (%d): ", totalBad), entries, toChat)
 end
 
-local function reportFlasks(toChat)
+local function reportFlasks(toChat, members)
     local missing = {}
     local expiring = {}
-    local scanUnavailable = false
-    local now = GetTime()
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
-        if not online then return end
-
+    for memberIndex = 1, #members do
+        local member = members[memberIndex]
         local hasFlask = false
-        local colored = Output.ColorName(F.shortName(name), class)
+        local colored = Output.ColorName(
+            F.shortName(member.name),
+            member.class
+        )
 
-        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura,
-                                                                  spellID)
+        for auraIndex = 1, #member.auras do
+            local aura = member.auras[auraIndex]
+            local spellID = aura.spellID
+
             if db.flaskBuffIDs[spellID] then
                 hasFlask = true
-
-                local remaining = F.GetAuraRemaining(
-                    aura.expirationTime,
-                    now
-                )
+                local remaining = aura.remaining
 
                 if Timing.IsExpiringSoon(remaining) then
                     expiring[#expiring + 1] = format(
@@ -146,21 +161,13 @@ local function reportFlasks(toChat)
                     )
                 end
 
-                return true
+                break
             end
-        end)
+        end
 
-        if not scanAvailable then
-            scanUnavailable = true
-
-            return false
-        elseif not hasFlask then
+        if not hasFlask then
             missing[#missing + 1] = colored
         end
-    end)
-
-    if scanUnavailable then
-        return
     end
 
     local totalBad = #missing + #expiring
@@ -177,19 +184,21 @@ local function reportFlasks(toChat)
     Output.SendChunked(format("No Flask (%d): ", totalBad), entries, toChat)
 end
 
-local function reportAugments(toChat)
+local function reportAugments(toChat, members)
     local missing = {}
     local lowXpac = {}
-    local scanUnavailable = false
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
-        if not online then return end
-
+    for memberIndex = 1, #members do
+        local member = members[memberIndex]
         local hasAugment = false
-        local colored = Output.ColorName(F.shortName(name), class)
+        local colored = Output.ColorName(
+            F.shortName(member.name),
+            member.class
+        )
 
-        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura,
-                                                                  spellID)
+        for auraIndex = 1, #member.auras do
+            local aura = member.auras[auraIndex]
+            local spellID = aura.spellID
             local augmentData = db.augmentBuffIDs[spellID]
 
             if augmentData then
@@ -205,21 +214,13 @@ local function reportAugments(toChat)
                     )
                 end
 
-                return true
+                break
             end
-        end)
+        end
 
-        if not scanAvailable then
-            scanUnavailable = true
-
-            return false
-        elseif not hasAugment then
+        if not hasAugment then
             missing[#missing + 1] = colored
         end
-    end)
-
-    if scanUnavailable then
-        return
     end
 
     local totalBad = #missing + #lowXpac
@@ -236,54 +237,45 @@ local function reportAugments(toChat)
     Output.SendChunked(format("No Augment (%d): ", totalBad), entries, toChat)
 end
 
-local function reportBuffs(toChat)
+local function reportBuffs(toChat, members)
     local buffsCount = RaidBuffStatus.GetCount()
     local buffInfos = {}
     local classPresent = {}
     local missingCount = {}
-    local scanUnavailable = false
 
     for k = 1, buffsCount do
         buffInfos[k] = RaidBuffStatus.GetInfo(k)
         missingCount[k] = 0
     end
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
-        if not online then return end
+    for memberIndex = 1, #members do
+        local member = members[memberIndex]
 
         for k = 1, buffsCount do
             local info = buffInfos[k]
 
-            if info and class == info.providerClass then
+            if info and member.class == info.providerClass then
                 classPresent[k] = true
             end
         end
 
         local hasBuff = {}
 
-        local scanAvailable = F.ForEachHelpfulAura(unit, function(aura)
+        for auraIndex = 1, #member.auras do
+            local aura = member.auras[auraIndex]
+
             for k = 1, buffsCount do
                 if RaidBuffStatus.AuraMatches(k, aura) then
                     hasBuff[k] = true
                 end
             end
-        end)
+        end
 
-        if not scanAvailable then
-            scanUnavailable = true
-
-            return false
-        else
-            for k = 1, buffsCount do
-                if not hasBuff[k] then
-                    missingCount[k] = missingCount[k] + 1
-                end
+        for k = 1, buffsCount do
+            if not hasBuff[k] then
+                missingCount[k] = missingCount[k] + 1
             end
         end
-    end)
-
-    if scanUnavailable then
-        return
     end
 
     local parts = {}
@@ -399,10 +391,15 @@ local function reportWeaponEnchants(toChat)
 end
 
 function Reports.SendAll(toChat)
-    reportFood(toChat)
-    reportFlasks(toChat)
-    reportAugments(toChat)
-    reportBuffs(toChat)
+    local auraRoster = scanAuraRoster(GetTime())
+
+    if auraRoster.available then
+        reportFood(toChat, auraRoster.members)
+        reportFlasks(toChat, auraRoster.members)
+        reportAugments(toChat, auraRoster.members)
+        reportBuffs(toChat, auraRoster.members)
+    end
+
     reportWeaponEnchants(toChat)
     reportRepairs(toChat)
     reportOffline(toChat)

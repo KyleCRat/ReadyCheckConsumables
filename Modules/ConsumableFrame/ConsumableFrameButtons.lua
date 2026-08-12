@@ -286,7 +286,15 @@ end
 function Buttons.ApplyState(button, state)
     if not button or not state then return end
 
-    button.statustexture:SetTexture(state.statusTexture)
+    if state.statusAtlas then
+        button.statustexture:SetAtlas(state.statusAtlas, false)
+    else
+        button.statustexture:SetTexture(state.statusTexture)
+    end
+
+    button.statustexture:SetDesaturated(
+        state.statusTextureDesaturated == true
+    )
     button.statustexture:SetShown(
         state.showStatusTexture == true and not button.hideStatusTexture
     )

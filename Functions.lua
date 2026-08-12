@@ -378,7 +378,7 @@ local function createPublicHelpfulAura(aura)
         expirationTime = F.GetPublicAuraField(aura, "expirationTime"),
         icon = F.GetPublicAuraField(aura, "icon"),
         name = F.GetPublicAuraField(aura, "name"),
-        spellId = spellID,
+        spellID = spellID,
     }
 end
 
@@ -400,7 +400,7 @@ function F.ForEachHelpfulAura(unit, callback)
             return false
         end
 
-        if callback(aura, aura.spellId, i) == true then
+        if callback(aura, aura.spellID, i) == true then
             return true
         end
     end

@@ -8,10 +8,15 @@ local F = RCC.F
 
 State.READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-Ready"
 State.NOT_READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-NotReady"
+State.UNKNOWN_ATLAS = "UI-LFG-PendingMark"
+
+local AURA_SCAN_UNAVAILABLE_TEXT =
+    "RCC was unable to see this buff information."
 
 State.DEFAULTS = {
     applicable = true,
     statusTexture = State.NOT_READY_TEXTURE,
+    statusTextureDesaturated = false,
     showStatusTexture = true,
     desaturated = true,
     countText = "",
@@ -115,6 +120,10 @@ function State.IsApplicable(state)
     end
 
     return applicable == true
+end
+
+function State.GetAuraScanUnavailableText(state)
+    return state and state.auraScanUnavailableText
 end
 
 function State.HasConsumableBuff(state)
@@ -238,4 +247,15 @@ function State.ApplyActiveAura(state, auraState)
     if auraState.auraInstanceID then
         state.tooltipAuraID = auraState.auraInstanceID
     end
+end
+
+function State.ApplyAuraScanAvailability(state, scanAvailable)
+    if not state or scanAvailable == true then return end
+
+    state.statusAtlas = State.UNKNOWN_ATLAS
+    state.statusTextureDesaturated = true
+    state.desaturated = true
+    state.glow = false
+    state.suppressGlow = true
+    state.auraScanUnavailableText = AURA_SCAN_UNAVAILABLE_TEXT
 end

@@ -36,13 +36,19 @@ local function getUnavailableText(button)
     -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
     local Buttons = RCC.ConsumableFrameButtons
 
-    return Buttons and Buttons.GetUnavailableText(button)
+    return Buttons.GetUnavailableText(button)
+end
+
+local function getAuraScanUnavailableText(button)
+    return State.GetAuraScanUnavailableText(
+        button and button.consumableState
+    )
 end
 
 local function setGameTooltipOwner(button)
     -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
     local Buttons = RCC.ConsumableFrameButtons
-    local spacing = Buttons and Buttons.SPACING or 0
+    local spacing = Buttons.SPACING
 
     GameTooltip:SetOwner(button, "ANCHOR_NONE")
     GameTooltip:SetPoint("BOTTOMLEFT", button, "TOPRIGHT", spacing, spacing)
@@ -111,6 +117,38 @@ local function addUnavailableHint(button)
     GameTooltip:Show()
 end
 
+local function addAuraScanUnavailableHint(button)
+    local text = getAuraScanUnavailableText(button)
+
+    if not text then return end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine(text, 0.65, 0.65, 0.65, true)
+    GameTooltip:Show()
+end
+
+local function showStatusMessageTooltip(button, auraText, unavailableText)
+    if not auraText and not unavailableText then return end
+
+    setGameTooltipOwner(button)
+    GameTooltip:ClearLines()
+
+    if auraText then
+        GameTooltip:AddLine("Status Unknown")
+        GameTooltip:AddLine(auraText, 0.65, 0.65, 0.65, true)
+    end
+
+    if unavailableText then
+        if auraText then
+            GameTooltip:AddLine(" ")
+        end
+
+        GameTooltip:AddLine(unavailableText, 1, 0.2, 0.2, true)
+    end
+
+    GameTooltip:Show()
+end
+
 local function showButtonTooltip(button, shoppingTooltip)
     local state = button.consumableState
     local shownTooltip
@@ -174,8 +212,16 @@ function Tooltips.ClickButtonOnEnter(self)
     Glow.SetHovered(button, true)
 
     if showButtonTooltip(button, true) then
+        addAuraScanUnavailableHint(button)
         addClickHints(button)
+
+        return
     end
+
+    showStatusMessageTooltip(
+        button,
+        getAuraScanUnavailableText(button)
+    )
 end
 
 function Tooltips.ClickButtonOnLeave(self)
@@ -188,6 +234,7 @@ function Tooltips.InfoButtonOnEnter(self)
     Glow.SetHovered(self, true)
 
     local unavailableText = getUnavailableText(self)
+    local auraScanUnavailableText = getAuraScanUnavailableText(self)
 
     if self.unavailableOverlay and unavailableText then
         self.unavailableOverlay:Show()
@@ -198,17 +245,17 @@ function Tooltips.InfoButtonOnEnter(self)
             addClickHints(self)
         end
 
+        addAuraScanUnavailableHint(self)
         addUnavailableHint(self)
 
         return
     end
 
-    if unavailableText then
-        setGameTooltipOwner(self)
-        GameTooltip:ClearLines()
-        GameTooltip:AddLine(unavailableText)
-        GameTooltip:Show()
-    end
+    showStatusMessageTooltip(
+        self,
+        auraScanUnavailableText,
+        unavailableText
+    )
 end
 
 function Tooltips.InfoButtonOnLeave(self)

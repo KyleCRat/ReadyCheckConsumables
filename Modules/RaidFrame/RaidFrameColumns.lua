@@ -119,7 +119,7 @@ local function setTimedAuraData(data, aura, remaining)
     data.has     = true
     data.time    = remaining
     data.iconID  = F.GetPublicAuraField(aura, "icon")
-    data.spellID = F.GetPublicAuraField(aura, "spellId")
+    data.spellID = F.GetPublicAuraField(aura, "spellID")
     data.source  = "aura"
     storeAuraID(data, aura)
 end
@@ -142,7 +142,7 @@ local function setIconAuraData(data, aura)
     data.available = true
     data.has     = true
     data.iconID  = F.GetPublicAuraField(aura, "icon")
-    data.spellID = F.GetPublicAuraField(aura, "spellId")
+    data.spellID = F.GetPublicAuraField(aura, "spellID")
     storeAuraID(data, aura)
 end
 
@@ -274,7 +274,7 @@ local function createFlaskData()
 end
 
 local function collectFlaskAura(data, aura, scanContext)
-    local spellID = aura.spellId
+    local spellID = aura.spellID
 
     if not spellID or data.has or not db.flaskBuffIDs[spellID] then
         return
@@ -400,7 +400,7 @@ local function createAugmentData()
 end
 
 local function collectAugmentAura(data, aura)
-    local spellID = aura.spellId
+    local spellID = aura.spellID
 
     if not spellID or data.has or not db.augmentBuffIDs[spellID] then
         return
@@ -443,7 +443,7 @@ local function createVantusData()
 end
 
 local function collectVantusAura(data, aura)
-    local spellID = aura.spellId
+    local spellID = aura.spellID
 
     if not spellID or data.has or not db.vantusBuffIDs[spellID] then
         return

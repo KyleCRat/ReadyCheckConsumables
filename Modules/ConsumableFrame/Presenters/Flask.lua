@@ -25,7 +25,6 @@ local function getFlaskAuraState(state)
 end
 
 function Flask.Update(button, state)
-    local auraScanAvailable = state and state.available == true
     local flaskState = getFlaskAuraState(state)
     local isFlask = flaskState and flaskState.satisfied
     local flaskCandidate, flaskCandidates, outOfCachedFlask =
@@ -64,8 +63,7 @@ function Flask.Update(button, state)
     end
 
     buttonState.countText = flaskItemID and tostring(flaskCount) or ""
-    buttonState.glow = auraScanAvailable
-        and not isFlask
+    buttonState.glow = not isFlask
         and flaskCount > 0
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         flaskCandidates,
@@ -75,6 +73,11 @@ function Flask.Update(button, state)
             cacheKey = CacheKey.FLASK,
             includeSingleChoice = outOfCachedFlask,
         }
+    )
+
+    ButtonState.ApplyAuraScanAvailability(
+        buttonState,
+        state and state.available == true
     )
 
     Renderer.Apply(button, buttonState)

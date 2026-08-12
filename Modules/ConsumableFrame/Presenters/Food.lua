@@ -71,7 +71,6 @@ local function getEatingCooldown(state)
 end
 
 function Food.Update(button, state)
-    local auraScanAvailable = state and state.available == true
     local foodAuraState, eatingAuraState = getFoodAuraStates(state)
     local displayAuraState = getDisplayAuraState(
         foodAuraState,
@@ -130,8 +129,7 @@ function Food.Update(button, state)
     end
 
     buttonState.countText = foodItemID and tostring(foodCount) or ""
-    buttonState.glow = auraScanAvailable
-        and not foodSatisfied
+    buttonState.glow = not foodSatisfied
         and foodCount > 0
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         foodCandidates,
@@ -141,6 +139,11 @@ function Food.Update(button, state)
             cacheKey = CacheKey.FOOD,
             includeSingleChoice = outOfCachedFood,
         }
+    )
+
+    ButtonState.ApplyAuraScanAvailability(
+        buttonState,
+        state and state.available == true
     )
 
     Renderer.Apply(button, buttonState)

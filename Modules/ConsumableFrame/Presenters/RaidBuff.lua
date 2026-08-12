@@ -93,5 +93,7 @@ function RaidBuff.Update(button)
         buttonState.desaturated = false
     end
 
+    ButtonState.ApplyAuraScanAvailability(buttonState, statusAvailable)
+
     Renderer.Apply(button, buttonState)
 end

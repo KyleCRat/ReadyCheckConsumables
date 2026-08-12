@@ -18,7 +18,7 @@ end
 local function getAuraSpellID(aura)
     if not aura then return end
 
-    return aura.spellId
+    return aura.spellID
 end
 
 function Status.GetCount()

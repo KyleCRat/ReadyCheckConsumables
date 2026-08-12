@@ -25,7 +25,6 @@ local function getAuraState(state)
 end
 
 function Augment.Update(button, state)
-    local auraScanAvailable = state and state.available == true
     local augmentState = getAuraState(state)
     local isAugment = augmentState and augmentState.satisfied
     local augmentCandidate, augmentCandidates, outOfCachedAugment =
@@ -69,8 +68,7 @@ function Augment.Update(button, state)
         end
     end
 
-    buttonState.glow = auraScanAvailable
-                       and augmentItemCount ~= nil
+    buttonState.glow = augmentItemCount ~= nil
                        and augmentItemCount > 0
                        and not isAugment
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
@@ -82,6 +80,11 @@ function Augment.Update(button, state)
             cacheKey = CacheKey.AUGMENT,
             includeSingleChoice = outOfCachedAugment,
         }
+    )
+
+    ButtonState.ApplyAuraScanAvailability(
+        buttonState,
+        state and state.available == true
     )
 
     Renderer.Apply(button, buttonState)

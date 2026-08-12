@@ -3,6 +3,7 @@ local _, RCC = ...
 RCC.ConsumableFrameAuras = RCC.ConsumableFrameAuras or {}
 
 local Auras = RCC.ConsumableFrameAuras
+local AuraScan = RCC.HelpfulAuraScan
 local F = RCC.F
 local Timing = RCC.ConsumableTiming
 
@@ -44,7 +45,7 @@ function Auras.ToConsumableState(aura, options)
     local auraState = {
         active = true,
         duration = aura.duration,
-        expiry = aura.expiry,
+        expiry = aura.expirationTime,
         icon = aura.icon,
         name = aura.name,
         remaining = aura.remaining,
@@ -65,33 +66,5 @@ function Auras.ToConsumableState(aura, options)
 end
 
 function Auras.ScanPlayer(now)
-    local state = {
-        auras = {},
-        available = false,
-    }
-
-    local scanAvailable = F.ForEachHelpfulAura("player", function(auraData,
-                                                                   spellID)
-        local expiry = auraData.expirationTime
-        local remaining = F.GetAuraRemaining(expiry, now)
-        local aura = {
-            auraInstanceID = auraData.auraInstanceID,
-            duration = auraData.duration,
-            expiry = expiry,
-            icon = auraData.icon,
-            name = auraData.name,
-            remaining = remaining,
-            spellID = spellID,
-        }
-
-        state.auras[#state.auras + 1] = aura
-    end)
-
-    if not scanAvailable then
-        wipe(state.auras)
-    end
-
-    state.available = scanAvailable
-
-    return state
+    return AuraScan.ScanUnit("player", now)
 end
