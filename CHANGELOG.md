@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [12.1.0-20] - 2026-08-14
 
 ### Fixed
 - Made scenario instance entry wait for settled instance data and respond to
@@ -24,25 +24,3 @@
   prompts instead of being treated as empty aura lists.
 - Added an explicit grey question-mark state and explanatory tooltip when the
   Consumables Frame cannot read aura status.
-
-## [12.1.0-18] - 2026-08-10
-
-### Added
-- Added Consumable Stasis support to the Consumables Frame, including optional
-  automatic opening when BigWigs or DBM starts a break timer.
-- Added feast detection that can show the Raid Status Frame's food column
-  outside ready checks.
-- Added `/rcc c` and `/rcc consume` to open the Consumables Frame.
-
-### Changed
-- Rebuilt addon settings on the native Blizzard Settings canvas using the
-  embedded LibModernSettings 1.0.0 release, with standardized full-width,
-  two-column, indented, and matrix layouts.
-- Moved consumable-frame, raid-frame, and chat-report settings into
-  feature-owned modules and centralized contextual frame visibility.
-- Shortened and standardized slash-command aliases while retaining descriptive
-  command names.
-
-### Fixed
-- Prevented `/rcc settings` from calling the protected Settings API in combat;
-  the panel now opens after combat ends.
