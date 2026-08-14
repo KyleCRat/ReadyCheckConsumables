@@ -27,7 +27,9 @@ local GetTime = GetTime
 local frame
 local readyCheckShowStart = 0
 local wasInInstance
+local wasInScenario
 local instanceOpenPending
+local instanceStateInitialized = false
 local readyCheckButtonsHooked
 local displayContext = DisplayContext.Create(
     RCC.DisplaySurface.CONSUMABLE_FRAME
@@ -363,16 +365,9 @@ local function shouldOpenForInstanceType(instanceType)
     return false
 end
 
-local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
-    local inInstance, instanceType = IsInInstance()
-    local enteredInstance = inInstance and not wasInInstance
-        and not isInitialLogin and not isReloadingUi
-
-    wasInInstance = inInstance
-
-    if not enteredInstance
+local function scheduleInstanceOpen(self)
+    if instanceOpenPending
         or not RCC.GetSetting("consumables_instanceOpen")
-        or not shouldOpenForInstanceType(instanceType)
     then
         return
     end
@@ -404,6 +399,39 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
             startInstanceHideDelay(self)
         end
     end)
+end
+
+local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
+    local inInstance, instanceType = IsInInstance()
+    local inScenario = inInstance and instanceType == "scenario"
+    local initialWorldEntry = isInitialLogin or isReloadingUi
+    local enteredInstance = instanceStateInitialized
+        and inInstance and not wasInInstance
+        and not initialWorldEntry
+    local enteredScenario = instanceStateInitialized
+        and inScenario and not wasInScenario
+        and not initialWorldEntry
+
+    wasInInstance = inInstance
+    wasInScenario = inScenario
+    instanceStateInitialized = true
+
+    if enteredInstance or enteredScenario then
+        scheduleInstanceOpen(self)
+    end
+end
+
+local function onScenarioDataUpdate(self)
+    local inInstance, instanceType = IsInInstance()
+    local inScenario = inInstance and instanceType == "scenario"
+    local enteredScenario = instanceStateInitialized
+        and inScenario and not wasInScenario
+
+    wasInScenario = inScenario
+
+    if enteredScenario then
+        scheduleInstanceOpen(self)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -439,14 +467,16 @@ end
 --------------------------------------------------------------------------------
 
 local eventHandlers = {
-    READY_CHECK            = onReadyCheck,
-    READY_CHECK_FINISHED   = onReadyCheckFinished,
-    READY_CHECK_CONFIRM    = onReadyCheckConfirm,
-    PLAYER_REGEN_DISABLED  = onCombat,
-    PLAYER_ENTERING_WORLD  = onPlayerEnteringWorld,
-    UNIT_AURA              = onUnitAura,
-    UNIT_INVENTORY_CHANGED = onInventoryChanged,
-    BAG_UPDATE_DELAYED     = onBagUpdateDelayed,
+    READY_CHECK               = onReadyCheck,
+    READY_CHECK_FINISHED      = onReadyCheckFinished,
+    READY_CHECK_CONFIRM       = onReadyCheckConfirm,
+    PLAYER_REGEN_DISABLED     = onCombat,
+    PLAYER_ENTERING_WORLD     = onPlayerEnteringWorld,
+    SCENARIO_UPDATE           = onScenarioDataUpdate,
+    ACTIVE_DELVE_DATA_UPDATE  = onScenarioDataUpdate,
+    UNIT_AURA                 = onUnitAura,
+    UNIT_INVENTORY_CHANGED    = onInventoryChanged,
+    BAG_UPDATE_DELAYED        = onBagUpdateDelayed,
 }
 
 local function onEvent(self, event, ...)
@@ -487,6 +517,8 @@ function Controller.Attach(consumablesFrame)
     frame:RegisterEvent("READY_CHECK_FINISHED")
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    frame:RegisterEvent("SCENARIO_UPDATE")
+    frame:RegisterEvent("ACTIVE_DELVE_DATA_UPDATE")
 end
 
 function Controller.StartReadyCheck(initiatorUnit)

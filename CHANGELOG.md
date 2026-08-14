@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- Made scenario instance entry wait for settled instance data and respond to
+  scenario-data events when the world-entry event alone misses the transition.
+
 ## [12.1.0-19] - 2026-08-11
 
 ### Changed
