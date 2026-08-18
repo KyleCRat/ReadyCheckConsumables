@@ -31,34 +31,6 @@ local function activateFrameReason()
     )
 end
 
-local function addItemSpell(itemID)
-    local _, spellID = C_Item.GetItemSpell(itemID)
-
-    if not spellID or issecretvalue(spellID) then
-        return
-    end
-
-    RCC.db.feastSpellIDs[spellID] = true
-end
-
-local function loadItemSpell(itemID)
-    local item = Item:CreateFromItemID(itemID)
-
-    if not item then return end
-
-    item:ContinueOnItemLoad(function()
-        addItemSpell(itemID)
-    end)
-end
-
-local function loadFeastItemSpells()
-    local itemIDs = RCC.db.feastItemIDs
-
-    for i = 1, #itemIDs do
-        loadItemSpell(itemIDs[i])
-    end
-end
-
 local function sendFeastMessage()
     if C_ChatInfo.InChatMessagingLockdown
         and C_ChatInfo.InChatMessagingLockdown()
@@ -112,7 +84,7 @@ end
 local function onUnitSpellcastSucceeded(_self, unit, _castGUID, spellID)
     if issecretvalue(unit) or unit ~= "player"
         or issecretvalue(spellID)
-        or not RCC.db.feastSpellIDs[spellID]
+        or not RCC.db.feastPlacementSpellIDs[spellID]
         or not IsInGroup()
     then
         return
@@ -160,5 +132,3 @@ eventFrame:RegisterEvent("CHAT_MSG_ADDON")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-
-loadFeastItemSpells()

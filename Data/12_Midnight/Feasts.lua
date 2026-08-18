@@ -14,9 +14,8 @@ RCC.Data.AddFeastItems({
     255847, -- [Rare] Impossibly Royal Roast | 98 Stam, 50 Primary Stat
 })
 
--- Placement spells observed by Northern Sky Raid Tools. Keeping explicit IDs
--- makes detection available before the client has cached the feast item data.
-RCC.Data.AddFeastSpells({
+-- Confirmed placement spells maintained by Northern Sky Raid Tools.
+RCC.Data.AddFeastPlacementSpells({
     1259657, -- Quel'dorei Medley
     1278915, -- Hearty Quel'dorei Medley
     1259658, -- Harandar Celebration

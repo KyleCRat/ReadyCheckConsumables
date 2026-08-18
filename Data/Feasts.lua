@@ -3,14 +3,13 @@ local _, RCC = ...
 RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
---- Feast Item and Placement Spell IDs
---- "Hearty" variants are the same food but persist through death.
---- Expansion files append their item and spell rows so the rest of the addon
---- can keep reading one combined feast registry.
+--- Feast Reference Data
+--- Item IDs remain available for future item-based features. Only confirmed
+--- placement spell IDs are valid feast-drop detection signals.
 --------------------------------------------------------------------------------
 
 RCC.db.feastItemIDs = {}
-RCC.db.feastSpellIDs = {}
+RCC.db.feastPlacementSpellIDs = {}
 
 RCC.Data = RCC.Data or {}
 
@@ -22,10 +21,10 @@ function RCC.Data.AddFeastItems(itemIDs)
     end
 end
 
-function RCC.Data.AddFeastSpells(spellIDs)
+function RCC.Data.AddFeastPlacementSpells(spellIDs)
     if not spellIDs then return end
 
     for i = 1, #spellIDs do
-        RCC.db.feastSpellIDs[spellIDs[i]] = true
+        RCC.db.feastPlacementSpellIDs[spellIDs[i]] = true
     end
 end
