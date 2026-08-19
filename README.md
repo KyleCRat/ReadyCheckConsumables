@@ -154,8 +154,9 @@ Access settings through `/rcc s` or the WoW AddOns settings panel.
 ## Compatibility
 
 - Reanchors the consumables frame for ElvUI and ShestakUI ready-check frames.
-- Shares and reads RCC addon messages for food, flask, weapon enchant, and
-  durability data.
+- Shares and reads RCC presence plus food, flask, weapon enchant, and
+  durability data. When RCC is detected but aura information is unavailable,
+  the affected cells show a grey question mark instead of appearing missing.
 - Shares lightweight cauldron-drop messages so other RCC users can open the
   correct cauldron columns, while pickup counts are still driven by local loot
   chat item IDs.

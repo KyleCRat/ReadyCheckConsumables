@@ -13,8 +13,10 @@ local GetItemIconByID    = C_Item.GetItemIconByID
 local GetSpellInfo       = C_Spell.GetSpellInfo
 
 local ADDON_PREFIX = "RCC"
+local PRESENCE_MESSAGE_TYPE = "PRESENCE"
 local FOOD_MESSAGE_TYPE = "FOOD"
 local FLASK_MESSAGE_TYPE = "FLASK"
+local PROTOCOL_VERSION = 1
 -- "OIL" is the stable RCC wire-protocol signal for temporary weapon enchants.
 -- Renaming it without a staged dual-protocol rollout would break released RCC
 -- clients, even though the payload now supports generalized enchant data.
@@ -27,10 +29,12 @@ Broadcast.TempWeaponEnchantStatus = {
     NO_WEAPON = -1,
     UNKNOWN   = -2,
 }
+Broadcast.ProtocolVersion = PROTOCOL_VERSION
 
 local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
 
 local sharedData = {
+    presenceData          = {},
     foodData              = {},
     flaskData             = {},
     durabilityData        = {},
@@ -195,6 +199,7 @@ end
 
 function Broadcast.Create()
     local broadcast = {
+        presenceData          = sharedData.presenceData,
         foodData              = sharedData.foodData,
         flaskData             = sharedData.flaskData,
         durabilityData        = sharedData.durabilityData,
@@ -202,10 +207,15 @@ function Broadcast.Create()
     }
 
     function broadcast:Reset()
+        wipe(self.presenceData)
         wipe(self.foodData)
         wipe(self.flaskData)
         wipe(self.durabilityData)
         wipe(self.tempWeaponEnchantData)
+    end
+
+    function broadcast:GetPresenceData()
+        return self.presenceData
     end
 
     function broadcast:GetFoodData()
@@ -222,6 +232,33 @@ function Broadcast.Create()
 
     function broadcast:GetTempWeaponEnchantData()
         return self.tempWeaponEnchantData
+    end
+
+    function broadcast:SetPresence(
+        playerKey,
+        protocolVersion,
+        auraScanAvailable
+    )
+        if not playerKey then
+            return
+        end
+
+        local presence = self.presenceData[playerKey]
+
+        if not presence then
+            presence = {}
+            self.presenceData[playerKey] = presence
+        end
+
+        if protocolVersion ~= nil then
+            presence.protocolVersion = protocolVersion
+        elseif presence.protocolVersion == nil then
+            presence.protocolVersion = 0
+        end
+
+        if auraScanAvailable ~= nil then
+            presence.auraScanAvailable = auraScanAvailable == true
+        end
     end
 
     function broadcast:SetDurability(playerKey, pct)
@@ -248,13 +285,31 @@ function Broadcast.Create()
         end
     end
 
-    function broadcast:SendDurability()
+    function broadcast:SendPresence(auraScanAvailable, chatType)
+        local playerKey = F.unitFullName("player")
+
+        self:SetPresence(playerKey, PROTOCOL_VERSION, auraScanAvailable)
+
+        chatType = chatType or F.chatType()
+
+        if chatType ~= "SAY" then
+            C_ChatInfo.SendAddonMessage(
+                ADDON_PREFIX,
+                PRESENCE_MESSAGE_TYPE
+                    .. "\t" .. PROTOCOL_VERSION
+                    .. "\t" .. (auraScanAvailable and 1 or 0),
+                chatType
+            )
+        end
+    end
+
+    function broadcast:SendDurability(chatType)
         local pct = getPlayerMinDurability()
         local playerKey = F.unitFullName("player")
 
         self:SetDurability(playerKey, pct)
 
-        local chatType = F.chatType()
+        chatType = chatType or F.chatType()
 
         if chatType ~= "SAY" then
             C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "DUR\t" .. pct, chatType)
@@ -326,24 +381,24 @@ function Broadcast.Create()
         end
     end
 
-    function broadcast:SendTimedConsumableStatuses(columnData)
+    function broadcast:SendTimedConsumableStatuses(columnData, chatType)
         if not columnData or columnData.auraScanAvailable ~= true then
             return
         end
 
-        local chatType = F.chatType()
+        chatType = chatType or F.chatType()
 
         self:SendFoodStatus(columnData.food, chatType)
         self:SendFlaskStatus(columnData.flask, chatType)
     end
 
-    function broadcast:SendTempWeaponEnchantStatus()
+    function broadcast:SendTempWeaponEnchantStatus(chatType)
         local status = getPlayerTempWeaponEnchantStatus()
         local playerKey = F.unitFullName("player")
 
         self:SetTempWeaponEnchantStatus(playerKey, status)
 
-        local chatType = F.chatType()
+        chatType = chatType or F.chatType()
 
         if chatType ~= "SAY" then
             C_ChatInfo.SendAddonMessage(
@@ -359,37 +414,71 @@ function Broadcast.Create()
         end
     end
 
+    function broadcast:SendReadyCheckStatuses(columnData)
+        local chatType = F.chatType()
+        local auraScanAvailable = columnData
+            and columnData.auraScanAvailable == true
+
+        self:SendPresence(auraScanAvailable, chatType)
+        self:SendTimedConsumableStatuses(columnData, chatType)
+        self:SendDurability(chatType)
+        self:SendTempWeaponEnchantStatus(chatType)
+    end
+
     function broadcast:HandleAddonMessage(prefix, message, sender)
         if prefix == ADDON_PREFIX then
             local msgType, val1, val2, val3, val4, val5, val6, val7, val8 =
                 strsplit("\t", message)
+            local senderKey = F.fullName(sender)
 
-            if msgType == "DUR" then
+            if not senderKey then
+                return false
+            end
+
+            if msgType == PRESENCE_MESSAGE_TYPE then
+                local protocolVersion = tonumber(val1)
+                local auraScanValue = tonumber(val2)
+                local auraScanAvailable
+
+                if protocolVersion == PROTOCOL_VERSION
+                    and (auraScanValue == 0 or auraScanValue == 1)
+                then
+                    auraScanAvailable = auraScanValue == 1
+                end
+
+                if protocolVersion then
+                    self:SetPresence(
+                        senderKey,
+                        protocolVersion,
+                        auraScanAvailable
+                    )
+
+                    return true
+                end
+            elseif msgType == "DUR" then
                 local pct = tonumber(val1)
-                local senderKey = F.fullName(sender)
 
                 if pct and senderKey then
                     self.durabilityData[senderKey] = pct
+                    self:SetPresence(senderKey)
 
                     return true
                 end
             elseif msgType == FOOD_MESSAGE_TYPE then
-                local senderKey = F.fullName(sender)
-
                 if senderKey then
                     self.foodData[senderKey] = {
                         wellFed = createTimedStatus(val1, val2, val3, val7),
                         eating  = createTimedStatus(val4, val5, val6, val8),
                     }
+                    self:SetPresence(senderKey, nil, true)
 
                     return true
                 end
             elseif msgType == FLASK_MESSAGE_TYPE then
-                local senderKey = F.fullName(sender)
-
                 if senderKey then
                     self.flaskData[senderKey] =
                         createTimedStatus(val1, val2, val3, val4)
+                    self:SetPresence(senderKey, nil, true)
 
                     return true
                 end
@@ -399,8 +488,6 @@ function Broadcast.Create()
                 local enchantID = tonumber(val3) or 0
                 local iconID = tonumber(val4) or 0
                 local spellID = tonumber(val5) or 0
-                local senderKey = F.fullName(sender)
-
                 if remaining and senderKey then
                     if enchantID > 0 then
                         local enchItemID, enchIconID, enchSpellID =
@@ -436,6 +523,7 @@ function Broadcast.Create()
                         iconID    = iconID,
                         spellID   = spellID,
                     }
+                    self:SetPresence(senderKey)
 
                     return true
                 end

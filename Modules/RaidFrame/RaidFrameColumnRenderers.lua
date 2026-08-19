@@ -10,10 +10,13 @@ local Timing         = RCC.ConsumableTiming
 local formatDuration = F.FormatDuration
 local GetItemIcon    = C_Item.GetItemIconByID
 
-local MISSING_ALPHA     = 0.3
-local COLOR_DUR_GREEN   = { r = 0.2, g = 1,    b = 0.2 }
-local COLOR_DUR_YELLOW  = { r = 1,   g = 0.82, b = 0   }
-local COLOR_DUR_RED     = { r = 1,   g = 0.2,  b = 0.2 }
+local MISSING_ALPHA      = 0.3
+local AURA_UNKNOWN_ATLAS = "UI-LFG-PendingMark"
+local AURA_UNKNOWN_LABEL =
+    "RCC detected; this aura information was unavailable."
+local COLOR_DUR_GREEN    = { r = 0.2, g = 1,    b = 0.2 }
+local COLOR_DUR_YELLOW   = { r = 1,   g = 0.82, b = 0   }
+local COLOR_DUR_RED      = { r = 1,   g = 0.2,  b = 0.2 }
 local COLOR_TIME_NORMAL = { r = 1,   g = 1,    b = 1   }
 local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
 local COLOR_UNDER       = { r = 1,   g = 0.82, b = 0   }
@@ -96,6 +99,18 @@ local function createOverlay(row, icon)
     return overlay
 end
 
+local function createAuraUnknownIcon(row, icon)
+    local unknownIcon = row:CreateTexture(nil, "OVERLAY")
+
+    unknownIcon:SetAllPoints(icon)
+    unknownIcon:SetAtlas(AURA_UNKNOWN_ATLAS)
+    unknownIcon:SetDesaturated(true)
+    unknownIcon:SetVertexColor(0.6, 0.6, 0.6, 1)
+    unknownIcon:Hide()
+
+    return unknownIcon
+end
+
 local function createIconBg(row, icon, color)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     color = color or MISSING_BG
@@ -143,12 +158,14 @@ local function createTimedCell(row, column, layout, options)
 
     local overlay = createOverlay(row, icon)
     overlay.label = column.label
+    local unknownIcon = createAuraUnknownIcon(row, icon)
 
     setCell(row, column, {
-        timeText = timeText,
-        icon     = icon,
-        bg       = bg,
-        overlay  = overlay,
+        timeText    = timeText,
+        icon        = icon,
+        bg          = bg,
+        overlay     = overlay,
+        unknownIcon = unknownIcon,
     })
 end
 
@@ -163,11 +180,13 @@ local function createIconCell(row, column, layout, options)
 
     local overlay = createOverlay(row, icon)
     overlay.label = column.label
+    local unknownIcon = createAuraUnknownIcon(row, icon)
 
     setCell(row, column, {
-        icon    = icon,
-        bg      = bg,
-        overlay = overlay,
+        icon        = icon,
+        bg          = bg,
+        overlay     = overlay,
+        unknownIcon = unknownIcon,
     })
 end
 
@@ -182,11 +201,13 @@ local function createRaidBuffCell(row, column, layout, options)
 
     local overlay = createOverlay(row, icon)
     overlay.spellID = column.spellID
+    local unknownIcon = createAuraUnknownIcon(row, icon)
 
     setCell(row, column, {
-        icon    = icon,
-        bg      = bg,
-        overlay = overlay,
+        icon        = icon,
+        bg          = bg,
+        overlay     = overlay,
+        unknownIcon = unknownIcon,
     })
 end
 
@@ -272,6 +293,19 @@ local function getCountColor(count, target)
     return COLOR_EXACT
 end
 
+local function renderUnavailableAuraCell(cell, member, column)
+    local rccPresent = member.columnData
+        and member.columnData.rccPresent == true
+
+    cell.icon:SetTexture(column.iconID)
+    cell.icon:SetDesaturated(true)
+    cell.icon:SetVertexColor(1, 1, 1, 0)
+    cell.bg:SetAlpha(0)
+    cell.unknownIcon:SetShown(rccPresent)
+    cell.overlay.label = rccPresent and AURA_UNKNOWN_LABEL or nil
+    cell.overlay:EnableMouse(rccPresent)
+end
+
 local function renderTimedAuraCell(row, member, column, context)
     local data = getColumnData(member, column)
     local cell = getCell(row, column)
@@ -286,16 +320,13 @@ local function renderTimedAuraCell(row, member, column, context)
     overlay.label   = nil
 
     if not data or data.available ~= true then
-        icon:SetTexture(column.iconID)
-        icon:SetDesaturated(true)
-        icon:SetVertexColor(1, 1, 1, 0)
-        cell.bg:SetAlpha(0)
         timeText:SetText("")
-        overlay:EnableMouse(false)
+        renderUnavailableAuraCell(cell, member, column)
 
         return
     end
 
+    cell.unknownIcon:Hide()
     cell.bg:SetAlpha(1)
     overlay:EnableMouse(true)
 
@@ -414,15 +445,12 @@ local function renderIconAuraCell(row, member, column)
     overlay.label   = nil
 
     if not data or data.available ~= true then
-        icon:SetTexture(column.iconID)
-        icon:SetDesaturated(true)
-        icon:SetVertexColor(1, 1, 1, 0)
-        cell.bg:SetAlpha(0)
-        overlay:EnableMouse(false)
+        renderUnavailableAuraCell(cell, member, column)
 
         return
     end
 
+    cell.unknownIcon:Hide()
     cell.bg:SetAlpha(1)
     overlay:EnableMouse(true)
 
@@ -454,24 +482,25 @@ local function renderRaidBuffCell(row, member, column)
     local icon = cell.icon
     local overlay = cell.overlay
 
-    overlay.unit = nil
-    overlay.auraID = nil
+    overlay.unit    = nil
+    overlay.auraID  = nil
+    overlay.spellID = nil
+    overlay.label   = nil
 
     if not data or data.available ~= true then
-        icon:SetDesaturated(true)
-        icon:SetVertexColor(1, 1, 1, 0)
-        cell.bg:SetAlpha(0)
-        overlay:EnableMouse(false)
+        renderUnavailableAuraCell(cell, member, column)
 
         return
     end
 
+    cell.unknownIcon:Hide()
     cell.bg:SetAlpha(1)
     overlay:EnableMouse(true)
 
     icon:SetDesaturated(not hasAura)
     icon:SetVertexColor(1, 1, 1, hasAura and 1 or MISSING_ALPHA)
     overlay.unit = member.unit
+    overlay.spellID = column.spellID
 
     if hasAura
         and type(auraID) == "number"

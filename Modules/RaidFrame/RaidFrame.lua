@@ -19,15 +19,17 @@ local GetTime = GetTime
 --- Constants
 --------------------------------------------------------------------------------
 
-local ADDON_REFRESH_DELAY = 0.25
-local FADE_OUT_DURATION   = 0.5
-local FEAST_SOURCE        = "feast"
+local ADDON_REFRESH_DELAY         = 0.25
+local READY_CHECK_BROADCAST_DELAY = 0.2
+local FADE_OUT_DURATION           = 0.5
+local FEAST_SOURCE                = "feast"
 
 local Reason = RCC.DisplayReason
 local displayContext = DisplayContext.Create(RCC.DisplaySurface.RAID_FRAME)
 local LAYOUT = Columns.CreateLayout()
 
 local broadcast             = Broadcast.Create()
+local presenceData          = broadcast:GetPresenceData()
 local foodData              = broadcast:GetFoodData()
 local flaskData             = broadcast:GetFlaskData()
 local durabilityData        = broadcast:GetDurabilityData()
@@ -89,6 +91,7 @@ local renderContext = {
     state  = state,
     display = displayContext,
     shared = {
+        presenceData          = presenceData,
         foodData              = foodData,
         flaskData             = flaskData,
         durabilityData        = durabilityData,
@@ -276,6 +279,7 @@ end
 
 local hideTimer
 local addonRefreshTimer
+local readyCheckBroadcastTimer
 local tempWeaponEnchantTimer
 local fadeOut = FrameAnimations.CreateFadeOut(frame, {
     duration = FADE_OUT_DURATION,
@@ -286,6 +290,13 @@ local function cancelAddonRefreshTimer()
     if addonRefreshTimer then
         addonRefreshTimer:Cancel()
         addonRefreshTimer = nil
+    end
+end
+
+local function cancelReadyCheckBroadcastTimer()
+    if readyCheckBroadcastTimer then
+        readyCheckBroadcastTimer:Cancel()
+        readyCheckBroadcastTimer = nil
     end
 end
 
@@ -418,19 +429,53 @@ local function showProvisionDisplay()
     return showProvisionDisplayFromState()
 end
 
-local function broadcastPlayerTimedConsumables()
-    local columnData = Columns.ScanUnitData(
+local function scanPlayerTimedConsumables()
+    return Columns.ScanUnitData(
         "player",
         GetTime(),
         LAYOUT,
         renderContext,
         LAYOUT.broadcastColumns
     )
+end
+
+local function broadcastPlayerTimedConsumables()
+    local columnData = scanPlayerTimedConsumables()
 
     broadcast:SendTimedConsumableStatuses(columnData)
 end
 
+local function scheduleReadyCheckBroadcast()
+    cancelReadyCheckBroadcastTimer()
+
+    readyCheckBroadcastTimer = C_Timer.NewTimer(
+        READY_CHECK_BROADCAST_DELAY,
+        function()
+            readyCheckBroadcastTimer = nil
+
+            if not DisplayContext.IsActive(
+                displayContext,
+                Reason.READY_CHECK
+            ) then
+                return
+            end
+
+            local columnData = scanPlayerTimedConsumables()
+
+            broadcast:SendReadyCheckStatuses(columnData)
+
+            if frame:IsShown() then
+                refreshAllRowsAndTitle()
+            end
+        end
+    )
+end
+
 local function scheduleTempWeaponEnchantRefresh()
+    if readyCheckBroadcastTimer then
+        return
+    end
+
     cancelTempWeaponEnchantTimer()
 
     tempWeaponEnchantTimer = C_Timer.NewTimer(0.2, function()
@@ -451,14 +496,14 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
     beginReadyCheckDisplay(timeToHide == 0)
 
     wipe(state.rcStatus)
+    cancelTempWeaponEnchantTimer()
     broadcast:Reset()
 
     -- Broadcast even when the local raid frame is disabled so other RCC users
     -- can still see this player's consumable, durability, and temp weapon
-    -- enchant status.
-    broadcastPlayerTimedConsumables()
-    broadcast:SendDurability()
-    broadcast:SendTempWeaponEnchantStatus()
+    -- enchant status. The short delay lets every client initialize and clear
+    -- its ready-check state before status messages arrive.
+    scheduleReadyCheckBroadcast()
 
     if not enabled then
         return
@@ -509,6 +554,7 @@ local function releaseReadyCheckDisplay(self)
         return
     end
 
+    cancelReadyCheckBroadcastTimer()
     self.manualShow = false
     syncProvisionReasons()
 
@@ -535,6 +581,7 @@ function frame:OnReadyCheckFinished()
         return
     end
 
+    cancelReadyCheckBroadcastTimer()
     titleBar:StopProgress()
     showFinishedSummary()
 
@@ -763,6 +810,7 @@ function frame:OnCombat()
     unregisterReadyCheckEvents()
     cancelHideTimer()
     cancelAddonRefreshTimer()
+    cancelReadyCheckBroadcastTimer()
     cancelTempWeaponEnchantTimer()
     fadeOut:Cancel()
     self:Hide()
@@ -790,6 +838,7 @@ function frame:OnHide()
     unregisterReadyCheckEvents()
     cancelHideTimer()
     cancelAddonRefreshTimer()
+    cancelReadyCheckBroadcastTimer()
     cancelTempWeaponEnchantTimer()
     fadeOut:Cancel()
     titleBar:StopProgress()
@@ -834,7 +883,10 @@ local function onPlayerRegenDisabled(self)
 end
 
 local function onUpdateInventoryDurability()
-    broadcast:SendDurability()
+    if not readyCheckBroadcastTimer then
+        broadcast:SendDurability()
+    end
+
     refreshAllRowsAndTitle()
 end
 
@@ -855,7 +907,7 @@ local function onUnitAura(self, unit)
         return
     end
 
-    if unit == "player" then
+    if unit == "player" and not readyCheckBroadcastTimer then
         broadcastPlayerTimedConsumables()
     end
 

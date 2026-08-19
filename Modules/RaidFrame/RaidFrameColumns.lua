@@ -608,6 +608,7 @@ local cauldronPotionColumn = {
 local function createColumnData(layout)
     local columnData = {
         auraScanAvailable = false,
+        rccPresent        = false,
     }
 
     for columnIndex = 1, #layout.columns do
@@ -727,14 +728,13 @@ function Columns.SyncExternalData(member, layout, context)
     end
 
     member.columnData = member.columnData or createColumnData(layout)
+    member.columnData.rccPresent = member.key ~= nil
+        and context.shared.presenceData[member.key] ~= nil
 
     for columnIndex = 1, #layout.activeColumns do
         local column = layout.activeColumns[columnIndex]
 
-        local canSync = column.dataSource ~= DATA_SOURCE.AURA
-            or member.columnData.auraScanAvailable == true
-
-        if column.SyncData and canSync then
+        if column.SyncData then
             local data = member.columnData[column.key]
 
             if not data then
