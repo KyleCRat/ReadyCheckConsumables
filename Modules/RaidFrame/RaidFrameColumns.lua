@@ -360,13 +360,13 @@ local function isTempWeaponEnchantBad(member, context, column)
     local time = data and data.time
 
     if time == nil
-        or time == TEMP_WEAPON_ENCHANT_STATUS.NO_WEAPON
         or time == TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
     then
         return false
     end
 
     return time == TEMP_WEAPON_ENCHANT_STATUS.MISSING
+        or time == TEMP_WEAPON_ENCHANT_STATUS.NO_WEAPON
         or Timing.IsExpiringSoon(time)
 end
 
