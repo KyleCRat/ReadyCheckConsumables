@@ -124,6 +124,11 @@ function TitleBar.Create(parent, layout, options)
         local columns = layout.activeColumns
         local columnStates = {}
 
+        -- Column headers intentionally have only good and bad states. IsBad
+        -- must return true only for a confirmed failure: any bad member makes
+        -- the header a red X; otherwise it is a green check. Unknown,
+        -- unavailable, and no-response results are neutral and must not block
+        -- members with confirmed good results from clearing the header.
         for columnIndex = 1, #columns do
             local column = columns[columnIndex]
             local anyBad = false
