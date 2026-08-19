@@ -30,6 +30,8 @@ local TEST_NAMES = {
     "Moonfire", "Havocblade", "Scalewing",
 }
 
+local SYNTHETIC_UNAVAILABLE_CHANCE = 0.05
+
 --------------------------------------------------------------------------------
 --- Timer lifecycle
 --------------------------------------------------------------------------------
@@ -111,9 +113,36 @@ local function generateSyntheticMembers(excludeClass)
                 isDead            = math.random() > 0.9,
                 durability        = math.random(10, 100),
                 tempWeaponEnchant = generateTempWeaponEnchantData(),
+                rccPresent         = true,
+                auraScanAvailable  = true,
             }
         end
     end
+
+    members[#members + 1] = {
+        name              = "Not Installed",
+        class             = "WARRIOR",
+        online            = true,
+        isDead            = false,
+        rccPresent        = false,
+        auraScanAvailable = false,
+    }
+
+    members[#members + 1] = {
+        name              = "Unknown",
+        class             = "MAGE",
+        online            = true,
+        isDead            = false,
+        durability        = 100,
+        tempWeaponEnchant = {
+            time    = 1800,
+            itemID  = 0,
+            iconID  = RCC.db.weaponEnchantIconID,
+            spellID = 0,
+        },
+        rccPresent        = true,
+        auraScanAvailable = false,
+    }
 
     return members
 end
@@ -169,10 +198,24 @@ local function shouldMirrorPlayerColumn(column)
         or column.columnType == COLUMN_TYPE.RAID_BUFF
 end
 
-local function createSyntheticColumnData(layout, context, playerMember)
+local function canSimulateUnavailable(column)
+    return column.dataSource == DATA_SOURCE.AURA
+        or column.dataSource == DATA_SOURCE.RAID_BUFF
+end
+
+local function createSyntheticColumnData(
+    layout,
+    context,
+    playerMember,
+    auraScanAvailable
+)
     local columnData = Columns.CreateColumnData(layout)
 
-    columnData.auraScanAvailable = true
+    columnData.auraScanAvailable = auraScanAvailable == true
+
+    if not columnData.auraScanAvailable then
+        return columnData
+    end
 
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
@@ -182,12 +225,19 @@ local function createSyntheticColumnData(layout, context, playerMember)
             and playerMember.columnData[column.key]
 
         if data then
+            -- Preserve the guaranteed-good mirrored columns so the test always
+            -- exercises the green title-bar state before adding random neutral
+            -- cells to the remaining columns.
             if shouldMirrorPlayerColumn(column)
                 and playerData
                 and playerData.available == true
                 and playerColumnIsGood(playerMember, context, column)
             then
                 columnData[column.key] = copySyntheticColumnData(playerData)
+            elseif canSimulateUnavailable(column)
+                and math.random() < SYNTHETIC_UNAVAILABLE_CHANCE
+            then
+                data.available = false
             elseif column.dataSource == DATA_SOURCE.AURA then
                 applySyntheticAuraData(data, column)
             elseif column.dataSource == DATA_SOURCE.RAID_BUFF then
@@ -248,11 +298,24 @@ local function populateSyntheticState(self)
             class      = member.class,
             online     = member.online,
             isDead     = member.isDead,
-            columnData = createSyntheticColumnData(layout, context, state.members[1]),
+            columnData = createSyntheticColumnData(
+                layout,
+                context,
+                state.members[1],
+                member.auraScanAvailable
+            ),
         }
 
         state.unitToIndex[fakeUnit] = count
         state.rcStatus[fakeUnit] = ReadyCheck.PENDING
+
+        if member.rccPresent then
+            broadcast:SetPresence(
+                playerKey,
+                RCC.RaidFrameBroadcast.ProtocolVersion,
+                member.auraScanAvailable
+            )
+        end
 
         if includeCauldrons then
             Cauldron.SetSyntheticTestEntry(playerKey, count)
