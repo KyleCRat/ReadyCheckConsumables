@@ -24,6 +24,11 @@ local TEMP_WEAPON_ENCHANT_MESSAGE_TYPE = "OIL"
 local MAIN_HAND_INVENTORY_SLOT = WeaponEnchant.MAIN_HAND_INVENTORY_SLOT
 local OFF_HAND_INVENTORY_SLOT = WeaponEnchant.OFF_HAND_INVENTORY_SLOT
 
+-- Temporary-enchant wire values are stable protocol data: positive seconds
+-- means present, 0 means confirmed missing, -1 means no enchantable main-hand
+-- weapon, and -2 means the client could not inspect the enchant. A missing OIL
+-- message is receiver-side NO_RESPONSE and is intentionally not another wire
+-- sentinel.
 Broadcast.TempWeaponEnchantStatus = {
     MISSING   = 0,
     NO_WEAPON = -1,

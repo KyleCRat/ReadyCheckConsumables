@@ -244,17 +244,18 @@ local function syncFoodData(data, member, context)
 end
 
 local foodColumn = {
-    columnType   = COLUMN_TYPE.TIMED,
-    dataSource   = DATA_SOURCE.AURA,
-    key          = "food",
-    visibility   = FOOD_VISIBILITY,
-    iconID       = db.foodIconID,
-    label        = "Food: Missing",
-    activeLabel  = "Food",
-    CreateData   = createFoodData,
-    CollectAura  = collectFoodAura,
-    SyncData     = syncFoodData,
-    IsBad        = isFoodBad,
+    columnType        = COLUMN_TYPE.TIMED,
+    dataSource        = DATA_SOURCE.AURA,
+    key               = "food",
+    visibility        = FOOD_VISIBILITY,
+    iconID            = db.foodIconID,
+    statusName        = "Food",
+    inProgressTooltip =
+        "This player is eating, but has not gained Well Fed yet.",
+    CreateData        = createFoodData,
+    CollectAura       = collectFoodAura,
+    SyncData          = syncFoodData,
+    IsBad             = isFoodBad,
 }
 
 --------------------------------------------------------------------------------
@@ -307,8 +308,7 @@ local flaskColumn = {
     key          = "flask",
     visibility   = READY_CHECK_VISIBILITY,
     iconID       = db.flaskIconID,
-    label        = "Flask: Missing",
-    activeLabel  = "Flask",
+    statusName   = "Flask",
     CreateData   = createFlaskData,
     CollectAura  = collectFlaskAura,
     SyncData     = syncFlaskData,
@@ -359,6 +359,8 @@ local function isTempWeaponEnchantBad(member, context, column)
     local data = getColumnData(member, column)
     local time = data and data.time
 
+    -- Header aggregation treats missing data and UNKNOWN as neutral because
+    -- neither confirms a failure. MISSING and NO_WEAPON are confirmed bad.
     if time == nil
         or time == TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
     then
@@ -376,10 +378,7 @@ local tempWeaponEnchantColumn = {
     key             = "tempWeaponEnchant",
     visibility      = READY_CHECK_VISIBILITY,
     iconID          = db.weaponEnchantIconID,
-    label           = "Weapon Enchant",
-    labelMissing    = "Weapon Enchant: Missing",
-    labelNoWeapon   = "Weapon Enchant: No Weapon",
-    labelUnknown    = "Weapon Enchant: Unknown",
+    statusName      = "Weapon Enchant",
     CreateData      = createTempWeaponEnchantData,
     SyncData        = syncTempWeaponEnchantData,
     IsBad           = isTempWeaponEnchantBad,
@@ -421,8 +420,7 @@ local augmentColumn = {
     key          = "augment",
     visibility   = READY_CHECK_VISIBILITY,
     iconID       = db.augmentIconID,
-    label        = "Augment Rune: Missing",
-    activeLabel  = "Augment Rune",
+    statusName   = "Augment Rune",
     CreateData   = createAugmentData,
     CollectAura  = collectAugmentAura,
     IsBad        = isAugmentBad,
@@ -464,8 +462,7 @@ local vantusColumn = {
     key          = "vantus",
     visibility   = READY_CHECK_VISIBILITY,
     iconID       = db.vantusIconID,
-    label        = "Vantus Rune: Missing",
-    activeLabel  = "Vantus Rune",
+    statusName   = "Vantus Rune",
     CreateData   = createVantusData,
     CollectAura  = collectVantusAura,
     IsBad        = isVantusBad,
@@ -500,6 +497,7 @@ local function createRaidBuffColumn(raidBuffIndex)
         visibility         = READY_CHECK_VISIBILITY,
         iconID             = buffInfo.iconID,
         spellID            = buffInfo.spellID,
+        statusName         = buffInfo.label,
         CreateData         = createRaidBuffData,
         CollectAura        = collectRaidBuffAura,
         IsBad              = isRaidBuffBad,
@@ -553,13 +551,14 @@ local function isDurabilityBad(member, context, column)
 end
 
 local durabilityColumn = {
-    columnType = COLUMN_TYPE.DURABILITY,
-    dataSource = DATA_SOURCE.DURABILITY,
-    key        = "durability",
-    visibility = READY_CHECK_VISIBILITY,
-    CreateData = createDurabilityData,
-    SyncData   = syncDurabilityData,
-    IsBad      = isDurabilityBad,
+    columnType  = COLUMN_TYPE.DURABILITY,
+    dataSource  = DATA_SOURCE.DURABILITY,
+    key         = "durability",
+    visibility  = READY_CHECK_VISIBILITY,
+    statusName  = "Durability",
+    CreateData  = createDurabilityData,
+    SyncData    = syncDurabilityData,
+    IsBad       = isDurabilityBad,
 }
 
 --------------------------------------------------------------------------------
@@ -582,8 +581,7 @@ local cauldronFlaskColumn = {
     visibility            = CAULDRON_VISIBILITY,
     cauldronKind          = Cauldron.KIND_FLASK,
     iconID                = db.flaskIconID,
-    label                 = "Flask Cauldron",
-    activeLabel           = "Flasks",
+    statusName            = "Flasks",
     includeOfflineInTitle = true,
     IsBad                 = isCauldronBad,
 }
@@ -595,8 +593,7 @@ local cauldronPotionColumn = {
     visibility            = CAULDRON_VISIBILITY,
     cauldronKind          = Cauldron.KIND_POTION,
     iconID                = db.combatPotionIconID,
-    label                 = "Potion Cauldron",
-    activeLabel           = "Potions",
+    statusName            = "Potions",
     includeOfflineInTitle = true,
     IsBad                 = isCauldronBad,
 }
