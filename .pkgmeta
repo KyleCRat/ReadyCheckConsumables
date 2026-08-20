@@ -10,6 +10,7 @@ externals:
         tag: 1.1.0
 
 ignore:
+    - AGENTS.md
     - Docs
     - Tests
     - "*.png"

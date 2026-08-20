@@ -56,7 +56,10 @@ Context overrides are stored sparsely in
 `ReadyCheckConsumablesDB.contextualVisibility`. Use
 `RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)` to
 set `true` or `false`, and pass `nil` to restore the definition default. The
-setter refreshes both frames. No settings matrix is exposed yet.
+setter refreshes both frames. The Consumables Frame exposes these overrides
+through the **Buttons by Open Event** matrix. **Reset Matrix** clears the
+Consumables Frame overrides and restores the reason defaults declared by each
+button definition.
 
 Feast and cauldron trackers publish semantic reasons to the Raid Frame. The
 frame owns per-source auto-open handling, including separate flask and potion
