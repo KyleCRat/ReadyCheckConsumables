@@ -521,12 +521,14 @@ local function getCauldronDataFromMessage(field1, field2)
     return getCauldronDataForKind(field1) or { kind = field1 }
 end
 
-local function onChatMsgAddon(_self, prefix, message)
-    if prefix ~= ADDON_PREFIX then
+local function onChatMsgAddon(_self, prefix, message, channel, sender)
+    if issecretvalue(prefix) or prefix ~= ADDON_PREFIX then
         return
     end
 
-    if issecretvalue(message) then
+    if issecretvalue(message)
+        or not F.GetTrustedGroupAddonSender(channel, sender)
+    then
         return
     end
 

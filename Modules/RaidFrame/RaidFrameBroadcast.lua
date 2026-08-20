@@ -430,15 +430,27 @@ function Broadcast.Create()
         self:SendTempWeaponEnchantStatus(chatType)
     end
 
-    function broadcast:HandleAddonMessage(prefix, message, sender)
-        if prefix == ADDON_PREFIX then
+    function broadcast:HandleAddonMessage(prefix, message, channel, sender)
+        if issecretvalue(prefix) or issecretvalue(message) then
+            return false
+        end
+
+        local isRccMessage = prefix == ADDON_PREFIX
+        local isMrtMessage = F.IsMrtPrefix(prefix)
+
+        if not isRccMessage and not isMrtMessage then
+            return false
+        end
+
+        local senderKey = F.GetTrustedGroupAddonSender(channel, sender)
+
+        if not senderKey then
+            return false
+        end
+
+        if isRccMessage then
             local msgType, val1, val2, val3, val4, val5, val6, val7, val8 =
                 strsplit("\t", message)
-            local senderKey = F.fullName(sender)
-
-            if not senderKey then
-                return false
-            end
 
             if msgType == PRESENCE_MESSAGE_TYPE then
                 local protocolVersion = tonumber(val1)
@@ -533,14 +545,13 @@ function Broadcast.Create()
                     return true
                 end
             end
-        elseif F.IsMrtPrefix(prefix) then
+        elseif isMrtMessage then
             local module, msgType, _, durStr = F.ParseMrtMessage(message)
 
             if module == "raidcheck" and msgType == "DUR" and durStr then
                 local pct = tonumber(durStr)
-                local senderKey = F.fullName(sender)
 
-                if pct and senderKey then
+                if pct then
                     self.durabilityData[senderKey] = floor(pct)
 
                     return true

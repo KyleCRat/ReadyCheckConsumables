@@ -331,6 +331,46 @@ function F.ForEachActiveRosterMember(callback)
     end
 end
 
+local TRUSTED_GROUP_ADDON_CHANNELS = {
+    INSTANCE_CHAT = true,
+    PARTY         = true,
+    RAID          = true,
+}
+
+--------------------------------------------------------------------------------
+--- GetTrustedGroupAddonSender(channel, sender)
+--- Returns the normalized full name only when an addon message arrived through
+--- a group channel from a member of the active roster.
+--------------------------------------------------------------------------------
+
+function F.GetTrustedGroupAddonSender(channel, sender)
+    if issecretvalue(channel) or issecretvalue(sender)
+        or type(channel) ~= "string"
+        or type(sender) ~= "string"
+        or not TRUSTED_GROUP_ADDON_CHANNELS[channel]
+    then
+        return nil
+    end
+
+    local senderKey = F.fullName(sender)
+
+    if not senderKey then
+        return nil
+    end
+
+    local senderIsActive = false
+
+    F.ForEachActiveRosterMember(function(name)
+        if name == senderKey then
+            senderIsActive = true
+
+            return false
+        end
+    end)
+
+    return senderIsActive and senderKey or nil
+end
+
 --------------------------------------------------------------------------------
 --- ForEachHelpfulAura(unit, callback)
 --- Iterates helpful auras using only normalized public fields.

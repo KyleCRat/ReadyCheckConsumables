@@ -49,18 +49,31 @@ function Election.BroadcastIntent()
     end
 end
 
-function Election.HandleAddonMessage(prefix, message, sender)
-    if prefix == ADDON_PREFIX and message == "REPORT" then
-        local senderKey = F.fullName(sender)
+function Election.HandleAddonMessage(prefix, message, channel, sender)
+    if issecretvalue(prefix) or issecretvalue(message) then
+        return
+    end
 
-        if senderKey then
-            reportCandidates[senderKey] = true
-        end
+    local isRccReport = prefix == ADDON_PREFIX and message == "REPORT"
+    local isMrtMessage = F.IsMrtPrefix(prefix)
+
+    if not isRccReport and not isMrtMessage then
+        return
+    end
+
+    local senderKey = F.GetTrustedGroupAddonSender(channel, sender)
+
+    if not senderKey then
+        return
+    end
+
+    if isRccReport then
+        reportCandidates[senderKey] = true
 
         return
     end
 
-    if F.IsMrtPrefix(prefix) then
+    if isMrtMessage then
         local moduleName, msgType = F.ParseMrtMessage(message)
 
         if F.IsMrtRaidCheckReportMessage(moduleName, msgType) then

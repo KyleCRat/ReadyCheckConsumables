@@ -65,7 +65,7 @@ cauldron tracking outside ready checks.
 RCC can automatically report missing consumables after a ready check starts.
 
 - Reports missing or expiring food, flasks, temporary weapon enchants, and
-  outdated augment runes.
+  outdated augment runes, including players without an enchantable weapon.
 - Reports low durability, missing raid buffs when the providing class is
   present, and offline players.
 - Suppresses aura-derived report sections when WoW does not allow the active

@@ -349,6 +349,7 @@ local function reportWeaponEnchants(toChat)
     end
 
     local missing = {}
+    local noWeapon = {}
     local expiring = {}
 
     F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
@@ -365,6 +366,8 @@ local function reportWeaponEnchants(toChat)
 
         if remaining == Broadcast.TempWeaponEnchantStatus.MISSING then
             missing[#missing + 1] = colored
+        elseif remaining == Broadcast.TempWeaponEnchantStatus.NO_WEAPON then
+            noWeapon[#noWeapon + 1] = format("%s(no weapon)", colored)
         elseif remaining > 0 and Timing.IsExpiringSoon(remaining) then
             expiring[#expiring + 1] = format(
                 "%s(%s)",
@@ -374,7 +377,7 @@ local function reportWeaponEnchants(toChat)
         end
     end)
 
-    local totalBad = #missing + #expiring
+    local totalBad = #missing + #noWeapon + #expiring
 
     if totalBad == 0 then
         return
@@ -382,6 +385,7 @@ local function reportWeaponEnchants(toChat)
 
     local entries = {}
     appendEntries(entries, missing)
+    appendEntries(entries, noWeapon)
     appendEntries(entries, expiring)
     Output.SendChunked(
         format("Weapon Enchant (%d): ", totalBad),

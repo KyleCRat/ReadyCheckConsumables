@@ -110,9 +110,9 @@ local function onReadyCheck()
 end
 
 local function onAddonMessage(...)
-    local prefix, message, _, sender = ...
+    local prefix, message, channel, sender = ...
 
-    Election.HandleAddonMessage(prefix, message, sender)
+    Election.HandleAddonMessage(prefix, message, channel, sender)
 end
 
 local function onEvent(self, event, ...)

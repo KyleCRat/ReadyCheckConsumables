@@ -914,8 +914,8 @@ local function onUnitAura(self, unit)
     self:OnUnitAura(unit)
 end
 
-local function onChatMsgAddon(_self, prefix, message, _channel, sender)
-    if broadcast:HandleAddonMessage(prefix, message, sender) then
+local function onChatMsgAddon(_self, prefix, message, channel, sender)
+    if broadcast:HandleAddonMessage(prefix, message, channel, sender) then
         scheduleAddonRefresh()
     end
 end

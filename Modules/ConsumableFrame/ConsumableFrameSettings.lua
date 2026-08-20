@@ -108,6 +108,11 @@ local function refreshConsumableFrame()
     RCC.consumables:Update()
 end
 
+local function refreshAugmentRuneSelection()
+    refreshConsumableFrame()
+    RCC.ConsumableMacros.ScheduleUpdate()
+end
+
 local function addSettingCheckbox(frame, flow, options, placement)
     local checkbox = flow:AddControl("checkbox", {
         label = options.label,
@@ -211,7 +216,7 @@ local function createGeneralSettings(frame, layout)
         key = "consumables_preferUnlimitedAugment",
         label = "Prefer Unlimited Augment Runes",
         tooltip = "Use unlimited augment runes before consumable runes from newer expansions.",
-        onChanged = refreshConsumableFrame,
+        onChanged = refreshAugmentRuneSelection,
     })
 
     addSettingCheckbox(frame, eventsFlow, {

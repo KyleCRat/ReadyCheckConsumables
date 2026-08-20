@@ -31,6 +31,7 @@ local wasInScenario
 local instanceOpenPending
 local instanceStateInitialized = false
 local readyCheckButtonsHooked
+local liveUpdateTimer
 local displayContext = DisplayContext.Create(
     RCC.DisplaySurface.CONSUMABLE_FRAME
 )
@@ -53,6 +54,13 @@ local function cancelInstanceHideDelay(self)
     if self.instanceHideDelay then
         self.instanceHideDelay:Cancel()
         self.instanceHideDelay = nil
+    end
+end
+
+local function cancelLiveUpdate()
+    if liveUpdateTimer then
+        liveUpdateTimer:Cancel()
+        liveUpdateTimer = nil
     end
 end
 
@@ -445,7 +453,13 @@ local function onUnitAura(self, unit)
 end
 
 local function scheduleLiveUpdate(self)
-    C_Timer.After(0.2, function()
+    if liveUpdateTimer then
+        return
+    end
+
+    liveUpdateTimer = C_Timer.NewTimer(0.2, function()
+        liveUpdateTimer = nil
+
         if self:IsShown() and not InCombatLockdown() then
             self:Update()
         end
@@ -494,6 +508,7 @@ local function onHide(self)
     self.anchor:Hide()
     cancelReadyCheckHideDelay(self)
     cancelInstanceHideDelay(self)
+    cancelLiveUpdate()
 
     if not InCombatLockdown() then
         self.drag:Hide()

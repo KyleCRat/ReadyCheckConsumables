@@ -95,10 +95,12 @@ local function onUnitSpellcastSucceeded(_self, unit, _castGUID, spellID)
     end
 end
 
-local function onChatMsgAddon(_self, prefix, message)
-    if prefix ~= ADDON_PREFIX
+local function onChatMsgAddon(_self, prefix, message, channel, sender)
+    if issecretvalue(prefix)
+        or prefix ~= ADDON_PREFIX
         or issecretvalue(message)
         or message ~= MESSAGE_TYPE
+        or not F.GetTrustedGroupAddonSender(channel, sender)
     then
         return
     end
