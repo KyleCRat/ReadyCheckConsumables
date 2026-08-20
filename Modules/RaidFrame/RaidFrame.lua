@@ -360,7 +360,7 @@ local function showReadyCheckDisplay(duration, showProgress)
     frame:Show()
 end
 
-local function canShowProvisionOnly()
+local function canShowProvisionOnly(ignoreAutoShowSetting)
     if InCombatLockdown() then
         return false
     end
@@ -369,15 +369,17 @@ local function canShowProvisionOnly()
         displayContext,
         Reason.FEAST_DROP
     )
-        and Feast.ShouldShowOutsideReadyCheck()
-
     local cauldronActive = DisplayContext.IsActive(
         displayContext,
         Reason.CAULDRON_DROP
     )
-        and Cauldron.ShouldShowOutsideReadyCheck()
 
-    return feastActive or cauldronActive
+    if ignoreAutoShowSetting then
+        return feastActive or cauldronActive
+    end
+
+    return feastActive and Feast.ShouldShowOutsideReadyCheck()
+        or cauldronActive and Cauldron.ShouldShowOutsideReadyCheck()
 end
 
 local function beginProvisionDisplay()
@@ -416,10 +418,10 @@ local function showProvisionDisplayFromState()
     return true
 end
 
-local function showProvisionDisplay()
+local function showProvisionDisplay(ignoreAutoShowSetting)
     syncProvisionReasons()
 
-    if not canShowProvisionOnly() then
+    if not canShowProvisionOnly(ignoreAutoShowSetting) then
         return false
     end
 
@@ -549,29 +551,17 @@ function frame:OnReadyCheckConfirm(unit, ready)
     end
 end
 
-local function releaseReadyCheckDisplay(self)
+local function closeReadyCheckDisplay(self)
     if not DisplayContext.Deactivate(displayContext, Reason.READY_CHECK) then
         return
     end
 
     cancelReadyCheckBroadcastTimer()
     self.manualShow = false
-    syncProvisionReasons()
 
-    if not self:IsShown() then
-        syncDisplayEvents()
-
-        return
-    end
-
-    if canShowProvisionOnly() then
-        beginProvisionDisplay()
-        Members.ScanAll(state, LAYOUT, renderContext)
-        showProvisionDisplayFromState()
-
-        return
-    end
-
+    -- Finishing a ready check closes the whole visible raid-status session.
+    -- Active provision reasons may be reused by their owners, but they do not
+    -- inherit the frame when the ready-check display closes.
     syncDisplayEvents()
     fadeOut:Hide()
 end
@@ -587,7 +577,7 @@ function frame:OnReadyCheckFinished()
 
     if not self:IsShown() then
         cancelTempWeaponEnchantTimer()
-        releaseReadyCheckDisplay(self)
+        closeReadyCheckDisplay(self)
 
         return
     end
@@ -600,7 +590,7 @@ function frame:OnReadyCheckFinished()
 
     if not RCC.GetSetting("raidFrame_minShow") then
         if not InCombatLockdown() then
-            releaseReadyCheckDisplay(self)
+            closeReadyCheckDisplay(self)
         end
 
         return
@@ -619,13 +609,17 @@ function frame:OnReadyCheckFinished()
                 Reason.READY_CHECK
             )
         then
-            releaseReadyCheckDisplay(self)
+            closeReadyCheckDisplay(self)
         end
     end)
 end
 
 function frame:ShowProvisionTracking()
     return showProvisionDisplay()
+end
+
+function frame:OpenProvisionTracking()
+    return showProvisionDisplay(true)
 end
 
 local function refreshShownDisplay(self, rescanMembers)

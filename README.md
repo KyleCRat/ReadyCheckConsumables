@@ -133,6 +133,7 @@ position are stored account-wide in `ReadyCheckConsumablesDB`.
 | `/rcc rt` | `/rcc ready check test` | Show a timed ready-check-only test |
 | `/rcc rtp` | `/rcc ready check test permanent` | Show a permanent ready-check-only test |
 | `/rcc ct` | `/rcc cauldron test` | Show the cauldron-only test |
+| `/rcc ca` | `/rcc cauldron` | Open the active Feast/Cauldron Frame |
 | `/rcc h` | `/rcc hide` | Hide all RCC frames |
 | `/rcc r` | `/rcc report` | Print the consumable report locally |
 | `/rcc rc` | `/rcc report chat` | Send the consumable report to group chat |

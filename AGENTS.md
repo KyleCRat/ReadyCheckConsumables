@@ -62,6 +62,9 @@ data.
   open mode with another. The shared reasons live in
   `Modules/ContextualVisibility.lua` and include ready check, instance entry,
   cauldron pickup, break timer, feast drop, cauldron drop, and manual test.
+- Closing the Raid Status Frame's ready-check display is also a close boundary
+  for its visible feast/cauldron provision mode. Do not hand the frame back to
+  active provision reasons when a ready check finishes.
 - Global enablement, reason visibility, and current applicability are separate
   gates. Keep policy in definitions/context, status data in presenters, and
   rendering in renderers.

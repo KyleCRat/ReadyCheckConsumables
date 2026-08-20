@@ -32,6 +32,30 @@ local function openConsumablesFrame()
     RCC.ConsumableFrameController.OpenManually()
 end
 
+local function openProvisionFrame()
+    if InCombatLockdown() then
+        printMessage("Can't open the Feast/Cauldron Frame in combat.")
+
+        return
+    end
+
+    if not RCC.GetSetting("raidFrame_enabled") then
+        printMessage("The Raid Status Frame is disabled.")
+
+        return
+    end
+
+    if not RCC.GetSetting("raidFrameCauldron_enabled") then
+        printMessage("Feast and cauldron tracking is disabled.")
+
+        return
+    end
+
+    if not RCC.raidFrame:OpenProvisionTracking() then
+        printMessage("No active feast or cauldron is being tracked.")
+    end
+end
+
 local COMMANDS = {
     {
         triggers = { "t", "test" },
@@ -71,6 +95,11 @@ local COMMANDS = {
         run = function()
             RCC.RaidFrameTest:StartCauldronOnly()
         end,
+    },
+    {
+        triggers = { "ca", "cauldron", "provisions" },
+        description = "Open the active Feast/Cauldron Frame",
+        run = openProvisionFrame,
     },
     {
         triggers = { "h", "hide" },
