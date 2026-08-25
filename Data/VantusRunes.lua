@@ -6,6 +6,9 @@ RCC.db = RCC.db or {}
 --- Vantus Rune Buff Spell IDs
 --- Maps spell ID -> truthy marker for detecting active vantus rune auras.
 --- The buff name contains "Vantus Rune: <Boss Name>".
+--- A new raid requires both these aura IDs and the instance/item mapping below.
+--- Without both datasets, Vantus readiness or item selection cannot function.
+--- See Docs/PATCH_UPDATE_CHECKLIST.md for discovery and validation steps.
 --------------------------------------------------------------------------------
 
 RCC.db.vantusBuffIDs = {}

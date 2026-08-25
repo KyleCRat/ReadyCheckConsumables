@@ -152,6 +152,16 @@ data.
 - When changing communication, test current-to-current and current-to-previous-
   release clients.
 
+## Patch and Season Updates
+
+- Follow `Docs/PATCH_UPDATE_CHECKLIST.md` for every Retail patch, season, or
+  raid addition, including content updates that do not change the Interface
+  number.
+- Treat Vantus support for every new raid as release-blocking. Register both the
+  raid instance/item mapping and every boss-specific applied aura spell ID;
+  without both datasets, the personal control, managed macro, or Raid Status
+  Frame Vantus column cannot function correctly.
+
 ## Release Workflow
 
 - Only prepare a release when explicitly requested.
