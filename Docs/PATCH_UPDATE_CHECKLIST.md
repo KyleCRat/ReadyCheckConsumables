@@ -26,7 +26,7 @@ the new client or content.
 - [ ] Secure buttons and protected attributes are not created or changed during
   combat.
 
-### Vantus Runes — Required for Every New Raid
+### Vantus Runes - Required for Every New Raid
 
 Vantus support is data-driven and has no useful generic fallback. The Raid
 Status Frame's Vantus column cannot detect a rune for a new raid until its boss
@@ -43,6 +43,8 @@ cannot select the new rune until its raid instance and item IDs are registered.
 - [ ] Enter every new raid difficulty and verify the runtime instance ID with
   `/dump GetInstanceInfo()`. Register the eighth return value; do not use the
   map, journal, or encounter ID.
+- [ ] Update `Data/<expansion>/VantusRunes.lua`, retaining clear raid and boss
+  comments so later patches can audit the dataset without rediscovering it.
 - [ ] Identify every supported Vantus Rune item rank and register the item IDs
   with `RCC.Data.AddVantusItemsByRaid`. List the highest-quality item first.
 - [ ] Apply every rune rank to every boss and capture each boss-specific aura
