@@ -1,15 +1,12 @@
 # TODO
 
-## LibModernSettings Migration
+## Features
+- Add repair drop items Jeeves:49040 Auto-Hammer:132514
+- Add Inky Black Potion:124640
+- (? Maybe, not sure yet) Add Raid Wipe Recovery Items Irresistible Red Button:221945 - These items can be placed before pull to ressurect someone after a wipe
 
-- [ ] Smoke-test every RCC Settings page after the library migration, including
-  value editing, dependent disabled states, disabled tooltips, defaults, and
-  reopening each canvas.
-- [ ] Exercise `LibModernSettings-1.0` from a second addon before its first
-  stable release.
-- [ ] Tag the reviewed library release and configure RCC's release packaging to
-  fetch that exact tag, or verify that the packager recursively includes the
-  pinned Git submodule contents.
+## ConsumableActionBar
+- Add icon styling controls (Should have same options as EUI allows for action bars at minimum) (Possibly add to ALL icons so they don't inherit base / eui / dominos look? maybe allow changing between these?)
 
 ## 12.1.0 / Interface 120100 Upgrade
 
