@@ -5,6 +5,9 @@ manual-changelog:
     markup-type: markdown
 
 externals:
+    Libs/LibEditMode:
+        url: https://github.com/p3lim-wow/LibEditMode.git
+        tag: 15
     Libs/LibModernSettings-1.0:
         url: https://github.com/KyleCRat/LibModernSettings.git
         tag: 1.2.0

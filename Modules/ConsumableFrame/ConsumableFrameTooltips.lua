@@ -1,14 +1,14 @@
 local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
-local State = RCC.ConsumableFrameButtonState
+local State = RCC.ConsumableState
 local F = RCC.F
-local ActionType = RCC.ConsumableActionType
 local GetItemInfo = C_Item.GetItemInfo
 local GetSpellInfo = C_Spell.GetSpellInfo
 local GetSpellLink = C_Spell.GetSpellLink
 
 RCC.ConsumableFrameTooltips = RCC.ConsumableFrameTooltips or {}
+RCC.ConsumableTooltips = RCC.ConsumableFrameTooltips
 
 local Tooltips = RCC.ConsumableFrameTooltips
 
@@ -33,10 +33,10 @@ local function getSpellDisplay(spellID)
 end
 
 local function getUnavailableText(button)
-    -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
-    local Buttons = RCC.ConsumableFrameButtons
-
-    return Buttons.GetUnavailableText(button)
+    return State.GetUnavailableText(
+        button and button.consumableState,
+        button and button.hoverStateActive
+    )
 end
 
 local function getAuraScanUnavailableText(button)
@@ -46,12 +46,8 @@ local function getAuraScanUnavailableText(button)
 end
 
 local function setGameTooltipOwner(button)
-    -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
-    local Buttons = RCC.ConsumableFrameButtons
-    local spacing = Buttons.SPACING
-
     GameTooltip:SetOwner(button, "ANCHOR_NONE")
-    GameTooltip:SetPoint("BOTTOMLEFT", button, "TOPRIGHT", spacing, spacing)
+    GameTooltip:SetPoint("BOTTOMLEFT", button, "TOPRIGHT", 2, 2)
 end
 
 local function addClickHint(button)
@@ -63,8 +59,14 @@ local function addClickHint(button)
 
     local action = state.action
 
-    if not action
-        or action.type == ActionType.ITEM_CACHE_SELECT
+    if not action then
+        return
+    end
+
+    local capabilities = button.surfaceCapabilities or {}
+
+    if action.selectionOnly
+        and capabilities.allowSelectionItemUse ~= true
     then
         return
     end
@@ -87,7 +89,7 @@ local function addRightClickPreferenceHint(button, hasHint)
     local action = state and state.action
     local itemID = State.GetClickHintItemID(state)
 
-    if not action or not action.cacheKey or not itemID then return end
+    if not action or not action.preferenceKey or not itemID then return end
 
     local targetText = getItemLink(itemID)
 

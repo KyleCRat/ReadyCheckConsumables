@@ -12,11 +12,9 @@ RCC.Consumables.ArmorKit = RCC.Consumables.ArmorKit or {}
 
 local ArmorKit = RCC.Consumables.ArmorKit
 
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
-local Renderer = RCC.ConsumableFrameRenderer
 
-local ActionType = RCC.ConsumableActionType
 local ARMOR_KIT_ITEM_ID = 172347
 local CHEST_INVENTORY_SLOT = 5
 
@@ -24,12 +22,10 @@ local CHEST_INVENTORY_SLOT = 5
 --- Dormant: Armor Kit handling
 --- Not currently called.
 --- To re-enable: create a kit button, add it to layout, restore or verify
---- RCC:KitCheck(), then call ArmorKit.Update(button).
+--- RCC:KitCheck(), then include ArmorKit.ResolveState() in the controller.
 --------------------------------------------------------------------------------
 
-function ArmorKit.Update(button)
-    if not button then return end
-
+function ArmorKit.ResolveState()
     local kitCount = ItemCandidates.GetCount(
         ARMOR_KIT_ITEM_ID,
         ItemCandidates.BAGS_ONLY
@@ -51,12 +47,13 @@ function ArmorKit.Update(button)
     if kitCount > 0 then
         buttonState.tooltipItemID = ARMOR_KIT_ITEM_ID
         buttonState.qualityItemID = ARMOR_KIT_ITEM_ID
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = ARMOR_KIT_ITEM_ID,
+        buttonState.action = ButtonState.CreateItemAction(
+            ARMOR_KIT_ITEM_ID,
+            {
             targetSlot = CHEST_INVENTORY_SLOT,
-        }
+            }
+        )
     end
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

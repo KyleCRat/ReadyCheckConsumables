@@ -3,20 +3,9 @@ local _, RCC = ...
 RCC.ConsumableFrameController = RCC.ConsumableFrameController or {}
 
 local Controller = RCC.ConsumableFrameController
-local Auras = RCC.ConsumableFrameAuras
-local Buttons = RCC.ConsumableFrameButtons
 local DisplayContext = RCC.DisplayContext
-local Food = RCC.Consumables.Food
-local Flask = RCC.Consumables.Flask
-local Augment = RCC.Consumables.Augment
-local Healthstone = RCC.Consumables.Healthstone
-local CombatPotion = RCC.Consumables.CombatPotion
-local HealingPotion = RCC.Consumables.HealingPotion
-local ConsumableStasis = RCC.Consumables.ConsumableStasis
-local Recuperate = RCC.Consumables.Recuperate
-local RaidBuff = RCC.Consumables.RaidBuff
-local Vantus = RCC.Consumables.Vantus
-local WeaponEnchant = RCC.Consumables.WeaponEnchant
+local StateController = RCC.ConsumableStateController
+local Surface = RCC.ConsumableSurface
 
 local GetTime = GetTime
 
@@ -31,7 +20,6 @@ local wasInScenario
 local instanceOpenPending
 local instanceStateInitialized = false
 local readyCheckButtonsHooked
-local liveUpdateTimer
 local displayContext = DisplayContext.Create(
     RCC.DisplaySurface.CONSUMABLE_FRAME
 )
@@ -54,13 +42,6 @@ local function cancelInstanceHideDelay(self)
     if self.instanceHideDelay then
         self.instanceHideDelay:Cancel()
         self.instanceHideDelay = nil
-    end
-end
-
-local function cancelLiveUpdate()
-    if liveUpdateTimer then
-        liveUpdateTimer:Cancel()
-        liveUpdateTimer = nil
     end
 end
 
@@ -164,9 +145,6 @@ local function showConsumableFrame(self, isInitiator, registerConfirm,
     self:SetScale(RCC.GetSetting("consumables_scale"))
     self:Show()
     self:Update()
-    self:RegisterEvent("UNIT_AURA")
-    self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-    self:RegisterEvent("BAG_UPDATE_DELAYED")
 
     if registerConfirm then
         self:RegisterEvent("READY_CHECK_CONFIRM")
@@ -258,10 +236,7 @@ local function hookBlizzardReadyCheckButtons()
     readyCheckButtonsHooked = true
 end
 
-local function unregisterLiveEvents(self)
-    self:UnregisterEvent("UNIT_AURA")
-    self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
-    self:UnregisterEvent("BAG_UPDATE_DELAYED")
+local function unregisterTransientEvents(self)
     self:UnregisterEvent("READY_CHECK_CONFIRM")
 end
 
@@ -270,29 +245,7 @@ end
 --------------------------------------------------------------------------------
 
 function RCC.consumables:Update()
-    self:UpdateReadyCheckAnchor()
-
-    local buttons = self.buttons
-    local now = GetTime()
-    local auraState = Auras.ScanPlayer(now)
-
-    Food.Update(buttons.food, auraState)
-    Healthstone.Update(buttons.hs)
-    Flask.Update(buttons.flask, auraState)
-    WeaponEnchant.Update(buttons)
-    Augment.Update(buttons.augment, auraState)
-    RaidBuff.Update(buttons.raidBuff)
-    CombatPotion.Update(buttons.combatpot)
-    HealingPotion.Update(buttons.healpot)
-    ConsumableStasis.Update(buttons.consumableStasis)
-    Recuperate.Update(buttons.recuperate)
-    Vantus.Update(buttons.vantus, auraState)
-
-    if not InCombatLockdown() then
-        Buttons.ApplyLayout(self, buttons, displayContext)
-    end
-
-    Buttons.UpdateUnavailableOverlays(buttons)
+    return StateController.RefreshNow(true)
 end
 
 --------------------------------------------------------------------------------
@@ -442,43 +395,6 @@ local function onScenarioDataUpdate(self)
     end
 end
 
---------------------------------------------------------------------------------
---- Live updates
---------------------------------------------------------------------------------
-
-local function onUnitAura(self, unit)
-    if RCC.F.UnitIsUnitSafe(unit, "player") then
-        self:Update()
-    end
-end
-
-local function scheduleLiveUpdate(self)
-    if liveUpdateTimer then
-        return
-    end
-
-    liveUpdateTimer = C_Timer.NewTimer(0.2, function()
-        liveUpdateTimer = nil
-
-        if self:IsShown() and not InCombatLockdown() then
-            self:Update()
-        end
-    end)
-end
-
-local function onInventoryChanged(self, unit)
-    if RCC.F.UnitIsUnitSafe(unit, "player") then
-        scheduleLiveUpdate(self)
-    end
-end
-
-local function onBagUpdateDelayed(self)
-    scheduleLiveUpdate(self)
-end
-
---------------------------------------------------------------------------------
---- Event wiring
---------------------------------------------------------------------------------
 
 local eventHandlers = {
     READY_CHECK               = onReadyCheck,
@@ -488,9 +404,6 @@ local eventHandlers = {
     PLAYER_ENTERING_WORLD     = onPlayerEnteringWorld,
     SCENARIO_UPDATE           = onScenarioDataUpdate,
     ACTIVE_DELVE_DATA_UPDATE  = onScenarioDataUpdate,
-    UNIT_AURA                 = onUnitAura,
-    UNIT_INVENTORY_CHANGED    = onInventoryChanged,
-    BAG_UPDATE_DELAYED        = onBagUpdateDelayed,
 }
 
 local function onEvent(self, event, ...)
@@ -504,12 +417,10 @@ end
 local function onHide(self)
     instanceOpenPending = false
     DisplayContext.Clear(displayContext)
-    unregisterLiveEvents(self)
+    unregisterTransientEvents(self)
     self.anchor:Hide()
     cancelReadyCheckHideDelay(self)
     cancelInstanceHideDelay(self)
-    cancelLiveUpdate()
-
     if not InCombatLockdown() then
         self.drag:Hide()
         self.close:Hide()
@@ -534,6 +445,20 @@ function Controller.Attach(consumablesFrame)
     frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     frame:RegisterEvent("SCENARIO_UPDATE")
     frame:RegisterEvent("ACTIVE_DELVE_DATA_UPDATE")
+
+    StateController.RegisterConsumer("temporaryConsumablesFrame", {
+        IsActive = function()
+            return frame:IsShown()
+        end,
+        ApplySnapshot = function(_, snapshot)
+            frame:UpdateReadyCheckAnchor()
+            Surface.ApplySnapshot(frame.surface, snapshot)
+
+            if not InCombatLockdown() then
+                Surface.ApplyTemporaryLayout(frame.surface, displayContext)
+            end
+        end,
+    })
 end
 
 function Controller.StartReadyCheck(initiatorUnit)

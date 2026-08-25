@@ -3,8 +3,9 @@ local _, RCC = ...
 RCC.ConsumableFrameSettings = RCC.ConsumableFrameSettings or {}
 
 local Page = RCC.ConsumableFrameSettings
-local Buttons = RCC.ConsumableFrameButtons
+local Catalog = RCC.ConsumableCatalog
 local Controls = LibStub("LibModernSettings-1.0")
+local Shared = RCC.ConsumableSettingsShared
 local Visibility = RCC.ContextualVisibility
 local Reason = RCC.DisplayReason
 local Surface = RCC.DisplaySurface.CONSUMABLE_FRAME
@@ -58,19 +59,14 @@ local CONSUMABLE_SETTING_KEYS = {
     "consumables_instanceHide",
     "consumables_instanceHideTime",
     "consumables_preferUnlimitedAugment",
-    "icon_food",
-    "icon_flask",
-    "icon_mhTempWeaponEnchant",
-    "icon_ohTempWeaponEnchant",
-    "icon_healthstone",
-    "icon_combatPotion",
-    "icon_healPotion",
-    "icon_consumableStasis",
-    "icon_recuperate",
-    "icon_augment",
-    "icon_raidBuff",
-    "icon_vantus",
 }
+
+local definitions = Catalog.GetDefinitions()
+
+for i = 1, #definitions do
+    CONSUMABLE_SETTING_KEYS[#CONSUMABLE_SETTING_KEYS + 1] =
+        definitions[i].settingKey
+end
 
 function Page.GetOpenEvents()
     return OPEN_EVENTS
@@ -105,11 +101,11 @@ local function refreshConsumableFrame()
         return
     end
 
-    RCC.consumables:Update()
+    RCC.ConsumableStateController.RefreshNow(true)
 end
 
 local function refreshAugmentRuneSelection()
-    refreshConsumableFrame()
+    RCC.ConsumableStateController.RequestRefresh(0, true)
     RCC.ConsumableMacros.ScheduleUpdate()
 end
 
@@ -158,16 +154,7 @@ end
 local function createGeneralSettings(frame, layout)
     local root = layout:GetRootFlow()
 
-    addSettingCheckbox(frame, root, {
-        key = "consumables_enabled",
-        label = "Enabled",
-        tooltip = "Enable the personal Consumables Frame.",
-        onChanged = function(enabled)
-            if not enabled and not InCombatLockdown() then
-                RCC.consumables:Hide()
-            end
-        end,
-    })
+    Shared.CreateConsumablesFrameEnabledCheckbox(frame, root)
 
     local columns = root:BeginColumns()
     local displayFlow = columns.left
@@ -392,8 +379,6 @@ local function createVisibilityMatrix(frame, layout)
         )
     end
 
-    local definitions = Buttons.GetDefinitions()
-
     for definitionIndex = 1, #definitions do
         local definition = definitions[definitionIndex]
         local row = matrix:AddRow()
@@ -491,15 +476,15 @@ function Page.CreateFrame(measurementFrame)
     function frame:Sync()
         local pageEnabled = RCC.GetSetting("consumables_enabled") == true
 
+        Shared.SyncConsumablesFrameEnabled(self)
+
         for key, control in pairs(self.settingControls) do
             control:SetValue(RCC.GetSetting(key))
 
-            if key ~= "consumables_enabled" then
-                control:SetControlEnabled(
-                    pageEnabled,
-                    FEATURE_DISABLED_TOOLTIP
-                )
-            end
+            control:SetControlEnabled(
+                pageEnabled,
+                FEATURE_DISABLED_TOOLTIP
+            )
         end
 
         local minShowEnabled = RCC.GetSetting("consumables_minShow") == true
@@ -584,9 +569,10 @@ function Page.CreateFrame(measurementFrame)
         RCC.ClearContextualVisibilityOverrides(Surface)
         RCC.consumables:SetScale(RCC.GetSetting("consumables_scale"))
         refreshConsumableFrame()
-        self:Sync()
+        Shared.SyncPages()
     end
 
+    Shared.RegisterPage(frame)
     frame:Sync()
 
     return frame

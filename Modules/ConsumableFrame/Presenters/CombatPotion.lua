@@ -5,13 +5,11 @@ RCC.Consumables.CombatPotion = RCC.Consumables.CombatPotion or {}
 
 local CombatPotion = RCC.Consumables.CombatPotion
 
-local ButtonState = RCC.ConsumableFrameButtonState
-local Renderer = RCC.ConsumableFrameRenderer
+local ButtonState = RCC.ConsumableState
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 
-function CombatPotion.Update(button)
+function CombatPotion.ResolveState()
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
         CombatPotion.GetItemCandidate(true)
     local inventoryItem = inventoryItemCandidate
@@ -26,11 +24,10 @@ function CombatPotion.Update(button)
     if inventoryItem and inventoryItemCount > 0 then
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.desaturated = false
-        buttonState.action = {
-            type = ActionType.ITEM_CACHE_SELECT,
-            itemID = inventoryItem,
-            cacheKey = CacheKey.COMBAT_POTION,
-        }
+        buttonState.action = ButtonState.CreateItemAction(inventoryItem, {
+            preferenceKey = CacheKey.COMBAT_POTION,
+            selectionOnly = true,
+        })
     end
 
     if inventoryItem then
@@ -45,13 +42,13 @@ function CombatPotion.Update(button)
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         inventoryItemCandidates,
         inventoryItem,
-        ActionType.ITEM_CACHE_SELECT,
         {
-            cacheKey = CacheKey.COMBAT_POTION,
+            preferenceKey = CacheKey.COMBAT_POTION,
+            selectionOnly = true,
             includeSingleChoice = outOfCachedPotion,
             suppressGlow = true,
         }
     )
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

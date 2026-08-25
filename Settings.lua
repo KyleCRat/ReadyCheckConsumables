@@ -37,6 +37,33 @@ local DEFAULTS = {
     icon_raidBuff            = true,
     icon_vantus              = true,
 
+    -- Consumables Action Bar
+    consumablesActionBar_enabled = false,
+    consumablesActionBar_iconsPerRow = 10,
+    consumablesActionBar_buttonWidth = 48,
+    consumablesActionBar_buttonHeight = 48,
+    consumablesActionBar_gapX = 2,
+    consumablesActionBar_gapY = 20,
+    consumablesActionBar_flyoutDirection = "UP",
+    consumablesActionBar_durationTextPosition = "TOP",
+    consumablesActionBar_textSize = 16,
+    consumablesActionBar_showStackCount = true,
+    consumablesActionBar_showDuration = true,
+    consumablesActionBar_showStatus = true,
+    consumablesActionBar_showProfessionQuality = true,
+    consumablesActionBar_icon_food = true,
+    consumablesActionBar_icon_flask = true,
+    consumablesActionBar_icon_consumableStasis = true,
+    consumablesActionBar_icon_mainHandTempWeaponEnchant = true,
+    consumablesActionBar_icon_offHandTempWeaponEnchant = true,
+    consumablesActionBar_icon_augment = true,
+    consumablesActionBar_icon_raidBuff = true,
+    consumablesActionBar_icon_hs = true,
+    consumablesActionBar_icon_combatpot = true,
+    consumablesActionBar_icon_healpot = true,
+    consumablesActionBar_icon_recuperate = false,
+    consumablesActionBar_icon_vantus = false,
+
     -- Raid Frame
     raidFrame_enabled        = true,
     raidFrame_scale          = 1.0,
@@ -496,6 +523,19 @@ local function registerPanel()
     )
 
     ----------------------------------------------------------------------------
+    --- Consumables Action Bar (subcategory)
+    ----------------------------------------------------------------------------
+
+    local actionBarFrame = RCC.ConsumableActionBarSettings.CreateFrame(
+        measurementFrame
+    )
+    local actionBarCat = Settings.RegisterCanvasLayoutSubcategory(
+        category,
+        actionBarFrame,
+        "Consumables Action Bar"
+    )
+
+    ----------------------------------------------------------------------------
     --- Raid Frame (subcategory — declared early for parent page buttons)
     ----------------------------------------------------------------------------
 
@@ -532,6 +572,12 @@ local function registerPanel()
             description = "Choose when the personal consumable bar opens "
                 .. "and which buttons each event displays.",
             category = cfCat,
+        },
+        {
+            label = "Consumables Action Bar",
+            description = "Configure the permanent clickable consumable "
+                .. "bar, its geometry, position, and button slots.",
+            category = actionBarCat,
         },
         {
             label = "Raid Frame",

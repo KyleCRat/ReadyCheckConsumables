@@ -4,7 +4,7 @@ RCC.ConsumableMacros = RCC.ConsumableMacros or {}
 
 local Macros = RCC.ConsumableMacros
 
-local ActionType = RCC.ConsumableActionType
+local ActionKind = RCC.ConsumableActionKind
 local CacheKey = RCC.ConsumableItemCacheKey
 local Consumables = RCC.Consumables
 local GetItemIcon = C_Item.GetItemIconByID
@@ -71,9 +71,9 @@ local function itemAction(candidate, cacheKey)
     if not candidate or not candidate.itemID then return end
 
     return {
-        type = ActionType.ITEM_MACRO,
+        kind = ActionKind.ITEM,
         itemID = candidate.itemID,
-        cacheKey = cacheKey,
+        preferenceKey = cacheKey,
     }, candidate.icon or getItemIcon(candidate.itemID)
 end
 
@@ -151,7 +151,7 @@ local function raidBuffAction()
     if not info or not info.spellID then return end
 
     return {
-        type = ActionType.SPELL,
+        kind = ActionKind.SPELL,
         spellID = info.spellID,
         spellName = getSpellName(info.spellID),
     }, info.iconID or getSpellIcon(info.spellID)
@@ -423,11 +423,9 @@ local function buildMacroBody(markerLine, action)
         return table.concat(lines, "\n")
     end
 
-    if action.type == ActionType.ITEM_MACRO and action.itemID then
+    if action.kind == ActionKind.ITEM and action.itemID then
         appendItemMacroLines(lines, action.itemID, action.targetSlot)
-    elseif action.type == ActionType.WEAPON_ENCHANT_ITEM and action.itemID then
-        appendItemMacroLines(lines, action.itemID, action.targetSlot)
-    elseif action.type == ActionType.SPELL then
+    elseif action.kind == ActionKind.SPELL then
         appendSpellMacroLines(lines, action)
     elseif action.type == HEALING_POTION_RECUPERATE_MACRO then
         appendHealingPotionMacroLines(lines, action)

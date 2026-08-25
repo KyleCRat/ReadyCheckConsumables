@@ -8,9 +8,9 @@ local WeaponEnchant = RCC.Consumables.WeaponEnchant
 local F = RCC.F
 local ItemCache = RCC.ConsumableFrameItemCache
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local State = RCC.ConsumableState
 local Timing = RCC.ConsumableTiming
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 local GetSpellInfo = C_Spell.GetSpellInfo
 local IsSpellKnown = C_SpellBook.IsSpellKnown
@@ -252,13 +252,11 @@ function WeaponEnchant.CreateSpellEnchantAction(enchantData, slotState)
 
     if not spellName then return end
 
-    return {
-        type = ActionType.SPELL,
+    return State.CreateSpellAction(enchantData.spellID, {
         spellName = spellName,
-        spellID = enchantData.spellID,
         available = slotState.canBeEnchanted,
-        cacheKey = WeaponEnchant.GetCacheKey(slotState.slotID),
-    }
+        preferenceKey = WeaponEnchant.GetCacheKey(slotState.slotID),
+    })
 end
 
 local function selectSpellEnchantForSlot(slotID, activeEnchantData)
@@ -277,14 +275,12 @@ end
 function WeaponEnchant.CreateItemEnchantAction(candidate, slotState)
     if not candidate or not candidate.itemID then return end
 
-    return {
-        type = ActionType.WEAPON_ENCHANT_ITEM,
-        itemID = candidate.itemID,
+    return State.CreateItemAction(candidate.itemID, {
         targetSlot = slotState.slotID,
         available = slotState.canBeEnchanted
                     and (candidate.count or 0) > 0,
-        cacheKey = WeaponEnchant.GetCacheKey(slotState.slotID),
-    }
+        preferenceKey = WeaponEnchant.GetCacheKey(slotState.slotID),
+    })
 end
 
 local function selectWeaponEnchantItemForSlot(slotID, candidates)

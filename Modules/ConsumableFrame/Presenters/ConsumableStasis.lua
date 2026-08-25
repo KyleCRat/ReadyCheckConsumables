@@ -6,13 +6,10 @@ RCC.Consumables.ConsumableStasis =
 
 local ConsumableStasis = RCC.Consumables.ConsumableStasis
 
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
-local Renderer = RCC.ConsumableFrameRenderer
 
-local ActionType = RCC.ConsumableActionType
-
-function ConsumableStasis.Update(button)
+function ConsumableStasis.ResolveState()
     local candidate = ConsumableStasis.GetItemCandidate()
     local itemID = candidate and candidate.itemID
         or ConsumableStasis.GetDefaultItemID()
@@ -27,11 +24,8 @@ function ConsumableStasis.Update(button)
 
     if candidate then
         state.desaturated = false
-        state.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = candidate.itemID,
-        }
+        state.action = ButtonState.CreateItemAction(candidate.itemID)
     end
 
-    Renderer.Apply(button, state)
+    return state
 end

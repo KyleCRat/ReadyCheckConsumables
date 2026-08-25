@@ -1,3 +1,6 @@
 [submodule "Libs/LibModernSettings-1.0"]
 	path = Libs/LibModernSettings-1.0
 	url = git@github.com:KyleCRat/LibModernSettings.git
+[submodule "Libs/LibEditMode"]
+	path = Libs/LibEditMode
+	url = https://github.com/p3lim-wow/LibEditMode.git

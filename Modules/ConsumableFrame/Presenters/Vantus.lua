@@ -6,11 +6,9 @@ RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
 local Vantus = RCC.Consumables.Vantus
 
 local Auras = RCC.ConsumableFrameAuras
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local F = RCC.F
-local Renderer = RCC.ConsumableFrameRenderer
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 
 local OUT_OF_ITEMS = "No Vantus Runes found in Bags"
@@ -26,13 +24,11 @@ local function getAuraBossName(aura)
     return bossName
 end
 
-function Vantus.Update(button, state)
+function Vantus.ResolveState(state)
     local vantusRuneIDs = Vantus.GetRuneIDsForCurrentRaid()
 
     if not vantusRuneIDs then
-        Renderer.Apply(button, ButtonState.Create({ applicable = false }))
-
-        return
+        return ButtonState.Create({ applicable = false })
     end
 
     local vantusAura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
@@ -76,16 +72,13 @@ function Vantus.Update(button, state)
         buttonState.countText = tostring(count)
         buttonState.qualityItemID = itemID
         buttonState.glow = true
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = itemID,
-            cacheKey = CacheKey.VANTUS,
-        }
+        buttonState.action = ButtonState.CreateItemAction(itemID, {
+            preferenceKey = CacheKey.VANTUS,
+        })
         buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
             candidates,
             itemID,
-            ActionType.ITEM_MACRO,
-            { cacheKey = CacheKey.VANTUS }
+            { preferenceKey = CacheKey.VANTUS }
         )
     else
         buttonState.countText = "0"
@@ -97,9 +90,8 @@ function Vantus.Update(button, state)
         buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
             candidates,
             itemID,
-            ActionType.ITEM_MACRO,
             {
-                cacheKey = CacheKey.VANTUS,
+                preferenceKey = CacheKey.VANTUS,
                 includeSingleChoice = outOfCachedItem,
             }
         )
@@ -110,5 +102,5 @@ function Vantus.Update(button, state)
         state and state.available == true
     )
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

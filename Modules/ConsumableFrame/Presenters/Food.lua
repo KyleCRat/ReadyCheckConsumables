@@ -6,11 +6,9 @@ RCC.Consumables.Food = RCC.Consumables.Food or {}
 local Food = RCC.Consumables.Food
 
 local Auras = RCC.ConsumableFrameAuras
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local FoodAuras = RCC.FoodAuras
-local Renderer = RCC.ConsumableFrameRenderer
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 local FOOD_AURA_TYPE = FoodAuras.Type
 
@@ -70,7 +68,7 @@ local function getEatingCooldown(state)
     return { clear = true }
 end
 
-function Food.Update(button, state)
+function Food.ResolveState(state)
     local foodAuraState, eatingAuraState = getFoodAuraStates(state)
     local displayAuraState = getDisplayAuraState(
         foodAuraState,
@@ -115,11 +113,9 @@ function Food.Update(button, state)
     end
 
     if foodCount > 0 then
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = foodItemID,
-            cacheKey = CacheKey.FOOD,
-        }
+        buttonState.action = ButtonState.CreateItemAction(foodItemID, {
+            preferenceKey = CacheKey.FOOD,
+        })
     elseif outOfCachedFood and not hasFoodCoverage then
         ButtonState.SetUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
     else
@@ -134,9 +130,8 @@ function Food.Update(button, state)
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         foodCandidates,
         foodItemID,
-        ActionType.ITEM_MACRO,
         {
-            cacheKey = CacheKey.FOOD,
+            preferenceKey = CacheKey.FOOD,
             includeSingleChoice = outOfCachedFood,
         }
     )
@@ -146,5 +141,5 @@ function Food.Update(button, state)
         state and state.available == true
     )
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

@@ -5,13 +5,11 @@ RCC.Consumables.HealingPotion = RCC.Consumables.HealingPotion or {}
 
 local HealingPotion = RCC.Consumables.HealingPotion
 
-local ButtonState = RCC.ConsumableFrameButtonState
-local Renderer = RCC.ConsumableFrameRenderer
+local ButtonState = RCC.ConsumableState
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 
-function HealingPotion.Update(button)
+function HealingPotion.ResolveState()
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
         HealingPotion.GetItemCandidate(true)
     local inventoryItem = inventoryItemCandidate
@@ -26,11 +24,10 @@ function HealingPotion.Update(button)
     if inventoryItem and inventoryItemCount > 0 then
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.desaturated = false
-        buttonState.action = {
-            type = ActionType.ITEM_CACHE_SELECT,
-            itemID = inventoryItem,
-            cacheKey = CacheKey.HEALING_POTION,
-        }
+        buttonState.action = ButtonState.CreateItemAction(inventoryItem, {
+            preferenceKey = CacheKey.HEALING_POTION,
+            selectionOnly = true,
+        })
     end
 
     if inventoryItem then
@@ -45,13 +42,13 @@ function HealingPotion.Update(button)
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         inventoryItemCandidates,
         inventoryItem,
-        ActionType.ITEM_CACHE_SELECT,
         {
-            cacheKey = CacheKey.HEALING_POTION,
+            preferenceKey = CacheKey.HEALING_POTION,
+            selectionOnly = true,
             includeSingleChoice = outOfCachedPotion,
             suppressGlow = true,
         }
     )
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

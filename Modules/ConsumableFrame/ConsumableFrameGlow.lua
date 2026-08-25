@@ -1,9 +1,10 @@
 local _, RCC = ...
 
 RCC.ConsumableFrameGlow = RCC.ConsumableFrameGlow or {}
+RCC.ConsumableGlow = RCC.ConsumableFrameGlow
 
 local Glow = RCC.ConsumableFrameGlow
-local State = RCC.ConsumableFrameButtonState
+local State = RCC.ConsumableState
 
 local GLOW_KEY = "rcc_consumable"
 local GLOW_COLOR = { 0.0, 0.85, 1.0, 1 }
@@ -88,10 +89,10 @@ local function isButtonClickable(button)
 end
 
 local function hasUnavailableState(button)
-    -- Deferred lookup: breaks circular dependency with ConsumableFrameButtons.
-    local Buttons = RCC.ConsumableFrameButtons
-
-    return Buttons and Buttons.GetUnavailableText(button) ~= nil
+    return State.GetUnavailableText(
+        button and button.consumableState,
+        button and button.hoverStateActive
+    ) ~= nil
 end
 
 local function hasConsumableBuff(button)
@@ -111,7 +112,9 @@ end
 local function resolveGlow(button)
     local cache = getRenderCache(button)
 
-    if State.IsGlowSuppressed(button.consumableState) then
+    if InCombatLockdown()
+        or State.IsGlowSuppressed(button.consumableState)
+    then
         stopButtonGlow(button)
 
         return

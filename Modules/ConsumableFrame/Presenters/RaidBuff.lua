@@ -5,13 +5,10 @@ RCC.Consumables.RaidBuff = RCC.Consumables.RaidBuff or {}
 
 local RaidBuff = RCC.Consumables.RaidBuff
 
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local F = RCC.F
 local RaidBuffStatus = RCC.RaidBuffStatus
-local Renderer = RCC.ConsumableFrameRenderer
 local Timing = RCC.ConsumableTiming
-
-local ActionType = RCC.ConsumableActionType
 
 local UNAVAILABLE_SPELL = "Raid buff spell unavailable"
 
@@ -48,13 +45,11 @@ local function getGroupStatus(raidBuffIndex)
     return missingCount, minRemaining, statusAvailable
 end
 
-function RaidBuff.Update(button)
+function RaidBuff.ResolveState()
     local info = RaidBuff.GetPlayerRaidBuffInfo()
 
     if not info then
-        Renderer.Apply(button, ButtonState.Create({ applicable = false }))
-
-        return
+        return ButtonState.Create({ applicable = false })
     end
 
     local missingCount, minRemaining, statusAvailable = getGroupStatus(
@@ -78,11 +73,9 @@ function RaidBuff.Update(button)
     })
 
     if info.spellID then
-        buttonState.action = {
-            type = ActionType.SPELL,
-            spellID = info.spellID,
+        buttonState.action = ButtonState.CreateSpellAction(info.spellID, {
             available = true,
-        }
+        })
     elseif hasMissing then
         ButtonState.SetUnavailable(buttonState, UNAVAILABLE_SPELL)
     end
@@ -95,5 +88,5 @@ function RaidBuff.Update(button)
 
     ButtonState.ApplyAuraScanAvailability(buttonState, statusAvailable)
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

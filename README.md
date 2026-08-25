@@ -2,8 +2,8 @@
 
 Ready Check Consumables (RCC) is a World of Warcraft Retail addon for checking
 personal and group consumable readiness. It combines a clickable personal
-consumables bar, a raid-wide status table, coordinated chat reports, and managed
-consumable macros.
+Consumables Frame, a permanent Consumables Action Bar, a raid-wide status
+table, coordinated chat reports, and managed consumable macros.
 
 RCC is currently built for Interface `120100`.
 
@@ -32,6 +32,31 @@ BigWigs or DBM starts a break timer.
 
 Each icon can be enabled globally and independently allowed for each automatic
 open reason through the **Buttons by Open Event** settings matrix.
+
+## Consumables Action Bar
+
+The Consumables Action Bar keeps selected personal consumable actions visible
+instead of opening only for contextual events.
+
+- Provides independent fixed slots for every action available on the temporary
+  Consumables Frame.
+- Remains clickable in combat using actions and flyout choices prepared before
+  combat. Aura durations and public ready or missing states continue to update,
+  while glows are suppressed in combat.
+- Supports independent button width and height, cropped non-square icons,
+  horizontal and vertical gaps, wrapping, text size, duration-text side, and
+  flyout direction.
+- Can independently hide stack counts, duration text, status marks, and
+  profession-quality marks.
+- Uses a fixed 2 px flyout spacing so bar row and column gaps do not separate
+  flyout choices from their primary button.
+- Can be positioned with EllesmereUI Unlock Mode when available, or through
+  Blizzard Edit Mode otherwise. Anchor and coordinate controls are also
+  available on its settings page.
+
+The shared **Enabled** / **Action Bar Only** setting disables only the temporary
+Consumables Frame. It does not disable the Raid Status Frame, chat reports,
+managed macros, or the permanent Action Bar.
 
 ## Raid Status Frame
 
@@ -116,13 +141,16 @@ Settings include:
   as `scenario`.
 - Automatic hiding after an instance-entry open.
 - Per-icon visibility and per-open-event visibility.
+- Permanent Action Bar enablement, button slots, geometry, visual information,
+  flyouts, and position.
 - Unlimited augment rune preference.
 - Feast and cauldron tracking behavior.
 - Chat-report permission and difficulty filters.
 - Managed macro creation.
 
-Settings, preferred consumable choices, raid-frame scale, and raid-frame
-position are stored account-wide in `ReadyCheckConsumablesDB`.
+Settings, preferred consumable choices, permanent-bar positions, raid-frame
+scale, and raid-frame position are stored account-wide in
+`ReadyCheckConsumablesDB`.
 
 ## Slash Commands
 
@@ -134,7 +162,7 @@ position are stored account-wide in `ReadyCheckConsumablesDB`.
 | `/rcc rtp` | `/rcc ready check test permanent` | Show a permanent ready-check-only test |
 | `/rcc ct` | `/rcc cauldron test` | Show the cauldron-only test |
 | `/rcc ca` | `/rcc cauldron` | Open the active Feast/Cauldron Frame |
-| `/rcc h` | `/rcc hide` | Hide all RCC frames |
+| `/rcc h` | `/rcc hide` | Hide all temporary RCC frames |
 | `/rcc r` | `/rcc report` | Print the consumable report locally |
 | `/rcc rc` | `/rcc report chat` | Send the consumable report to group chat |
 | `/rcc c` | `/rcc consume` | Open the Consumables Frame |
@@ -147,6 +175,8 @@ Frame cannot be opened manually during combat.
 
 - Integrates with BigWigs and DBM break timers.
 - Reanchors the Consumables Frame for ElvUI and ShestakUI ready-check frames.
+- Integrates the permanent Action Bar with EllesmereUI Unlock Mode when present
+  and otherwise embeds LibEditMode for Blizzard Edit Mode positioning.
 - Reads Method Raid Tools durability data and avoids duplicate MRT chat reports.
 - Exchanges lightweight presence, consumable, durability, feast, and cauldron
   data with compatible RCC clients.

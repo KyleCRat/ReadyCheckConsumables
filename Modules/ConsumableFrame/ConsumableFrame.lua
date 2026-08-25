@@ -1,7 +1,10 @@
 local _, RCC = ...
 
 local UI = RCC.UI
-local Buttons = RCC.ConsumableFrameButtons
+local Binder = RCC.ConsumableActionBinder
+local Catalog = RCC.ConsumableCatalog
+local Surface = RCC.ConsumableSurface
+local View = RCC.ConsumableButtonView
 
 local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
@@ -10,11 +13,10 @@ local CONTROL_BORDER_OVERHANG = 1
 RCC.consumables = CreateFrame("Frame", "RCConsumables", UIParent)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
 RCC.consumables:SetSize(
-    Buttons.GetWidth(Buttons.GetButtonCount()),
-    Buttons.SIZE
+    View.GetWidth(Catalog.GetCount()),
+    View.SIZE
 )
 RCC.consumables:Hide()
-RCC.consumables.buttons = {}
 
 RCC.consumables.anchor = CreateFrame("Frame", nil, UIParent)
 RCC.consumables.anchor:SetSize(1, 1)
@@ -29,7 +31,7 @@ RCC.consumables:SetToplevel(true)
 RCC.consumables.drag = UI.CreateControlFrame(RCC.consumables, 20, 20)
 RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT",
                               CONTROL_BORDER_OVERHANG,
-                              -(Buttons.SPACING + CONTROL_BORDER_OVERHANG))
+                              -(View.SPACING + CONTROL_BORDER_OVERHANG))
 RCC.consumables.drag:EnableMouse(true)
 RCC.consumables.drag:RegisterForDrag("LeftButton")
 RCC.consumables.drag:Hide()
@@ -51,11 +53,11 @@ RCC.consumables.close = UI.CreateControlButton(
     RCC.consumables, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
 )
 RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT",
-                               Buttons.SPACING + CONTROL_BORDER_OVERHANG * 2,
+                               View.SPACING + CONTROL_BORDER_OVERHANG * 2,
                                0)
 RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT",
                                -CONTROL_BORDER_OVERHANG,
-                               -(Buttons.SPACING + CONTROL_BORDER_OVERHANG))
+                               -(View.SPACING + CONTROL_BORDER_OVERHANG))
 RCC.consumables.close:Hide()
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
@@ -65,7 +67,12 @@ RCC.consumables.close:SetAttribute("_onclick", [[
     self:GetFrameRef("anchor"):Hide()
 ]])
 
-Buttons.CreateAll(RCC.consumables)
+RCC.consumables.surface = Surface.Create(RCC.consumables, {
+    capabilities = Binder.Capabilities.TEMPORARY,
+    isClickable = function(definition)
+        return definition.temporaryClickable == true
+    end,
+})
 
 function RCC.consumables:UpdateReadyCheckAnchor()
     if self.readyCheckAnchorFixed then return end

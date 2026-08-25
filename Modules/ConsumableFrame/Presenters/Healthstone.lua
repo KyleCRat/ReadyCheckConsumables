@@ -5,12 +5,11 @@ RCC.Consumables.Healthstone = RCC.Consumables.Healthstone or {}
 
 local Healthstone = RCC.Consumables.Healthstone
 
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local F = RCC.F
 local ItemCandidates = RCC.ConsumableFrameItemCandidates
-local Renderer = RCC.ConsumableFrameRenderer
 
-function Healthstone.Update(button)
+function Healthstone.ResolveState()
     local showHealthstone = F.hasClassInRoster("WARLOCK")
     local totalCount = ItemCandidates.SumCounts(
         RCC.db.healthstoneItemIDs,
@@ -18,17 +17,27 @@ function Healthstone.Update(button)
     )
 
     if totalCount > 0 then
-        Renderer.Apply(button, ButtonState.Create({
+        return ButtonState.Create({
             applicable = showHealthstone,
             countText = tostring(totalCount),
             statusTexture = ButtonState.READY_TEXTURE,
             desaturated = false,
             tooltipItemID = RCC.db.healthstoneItemID,
-        }))
-    else
-        Renderer.Apply(button, ButtonState.Create({
-            applicable = showHealthstone,
-            countText = "0",
-        }))
+            clickHintItemID = RCC.db.healthstoneItemID,
+            action = ButtonState.CreateItemAction(
+                RCC.db.healthstoneItemID,
+                { available = true }
+            ),
+        })
     end
+
+    return ButtonState.Create({
+        applicable = showHealthstone,
+        countText = "0",
+        tooltipItemID = RCC.db.healthstoneItemID,
+        action = ButtonState.CreateItemAction(
+            RCC.db.healthstoneItemID,
+            { available = false }
+        ),
+    })
 end

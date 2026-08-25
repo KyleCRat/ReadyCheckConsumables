@@ -5,7 +5,7 @@
 ## Version: 12.1.0-23
 ## Category: Raid
 ## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
-## OptionalDeps: BigWigs, DBM-Core
+## OptionalDeps: BigWigs, DBM-Core, EllesmereUI
 ## SavedVariables: ReadyCheckConsumablesDB
 
 embeds.xml
@@ -91,15 +91,11 @@ Modules/ContextualVisibility.lua
 Modules/RaidBuffStatus.lua
 
 ################################################################################
-# Consumable Frame
-Modules/ConsumableFrame/ConsumableFrameButtonState.lua
-Modules/ConsumableFrame/ConsumableFrameGlow.lua
+# Shared consumable state
+Modules/Consumables/ConsumableCatalog.lua
+Modules/Consumables/ConsumableState.lua
+
 Modules/ConsumableFrame/ConsumableFrameItemCache.lua
-Modules/ConsumableFrame/ConsumableFrameActions.lua
-Modules/ConsumableFrame/ConsumableFrameTooltips.lua
-Modules/ConsumableFrame/ConsumableFrameButtons.lua
-Modules/ConsumableFrame/ConsumableFrameSettings.lua
-Modules/ConsumableFrame/ConsumableFrameRenderer.lua
 Modules/ConsumableFrame/ConsumableFrameItemCandidates.lua
 Modules/ConsumableFrame/ConsumableFrameAuras.lua
 
@@ -127,9 +123,30 @@ Modules/ConsumableFrame/Presenters/RaidBuff.lua
 Modules/ConsumableFrame/Presenters/Vantus.lua
 Modules/ConsumableFrame/Presenters/WeaponEnchant.lua
 
+Modules/Consumables/ConsumableStateController.lua
+
+################################################################################
+# Shared personal-consumable UI
+Modules/ConsumableFrame/ConsumableFrameGlow.lua
+Modules/ConsumableFrame/ConsumableFrameTooltips.lua
+Modules/ConsumableUI/ConsumableActionBinder.lua
+Modules/ConsumableUI/ConsumableButtonView.lua
+Modules/ConsumableUI/ConsumableFlyout.lua
+Modules/ConsumableUI/ConsumableSurface.lua
+Modules/ConsumableUI/ConsumableSettingsShared.lua
+
+################################################################################
+# Consumable Frame
+Modules/ConsumableFrame/ConsumableFrameSettings.lua
 Modules/ConsumableFrame/ConsumableFrame.lua
 Modules/ConsumableFrame/ConsumableFrameController.lua
 Modules/ConsumableFrame/ConsumableFrameBreakTimers.lua
+
+################################################################################
+# Consumables Action Bar
+Modules/ConsumableActionBar/ConsumableActionBar.lua
+Modules/ConsumableActionBar/ConsumableActionBarPosition.lua
+Modules/ConsumableActionBar/ConsumableActionBarSettings.lua
 
 ################################################################################
 # Managed macros

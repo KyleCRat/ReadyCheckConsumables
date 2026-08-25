@@ -6,10 +6,8 @@ RCC.Consumables.Augment = RCC.Consumables.Augment or {}
 local Augment = RCC.Consumables.Augment
 
 local Auras = RCC.ConsumableFrameAuras
-local ButtonState = RCC.ConsumableFrameButtonState
-local Renderer = RCC.ConsumableFrameRenderer
+local ButtonState = RCC.ConsumableState
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 
 local OUT_OF_ITEMS = "No Augment Runes found in Bags"
@@ -24,7 +22,7 @@ local function getAuraState(state)
     )
 end
 
-function Augment.Update(button, state)
+function Augment.ResolveState(state)
     local augmentState = getAuraState(state)
     local isAugment = augmentState and augmentState.satisfied
     local augmentCandidate, augmentCandidates, outOfCachedAugment =
@@ -49,11 +47,9 @@ function Augment.Update(button, state)
     end
 
     if augmentItemID and augmentItemCount and augmentItemCount > 0 then
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = augmentItemID,
-            cacheKey = CacheKey.AUGMENT,
-        }
+        buttonState.action = ButtonState.CreateItemAction(augmentItemID, {
+            preferenceKey = CacheKey.AUGMENT,
+        })
     elseif outOfCachedAugment then
         buttonState.countText = "0"
 
@@ -74,10 +70,9 @@ function Augment.Update(button, state)
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         augmentCandidates,
         augmentItemID,
-        ActionType.ITEM_MACRO,
         {
             getCountText = Augment.GetCountText,
-            cacheKey = CacheKey.AUGMENT,
+            preferenceKey = CacheKey.AUGMENT,
             includeSingleChoice = outOfCachedAugment,
         }
     )
@@ -87,5 +82,5 @@ function Augment.Update(button, state)
         state and state.available == true
     )
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

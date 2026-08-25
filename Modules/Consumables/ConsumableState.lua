@@ -1,10 +1,16 @@
 local _, RCC = ...
 
-RCC.ConsumableFrameButtonState = RCC.ConsumableFrameButtonState or {}
+RCC.ConsumableState = RCC.ConsumableState or {}
 
-local State = RCC.ConsumableFrameButtonState
-
+local State = RCC.ConsumableState
 local F = RCC.F
+
+RCC.ConsumableActionKind = RCC.ConsumableActionKind or {
+    ITEM = "item",
+    SPELL = "spell",
+}
+
+local ActionKind = RCC.ConsumableActionKind
 
 State.READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-Ready"
 State.NOT_READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-NotReady"
@@ -28,8 +34,6 @@ State.DEFAULTS = {
     suppressGlow = false,
 }
 
--- Consumable modules return partial input state. The renderer normalizes that
--- input before applying it, so omitted fields use State.DEFAULTS.
 function State.Create(fields)
     local state = {}
 
@@ -59,17 +63,15 @@ function State.Normalize(state)
 end
 
 function State.SetUnavailable(state, text)
-    if not state or not text then return end
-
-    state.unavailable = {
-        text = text,
-    }
+    if state and text then
+        state.unavailable = { text = text }
+    end
 end
 
 function State.SetHoverState(state, hoverState)
-    if not state or not hoverState then return end
-
-    state.hoverState = hoverState
+    if state and hoverState then
+        state.hoverState = hoverState
+    end
 end
 
 function State.SetHoverUnavailable(state, text, fields)
@@ -99,17 +101,15 @@ end
 function State.GetClickHintItemID(state)
     if not state then return end
 
-    if state.clickHintItemID then
-        return state.clickHintItemID
-    end
-
-    return state.action and state.action.itemID
+    return state.clickHintItemID
+        or (state.action and state.action.itemID)
 end
 
 function State.GetClickHintSpellID(state)
     if not state then return end
 
-    return state.clickHintSpellID or (state.action and state.action.spellID)
+    return state.clickHintSpellID
+        or (state.action and state.action.spellID)
 end
 
 function State.IsApplicable(state)
@@ -127,13 +127,13 @@ function State.GetAuraScanUnavailableText(state)
 end
 
 function State.HasConsumableBuff(state)
-    local hasConsumableBuff = state and state.hasConsumableBuff
+    local value = state and state.hasConsumableBuff
 
-    if hasConsumableBuff == nil then
-        hasConsumableBuff = State.DEFAULTS.hasConsumableBuff
+    if value == nil then
+        value = State.DEFAULTS.hasConsumableBuff
     end
 
-    return hasConsumableBuff == true
+    return value == true
 end
 
 function State.IsGlowSuppressed(state)
@@ -154,18 +154,39 @@ function State.GetIcon(state, defaultIcon, hoverActive)
     return icon or defaultIcon
 end
 
-function State.CreateItemChoice(candidate, actionType, options)
-    if not candidate or not candidate.itemID then return end
+function State.CreateItemAction(itemID, options)
+    if not itemID then return end
 
     options = options or {}
 
-    local action = {
-        type = actionType,
-        itemID = candidate.itemID,
+    return {
+        kind = ActionKind.ITEM,
+        itemID = itemID,
         targetSlot = options.targetSlot,
         available = options.available,
-        cacheKey = options.cacheKey,
+        preferenceKey = options.preferenceKey,
+        selectionOnly = options.selectionOnly == true,
     }
+end
+
+function State.CreateSpellAction(spellID, options)
+    if not spellID then return end
+
+    options = options or {}
+
+    return {
+        kind = ActionKind.SPELL,
+        spellID = spellID,
+        spellName = options.spellName,
+        available = options.available,
+        preferenceKey = options.preferenceKey,
+    }
+end
+
+function State.CreateItemChoice(candidate, options)
+    if not candidate or not candidate.itemID then return end
+
+    options = options or {}
 
     return State.Create({
         icon = candidate.icon,
@@ -175,12 +196,11 @@ function State.CreateItemChoice(candidate, actionType, options)
         qualityItemID = candidate.itemID,
         clickHintItemID = candidate.itemID,
         suppressGlow = options.suppressGlow == true,
-        action = action,
+        action = State.CreateItemAction(candidate.itemID, options),
     })
 end
 
-function State.CreateItemFlyoutChoices(candidates, selectedItemID, actionType,
-                                       options)
+function State.CreateItemFlyoutChoices(candidates, selectedItemID, options)
     if not candidates then return end
 
     options = options or {}
@@ -198,7 +218,8 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, actionType,
             local choiceOptions = {
                 targetSlot = options.targetSlot,
                 available = options.available,
-                cacheKey = options.cacheKey,
+                preferenceKey = options.preferenceKey,
+                selectionOnly = options.selectionOnly,
                 suppressGlow = options.suppressGlow,
             }
 
@@ -208,11 +229,7 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, actionType,
                 choiceOptions.countText = options.countText
             end
 
-            local choice = State.CreateItemChoice(
-                candidate,
-                actionType,
-                choiceOptions
-            )
+            local choice = State.CreateItemChoice(candidate, choiceOptions)
 
             if choice then
                 choices[#choices + 1] = choice
@@ -259,3 +276,36 @@ function State.ApplyAuraScanAvailability(state, scanAvailable)
     state.suppressGlow = true
     state.auraScanUnavailableText = AURA_SCAN_UNAVAILABLE_TEXT
 end
+
+-- Secure actions and flyout contents cannot be rebound in combat. Keep their
+-- identifying visuals aligned with the prepared action while allowing public
+-- aura/status fields to continue updating.
+function State.MergeCombatVisual(prepared, live)
+    if not prepared then
+        return live
+    end
+
+    local merged = State.Normalize(live)
+    local frozenFields = {
+        "action",
+        "flyoutChoices",
+        "icon",
+        "hoverState",
+        "tooltipItemID",
+        "tooltipSpellID",
+        "qualityItemID",
+        "clickHintItemID",
+        "clickHintSpellID",
+        "countText",
+    }
+
+    for i = 1, #frozenFields do
+        local key = frozenFields[i]
+
+        merged[key] = prepared[key]
+    end
+
+    return merged
+end
+
+

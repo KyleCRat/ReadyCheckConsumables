@@ -6,10 +6,8 @@ RCC.Consumables.Flask = RCC.Consumables.Flask or {}
 local Flask = RCC.Consumables.Flask
 
 local Auras = RCC.ConsumableFrameAuras
-local ButtonState = RCC.ConsumableFrameButtonState
-local Renderer = RCC.ConsumableFrameRenderer
+local ButtonState = RCC.ConsumableState
 
-local ActionType = RCC.ConsumableActionType
 local CacheKey = RCC.ConsumableItemCacheKey
 
 local OUT_OF_ITEMS = "No Flasks found in Bags"
@@ -24,7 +22,7 @@ local function getFlaskAuraState(state)
     )
 end
 
-function Flask.Update(button, state)
+function Flask.ResolveState(state)
     local flaskState = getFlaskAuraState(state)
     local isFlask = flaskState and flaskState.satisfied
     local flaskCandidate, flaskCandidates, outOfCachedFlask =
@@ -45,11 +43,9 @@ function Flask.Update(button, state)
     end
 
     if flaskCount > 0 then
-        buttonState.action = {
-            type = ActionType.ITEM_MACRO,
-            itemID = flaskItemID,
-            cacheKey = CacheKey.FLASK,
-        }
+        buttonState.action = ButtonState.CreateItemAction(flaskItemID, {
+            preferenceKey = CacheKey.FLASK,
+        })
     elseif outOfCachedFlask then
         if flaskState then
             ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
@@ -68,9 +64,8 @@ function Flask.Update(button, state)
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         flaskCandidates,
         flaskItemID,
-        ActionType.ITEM_MACRO,
         {
-            cacheKey = CacheKey.FLASK,
+            preferenceKey = CacheKey.FLASK,
             includeSingleChoice = outOfCachedFlask,
         }
     )
@@ -80,5 +75,5 @@ function Flask.Update(button, state)
         state and state.available == true
     )
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end

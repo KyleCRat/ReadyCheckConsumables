@@ -7,12 +7,13 @@ code that implements them.
 
 ## Product Intent
 
-Ready Check Consumables is a Retail WoW addon with four connected surfaces:
+Ready Check Consumables is a Retail WoW addon with five connected surfaces:
 
 1. A personal, clickable Consumables Frame.
-2. A group Raid Status Frame.
-3. Coordinated ready-check chat reports.
-4. Managed consumable macros.
+2. A permanent, combat-usable Consumables Action Bar.
+3. A group Raid Status Frame.
+4. Coordinated ready-check chat reports.
+5. Managed consumable macros.
 
 The addon should help a group act on known readiness information without
 turning unavailable information into a false failure. Unknown data is not bad
@@ -74,13 +75,18 @@ data.
 ## UI and Combat Safety
 
 - Secure action buttons and protected attributes are created before combat and
-  only mutated out of combat.
-- Both primary frames hide when combat starts. Do not queue combat-time frame
-  opens unless the product behavior explicitly calls for it.
+  only mutated out of combat. The permanent Action Bar keeps its prepared
+  actions and flyout choices through combat while public aura/status visuals
+  continue to update and glows remain hidden.
+- The temporary Consumables Frame and Raid Status Frame hide when combat starts.
+  Do not queue combat-time frame opens unless the product behavior explicitly
+  calls for it. The permanent Action Bar is intentionally combat-usable.
 - Settings opened in combat are deferred until `PLAYER_REGEN_ENABLED`; the
   Consumables Frame manual-open command prints a message and does not open.
 - The Raid Status Frame owns its SavedVariables position and scale. Keep one
   clear owner for frame positioning.
+- The Consumables Action Bar uses EllesmereUI Unlock Mode when its public API is
+  available and LibEditMode otherwise; never register both movement providers.
 - LibModernSettings owns normal settings-page layout. Addon pages should express
   full- or half-width placement through its canvas layout API and use direct
   pixel positioning only for genuinely custom layouts such as matrices.
@@ -107,10 +113,16 @@ data.
 - Permanent enchant data under `Data/*/Enchants.lua` is intentionally retained
   for possible future features but is not part of current runtime readiness
   checks. Do not delete it merely because it is dormant.
-- `Modules/Consumables/` resolves domain state and actions.
-- `Modules/ConsumableFrame/Presenters/` translates domain state into view state.
-- `Modules/ConsumableFrame/` owns the personal frame, secure actions, rendering,
-  tooltips, contextual visibility, and settings.
+- `Modules/Consumables/` owns the canonical consumable catalog, neutral action
+  descriptors, domain resolution, and the shared state controller.
+- `Modules/ConsumableFrame/Presenters/` translates domain state into normalized
+  personal-surface view state.
+- `Modules/ConsumableUI/` owns shared button rendering, secure action binding,
+  flyouts, surface application, and cross-page settings behavior.
+- `Modules/ConsumableFrame/` owns the temporary personal frame, contextual
+  visibility, automatic-open lifecycle, and its settings.
+- `Modules/ConsumableActionBar/` owns permanent-bar layout, visibility,
+  positioning-provider selection, and settings.
 - `Modules/RaidFrame/` owns group state, RCC broadcasts, row/column rendering,
   feast/cauldron tracking, tests, and frame controls.
 - `Modules/ChatReport/` owns reporter election, report construction, output
@@ -120,6 +132,9 @@ data.
 - LibModernSettings is embedded as the `Libs/LibModernSettings-1.0` submodule
   and fetched by `.pkgmeta` from its released tag. Keep the submodule commit and
   `.pkgmeta` tag aligned when updating it.
+- LibEditMode is embedded as the `Libs/LibEditMode` submodule and is only the
+  fallback movement provider when EllesmereUI is unavailable. Keep its gitlink
+  and `.pkgmeta` tag aligned.
 
 ## External Boundaries
 
@@ -151,6 +166,10 @@ data.
   battleground entry independently.
 - When changing communication, test current-to-current and current-to-previous-
   release clients.
+- When changing the permanent Action Bar, test prepared primary and flyout
+  actions before and during combat, public aura/status updates during combat,
+  non-square icon cropping, every flyout direction, multi-row hover ownership,
+  EllesmereUI Unlock Mode, and the LibEditMode fallback.
 
 ## Patch and Season Updates
 

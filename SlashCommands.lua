@@ -9,7 +9,7 @@ local function printMessage(message)
     print("|" .. RCC.color .. "ffReadyCheckConsumables|r: " .. message)
 end
 
-local function hideFrames()
+local function hideTemporaryFrames()
     RCC.ReadyCheckTest:Cancel()
     RCC.ConsumableFrameController.HideImmediately()
     RCC.raidFrame:Hide()
@@ -103,8 +103,8 @@ local COMMANDS = {
     },
     {
         triggers = { "h", "hide" },
-        description = "Immediately hide all RCC frames",
-        run = hideFrames,
+        description = "Immediately hide temporary RCC frames",
+        run = hideTemporaryFrames,
     },
     {
         triggers = { "r", "report" },

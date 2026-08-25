@@ -5,11 +5,8 @@ RCC.Consumables.WeaponEnchant = RCC.Consumables.WeaponEnchant or {}
 
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
-local ButtonState = RCC.ConsumableFrameButtonState
+local ButtonState = RCC.ConsumableState
 local F = RCC.F
-local Renderer = RCC.ConsumableFrameRenderer
-
-local ActionType = RCC.ConsumableActionType
 
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Weapon Enchant Item not found in Bags"
@@ -115,11 +112,10 @@ local function buildItemPrimaryFlyoutChoices(itemCandidates, itemID, slotState,
     appendChoices(choices, ButtonState.CreateItemFlyoutChoices(
         itemCandidates,
         itemID,
-        ActionType.WEAPON_ENCHANT_ITEM,
         {
             targetSlot = slotState.slotID,
             available = slotState.canBeEnchanted,
-            cacheKey = WeaponEnchant.GetCacheKey(slotState.slotID),
+            preferenceKey = WeaponEnchant.GetCacheKey(slotState.slotID),
             includeSingleChoice = outOfCachedItem,
         }
     ))
@@ -147,12 +143,11 @@ local function configureSpellEnchantState(buttonState, resolution, slotState,
     buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
         itemCandidates,
         nil,
-        ActionType.WEAPON_ENCHANT_ITEM,
         {
             targetSlot = slotState.slotID,
             available = slotState.canBeEnchanted,
             includeSingleChoice = true,
-            cacheKey = WeaponEnchant.GetCacheKey(slotState.slotID),
+            preferenceKey = WeaponEnchant.GetCacheKey(slotState.slotID),
         }
     )
 
@@ -229,17 +224,15 @@ local function configureItemEnchantForSlot(buttonState, slotState,
     )
 end
 
-local function updateWeaponEnchantSlot(button, slotState, showMissingHint,
-                                       itemCandidates)
+local function resolveWeaponEnchantSlot(slotState, showMissingHint,
+                                        itemCandidates)
     local buttonState = ButtonState.Create({
         applicable = slotState.canBeEnchanted,
         glow = false,
     })
 
     if not slotState.canBeEnchanted then
-        Renderer.Apply(button, buttonState)
-
-        return
+        return buttonState
     end
 
     local activeEnchantData = addActiveEnchantToState(
@@ -272,22 +265,10 @@ local function updateWeaponEnchantSlot(button, slotState, showMissingHint,
         )
     end
 
-    Renderer.Apply(button, buttonState)
+    return buttonState
 end
 
-local function updateWeaponEnchantButton(button, slotState, showMissingHint,
-                                         itemCandidates)
-    if not button or not slotState then return end
-
-    updateWeaponEnchantSlot(
-        button,
-        slotState,
-        showMissingHint,
-        itemCandidates
-    )
-end
-
-function WeaponEnchant.Update(buttons)
+function WeaponEnchant.ResolveStates()
     local mainHandState = WeaponEnchant.GetCurrentSlotState(
         MAIN_HAND_INVENTORY_SLOT
     )
@@ -296,17 +277,16 @@ function WeaponEnchant.Update(buttons)
     )
     local itemCandidates = WeaponEnchant.CollectItemCandidatesInBags()
 
-    updateWeaponEnchantButton(
-        buttons.mainHandTempWeaponEnchant,
-        mainHandState,
-        true,
-        itemCandidates
-    )
-
-    updateWeaponEnchantButton(
-        buttons.offHandTempWeaponEnchant,
-        offHandState,
-        true,
-        itemCandidates
-    )
+    return {
+        mainHandTempWeaponEnchant = resolveWeaponEnchantSlot(
+            mainHandState,
+            true,
+            itemCandidates
+        ),
+        offHandTempWeaponEnchant = resolveWeaponEnchantSlot(
+            offHandState,
+            true,
+            itemCandidates
+        ),
+    }
 end
