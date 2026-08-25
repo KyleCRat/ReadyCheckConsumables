@@ -199,7 +199,7 @@ local function createGeneralSettings(frame, layout)
         label = "Icons Per Row",
         tooltip = "Wrap enabled action-bar buttons after this many icons.",
         minValue = 1,
-        maxValue = 12,
+        maxValue = Catalog.GetCount(),
         step = 1,
         inputFormatter = function(value)
             return string.format("%d", value)

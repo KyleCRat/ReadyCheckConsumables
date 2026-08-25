@@ -72,6 +72,9 @@ Data/HealingItems.lua
 Data/12_Midnight/HealingItems.lua
 Data/11_TheWarWithin/HealingItems.lua
 
+Data/InkyBlackPotion.lua
+Data/RepairItems.lua
+
 Data/WeaponEnchants.lua
 Data/12_Midnight/WeaponEnchants.lua
 Data/11_TheWarWithin/WeaponEnchants.lua
@@ -106,6 +109,8 @@ Modules/Consumables/Healthstone.lua
 Modules/Consumables/CombatPotion.lua
 Modules/Consumables/HealingPotion.lua
 Modules/Consumables/ConsumableStasis.lua
+Modules/Consumables/InkyBlackPotion.lua
+Modules/Consumables/Repair.lua
 Modules/Consumables/RaidBuff.lua
 Modules/Consumables/Vantus.lua
 Modules/Consumables/WeaponEnchant.lua
@@ -119,6 +124,8 @@ Modules/ConsumableFrame/Presenters/CombatPotion.lua
 Modules/ConsumableFrame/Presenters/HealingPotion.lua
 Modules/ConsumableFrame/Presenters/ConsumableStasis.lua
 Modules/ConsumableFrame/Presenters/Recuperate.lua
+Modules/ConsumableFrame/Presenters/InkyBlackPotion.lua
+Modules/ConsumableFrame/Presenters/Repair.lua
 Modules/ConsumableFrame/Presenters/RaidBuff.lua
 Modules/ConsumableFrame/Presenters/Vantus.lua
 Modules/ConsumableFrame/Presenters/WeaponEnchant.lua

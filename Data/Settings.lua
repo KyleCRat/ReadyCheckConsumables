@@ -54,6 +54,10 @@ RCC.db.raidBuffIconID       = 134400
 RCC.db.combatPotionIconID   = 650640   -- trade_alchemy_potiona4
 RCC.db.healingPotionIconID  = 5931169  -- inv_flask_red
 RCC.db.recuperateIconID     = 136074
+RCC.db.inkyBlackPotionIconID = 136122
+RCC.db.repairIconID         = C_Item.GetItemIconByID(
+    RCC.db.repairDefaultItemID
+) or C_Item.GetItemIconByID(49040) or 134064
 RCC.db.vantusIconID         = 4638737  -- inv_10_inscription_glyphs_color5
 
 local iconKeys = {

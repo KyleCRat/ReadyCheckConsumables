@@ -15,7 +15,7 @@ BigWigs or DBM starts a break timer.
 
 - Tracks food, flasks, augment runes, Vantus runes, raid buffs, temporary weapon
   enchants, healthstones, combat potions, healing potions, consumable stasis,
-  and optional Recuperate.
+  Inky Black Potion, repair items, and optional Recuperate.
 - Shows the active item or aura, remaining duration, stack count, and warning
   styling for missing or expiring effects.
 - Shows eating or drinking progress until the Well Fed aura appears.
@@ -23,8 +23,10 @@ BigWigs or DBM starts a break timer.
   enchant button when the corresponding weapon slot is applicable.
 - Left-click uses or casts the selected action. Right-click stores a preferred
   item where preferences are supported.
-- Flyouts expose alternate available food, flasks, runes, potions, and weapon
-  enchants.
+- Flyouts expose alternate available food, flasks, runes, potions, weapon
+  enchants, and repair items.
+- Prefers a ready reusable repair device such as Jeeves, then falls back to a
+  ready consumable repair item such as Auto-Hammer.
 - Uses bag-only item counts; bank contents are not treated as usable inventory.
 - Shows an unknown state with an explanatory tooltip when WoW does not allow an
   aura to be inspected instead of treating that aura as missing.

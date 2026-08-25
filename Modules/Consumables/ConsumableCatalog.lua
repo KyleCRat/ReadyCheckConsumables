@@ -126,6 +126,25 @@ local DEFINITIONS = {
         tooltipAction = "cast",
     },
     {
+        key = "inkyBlackPotion",
+        label = "Inky Black Potion",
+        settingKey = "icon_inkyBlackPotion",
+        defaultIcon = RCC.db.inkyBlackPotionIconID,
+        temporaryClickable = true,
+        tooltipAction = "use",
+    },
+    {
+        key = "repair",
+        label = "Repair",
+        settingKey = "icon_repair",
+        defaultIcon = RCC.db.repairIconID,
+        temporaryClickable = true,
+        tooltipAction = "use",
+        hasCooldown = true,
+        settingsTooltip = "Prefer a ready reusable repair device, then "
+            .. "fall back to a ready consumable repair item.",
+    },
+    {
         key = "vantus",
         label = "Vantus Rune",
         settingKey = "icon_vantus",
@@ -168,4 +187,3 @@ function Catalog.GetTemporarySettingKeys()
 
     return keys
 end
-

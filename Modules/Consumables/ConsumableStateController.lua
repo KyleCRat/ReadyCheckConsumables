@@ -12,6 +12,7 @@ local REFRESH_DELAY = 0.2
 local consumers = {}
 local refreshTimer
 local latestSnapshot
+local repairCooldownSignature
 
 local function hasActiveConsumer()
     for _, consumer in pairs(consumers) do
@@ -41,6 +42,9 @@ local function resolveStates(now)
         combatpot = Consumables.CombatPotion.ResolveState(),
         healpot = Consumables.HealingPotion.ResolveState(),
         recuperate = Consumables.Recuperate.ResolveState(),
+        inkyBlackPotion =
+            Consumables.InkyBlackPotion.ResolveState(auraState),
+        repair = Consumables.Repair.ResolveState(now),
         vantus = Consumables.Vantus.ResolveState(auraState),
     }
 end
@@ -130,6 +134,17 @@ local function requestUnitRefresh(unit)
     end
 end
 
+local function requestRepairCooldownRefresh()
+    if not hasActiveConsumer() then return end
+
+    local signature = Consumables.Repair.GetCooldownSignature(GetTime())
+
+    if signature == repairCooldownSignature then return end
+
+    repairCooldownSignature = signature
+    Controller.RequestRefresh()
+end
+
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event == "PLAYER_LOGIN" then
         Controller.RequestRefresh(0, true)
@@ -148,6 +163,10 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
         Controller.RequestRefresh(0)
 
         return
+    elseif event == "BAG_UPDATE_COOLDOWN" then
+        requestRepairCooldownRefresh()
+
+        return
     end
 
     Controller.RequestRefresh()
@@ -161,6 +180,6 @@ eventFrame:RegisterEvent("UNIT_AURA")
 eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
+eventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("SPELLS_CHANGED")
-

@@ -33,6 +33,8 @@ local DEFAULTS = {
     icon_healPotion          = true,
     icon_consumableStasis    = true,
     icon_recuperate          = false,
+    icon_inkyBlackPotion     = false,
+    icon_repair              = false,
     icon_augment             = true,
     icon_raidBuff            = true,
     icon_vantus              = true,
@@ -62,6 +64,8 @@ local DEFAULTS = {
     consumablesActionBar_icon_combatpot = true,
     consumablesActionBar_icon_healpot = true,
     consumablesActionBar_icon_recuperate = false,
+    consumablesActionBar_icon_inkyBlackPotion = false,
+    consumablesActionBar_icon_repair = false,
     consumablesActionBar_icon_vantus = false,
 
     -- Raid Frame
