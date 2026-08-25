@@ -18,6 +18,16 @@ RCC.Data.AddVantusBuffs({
     -- 12.0.0 - March on Quel'Danas
     [1276666] = true, [1276669] = true, -- Belo'ren, Child of Al'ar
     [1276682] = true, [1276683] = true, -- L'ura
+
+    -- 12.1.0 - The Venomous Abyss
+    [1303172] = true, [1303180] = true, -- Nek'zali the Soulcoiler
+    [1303173] = true, [1303181] = true, -- Entombed Sentinels
+    [1303174] = true, [1303182] = true, -- The Lost Explorers
+    [1303175] = true, [1303183] = true, -- Vashnik the Malignant
+    [1303176] = true, [1303184] = true, -- Sszorak
+    [1303177] = true, [1303185] = true, -- The Twin Fangs
+    [1303178] = true, [1303186] = true, -- The Coiled Altar
+    [1303179] = true, [1303187] = true, -- Ula'tek
 })
 
 RCC.Data.AddVantusItemsByRaid({
@@ -25,4 +35,5 @@ RCC.Data.AddVantusItemsByRaid({
     [2912] = { 245880, 245879 }, -- The Voidspire
     [2913] = { 245880, 245879 }, -- March on Quel'Danas
     [2939] = { 245880, 245879 }, -- The Dreamrift
+    [3004] = { 272195, 272194 }, -- The Venomous Abyss
 })
