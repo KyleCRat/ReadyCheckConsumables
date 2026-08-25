@@ -1,8 +1,10 @@
 # TODO
 
+## Fixes
+- Changing a setting during a test removes all test rows (not critical)
+
 ## Features
-- Add repair drop items Jeeves:49040 Auto-Hammer:132514
-- Add Inky Black Potion:124640
+- Add invisibilty potions Potion of the Hushed Zephyr:191395 - need to find newer and older ones
 - (? Maybe, not sure yet) Add Raid Wipe Recovery Items Irresistible Red Button:221945 - These items can be placed before pull to ressurect someone after a wipe
 
 ## ConsumableActionBar
@@ -19,17 +21,31 @@
 - [ ] Find and verify the remaining data for the provisional 12.1 consumables.
   RCC currently includes only the supplied PTR item IDs; combat-potion quality
   metadata is intentionally unset until it can be confirmed.
-  - Concentrated Silvermoon Health Potion: item `271884`, use spell `1295247`.
   - Liquid Luster: item `271887`, use spell `1295132`.
+    - https://www.wowhead.com/item=274763/fleeting-liquid-luster
+    - https://www.wowhead.com/item=274764/fleeting-liquid-luster
   - Alluring Nostrum: item `271890`, use spell `1295015`.
+    - https://www.wowhead.com/item=274765/fleeting-alluring-nostrum
+    - https://www.wowhead.com/item=274766/fleeting-alluring-nostrum
   - Identify every quality rank, priority order, and fleeting or other alternate
     item variant.
   - Confirm final effects, shared cooldown categories, and any separate aura
     spell IDs on a later PTR build or the final live client.
-- [ ] Optional: evaluate `C_Spell.GetLastCategoryCooldownSource` for a future
-  combat/healing-potion cooldown display. Do not implement it until RCC has a
-  reliable source for the relevant spell-category IDs and secret cooldown
-  returns are handled.
+
+https://www.wowhead.com/item=275261/sweet-and-sour-skewers
+https://www.wowhead.com/item=275263/hearty-sweet-and-sour-skewers
+
+https://www.wowhead.com/item=275260/puffer-plate
+https://www.wowhead.com/item=275262/hearty-puffer-plate
+
+https://www.wowhead.com/item=275258/venom-spiced-cutlets
+https://www.wowhead.com/item=275259/hearty-venom-spiced-cutlets
+
+https://www.wowhead.com/item=275264/amani-cornucopia
+https://www.wowhead.com/item=275267/hearty-amani-cornucopia
+
+https://www.wowhead.com/item=275266/feast-of-knowledge
+https://www.wowhead.com/item=275269/hearty-feast-of-knowledge
 
 ## Review
 
