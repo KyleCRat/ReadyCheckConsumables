@@ -6,12 +6,16 @@ RCC.Data.AddFeastItems({
     242744, -- [Epic] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
     266985, -- [Epic] Hearty Silvermoon Parade    | 98 Stam, 65 Primary Stat
     266986, -- [Rare] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
+    275267, -- [Rare] Hearty Amani Cornucopia     | 98 Stam, 65 Highest Secondary Stat
+    275269, -- [Rare] Hearty Feast of Knowledge   | 98 Stam, 65 Highest Secondary Stat
 
     242273, -- [Rare] Blooming Feast         | 98 Stam, 65 Highest Secondary Stat
     242272, -- [Rare] Quel'dorei Medley      | 98 Stam, 65 Highest Secondary Stat
     255846, -- [Rare] Harandar Celebration   | 98 Stam, 50 Primary Stat
     255845, -- [Rare] Silvermoon Parade      | 98 Stam, 50 Primary Stat
     255847, -- [Rare] Impossibly Royal Roast | 98 Stam, 50 Primary Stat
+    275264, -- [Rare] Amani Cornucopia       | 98 Stam, 65 Highest Secondary Stat
+    275266, -- [Rare] Feast of Knowledge     | 98 Stam, 65 Highest Secondary Stat
 })
 
 -- Confirmed placement spells maintained by Northern Sky Raid Tools.
@@ -24,4 +28,8 @@ RCC.Data.AddFeastPlacementSpells({
     1278909, -- Hearty Blooming Feast
     1259659, -- Silvermoon Parade
     1278895, -- Hearty Silvermoon Parade
+    1296432, -- Amani Cornucopia
+    1303407, -- Hearty Amani Cornucopia
+    1296434, -- Feast of Knowledge
+    1303409, -- Hearty Feast of Knowledge
 })

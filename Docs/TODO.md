@@ -32,6 +32,13 @@
   - Confirm final effects, shared cooldown categories, and any separate aura
     spell IDs on a later PTR build or the final live client.
 
+  - Liquid Luster: item `271887`, use spell `1295132`.
+    - https://www.wowhead.com/item=274763/fleeting-liquid-luster
+    - https://www.wowhead.com/item=274764/fleeting-liquid-luster
+  - Alluring Nostrum: item `271890`, use spell `1295015`.
+    - https://www.wowhead.com/item=274765/fleeting-alluring-nostrum
+    - https://www.wowhead.com/item=274766/fleeting-alluring-nostrum
+
 https://www.wowhead.com/item=275261/sweet-and-sour-skewers
 https://www.wowhead.com/item=275263/hearty-sweet-and-sour-skewers
 

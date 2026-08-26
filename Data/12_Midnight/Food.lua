@@ -11,6 +11,9 @@ RCC.Data.AddFoodItems({
 
     242746, -- [Rare] Hearty Champion's Bento       | 65 Highest Secondary Stat
     268680, -- [Rare] Hearty Flora Frenzy           | 65 Highest Secondary Stat
+    275259, -- [Rare] Hearty Venom-Spiced Cutlets   | 65 Highest Secondary Stat
+    275262, -- [Rare] Hearty Puffer Plate            | 65 Highest Secondary Stat
+    275263, -- [Rare] Hearty Sweet-and-Sour Skewers | 65 Highest Secondary Stat
 
     242750, -- [Rare] Hearty Tasty Smoked Tetra     | 59 Critical Strike
     242759, -- [Rare] Hearty Arcano Cutlets         | 59 Critical Strike
@@ -48,6 +51,9 @@ RCC.Data.AddFoodItems({
 
     242274, -- [Rare] Champion's Bento              | 65 Highest Secondary Stat
     255848, -- [Rare] Flora Frenzy                  | 65 Highest Secondary Stat
+    275258, -- [Rare] Venom-Spiced Cutlets          | 65 Highest Secondary Stat
+    275260, -- [Rare] Puffer Plate                   | 65 Highest Secondary Stat
+    275261, -- [Rare] Sweet-and-Sour Skewers        | 65 Highest Secondary Stat
 
     242287, -- [Rare] Arcano Cutlets                | 59 Critical Strike
     242278, -- [Rare] Tasty Smoked Tetra            | 59 Critical Strike
