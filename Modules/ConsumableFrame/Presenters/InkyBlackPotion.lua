@@ -33,6 +33,7 @@ function InkyBlackPotion.ResolveState(state)
         tooltipItemID = itemID,
         clickHintItemID = itemID,
         icon = candidate.icon,
+        showStatusTexture = false,
         suppressGlow = true,
     })
 
@@ -50,6 +51,10 @@ function InkyBlackPotion.ResolveState(state)
         buttonState,
         state and state.available == true
     )
+
+    -- This is an optional visual effect, not a readiness state. Keep both the
+    -- item and active-buff icons at full color.
+    buttonState.desaturated = false
 
     return buttonState
 end
