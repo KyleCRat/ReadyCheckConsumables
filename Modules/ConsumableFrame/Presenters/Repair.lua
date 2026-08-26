@@ -54,6 +54,7 @@ function Repair.ResolveState(now)
         clickHintItemID = itemID,
         icon = candidate and candidate.icon
             or ItemCandidates.GetIcon(itemID),
+        showStatusTexture = false,
         suppressGlow = true,
     })
 
@@ -64,7 +65,6 @@ function Repair.ResolveState(now)
         })
 
         if candidate.ready then
-            buttonState.statusTexture = ButtonState.READY_TEXTURE
             buttonState.desaturated = false
         end
     else
