@@ -21,16 +21,18 @@ RCC.Data.AddCauldrons({
             274763, -- R1 Fleeting Liquid Luster
             274765, -- R2 Fleeting Alluring Nostrum
             274766, -- R1 Fleeting Alluring Nostrum
-            245917, -- R2 Fleeting Lightfused Mana Potion
-            245916, -- R1 Fleeting Lightfused Mana Potion
-            245897, -- R2 Fleeting Light's Potential
-            245898, -- R1 Fleeting Light's Potential
+            245916, -- R2 Fleeting Lightfused Mana Potion
+            245917, -- R1 Fleeting Lightfused Mana Potion
+            245918, -- R2 Fleeting Silvermoon Health Potion
+            245919, -- R1 Fleeting Silvermoon Health Potion
+            245898, -- R2 Fleeting Light's Potential
+            245897, -- R1 Fleeting Light's Potential
             245910, -- R2 Fleeting Draught of Rampant Abandon
             245911, -- R1 Fleeting Draught of Rampant Abandon
             245902, -- R2 Fleeting Potion of Recklessness
             245903, -- R1 Fleeting Potion of Recklessness
-            245900, -- R2 Fleeting Potion of Zealotry
-            245901, -- R1 Fleeting Potion of Zealotry
+            245901, -- R2 Fleeting Potion of Zealotry
+            245900, -- R1 Fleeting Potion of Zealotry
             245904, -- R2 Fleeting Potion of Devoured Dreams
             245905, -- R1 Fleeting Potion of Devoured Dreams
         },
@@ -50,14 +52,14 @@ RCC.Data.AddCauldrons({
             241319, -- R1
         },
         pickupItemIDs = {
-            245927, -- R2 Fleeting Flask of Thalassian Resistance
-            245926, -- R1 Fleeting Flask of Thalassian Resistance
-            245932, -- R2 Fleeting Flask of the Magisters
-            245933, -- R1 Fleeting Flask of the Magisters
-            245930, -- R2 Fleeting Flask of the Blood Knights
-            245931, -- R1 Fleeting Flask of the Blood Knights
-            245928, -- R2 Fleeting Flask of the Shattered Sun
-            245929, -- R1 Fleeting Flask of the Shattered Sun
+            245926, -- R2 Fleeting Flask of Thalassian Resistance
+            245927, -- R1 Fleeting Flask of Thalassian Resistance
+            245933, -- R2 Fleeting Flask of the Magisters
+            245932, -- R1 Fleeting Flask of the Magisters
+            245931, -- R2 Fleeting Flask of the Blood Knights
+            245930, -- R1 Fleeting Flask of the Blood Knights
+            245929, -- R2 Fleeting Flask of the Shattered Sun
+            245928, -- R1 Fleeting Flask of the Shattered Sun
         },
         target = 2,
         pickupQuantity = 1,

@@ -30,8 +30,8 @@ RCC.Data.AddCombatPotionItems({
         type = MANA,
         xpac = RCC.MIDNIGHT,
         items = {
-            { itemID = 245917, q = 2, variant = FLEETING },
-            { itemID = 245916, q = 1, variant = FLEETING },
+            { itemID = 245916, q = 2, variant = FLEETING },
+            { itemID = 245917, q = 1, variant = FLEETING },
             { itemID = 241300, q = 2 },
             { itemID = 241301, q = 1 },
         },
@@ -40,8 +40,8 @@ RCC.Data.AddCombatPotionItems({
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
-            { itemID = 245897, q = 2, variant = FLEETING },
-            { itemID = 245898, q = 1, variant = FLEETING },
+            { itemID = 245898, q = 2, variant = FLEETING },
+            { itemID = 245897, q = 1, variant = FLEETING },
             { itemID = 241308, q = 2 },
             { itemID = 241309, q = 1 },
         },
@@ -70,8 +70,8 @@ RCC.Data.AddCombatPotionItems({
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
-            { itemID = 245900, q = 2, variant = FLEETING },
-            { itemID = 245901, q = 1, variant = FLEETING },
+            { itemID = 245901, q = 2, variant = FLEETING },
+            { itemID = 245900, q = 1, variant = FLEETING },
             { itemID = 241296, q = 2 },
             { itemID = 241297, q = 1 },
         },
