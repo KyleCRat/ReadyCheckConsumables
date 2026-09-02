@@ -136,6 +136,45 @@ data.
   fallback movement provider when EllesmereUI is unavailable. Keep its gitlink
   and `.pkgmeta` tag aligned.
 
+## Data Completeness
+
+- Treat every gameplay-data addition as an end-to-end dataset, not as a single
+  ID edit. Before considering it complete, search the category's registries and
+  runtime consumers and verify inventory/action selection, active-effect
+  detection, acquisition or placement signals, context mappings, every rank and
+  variant, priority ordering, fallback icons, and TOC load order. Registration
+  in one purpose-specific table never implies registration in another.
+- Known coupled datasets that must be audited together are:
+  - Flasks: item families, ranks, and priority live in
+    `Data/<expansion>/Flasks.lua`; applied flask aura IDs live in
+    `Data/Flasks.lua`; every cauldron-granted fleeting flask item must also be
+    present in `Data/<expansion>/Cauldrons.lua` under `pickupItemIDs`.
+  - Potion cauldrons: fleeting combat-potion outputs must be registered in
+    `Data/<expansion>/CombatPotions.lua`, fleeting healing-potion outputs in
+    `Data/<expansion>/HealingItems.lua`, and every output in the cauldron's
+    `pickupItemIDs`. A cauldron definition also needs its placement/use spell
+    IDs, cauldron item ranks, pickup target, and pickup quantity.
+  - Augment Runes: register both inventory item IDs and applied aura spell IDs,
+    with matching expansion, priority, and unlimited metadata.
+  - Vantus Runes: register the raid instance-to-item mapping and every
+    boss-specific applied aura spell ID for every supported rank.
+  - Feasts: retain the feast item IDs and separately register only confirmed
+    feast-placement spell IDs; eating or food-use spells are not placement
+    signals.
+  - Food: register usable food items and confirm the resulting Well Fed/eating
+    auras still match `foodAuraIconTypes`; add a new aura classification only
+    when the existing generic icons do not cover it.
+  - Temporary weapon enchants: each item-based rank needs the detected enchant
+    ID plus its item, quality, expansion, and icon metadata. Spell-based
+    enchants instead need the spell ID and complete weapon-slot applicability
+    rules.
+  - Repair devices: keep the ordered item list, per-item reusable metadata, and
+    intentional default/fallback item consistent.
+- Adding an entirely new consumable category also requires tracing the
+  canonical catalog, domain resolver, presenter, settings/defaults, both
+  personal surfaces, and managed macros where applicable; a `Data/` entry alone
+  cannot expose a new category.
+
 ## External Boundaries
 
 - BigWigs and DBM are optional break-timer providers.
