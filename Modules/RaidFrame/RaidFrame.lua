@@ -308,14 +308,17 @@ local function cancelTempWeaponEnchantTimer()
 end
 
 local function scheduleAddonRefresh()
-    if addonRefreshTimer or not frame:IsShown() then
+    if addonRefreshTimer
+        or not frame:IsShown()
+        or fadeOut.isFadingOut
+    then
         return
     end
 
     addonRefreshTimer = C_Timer.NewTimer(ADDON_REFRESH_DELAY, function()
         addonRefreshTimer = nil
 
-        if frame:IsShown() then
+        if frame:IsShown() and not fadeOut.isFadingOut then
             refreshAllRowsAndTitle()
         end
     end)
@@ -474,7 +477,7 @@ local function scheduleReadyCheckBroadcast()
 end
 
 local function scheduleTempWeaponEnchantRefresh()
-    if readyCheckBroadcastTimer then
+    if readyCheckBroadcastTimer or fadeOut.isFadingOut then
         return
     end
 
@@ -484,7 +487,7 @@ local function scheduleTempWeaponEnchantRefresh()
         tempWeaponEnchantTimer = nil
         broadcast:SendTempWeaponEnchantStatus()
 
-        if frame:IsShown() then
+        if frame:IsShown() and not fadeOut.isFadingOut then
             refreshAllRowsAndTitle()
         end
     end)
@@ -556,7 +559,10 @@ local function closeReadyCheckDisplay(self)
         return
     end
 
+    cancelHideTimer()
+    cancelAddonRefreshTimer()
     cancelReadyCheckBroadcastTimer()
+    cancelTempWeaponEnchantTimer()
     self.manualShow = false
 
     -- Finishing a ready check closes the whole visible raid-status session.
@@ -576,7 +582,6 @@ function frame:OnReadyCheckFinished()
     showFinishedSummary()
 
     if not self:IsShown() then
-        cancelTempWeaponEnchantTimer()
         closeReadyCheckDisplay(self)
 
         return
@@ -623,6 +628,12 @@ function frame:OpenProvisionTracking()
 end
 
 local function refreshShownDisplay(self, rescanMembers)
+    -- READY_CHECK has already been removed while its last visual state fades.
+    -- Do not let passive provision refreshes rebuild the still-visible frame.
+    if fadeOut.isFadingOut then
+        return false
+    end
+
     if not self:IsShown() then
         configureDisplay()
 
