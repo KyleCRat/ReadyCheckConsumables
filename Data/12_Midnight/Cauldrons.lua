@@ -17,6 +17,10 @@ RCC.Data.AddCauldrons({
             241285, -- R1
         },
         pickupItemIDs = {
+            274764, -- R2 Fleeting Liquid Luster
+            274763, -- R1 Fleeting Liquid Luster
+            274765, -- R2 Fleeting Alluring Nostrum
+            274766, -- R1 Fleeting Alluring Nostrum
             245917, -- R2 Fleeting Lightfused Mana Potion
             245916, -- R1 Fleeting Lightfused Mana Potion
             245897, -- R2 Fleeting Light's Potential
