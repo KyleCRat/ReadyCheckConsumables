@@ -13,6 +13,7 @@ local Visibility = RCC.ContextualVisibility
 local DEFAULT_GEOMETRY = {
     buttonWidth = View.SIZE,
     buttonHeight = View.SIZE,
+    gapX = View.SPACING,
     textSize = 16,
     flyoutDirection = "UP",
     durationTextPosition = "TOP",
@@ -79,7 +80,13 @@ function Surface.Create(parent, options)
         button:ClearAllPoints()
 
         if previous then
-            button:SetPoint("LEFT", previous, "RIGHT", View.SPACING, 0)
+            button:SetPoint(
+                "LEFT",
+                previous,
+                "RIGHT",
+                surface.geometry.gapX,
+                0
+            )
         else
             button:SetPoint("LEFT", parent, "LEFT", 0, 0)
         end
@@ -185,6 +192,19 @@ function Surface.ApplyTemporaryLayout(surface, context)
     if not surface or InCombatLockdown() then return false end
 
     local definitions = Catalog.GetDefinitions()
+    local geometry = surface.geometry or DEFAULT_GEOMETRY
+    local buttonWidth = math.max(
+        1,
+        tonumber(geometry.buttonWidth) or View.SIZE
+    )
+    local buttonHeight = math.max(
+        1,
+        tonumber(geometry.buttonHeight) or View.SIZE
+    )
+    local gapX = math.max(
+        0,
+        tonumber(geometry.gapX) or View.SPACING
+    )
     local previous
     local visibleCount = 0
 
@@ -205,7 +225,7 @@ function Surface.ApplyTemporaryLayout(surface, context)
                     "LEFT",
                     previous,
                     "RIGHT",
-                    View.SPACING,
+                    gapX,
                     0
                 )
             else
@@ -221,7 +241,10 @@ function Surface.ApplyTemporaryLayout(surface, context)
         end
     end
 
-    surface.frame:SetWidth(View.GetWidth(visibleCount))
+    surface.frame:SetSize(
+        View.GetWidth(visibleCount, buttonWidth, gapX),
+        buttonHeight
+    )
 
     return true
 end

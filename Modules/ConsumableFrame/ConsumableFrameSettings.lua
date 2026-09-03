@@ -9,6 +9,7 @@ local Shared = RCC.ConsumableSettingsShared
 local Visibility = RCC.ContextualVisibility
 local Reason = RCC.DisplayReason
 local Surface = RCC.DisplaySurface.CONSUMABLE_FRAME
+local ICON_WIDTH_LIMITS = RCC.ConsumableFrameLimits.iconWidthPercent
 
 local MATRIX_ROW_HEIGHT = 36
 local FEATURE_DISABLED_TOOLTIP =
@@ -46,6 +47,7 @@ local OPEN_EVENTS = {
 local CONSUMABLE_SETTING_KEYS = {
     "consumables_enabled",
     "consumables_scale",
+    "consumables_iconWidthPercent",
     "consumables_minShow",
     "consumables_minShowTime",
     "consumables_cauldronOpen",
@@ -107,6 +109,24 @@ end
 local function refreshAugmentRuneSelection()
     RCC.ConsumableStateController.RequestRefresh(0, true)
     RCC.ConsumableMacros.ScheduleUpdate()
+end
+
+local function parseIconWidthPercent(text)
+    if type(text) ~= "string" then return end
+
+    local numericText = text:match(
+        "^%s*([+-]?%d*%.?%d+)%s*%%?%s*$"
+    )
+    local value = numericText and tonumber(numericText) or nil
+
+    if not value
+        or value < ICON_WIDTH_LIMITS.min
+        or value > ICON_WIDTH_LIMITS.max
+    then
+        return
+    end
+
+    return value
 end
 
 local function addSettingCheckbox(frame, flow, options, placement)
@@ -175,6 +195,24 @@ local function createGeneralSettings(frame, layout)
         end,
         afterChanged = function(value)
             RCC.consumables:SetScale(value)
+        end,
+    })
+
+    addSettingSlider(frame, displayFlow, {
+        key = "consumables_iconWidthPercent",
+        label = "Icon Width",
+        tooltip = "Set Consumables Frame button width as a percentage of "
+            .. "the normal icon width.",
+        minValue = ICON_WIDTH_LIMITS.min,
+        maxValue = ICON_WIDTH_LIMITS.max,
+        step = ICON_WIDTH_LIMITS.step,
+        inputFormatter = function(value)
+            return string.format("%d", value)
+        end,
+        inputParser = parseIconWidthPercent,
+        suffix = "%",
+        afterChanged = function()
+            RCC.consumables:ApplyLayout()
         end,
     })
 
@@ -568,6 +606,7 @@ function Page.CreateFrame(measurementFrame)
 
         RCC.ClearContextualVisibilityOverrides(Surface)
         RCC.consumables:SetScale(RCC.GetSetting("consumables_scale"))
+        RCC.consumables:ApplyLayout()
         refreshConsumableFrame()
         Shared.SyncPages()
     end

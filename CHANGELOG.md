@@ -16,6 +16,8 @@
   and exclusive flyout hover ownership across multi-row layouts.
 - Added Action Bar positioning through EllesmereUI Unlock Mode when available,
   with LibEditMode-backed Blizzard Edit Mode positioning otherwise.
+- Added a 50% to 100% Consumables Frame icon-width setting with cropped icons,
+  matching flyout widths, and strict range validation.
 - Added an Action Bar Only setting that disables the temporary Consumables
   Frame without affecting the permanent bar, Raid Status Frame, chat reports,
   or managed macros.

@@ -10,11 +10,29 @@ local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 
 local CONTROL_BORDER_OVERHANG = 1
 
+local function getGeometry()
+    local widthPercent = RCC.GetSetting(
+        "consumables_iconWidthPercent"
+    )
+
+    return {
+        buttonWidth = View.SIZE * (widthPercent / 100),
+        buttonHeight = View.SIZE,
+        gapX = View.SPACING,
+    }
+end
+
+local initialGeometry = getGeometry()
+
 RCC.consumables = CreateFrame("Frame", "RCConsumables", UIParent)
 RCC.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
 RCC.consumables:SetSize(
-    View.GetWidth(Catalog.GetCount()),
-    View.SIZE
+    View.GetWidth(
+        Catalog.GetCount(),
+        initialGeometry.buttonWidth,
+        initialGeometry.gapX
+    ),
+    initialGeometry.buttonHeight
 )
 RCC.consumables:Hide()
 
@@ -69,10 +87,35 @@ RCC.consumables.close:SetAttribute("_onclick", [[
 
 RCC.consumables.surface = Surface.Create(RCC.consumables, {
     capabilities = Binder.Capabilities.TEMPORARY,
+    geometry = initialGeometry,
     isClickable = function(definition)
         return definition.temporaryClickable == true
     end,
 })
+
+function RCC.consumables:ApplyLayout()
+    if InCombatLockdown() then return false end
+
+    local geometry = getGeometry()
+
+    Surface.HideFlyouts(self.surface)
+    Surface.ApplyGeometry(self.surface, geometry)
+
+    if self:IsShown() then
+        Surface.ApplyTemporaryLayout(self.surface, self.displayContext)
+    else
+        self:SetSize(
+            View.GetWidth(
+                Catalog.GetCount(),
+                geometry.buttonWidth,
+                geometry.gapX
+            ),
+            geometry.buttonHeight
+        )
+    end
+
+    return true
+end
 
 function RCC.consumables:UpdateReadyCheckAnchor()
     if self.readyCheckAnchorFixed then return end

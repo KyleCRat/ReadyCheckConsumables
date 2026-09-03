@@ -2,6 +2,17 @@ local _, RCC = ...
 
 local CanvasControls = LibStub("LibModernSettings-1.0")
 
+RCC.ConsumableFrameLimits = {
+    iconWidthPercent = {
+        min = 50,
+        max = 100,
+        step = 1,
+        default = 100,
+    },
+}
+
+local ICON_WIDTH_LIMITS = RCC.ConsumableFrameLimits.iconWidthPercent
+
 --------------------------------------------------------------------------------
 --- Defaults
 --------------------------------------------------------------------------------
@@ -10,6 +21,7 @@ local DEFAULTS = {
     -- Consumables Frame
     consumables_enabled      = true,
     consumables_scale        = 1.0,
+    consumables_iconWidthPercent = ICON_WIDTH_LIMITS.default,
     consumables_minShow      = false,
     consumables_minShowTime  = 15,
     consumables_cauldronOpen = false,
@@ -90,6 +102,39 @@ local DEFAULTS = {
     chatReport_normalDungeon = false,
 }
 
+local function normalizeConsumablesIconWidthPercent(value)
+    value = tonumber(value)
+
+    if not value or value ~= value then
+        return ICON_WIDTH_LIMITS.default
+    end
+
+    if value <= ICON_WIDTH_LIMITS.min then
+        return ICON_WIDTH_LIMITS.min
+    end
+
+    if value >= ICON_WIDTH_LIMITS.max then
+        return ICON_WIDTH_LIMITS.max
+    end
+
+    local stepIndex = math.floor(
+        ((value - ICON_WIDTH_LIMITS.min) / ICON_WIDTH_LIMITS.step) + 0.5
+    )
+
+    return ICON_WIDTH_LIMITS.min + (stepIndex * ICON_WIDTH_LIMITS.step)
+end
+
+local SETTING_NORMALIZERS = {
+    consumables_iconWidthPercent =
+        normalizeConsumablesIconWidthPercent,
+}
+
+local function normalizeSettingValue(key, value)
+    local normalizer = SETTING_NORMALIZERS[key]
+
+    return normalizer and normalizer(value) or value
+end
+
 --------------------------------------------------------------------------------
 --- Public accessor
 --------------------------------------------------------------------------------
@@ -98,16 +143,16 @@ function RCC.GetSetting(key)
     local db = ReadyCheckConsumablesDB
 
     if not db then
-        return DEFAULTS[key]
+        return normalizeSettingValue(key, DEFAULTS[key])
     end
 
     local val = db[key]
 
     if val == nil then
-        return DEFAULTS[key]
+        return normalizeSettingValue(key, DEFAULTS[key])
     end
 
-    return val
+    return normalizeSettingValue(key, val)
 end
 
 function RCC.GetSettingDefault(key)
@@ -119,7 +164,7 @@ function RCC.SetSettingValue(key, value)
         return false
     end
 
-    ReadyCheckConsumablesDB[key] = value
+    ReadyCheckConsumablesDB[key] = normalizeSettingValue(key, value)
 
     return true
 end
@@ -509,6 +554,10 @@ local function registerPanel()
         if db[key] == nil then
             db[key] = default
         end
+    end
+
+    for key, normalizer in pairs(SETTING_NORMALIZERS) do
+        db[key] = normalizer(db[key])
     end
 
     local mainFrame = CreateFrame("Frame")

@@ -143,6 +143,7 @@ local function showConsumableFrame(self, isInitiator, registerConfirm,
     local wasShown = self:IsShown()
 
     self:SetScale(RCC.GetSetting("consumables_scale"))
+    self:ApplyLayout()
     self:Show()
     self:Update()
 
