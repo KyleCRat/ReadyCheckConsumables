@@ -177,7 +177,6 @@ Frame cannot be opened manually during combat.
 ## Compatibility
 
 - Integrates with BigWigs and DBM break timers.
-- Reanchors the Consumables Frame for ElvUI and ShestakUI ready-check frames.
 - Integrates the permanent Action Bar with EllesmereUI Unlock Mode when present
   and otherwise embeds LibEditMode for Blizzard Edit Mode positioning.
 - Reads Method Raid Tools durability data and avoids duplicate MRT chat reports.
