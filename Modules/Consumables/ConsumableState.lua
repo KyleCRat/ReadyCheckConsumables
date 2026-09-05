@@ -307,5 +307,3 @@ function State.MergeCombatVisual(prepared, live)
 
     return merged
 end
-
-

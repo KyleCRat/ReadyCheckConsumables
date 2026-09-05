@@ -471,4 +471,3 @@ function Flyout.HideAll(buttons)
 
     return true
 end
-

@@ -195,4 +195,3 @@ end
 function Binder.Disable(button)
     return disable(button)
 end
-

@@ -385,4 +385,3 @@ function View.GetStackHeight(buttonCount, buttonHeight, spacing)
     return buttonHeight * buttonCount
         + spacing * math.max(buttonCount - 1, 0)
 end
-

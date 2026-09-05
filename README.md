@@ -135,7 +135,8 @@ Consumables**.
 
 Settings include:
 
-- Frame enablement, scale, and ready-check display duration.
+- Consumables Frame enablement, scale, icon width, and ready-check display
+  duration.
 - Automatic opening on ready checks, instance entry, cauldron pickup, or break
   timers.
 - Instance-type controls for dungeons, raids, scenarios, battlegrounds, and

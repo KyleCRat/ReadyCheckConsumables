@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [12.1.0-24] - 2026-09-04
 
 ### Added
 - Added an optional permanent Consumables Action Bar with independently enabled,
@@ -41,8 +41,9 @@
   flyout pipeline.
 - Changed `/rcc h` and `/rcc hide` to hide only temporary RCC frames, leaving
   the enabled permanent Consumables Action Bar visible.
-- Updated LibModernSettings to 1.2.0 so manually entered slider values can
-  remain outside the visual slider track range.
+- Updated LibModernSettings to 1.5.0 so manually entered slider values can
+  remain outside the visual slider track range and to include cumulative
+  control fixes.
 - Embedded LibEditMode 15 as the Action Bar movement fallback when EllesmereUI
   is unavailable.
 - Expanded player and maintainer documentation for the Action Bar and
@@ -79,19 +80,3 @@
   reports.
 - Restricted RCC and Method Raid Tools addon messages to active group members
   on trusted group channels.
-
-## [12.1.0-22] - 2026-08-19
-
-### Changed
-- Added a backwards-compatible RCC presence message so the raid status frame
-  can distinguish unavailable information from players without a response.
-- Delayed initial ready-check status broadcasts briefly to reduce messages
-  being lost while clients initialize their ready-check state.
-- Standardized raid status row visuals and tooltips for present, expiring,
-  missing, in-progress, no-weapon, unknown, and no-response states.
-- Made unknown and no-response data neutral when aggregating column header
-  status, while confirmed failures continue to produce a red X.
-
-### Fixed
-- Made a missing enchantable weapon count as a confirmed bad weapon-enchant
-  state and display the standard red X overlay.

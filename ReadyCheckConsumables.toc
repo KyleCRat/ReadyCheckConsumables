@@ -1,8 +1,8 @@
 ## Interface: 120100
 ## Title: Ready Check Consumables
-## Notes: Show consumable icons on ready check frame
+## Notes: Personal and group consumable readiness, action bars, reports, and macros
 ## Author: Yvairel
-## Version: 12.1.0-23
+## Version: 12.1.0-24
 ## Category: Raid
 ## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
 ## OptionalDeps: BigWigs, DBM-Core, EllesmereUI
