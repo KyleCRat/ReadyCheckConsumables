@@ -387,14 +387,23 @@ function Broadcast.Create()
     end
 
     function broadcast:SendTimedConsumableStatuses(columnData, chatType)
-        if not columnData or columnData.auraScanAvailable ~= true then
+        if not columnData then
             return
         end
 
         chatType = chatType or F.chatType()
 
-        self:SendFoodStatus(columnData.food, chatType)
-        self:SendFlaskStatus(columnData.flask, chatType)
+        -- Preserve the released FOOD/FLASK payloads: neither has an unknown
+        -- sentinel. Send each known category independently, never encode an
+        -- unresolved category as missing. Food is available only when its
+        -- Well Fed state is known, not from an eating-only partial scan.
+        if columnData.food and columnData.food.available == true then
+            self:SendFoodStatus(columnData.food, chatType)
+        end
+
+        if columnData.flask and columnData.flask.available == true then
+            self:SendFlaskStatus(columnData.flask, chatType)
+        end
     end
 
     function broadcast:SendTempWeaponEnchantStatus(chatType)
@@ -487,7 +496,7 @@ function Broadcast.Create()
                         wellFed = createTimedStatus(val1, val2, val3, val7),
                         eating  = createTimedStatus(val4, val5, val6, val8),
                     }
-                    self:SetPresence(senderKey, nil, true)
+                    self:SetPresence(senderKey)
 
                     return true
                 end
@@ -495,7 +504,7 @@ function Broadcast.Create()
                 if senderKey then
                     self.flaskData[senderKey] =
                         createTimedStatus(val1, val2, val3, val4)
-                    self:SetPresence(senderKey, nil, true)
+                    self:SetPresence(senderKey)
 
                     return true
                 end

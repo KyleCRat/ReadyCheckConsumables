@@ -191,7 +191,9 @@ local function refreshFoodDisplayData(data, rules)
     data.spellID  = displayData.spellID
     data.source   = displayData.source
     data.isEating = isEating
-    data.available = displayData.available == true
+    -- Eating alone cannot prove Well Fed is missing in an incomplete scan.
+    -- Food readiness stays unknown until Well Fed is found or ruled out.
+    data.available = data.wellFed.available == true
 end
 
 local function collectFoodAura(data, aura, scanContext)
@@ -687,14 +689,13 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
         end
     end)
 
-    if not scanAvailable then
-        columnData = createColumnData(layout)
-        columnData.auraScanAvailable = false
+    columnData.auraScanAvailable = scanAvailable
 
+    if not scanAvailable then
+        -- CollectAura makes confirmed matches available independently. Keep
+        -- those results while leaving unmatched columns unknown.
         return columnData
     end
-
-    columnData.auraScanAvailable = true
 
     for columnIndex = 1, #columns do
         local column = columns[columnIndex]

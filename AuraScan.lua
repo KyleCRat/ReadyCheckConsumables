@@ -21,11 +21,9 @@ function AuraScan.ScanUnit(unit, now)
         auras[#auras + 1] = aura
     end)
 
-    if not scanAvailable then
-        return result
-    end
-
-    result.available = true
+    -- Readable matches survive an incomplete scan. Only a complete scan can
+    -- establish that an unmatched buff is missing (or support a full report).
+    result.available = scanAvailable
     result.auras = auras
 
     return result

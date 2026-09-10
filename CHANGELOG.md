@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- Preserved readable consumable and raid-buff information when another aura
+  has a restricted spell ID, instead of discarding the entire scan. Confirmed
+  food and flask results are still shared; unresolved statuses remain Unknown.
+
 ## [12.1.0-24] - 2026-09-04
 
 ### Added

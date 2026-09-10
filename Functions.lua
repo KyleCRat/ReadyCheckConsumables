@@ -99,7 +99,7 @@ function F.IsSafeNumber(value)
 end
 
 function F.GetPublicAuraField(aura, field)
-    if not aura or issecretvalue(aura) then
+    if issecretvalue(aura) or not aura then
         return nil
     end
 
@@ -375,9 +375,10 @@ end
 --- ForEachHelpfulAura(unit, callback)
 --- Iterates helpful auras using only normalized public fields.
 --- Callback receives aura, spellID, auraIndex.
---- Return true from the callback to stop iteration early.
---- Returns true when the requested scan completed, or false when aura access
---- was denied or a required identifying field was restricted.
+--- Unidentifiable auras are skipped without discarding readable matches.
+--- Returns true after a complete scan, or when the callback returns true to
+--- indicate its requested match was found. False means the scan was incomplete:
+--- collected matches are valid, but an unmatched buff is unknown, not missing.
 --------------------------------------------------------------------------------
 
 local function queryHelpfulAura(unit, index)
@@ -402,7 +403,7 @@ local function queryHelpfulAura(unit, index)
 end
 
 local function createPublicHelpfulAura(aura)
-    if not aura or issecretvalue(aura) then
+    if issecretvalue(aura) or not aura then
         return nil
     end
 
@@ -423,6 +424,8 @@ local function createPublicHelpfulAura(aura)
 end
 
 function F.ForEachHelpfulAura(unit, callback)
+    local scanComplete = true
+
     for i = 1, RCC.MAX_AURAS do
         local querySucceeded, rawAura = queryHelpfulAura(unit, i)
 
@@ -430,22 +433,23 @@ function F.ForEachHelpfulAura(unit, callback)
             return false
         end
 
-        if not rawAura then
-            return true
-        end
+        if issecretvalue(rawAura) then
+            scanComplete = false
+        elseif not rawAura then
+            return scanComplete
+        else
+            local aura = createPublicHelpfulAura(rawAura)
 
-        local aura = createPublicHelpfulAura(rawAura)
-
-        if not aura then
-            return false
-        end
-
-        if callback(aura, aura.spellID, i) == true then
-            return true
+            if not aura then
+                scanComplete = false
+            elseif callback(aura, aura.spellID, i) == true then
+                return true
+            end
         end
     end
 
-    return true
+    -- Without the terminating nil, the bounded scan cannot prove absence.
+    return false
 end
 
 --------------------------------------------------------------------------------

@@ -267,7 +267,11 @@ function State.ApplyActiveAura(state, auraState)
 end
 
 function State.ApplyAuraScanAvailability(state, scanAvailable)
-    if not state or scanAvailable == true then return end
+    -- A readable buff is still confirmed even when another aura made the
+    -- overall scan incomplete. Only unresolved statuses become unknown.
+    if not state or scanAvailable == true or state.hasConsumableBuff == true then
+        return
+    end
 
     state.statusAtlas = State.UNKNOWN_ATLAS
     state.statusTextureDesaturated = true

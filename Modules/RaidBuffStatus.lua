@@ -91,6 +91,7 @@ function Status.CollectAura(data, aura, index, remaining)
     if not data or data.has then return end
     if not Status.AuraMatches(index, aura) then return end
 
+    data.available = true
     data.has = true
     if F.IsSafeNumber(remaining) then
         data.time = remaining
@@ -128,16 +129,10 @@ function Status.ScanUnit(unit, now)
         end
     end)
 
-    if not scanAvailable then
+    if scanAvailable then
         for index = 1, count do
-            statuses[index] = Status.CreateData()
+            statuses[index].available = true
         end
-
-        return statuses
-    end
-
-    for index = 1, count do
-        statuses[index].available = true
     end
 
     return statuses
@@ -165,11 +160,9 @@ function Status.GetUnitStatus(unit, index, now)
         end
     end)
 
-    if not scanAvailable then
-        return Status.CreateData()
+    if scanAvailable then
+        data.available = true
     end
-
-    data.available = true
 
     return data
 end
