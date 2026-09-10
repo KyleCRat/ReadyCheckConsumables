@@ -1,188 +1,243 @@
 # Ready Check Consumables
 
-Ready Check Consumables (RCC) is a World of Warcraft Retail addon for checking
-personal and group consumable readiness. It combines a clickable personal
-Consumables Frame, a permanent Consumables Action Bar, a raid-wide status
-table, coordinated chat reports, and managed consumable macros.
+Ready Check Consumables (RCC) helps you and your group prepare for the next pull
+in World of Warcraft Retail. Keep consumables close at hand, see what needs
+refreshing, check your group's readiness, and maintain consumable macros as
+your inventory changes.
 
-RCC is currently built for Interface `120100`.
+Open settings with `/rcc s` or **Options > AddOns > Ready Check Consumables**.
+Each display and automatic chat reporting has its own **Enabled** checkbox,
+so you can use only the features you want. Settings and item preferences are
+account-wide.
 
-## Personal Consumables Frame
+## Personal Consumables
 
-The Consumables Frame is a clickable icon bar that can open during a ready
-check, when entering an enabled instance type, after a cauldron pickup, or when
-BigWigs or DBM starts a break timer.
+Choose a temporary preparation frame, a permanent Action Bar, or both. Their
+buttons are configured separately, while preferred item choices are shared.
 
-- Tracks food, flasks, augment runes, Vantus runes, raid buffs, temporary weapon
-  enchants, healthstones, combat potions, healing potions, consumable stasis,
-  Inky Black Potion, repair items, and optional Recuperate.
-- Shows the active item or aura, remaining duration, stack count, and warning
-  styling for missing or expiring effects.
-- Shows eating or drinking progress until the Well Fed aura appears.
-- Supports both item-based and spell-based weapon enchants and only shows an
-  enchant button when the corresponding weapon slot is applicable.
-- Left-click uses or casts the selected action. Right-click stores a preferred
-  item where preferences are supported.
-- Flyouts expose alternate available food, flasks, runes, potions, weapon
-  enchants, and repair items.
-- Prefers a ready reusable repair device such as Jeeves, then falls back to a
-  ready consumable repair item such as Auto-Hammer.
-- Uses bag-only item counts; bank contents are not treated as usable inventory.
-- Shows an unknown state with an explanatory tooltip when WoW does not allow an
-  aura to be inspected instead of treating that aura as missing.
-- Hides in combat and avoids changing protected click behavior during combat.
+### Consumables Frame
 
-Each icon can be enabled globally and independently allowed for each automatic
-open reason through the **Buttons by Open Event** settings matrix.
+A temporary, clickable bar brings food, flasks, augment runes, vantus runes,
+weapon enchants, raid buffs, and other essentials together during ready checks.
+Remaining buff durations, item counts, and warnings help you see what needs
+attention. Hover an icon to see details and available alternatives.
 
-## Consumables Action Bar
+On the **Consumables Frame** settings page:
 
-The Consumables Action Bar keeps selected personal consumable actions visible
-instead of opening only for contextual events.
+- **Choose buttons:** Use **Buttons by Open Event**. Each row's **Enabled**
+  checkbox controls that button overall; the event columns choose when it
+  appears.
+- **Choose when it opens:** Ready checks are supported by default. Under
+  **Automatic Open Events**, enable instance entry, cauldron pickups, or
+  BigWigs/DBM break timers. For instance entry, select the instance types you
+  want; delves use **Scenarios**.
+- **Adjust the size:** Change **Scale** for the whole frame or **Icon Width**
+  to make buttons narrower, from 50% to 100%, without stretching their images.
+- **Keep it visible longer:** Enable **Keep Open After Ready Response** and
+  adjust **Ready Check Duration**. Instance-entry opens have a separate
+  auto-hide toggle and delay.
 
-- Provides independent fixed slots for every action available on the temporary
-  Consumables Frame.
-- Remains clickable in combat using actions and flyout choices prepared before
-  combat. Aura durations and public ready or missing states continue to update,
-  while glows are suppressed in combat.
-- Supports independent button width and height, cropped non-square icons,
-  horizontal and vertical gaps, wrapping, text size, duration-text side, and
-  flyout direction.
-- Can independently hide stack counts, duration text, status marks, and
-  profession-quality marks.
-- Uses a fixed 2 px flyout spacing so bar row and column gaps do not separate
-  flyout choices from their primary button.
-- Can be positioned with EllesmereUI Unlock Mode when available, or through
-  Blizzard Edit Mode otherwise. Anchor and coordinate controls are also
-  available on its settings page.
+### Consumables Action Bar
 
-The shared **Enabled** / **Action Bar Only** setting disables only the temporary
-Consumables Frame. It does not disable the Raid Status Frame, chat reports,
-managed macros, or the permanent Action Bar.
+Keep selected consumables on a permanent bar that stays usable in combat,
+including its flyout choices. Buttons keep fixed positions, making it suitable
+for everyday use as well as preparation before a pull.
 
-## Raid Status Frame
+On the **Consumables Action Bar** settings page:
 
-The Raid Status Frame opens with a ready check and can also show feast and
-cauldron tracking outside ready checks.
+- **Turn it on:** Check **Enabled**; the permanent bar is off by default.
+  Choose individual icons under **Buttons**.
+- **Arrange it:** Set **Icons Per Row**, button width and height, and horizontal
+  and vertical gaps. Non-square icons are cropped rather than stretched.
+- **Choose the information shown:** Adjust text size, duration-text side, and
+  flyout direction. Under **Button Information**, toggle counts, durations,
+  status marks, and profession-quality marks.
+- **Move it:** Use EllesmereUI Unlock Mode when available, or Blizzard Edit
+  Mode otherwise. The settings page also offers anchor and X/Y position controls.
 
-- Shows one row per active party or raid member and excludes bench groups that
-  are outside the active instance size.
-- Displays ready-check response, player state, food, flask, temporary weapon
-  enchant, augment rune, Vantus rune, raid buffs, durability, and active
-  cauldron pickups.
-- Shows actual aura or item icons and remaining durations where that information
-  is available.
-- Distinguishes a compatible RCC response with unavailable information from no
-  compatible response.
-- Treats unknown and no-response data as neutral. Only confirmed failures make
-  a column header show a red X; otherwise the header becomes ready once all
-  known states are good.
-- Treats an enchantable weapon without an enchant, and having no applicable
-  weapon equipped, as confirmed weapon-enchant failures.
-- Reads Method Raid Tools durability broadcasts.
-- Tracks Midnight flask and potion cauldron drops and pickup counts.
-- Detects known feast placement spells and can show the food column when a feast
-  is placed.
-- Combines active feast and cauldron columns with the normal ready-check layout.
-- Includes a countdown, finished summary, scale control, and saved position.
-- Hides and resets feast or cauldron tracking when combat begins.
+Both personal displays also offer optional Inky Black Potion, Repair, and
+Recuperate buttons, which are off by default.
 
-## Chat Reports
+## Group Readiness
 
-RCC can automatically report missing consumables after a ready check starts.
+The Raid Status Frame and Chat Reports work independently of the personal
+displays and of each other.
 
-- Reports missing or expiring food, flasks, temporary weapon enchants, and
-  outdated augment runes, including players without an enchantable weapon.
-- Reports low durability, missing raid buffs when the providing class is
-  present, and offline players.
-- Suppresses aura-derived report sections when WoW does not allow the active
-  roster to be inspected safely.
-- Elects one RCC user to report and defers to Method Raid Tools when MRT is
-  already reporting.
-- Can be limited by raid role and by raid or dungeon difficulty.
-- Uses local output instead of `/say` when no group chat channel is available.
+### Raid Status Frame
+
+See your party or raid's food, flasks, runes, temporary weapon enchants, raid
+buffs, and durability alongside their ready-check responses in one table.
+Buff icons and remaining durations help identify what needs refreshing.
+Feast and cauldron tracking also shows available provisions and members'
+flask or potion pickup counts.
+
+On the **Raid Frame** settings page:
+
+- **Display:** Turn the frame on or off with **Enabled**, and adjust **Scale**.
+  You can also drag the frame to move it and use its bottom scale control.
+- **Ready-check timing:** Use **Keep Open After Finished** and **Keep Open
+  Duration** to leave the results visible briefly.
+- **Feasts and cauldrons:** Enable **Track Feasts and Cauldrons**. Turn on
+  **Show Outside Ready Checks** if you also want those columns to appear when
+  provisions are detected between ready checks.
+
+### Chat Reports
+
+Automatically share missing or expiring consumables, missing raid buffs,
+low durability, and offline players in group chat during ready checks.
+RCC coordinates with other RCC users and Method Raid Tools to avoid duplicate
+automatic reports.
+
+On the **Chat Report** settings page:
+
+- **Enabled** turns your automatic reporting on or off.
+- **Who Can Report** selects raid leader, leader/assist, or any raid member.
+  This role restriction applies only in raids.
+- **Raid Instances** and **Dungeon Instances** select the difficulties where
+  automatic reports are allowed.
+
+By default, automatic reporting is enabled for Heroic and Mythic raids and
+limited to raid leaders or assistants. Dungeon reporting is off by default.
 
 ## Managed Macros
 
-The Macros settings page can create shared or character-specific macros that RCC
-keeps synchronized with current bags, equipment, known spells, zone, and item
-preferences.
+Create macros for food, flasks, augment runes, vantus runes, potions,
+healthstones, raid buffs, and weapon enchants. RCC keeps them updated as your
+bags, equipment, known spells, zone, and preferred items change.
 
-Managed macro types include food, flask, augment rune, Vantus rune, combat
-potion, healing potion, healthstone, raid buff, main-hand enchant, and off-hand
-enchant.
+To create one:
 
-RCC-owned macros use `#RCC:<key>` markers. Existing custom macros can use an
-inline `#RCCI:<key>` marker for combat potions, healing potions, or healthstones;
-RCC rewrites only the marked line and preserves the rest of the macro.
+1. Open the **Macros** settings page.
+2. Find the consumable you want and click **Shared** for an account-wide macro,
+   or **Character** for a character-specific macro.
+3. Place the created macro on your normal WoW action bar.
 
-Common aliases include:
+You can also include automatically updated potion or healthstone lines in your
+own custom macros. See [custom macro markers](#custom-macro-markers) below for
+the syntax.
 
-- `aug` for `augment`
-- `combatpotion` or `cp` for `combatpot`
-- `healingpotion` or `hp` for `healpot`
-- `hs` for `healthstone`
-- `mhen` for `mhenchant`
-- `ohen` for `ohenchant`
+## Preview and Open Frames
 
-Optional macro conditionals can follow an inline marker, such as
-`#RCCI:cp [combat]`.
+- `/rcc c` opens the enabled Consumables Frame outside combat.
+- `/rcc t` previews the temporary personal and raid frames with sample data;
+  it does not start a real group ready check.
+- `/rcc h` closes temporary RCC frames and previews without hiding the
+  permanent Action Bar.
 
-## Settings
+---
 
-Open settings with `/rcc s` or through **Options > AddOns > Ready Check
-Consumables**.
+## Advanced Reference
 
-Settings include:
+### Buttons, item choices, and combat
 
-- Consumables Frame enablement, scale, icon width, and ready-check display
-  duration.
-- Automatic opening on ready checks, instance entry, cauldron pickup, or break
-  timers.
-- Instance-type controls for dungeons, raids, scenarios, battlegrounds, and
-  arenas. Delves use the Scenarios setting because WoW reports delve instances
-  as `scenario`.
-- Automatic hiding after an instance-entry open.
-- Per-icon visibility and per-open-event visibility.
-- Permanent Action Bar enablement, button slots, geometry, visual information,
-  flyouts, and position.
-- Unlimited augment rune preference.
-- Feast and cauldron tracking behavior.
-- Chat-report permission and difficulty filters.
-- Managed macro creation.
+Left-click usable buttons to consume an item or cast a spell. Where supported,
+right-click an item outside combat to save it as your preferred choice.
+Preferences are shared by the personal displays and managed macros. Item counts
+use your bags, not your bank.
 
-Settings, preferred consumable choices, permanent-bar positions, raid-frame
-scale, and raid-frame position are stored account-wide in
-`ReadyCheckConsumablesDB`.
+Some buttons have different purposes on the two displays:
 
-## Slash Commands
+| Item type | Consumables Frame | Consumables Action Bar |
+|---|---|---|
+| Food, flasks, runes, and weapon enchants | Use or apply the selected item/spell | Use or apply the selected item/spell |
+| Combat and healing potions | Right-click to choose a preferred item | Left-click to use; right-click to prefer |
+| Healthstones | Display available supply | Left-click to use |
+
+The temporary Consumables Frame and Raid Status Frame hide in combat. The
+permanent bar uses actions and flyout choices prepared beforehand, with item
+choices refreshing after combat. Readable buff durations and status marks
+continue updating; glows stay hidden. Managed macro updates also wait until
+combat ends.
+
+Settings requested in combat open afterward. Manual Consumables Frame and
+Feast/Cauldron Frame opens are blocked during combat, not queued.
+
+### Optional utility buttons
+
+- **Repair** prefers a ready reusable device such as Jeeves before a consumable
+  such as Auto-Hammer. It shows cooldowns rather than ready/missing marks.
+- **Inky Black Potion** shows the item or active buff without ready/missing marks.
+- **Consumable Stasis** provides access to items that pause consumable buff
+  durations during breaks. Its temporary-frame button appears for break timers
+  by default.
+
+### Reading group status
+
+The Raid Status Frame covers active party or raid members, excluding bench
+groups outside the instance size.
+
+- **Column headers:** Confirmed failures show a red X. Unknown and no-response
+  states are neutral, so they do not block a green check for known-good members.
+- **Food:** Eating is still in progress until a sufficiently long Well Fed
+  buff appears.
+- **Weapons:** A missing temporary weapon enchant or having no enchantable
+  main-hand weapon equipped is a failure.
+- **Unavailable information:** Tooltips distinguish a responding RCC user whose
+  information could not be checked from a player with no compatible response.
+
+Readable buffs still show when another buff is restricted; buffs that cannot
+be confirmed remain unknown. When WoW prevents a reliable check of the active
+group's buffs, RCC omits the affected buff-based chat-report sections instead
+of reporting false missing buffs. RCC also reads Method Raid Tools durability
+data.
+
+Closing the ready-check display also closes its feast/cauldron display.
+`/rcc ca` reopens provision tracking while it remains active. Combat hides the
+frame and resets feast/cauldron tracking.
+
+### Custom macro markers
+
+RCC-owned macros use `#RCC:<key>` markers. Inline `#RCCI:<key>` markers update
+one line inside your own macro without changing the rest.
+
+| Macro type | Key and aliases | Inline marker |
+|---|---|---|
+| Food | `food` | Not supported |
+| Flask | `flask` | Not supported |
+| Augment rune | `augment`, `aug` | Not supported |
+| Vantus rune | `vantus` | Not supported |
+| Combat potion | `combatpot`, `combatpotion`, `cp` | `#RCCI:cp` |
+| Healing potion | `healpot`, `healingpotion`, `hp` | `#RCCI:hp` |
+| Healthstone | `healthstone`, `hs` | `#RCCI:hs` |
+| Raid buff | `raidbuff` | Not supported |
+| Main-hand enchant | `mhenchant`, `mhen` | Not supported |
+| Off-hand enchant | `ohenchant`, `ohen` | Not supported |
+
+Put an inline marker on its own line. Optional macro conditions can follow it,
+for example:
+
+```text
+#RCCI:cp [combat]
+```
+
+The complete Healing Potion macro casts Recuperate out of combat and uses a
+potion in combat. Its inline marker selects only the healing potion.
+
+### Command reference
+
+Use `/rcc` for in-game help.
+
+#### Everyday commands
 
 | Short | Long | Description |
 |---|---|---|
-| `/rcc t` | `/rcc test` | Show a timed combined frame test |
-| `/rcc tp` | `/rcc test permanent` | Show a permanent combined frame test |
-| `/rcc rt` | `/rcc ready check test` | Show a timed ready-check-only test |
-| `/rcc rtp` | `/rcc ready check test permanent` | Show a permanent ready-check-only test |
-| `/rcc ct` | `/rcc cauldron test` | Show the cauldron-only test |
-| `/rcc ca` | `/rcc cauldron` | Open the active Feast/Cauldron Frame |
-| `/rcc h` | `/rcc hide` | Hide all temporary RCC frames |
-| `/rcc r` | `/rcc report` | Print the consumable report locally |
-| `/rcc rc` | `/rcc report chat` | Send the consumable report to group chat |
+| `/rcc s` | `/rcc settings` | Open settings |
 | `/rcc c` | `/rcc consume` | Open the Consumables Frame |
-| `/rcc s` | `/rcc settings` | Open the settings panel |
+| `/rcc h` | `/rcc hide` | Hide temporary frames; leave the Action Bar visible |
+| `/rcc ca` | `/rcc cauldron` | Reopen active feast/cauldron tracking |
+| `/rcc r` | `/rcc report` | Print a report locally |
+| `/rcc rc` | `/rcc report chat` | Send a report to group chat |
 
-Opening settings during combat is deferred until combat ends. The Consumables
-Frame cannot be opened manually during combat.
+With no group channel available, reports stay local.
 
-## Compatibility
+#### Previews
 
-- Integrates with BigWigs and DBM break timers.
-- Integrates the permanent Action Bar with EllesmereUI Unlock Mode when present
-  and otherwise embeds LibEditMode for Blizzard Edit Mode positioning.
-- Reads Method Raid Tools durability data and avoids duplicate MRT chat reports.
-- Exchanges lightweight presence, consumable, durability, feast, and cauldron
-  data with compatible RCC clients.
-- Uses public aura data only. Readable buffs remain visible when another aura
-  is restricted; buffs that cannot be confirmed remain unknown rather than
-  being reported as missing.
-- Keeps protected UI work out of combat.
+These commands use sample data, not a real group ready check.
+
+| Short | Long | Description |
+|---|---|---|
+| `/rcc t` | `/rcc test` | Timed combined frame preview |
+| `/rcc tp` | `/rcc test permanent` | Combined preview that stays open |
+| `/rcc rt` | `/rcc ready check test` | Timed ready-check-only preview |
+| `/rcc rtp` | `/rcc ready check test permanent` | Ready-check-only preview that stays open |
+| `/rcc ct` | `/rcc cauldron test` | Cauldron-only preview |

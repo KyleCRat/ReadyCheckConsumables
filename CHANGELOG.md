@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Reorganized the README around personal consumables, group readiness, and
+  macros, with clearer consumable lists, common settings beside each feature,
+  and a separate advanced reference for behavior, macro syntax, and commands.
+- Removed the Action Bar Only checkbox. The Consumables Frame and Action Bar
+  now use only their independent Enabled settings, and resetting the Action
+  Bar no longer changes Consumables Frame enablement.
+
 ## [12.1.0-25] - 2026-09-09
 
 ### Fixed
