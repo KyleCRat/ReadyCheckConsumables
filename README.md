@@ -182,5 +182,7 @@ Frame cannot be opened manually during combat.
 - Reads Method Raid Tools durability data and avoids duplicate MRT chat reports.
 - Exchanges lightweight presence, consumable, durability, feast, and cauldron
   data with compatible RCC clients.
-- Uses public aura data only and presents restricted information as unknown.
+- Uses public aura data only. Readable buffs remain visible when another aura
+  is restricted; buffs that cannot be confirmed remain unknown rather than
+  being reported as missing.
 - Keeps protected UI work out of combat.

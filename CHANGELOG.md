@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [12.1.0-25] - 2026-09-09
 
 ### Fixed
 - Preserved readable consumable and raid-buff information when another aura
@@ -66,24 +66,3 @@
 - Corrected reversed quality ordering for Fleeting Lightfused Mana Potion,
   Light's Potential, Potion of Zealotry, and all four Midnight fleeting flask
   families.
-
-## [12.1.0-23] - 2026-08-25
-
-### Added
-- Added Vantus Rune detection and item selection for The Venomous Abyss.
-- Added `/rcc ca` to reopen the Feast/Cauldron Frame while active provision
-  tracking is available.
-
-### Changed
-- Made the Raid Status Frame close its visible feast and cauldron provision
-  mode when a ready-check display finishes.
-- Made the "Prefer Unlimited Augment Runes" setting immediately refresh managed
-  augment rune macros.
-- Coalesced closely spaced Consumables Frame updates to avoid redundant
-  refreshes.
-
-### Fixed
-- Included players without an enchantable weapon in weapon-enchant chat
-  reports.
-- Restricted RCC and Method Raid Tools addon messages to active group members
-  on trusted group channels.

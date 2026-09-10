@@ -2,7 +2,7 @@
 ## Title: Ready Check Consumables
 ## Notes: Personal and group consumable readiness, action bars, reports, and macros
 ## Author: Yvairel
-## Version: 12.1.0-24
+## Version: 12.1.0-25
 ## Category: Raid
 ## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
 ## OptionalDeps: BigWigs, DBM-Core, EllesmereUI
