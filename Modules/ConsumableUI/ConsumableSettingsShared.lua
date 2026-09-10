@@ -51,27 +51,3 @@ function Shared.SyncConsumablesFrameEnabled(frame)
         RCC.GetSetting("consumables_enabled") == true
     )
 end
-
-function Shared.CreateActionBarOnlyCheckbox(frame, flow, placement)
-    local checkbox = flow:AddControl("checkbox", {
-        label = "Action Bar Only",
-        tooltip = "Disable the temporary Consumables Frame and use only "
-            .. "the permanent Consumables Action Bar. This does not affect "
-            .. "the Raid Frame, Chat Report, or managed macros.",
-        onChanged = function(checked)
-            setConsumablesFrameEnabled(checked ~= true)
-        end,
-    }, placement)
-
-    frame.actionBarOnlyControl = checkbox
-
-    return checkbox
-end
-
-function Shared.SyncActionBarOnly(frame)
-    if not frame.actionBarOnlyControl then return end
-
-    frame.actionBarOnlyControl:SetValue(
-        RCC.GetSetting("consumables_enabled") ~= true
-    )
-end

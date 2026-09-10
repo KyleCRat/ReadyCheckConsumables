@@ -14,7 +14,6 @@ local FEATURE_DISABLED_TOOLTIP =
     "The Consumables Action Bar is disabled. Enable it to edit."
 
 local ACTION_BAR_SETTING_KEYS = {
-    "consumables_enabled",
     "consumablesActionBar_enabled",
     "consumablesActionBar_iconsPerRow",
     "consumablesActionBar_buttonWidth",
@@ -175,10 +174,6 @@ end
 
 local function createGeneralSettings(frame, layout)
     local root = layout:GetRootFlow()
-
-    Shared.CreateActionBarOnlyCheckbox(frame, root, {
-        marginBottom = 12,
-    })
 
     local columns = root:BeginColumns()
     local featureFlow = columns.left
@@ -450,8 +445,6 @@ function Page.CreateFrame(measurementFrame)
         local enabled = RCC.GetSetting(
             "consumablesActionBar_enabled"
         ) == true
-
-        Shared.SyncActionBarOnly(self)
 
         for key, control in pairs(self.settingControls) do
             control:SetValue(RCC.GetSetting(key))

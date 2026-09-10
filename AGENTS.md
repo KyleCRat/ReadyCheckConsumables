@@ -96,6 +96,8 @@ data.
 ## SavedVariables and Settings
 
 - `ReadyCheckConsumablesDB` is account-wide. There are no profiles.
+- Each module owns its own Enabled setting. Do not add combined enable/disable
+  modes or let one module's settings reset change another module's enablement.
 - `Settings.lua` owns defaults and nil-only default backfilling. Preserve stored
   `false` values and validate or migrate malformed structured data explicitly.
 - Prefer `RCC.GetSetting` and `RCC.SetSettingValue` over direct access for normal
