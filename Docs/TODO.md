@@ -10,6 +10,42 @@
 ## ConsumableActionBar
 - Add icon styling controls (Should have same options as EUI allows for action bars at minimum) (Possibly add to ALL icons so they don't inherit base / eui / dominos look? maybe allow changing between these?)
 
+## Aura Lookup Deep Dive (After Refactors 1-3)
+
+- [ ] After flyout updates, dependency-aware refreshes, and disabled-category
+  filtering are implemented and individually confirmed in game, review aura
+  acquisition across the addon before deciding on a broader refactor.
+  - Compare targeted `C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)` queries
+    with shared full scans for each consumer, starting with raid-buff checks.
+  - Preserve primary, scroll, and class-specific equivalent aura IDs.
+  - Distinguish confirmed absence from an invisible/unavailable unit or a
+    secret aura; retain normalized public fields and Unknown semantics.
+  - Review unit/event refresh scope, expiration handling, and categories that
+    need generic icon matching or several aura types rather than known IDs.
+  - Measure representative solo, party, raid, and combat cases before choosing
+    targeted queries, shared scans, or caching for each path.
+
+## Performance Follow-ups (After Major Refactors)
+
+Review these after the flyout update cleanup, dependency-aware consumable
+refreshes, and disabled-category filtering. The separate aura lookup deep dive
+above will determine the scope of any later aura refactor.
+Implement and confirm each major step in game before starting the next. Check
+whether those changes already resolve a follow-up before adding more caching.
+
+- [ ] Remove redundant state normalization/copying between the controller,
+  flyout preparation, and button renderer. Establish the normalization boundary
+  and preserve isolation between shared snapshots and combat-prepared states.
+- [ ] Avoid reapplying unchanged icon, text, color, and visibility values in
+  the shared button renderer. Preserve hover transitions and visual-option
+  changes, and build on the existing cooldown and quality-icon caches.
+- [ ] Remove the redundant weapon-enchant candidate sort: the generic map
+  collector sorts by item ID before the enchant selector sorts by expansion,
+  quality, and item ID. Preserve final priority and flyout ordering.
+- [ ] Avoid repair-candidate/cooldown work when no active consumer needs Repair.
+  Revisit the `BAG_UPDATE_COOLDOWN` signature check after disabled-category
+  filtering; retain timely cooldown completion and ready-item selection.
+
 ## 12.1.0 / Interface 120100 Upgrade
 
 - [ ] In the next LibModernSettings release, replace the slider tooltip hooks
