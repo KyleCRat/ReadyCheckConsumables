@@ -13,6 +13,8 @@
 - The Action Bar now hides Off-hand Enchant when the off-hand slot cannot be
   enchanted and closes the gap. It returns when an enchantable off-hand is
   equipped; combat-time equipment changes update the layout after combat.
+- Removed persistent reminder glows from the Action Bar to reduce idle CPU
+  usage. Hover glows and temporary Consumables Frame reminders are unchanged.
 
 ## [12.1.0-25] - 2026-09-09
 

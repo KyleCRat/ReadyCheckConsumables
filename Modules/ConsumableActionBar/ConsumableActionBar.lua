@@ -141,6 +141,8 @@ end
 
 function ActionBar.GetVisualOptions()
     return {
+        -- The permanent bar uses hover feedback, not persistent reminders.
+        showReminderGlow = false,
         showStackCount = RCC.GetSetting(
             "consumablesActionBar_showStackCount"
         ) == true,

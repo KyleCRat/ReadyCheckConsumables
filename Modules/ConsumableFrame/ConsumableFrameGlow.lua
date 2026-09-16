@@ -126,7 +126,7 @@ local function resolveGlow(button)
         else
             startButtonGlow(button, GLOW_UNAVAILABLE_COLOR)
         end
-    elseif cache.glowEnabled then
+    elseif cache.glowEnabled and not button.hideReminderGlow then
         startButtonGlow(button, GLOW_COLOR)
     else
         stopButtonGlow(button)

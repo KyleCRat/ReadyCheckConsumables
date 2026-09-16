@@ -169,6 +169,7 @@ function View.ApplyVisualOptions(button, options, isFlyout)
     button.hideStatusTexture = isFlyout == true
         or options.showStatus == false
     button.hideQualityIcon = options.showProfessionQuality == false
+    button.hideReminderGlow = options.showReminderGlow == false
 
     if button.consumableState then
         View.ApplyVisual(button, button.consumableState)

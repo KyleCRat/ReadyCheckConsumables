@@ -24,6 +24,7 @@ local DEFAULT_VISUAL_OPTIONS = {
     showDuration = true,
     showStatus = true,
     showProfessionQuality = true,
+    showReminderGlow = true,
 }
 
 local function copyOptions(source, defaults)
