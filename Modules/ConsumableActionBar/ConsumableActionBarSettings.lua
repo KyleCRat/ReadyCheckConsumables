@@ -394,9 +394,10 @@ local function createButtonSettings(frame, layout)
     flow:AddSection("Buttons")
     flow:AddText({
         fontObject = GameFontHighlightSmall,
-        text = "Enabled buttons keep fixed slots. A button that is not "
-            .. "currently applicable or available remains visible in its "
-            .. "disabled state.",
+        text = "Enabled buttons remain visible when unavailable. Off-hand "
+            .. "Enchant hides when your off-hand slot cannot be enchanted, "
+            .. "and the bar closes the gap. Layout changes wait until "
+            .. "combat ends.",
     }, {
         marginBottom = 8,
     })

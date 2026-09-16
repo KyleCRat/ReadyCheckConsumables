@@ -76,6 +76,7 @@ local DEFINITIONS = {
         temporaryClickable = true,
         tooltipAction = "apply to off hand",
         hiddenByDefault = true,
+        actionBarHideWhenInapplicable = true,
     },
     {
         key = "augment",

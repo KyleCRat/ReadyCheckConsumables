@@ -5,6 +5,7 @@ RCC.ConsumableActionBar = RCC.ConsumableActionBar or {}
 local ActionBar = RCC.ConsumableActionBar
 local Binder = RCC.ConsumableActionBinder
 local Catalog = RCC.ConsumableCatalog
+local State = RCC.ConsumableState
 local StateController = RCC.ConsumableStateController
 local Surface = RCC.ConsumableSurface
 local View = RCC.ConsumableButtonView
@@ -155,6 +156,24 @@ function ActionBar.GetVisualOptions()
     }
 end
 
+-- Enabled buttons retain their slots when supplies are unavailable. The
+-- off-hand enchant definition opts out when the slot cannot be enchanted;
+-- use its resolved applicability, not item availability or enchant status.
+local function shouldShowButton(definition)
+    if RCC.GetSetting(definition.actionBarSettingKey) ~= true then
+        return false
+    end
+
+    if definition.actionBarHideWhenInapplicable then
+        local snapshot = frame.surface.latestSnapshot
+        local state = snapshot and snapshot.states[definition.key]
+
+        return State.IsApplicable(state)
+    end
+
+    return true
+end
+
 function ActionBar.GetEnabledCount()
     local definitions = Catalog.GetDefinitions()
     local count = 0
@@ -173,8 +192,17 @@ function ActionBar.IsEnabled()
 end
 
 function ActionBar.ShouldShow()
-    return ActionBar.IsEnabled()
-        and ActionBar.GetEnabledCount() > 0
+    if not ActionBar.IsEnabled() then return false end
+
+    local definitions = Catalog.GetDefinitions()
+
+    for i = 1, #definitions do
+        if shouldShowButton(definitions[i]) then
+            return true
+        end
+    end
+
+    return false
 end
 
 local function notifyMovementProviderOfResize()
@@ -228,7 +256,7 @@ function ActionBar.ApplyLayout()
 
         button:ClearAllPoints()
 
-        if RCC.GetSetting(definition.actionBarSettingKey) == true then
+        if shouldShowButton(definition) then
             local column = visibleCount % iconsPerRow
             local row = math.floor(visibleCount / iconsPerRow)
 
@@ -270,17 +298,17 @@ function ActionBar.ApplyVisibility()
 
     pending.visibility = false
 
+    if not frame:IsShown()
+        and ActionBar.IsEnabled()
+        and ActionBar.GetEnabledCount() > 0
+    then
+        -- Refresh applicability before deciding whether an empty bar can
+        -- reopen, and prepare its secure actions before making it visible.
+        StateController.RefreshNow(true)
+    end
+
     if ActionBar.ShouldShow() then
-        local wasShown = frame:IsShown()
-
         frame:Show()
-
-        if not wasShown then
-            -- Populate secure actions synchronously while combat is still
-            -- unlocked. A zero-delay timer leaves a small window where the bar
-            -- is visible but its buttons have not yet been prepared.
-            StateController.RefreshNow(true)
-        end
     else
         Surface.HideFlyouts(frame.surface)
         frame:Hide()
@@ -299,13 +327,7 @@ function ActionBar.ApplyAll()
     end
 
     ActionBar.ApplyLayout()
-
-    local Position = RCC.ConsumableActionBarPosition
-
-    if Position then
-        Position.ApplyCurrent()
-    end
-
+    RCC.ConsumableActionBarPosition.ApplyCurrent()
     ActionBar.ApplyVisibility()
 
     return true
@@ -345,11 +367,7 @@ function ActionBar.ApplyPending()
         ActionBar.ApplyVisualOptions()
     end
 
-    local Position = RCC.ConsumableActionBarPosition
-
-    if Position then
-        Position.ApplyPending()
-    end
+    RCC.ConsumableActionBarPosition.ApplyPending()
 
     if pending.visibility then
         ActionBar.ApplyVisibility()
@@ -362,10 +380,28 @@ end
 
 StateController.RegisterConsumer("consumablesActionBar", {
     IsActive = function()
-        return frame:IsShown()
+        -- Keep receiving equipment changes when the only enabled button is
+        -- an inapplicable off-hand enchant and the entire bar is hidden.
+        return ActionBar.IsEnabled()
+            and ActionBar.GetEnabledCount() > 0
     end,
     ApplySnapshot = function(_, snapshot)
         Surface.ApplySnapshot(frame.surface, snapshot)
+
+        local definitions = Catalog.GetDefinitions()
+
+        for i = 1, #definitions do
+            local definition = definitions[i]
+            local button = frame.surface.buttons[definition.key]
+
+            if button:IsShown() ~= shouldShowButton(definition) then
+                -- Reflow only when visibility changes. RequestLayout keeps
+                -- protected layout changes deferred until combat ends.
+                ActionBar.RequestLayout()
+
+                break
+            end
+        end
     end,
 })
 

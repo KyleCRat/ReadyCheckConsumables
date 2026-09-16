@@ -40,7 +40,7 @@ On the **Consumables Frame** settings page:
 ### Consumables Action Bar
 
 Keep selected consumables on a permanent bar that stays usable in combat,
-including its flyout choices. Buttons keep fixed positions, making it suitable
+including its flyout choices. Buttons keep a consistent order, making it suitable
 for everyday use as well as preparation before a pull.
 
 On the **Consumables Action Bar** settings page:
@@ -142,6 +142,10 @@ Some buttons have different purposes on the two displays:
 | Food, flasks, runes, and weapon enchants | Use or apply the selected item/spell | Use or apply the selected item/spell |
 | Combat and healing potions | Right-click to choose a preferred item | Left-click to use; right-click to prefer |
 | Healthstones | Display available supply | Left-click to use |
+
+Enabled Action Bar buttons normally remain visible even when unavailable.
+The off-hand enchant button hides when that slot cannot be enchanted, and the
+bar closes the gap. Equipment changes during combat update the layout afterward.
 
 The temporary Consumables Frame and Raid Status Frame hide in combat. The
 permanent bar uses actions and flyout choices prepared beforehand, with item
