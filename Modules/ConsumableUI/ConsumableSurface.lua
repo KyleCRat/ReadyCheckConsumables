@@ -50,7 +50,6 @@ function Surface.Create(parent, options)
         frame = parent,
         capabilities = options.capabilities
             or Binder.Capabilities.TEMPORARY,
-        combatFlyouts = options.combatFlyouts == true,
         preparedStates = {},
         secureDirty = false,
         geometry = copyOptions(options.geometry, DEFAULT_GEOMETRY),
@@ -62,10 +61,9 @@ function Surface.Create(parent, options)
 
     surface.flyoutManager = Flyout.CreateManager(
         parent,
-        surface.combatFlyouts
+        surface.capabilities.allowCombat
     )
     surface.buttons = View.CreateSet(parent, {
-        combatFlyouts = surface.combatFlyouts,
         capabilities = surface.capabilities,
         isClickable = options.isClickable,
         clickable = options.clickable,
@@ -93,7 +91,9 @@ function Surface.Create(parent, options)
         end
 
         View.ApplyGeometry(button, surface.geometry)
+        Flyout.ApplyGeometry(button, surface.geometry)
         View.ApplyVisualOptions(button, surface.visualOptions, false)
+        Flyout.ApplyVisualOptions(button, surface.visualOptions)
         previous = button
     end
 
@@ -165,12 +165,7 @@ function Surface.ApplySnapshot(surface, snapshot)
 
         if not inCombat then
             Binder.Bind(button, state.action, surface.capabilities)
-            Flyout.SetChoices(
-                button,
-                state.flyoutChoices,
-                surface.geometry,
-                surface.visualOptions
-            )
+            Flyout.SetChoices(button, state.flyoutChoices)
             surface.preparedStates[key] = state
         end
     end

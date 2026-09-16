@@ -76,8 +76,10 @@ data.
 
 - Secure action buttons and protected attributes are created before combat and
   only mutated out of combat. The permanent Action Bar keeps its prepared
-  actions and flyout choices through combat while public aura/status visuals
-  continue to update and glows remain hidden.
+  primary actions through combat while public aura/status visuals continue to
+  update and glows remain hidden. Flyouts are out-of-combat preparation UI:
+  close any open flyout securely when combat starts and do not reopen it during
+  combat. Preferred items must be selected before combat.
 - The temporary Consumables Frame and Raid Status Frame hide when combat starts.
   Do not queue combat-time frame opens unless the product behavior explicitly
   calls for it. The permanent Action Bar is intentionally combat-usable.
@@ -207,10 +209,12 @@ data.
   battleground entry independently.
 - When changing communication, test current-to-current and current-to-previous-
   release clients.
-- When changing the permanent Action Bar, test prepared primary and flyout
-  actions before and during combat, public aura/status updates during combat,
-  non-square icon cropping, every flyout direction, multi-row hover ownership,
-  EllesmereUI Unlock Mode, and the LibEditMode fallback.
+- When changing the permanent Action Bar, test primary actions before and
+  during combat, out-of-combat flyout use and preference selection, secure
+  closure of an open flyout on combat entry, blocked combat flyout hover, and
+  normal flyout use after combat. Also check public aura/status updates during
+  combat, non-square icon cropping, every flyout direction, multi-row hover
+  ownership, EllesmereUI Unlock Mode, and the LibEditMode fallback.
 
 ## Patch and Season Updates
 

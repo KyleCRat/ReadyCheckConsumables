@@ -15,6 +15,12 @@
   equipped; combat-time equipment changes update the layout after combat.
 - Removed persistent reminder glows from the Action Bar to reduce idle CPU
   usage. Hover glows and temporary Consumables Frame reminders are unchanged.
+- Separated flyout configuration from choice updates, avoiding duplicate
+  rendering and unchanged layout work. Deferred the broader aura-lookup review
+  until the first three performance refactors are confirmed in game.
+- Action Bar flyouts now close when combat starts and remain disabled until
+  combat ends. Choose preferred items before combat; primary buttons remain
+  usable with their preselected items and spells during combat.
 
 ## [12.1.0-25] - 2026-09-09
 

@@ -432,8 +432,8 @@ function Page.CreateFrame(measurementFrame)
         "Consumables Action Bar",
         "Keep selected consumable actions visible at all times. Position the "
             .. "bar here, with EllesmereUI Unlock Mode when available, or "
-            .. "with Blizzard Edit Mode otherwise. Prepared flyout choices "
-            .. "remain usable in combat."
+            .. "with Blizzard Edit Mode otherwise. Choose preferred items "
+            .. "before combat; only the primary buttons remain usable in combat."
     )
 
     createGeneralSettings(frame, layout)

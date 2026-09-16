@@ -12,36 +12,11 @@ local View = RCC.ConsumableButtonView
 local FLYOUT_HIDE_DELAY = 0.1
 local FLYOUT_SPACING = 2
 
-local SECURE_FLYOUT_SHOW = [[
-    local manager = self:GetFrameRef("rccFlyoutManager")
-    local active = manager
-        and manager:GetAttribute("rcc-flyout-active")
-
-    if self:GetAttribute("rcc-flyout-enabled") and not active then
-        local flyout = self:GetFrameRef("rccFlyout")
-
-        if flyout then
-            if manager then
-                manager:SetAttribute("rcc-flyout-active", true)
-            end
-
-            self:SetAttribute("rcc-flyout-open", true)
-            flyout:Show()
-        end
-    end
-]]
-
-local SECURE_FLYOUT_HIDE = [[
-    local flyout = self:GetFrameRef("rccFlyout")
-
-    if self:GetAttribute("rcc-flyout-open") then
-        local manager = self:GetFrameRef("rccFlyoutManager")
-
-        self:SetAttribute("rcc-flyout-open", nil)
-
-        if manager then
-            manager:SetAttribute("rcc-flyout-active", nil)
-        end
+-- Flyouts are preparation UI, never combat controls. Only this secure close
+-- runs in combat; primary buttons retain their preselected secure actions.
+local SECURE_FLYOUT_COMBAT = [[
+    if newstate == "combat" then
+        local flyout = self:GetFrameRef("rccActiveFlyout")
 
         if flyout then
             flyout:Hide()
@@ -69,19 +44,36 @@ local function isClaimedByAnother(owner)
     local manager = owner and owner.consumableFlyoutManager
 
     return manager
-        and manager:GetAttribute("rcc-flyout-active") == true
-        and owner:GetAttribute("rcc-flyout-open") ~= true
+        and manager.activeOwner
+        and manager.activeOwner ~= owner
 end
 
-function Flyout.CreateManager(parent, enabled)
-    if not enabled then return end
+local function releaseOwner(owner)
+    owner.flyoutHovered = false
 
-    return CreateFrame(
+    local manager = owner.consumableFlyoutManager
+
+    if manager and manager.activeOwner == owner then
+        manager.activeOwner = nil
+    end
+end
+
+-- Temporary surfaces already hide in combat. A combat-usable surface needs
+-- shared hover ownership and a secure close, never a secure hover-open path.
+function Flyout.CreateManager(parent, combatUsable)
+    if not combatUsable then return end
+
+    local manager = CreateFrame(
         "Frame",
         nil,
         parent,
-        "SecureHandlerBaseTemplate"
+        "SecureHandlerStateTemplate"
     )
+
+    manager:SetAttribute("_onstate-combat", SECURE_FLYOUT_COMBAT)
+    RegisterStateDriver(manager, "combat", "[combat] combat; nocombat")
+
+    return manager
 end
 
 function Flyout.Hide(button)
@@ -91,21 +83,8 @@ function Flyout.Hide(button)
         return false
     end
 
-    local ownsFlyout = owner:GetAttribute("rcc-flyout-open") == true
-
-    owner.flyoutOpen = false
     owner.flyout:Hide()
-
-    if ownsFlyout then
-        owner:SetAttribute("rcc-flyout-open", nil)
-
-        if owner.consumableFlyoutManager then
-            owner.consumableFlyoutManager:SetAttribute(
-                "rcc-flyout-active",
-                nil
-            )
-        end
-    end
+    releaseOwner(owner)
 
     return true
 end
@@ -119,16 +98,14 @@ function Flyout.Show(button)
     end
     if isClaimedByAnother(owner) then return false end
 
-    owner.flyoutOpen = true
-    owner.flyout:Show()
+    local manager = owner.consumableFlyoutManager
 
-    if owner.consumableFlyoutManager then
-        owner.consumableFlyoutManager:SetAttribute(
-            "rcc-flyout-active",
-            true
-        )
-        owner:SetAttribute("rcc-flyout-open", true)
+    if manager and manager.activeOwner ~= owner then
+        manager:SetFrameRef("rccActiveFlyout", owner.flyout)
+        manager.activeOwner = owner
     end
+
+    owner.flyout:Show()
 
     return true
 end
@@ -136,7 +113,7 @@ end
 function Flyout.ScheduleHide(button)
     local owner = getOwner(button)
 
-    if not owner then return end
+    if not owner or InCombatLockdown() then return end
 
     owner.flyoutHideToken = (owner.flyoutHideToken or 0) + 1
 
@@ -238,15 +215,8 @@ function Flyout.AttachPrimary(button, manager)
     if not button then return end
 
     button.consumableFlyoutManager = manager
-
-    if manager then
-        button:SetFrameRef("rccFlyoutManager", manager)
-        button:HookScript("OnEnter", primaryFrameOnEnter)
-        button:HookScript("OnLeave", primaryFrameOnLeave)
-    else
-        button:SetScript("OnEnter", primaryFrameOnEnter)
-        button:SetScript("OnLeave", primaryFrameOnLeave)
-    end
+    button:SetScript("OnEnter", primaryFrameOnEnter)
+    button:SetScript("OnLeave", primaryFrameOnLeave)
 
     if button.click then
         button.click:SetScript("OnEnter", primaryClickOnEnter)
@@ -261,12 +231,8 @@ local function createFlyoutButton(owner, index)
     })
 
     button.flyoutOwner = owner
-    button.hideStatusTexture = true
-
-    if owner.combatFlyouts then
-        button:SetPropagateMouseMotion(true)
-        button.click:SetPropagateMouseMotion(true)
-    end
+    View.ApplyGeometry(button, owner.flyoutGeometry)
+    View.ApplyVisualOptions(button, owner.flyoutVisualOptions, true)
 
     button:SetScript("OnEnter", flyoutFrameOnEnter)
     button:SetScript("OnLeave", flyoutFrameOnLeave)
@@ -286,7 +252,7 @@ local function ensureFlyout(owner)
         "Frame",
         nil,
         owner,
-        "SecureHandlerEnterLeaveTemplate"
+        "SecureFrameTemplate"
     )
 
     flyout.owner = owner
@@ -295,43 +261,31 @@ local function ensureFlyout(owner)
     flyout:SetSize(View.SIZE, View.SIZE + FLYOUT_SPACING)
     flyout:SetFrameLevel(owner:GetFrameLevel() + 20)
     flyout:EnableMouse(true)
-    flyout:HookScript("OnEnter", function(self)
+    flyout:SetScript("OnEnter", function(self)
         Flyout.SetFlyoutHovered(self.owner, true)
     end)
-    flyout:HookScript("OnLeave", function(self)
+    flyout:SetScript("OnLeave", function(self)
         Flyout.SetFlyoutHovered(self.owner, false)
+    end)
+    flyout:SetScript("OnHide", function(self)
+        -- A secure combat close or a hidden parent also releases hover
+        -- ownership, without mutating protected attributes from this hook.
+        releaseOwner(self.owner)
     end)
     flyout:Hide()
 
-    if owner.combatFlyouts then
-        flyout:SetPropagateMouseMotion(true)
-    end
-
     owner.flyout = flyout
-
-    if owner.combatFlyouts then
-        owner:SetFrameRef("rccFlyout", flyout)
-        owner:SetAttribute("_onenter", SECURE_FLYOUT_SHOW)
-        owner:SetAttribute("_onleave", SECURE_FLYOUT_HIDE)
-        owner:SetAttribute(
-            "rcc-flyout-enabled",
-            (owner.flyoutChoiceCount or 0) > 0
-        )
-    end
 
     return flyout
 end
 
-function Flyout.ApplyGeometry(owner, geometry)
-    if not owner or InCombatLockdown() or not owner.flyout then
-        return false
-    end
-
+local function layoutFlyout(owner)
     local flyout = owner.flyout
+    local geometry = owner.flyoutGeometry
     local width = math.max(1, tonumber(geometry.buttonWidth) or View.SIZE)
     local height = math.max(1, tonumber(geometry.buttonHeight) or View.SIZE)
     local direction = geometry.flyoutDirection or "UP"
-    local count = math.max(owner.flyoutChoiceCount or 0, 1)
+    local count = owner.flyoutChoiceCount
     local stackLength
 
     if direction == "LEFT" or direction == "RIGHT" then
@@ -357,7 +311,7 @@ function Flyout.ApplyGeometry(owner, geometry)
         flyout:SetSize(width, stackLength)
     end
 
-    for i = 1, #flyout.buttons do
+    for i = 1, count do
         local button = flyout.buttons[i]
         local previous = flyout.buttons[i - 1]
 
@@ -396,15 +350,48 @@ function Flyout.ApplyGeometry(owner, geometry)
                 FLYOUT_SPACING
             )
         end
+    end
+end
 
-        View.ApplyGeometry(button, geometry)
+-- The surface owns configuration changes. Keep its current configuration for
+-- future pooled buttons; ordinary snapshots update choices, not configuration.
+function Flyout.ApplyGeometry(owner, geometry)
+    if not owner or InCombatLockdown() then return false end
+
+    local previous = owner.flyoutGeometry
+    owner.flyoutGeometry = geometry
+
+    if not owner.flyout then return true end
+
+    local sizeChanged = not previous
+        or previous.buttonWidth ~= geometry.buttonWidth
+        or previous.buttonHeight ~= geometry.buttonHeight
+    local layoutChanged = sizeChanged
+        or previous.flyoutDirection ~= geometry.flyoutDirection
+    local buttonGeometryChanged = sizeChanged
+        or previous.textSize ~= geometry.textSize
+        or previous.durationTextPosition ~= geometry.durationTextPosition
+
+    if buttonGeometryChanged then
+        local buttons = owner.flyout.buttons
+
+        for i = 1, #buttons do
+            View.ApplyGeometry(buttons[i], geometry)
+        end
+    end
+
+    if layoutChanged and (owner.flyoutChoiceCount or 0) > 0 then
+        layoutFlyout(owner)
     end
 
     return true
 end
 
 function Flyout.ApplyVisualOptions(owner, options)
-    local buttons = owner and owner.flyout and owner.flyout.buttons
+    if not owner then return end
+
+    owner.flyoutVisualOptions = options
+    local buttons = owner.flyout and owner.flyout.buttons
 
     if not buttons then return end
 
@@ -413,17 +400,23 @@ function Flyout.ApplyVisualOptions(owner, options)
     end
 end
 
-function Flyout.SetChoices(owner, choices, geometry, visualOptions)
+-- Update choices only out of combat. Configuration is applied separately;
+-- reflow only when the number of choices changes.
+function Flyout.SetChoices(owner, choices)
     if not owner or owner.flyoutOwner or InCombatLockdown() then
         return false
     end
 
     local count = choices and #choices or 0
+    local previousCount = owner.flyoutChoiceCount or 0
 
     owner.flyoutChoiceCount = count
 
-    if owner.combatFlyouts then
-        owner:SetAttribute("rcc-flyout-enabled", count > 0)
+    for i = count + 1, previousCount do
+        local button = owner.flyout.buttons[i]
+
+        Binder.Disable(button)
+        button:Hide()
     end
 
     if count == 0 then
@@ -438,18 +431,14 @@ function Flyout.SetChoices(owner, choices, geometry, visualOptions)
         local button = flyout.buttons[i] or createFlyoutButton(owner, i)
         local choice = State.Normalize(choices[i])
 
-        View.ApplyVisualOptions(button, visualOptions, true)
         View.ApplyVisual(button, choice)
         Binder.Bind(button, choice.action, owner.surfaceCapabilities)
         button:Show()
     end
 
-    for i = count + 1, #flyout.buttons do
-        Binder.Disable(flyout.buttons[i])
-        flyout.buttons[i]:Hide()
+    if count ~= previousCount then
+        layoutFlyout(owner)
     end
-
-    Flyout.ApplyGeometry(owner, geometry or {})
 
     if isInteractionActive(owner) then
         Flyout.Show(owner)

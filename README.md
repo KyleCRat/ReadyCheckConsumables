@@ -39,8 +39,9 @@ On the **Consumables Frame** settings page:
 
 ### Consumables Action Bar
 
-Keep selected consumables on a permanent bar that stays usable in combat,
-including its flyout choices. Buttons keep a consistent order, making it suitable
+Keep selected consumables on a permanent bar that stays usable in combat.
+Use flyouts before combat to choose preferred items, then use the primary
+buttons during the fight. Buttons keep a consistent order, making it suitable
 for everyday use as well as preparation before a pull.
 
 On the **Consumables Action Bar** settings page:
@@ -147,11 +148,11 @@ Enabled Action Bar buttons normally remain visible even when unavailable.
 The off-hand enchant button hides when that slot cannot be enchanted, and the
 bar closes the gap. Equipment changes during combat update the layout afterward.
 
-The temporary Consumables Frame and Raid Status Frame hide in combat. The
-permanent bar uses actions and flyout choices prepared beforehand, with item
-choices refreshing after combat. Readable buff durations and status marks
-continue updating; glows stay hidden. Managed macro updates also wait until
-combat ends.
+The temporary Consumables Frame and Raid Status Frame hide in combat. Action
+Bar flyouts close when combat starts and cannot open during combat. The bar's
+primary buttons keep using the items or spells selected beforehand. Item choices
+refresh after combat. Readable buff durations and status marks continue updating;
+glows stay hidden. Managed macro updates also wait until combat ends.
 
 Settings requested in combat open afterward. Manual Consumables Frame and
 Feast/Cauldron Frame opens are blocked during combat, not queued.

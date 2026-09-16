@@ -49,7 +49,6 @@ frame:Hide()
 
 frame.surface = Surface.Create(frame, {
     capabilities = Binder.Capabilities.ACTION_BAR,
-    combatFlyouts = true,
     clickable = true,
 })
 

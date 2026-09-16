@@ -164,12 +164,27 @@ function View.ApplyVisualOptions(button, options, isFlyout)
     if not button then return end
 
     options = options or {}
-    button.hideCountText = options.showStackCount == false
-    button.hideDurationText = options.showDuration == false
-    button.hideStatusTexture = isFlyout == true
+    local hideCountText = options.showStackCount == false
+    local hideDurationText = options.showDuration == false
+    local hideStatusTexture = isFlyout == true
         or options.showStatus == false
-    button.hideQualityIcon = options.showProfessionQuality == false
-    button.hideReminderGlow = options.showReminderGlow == false
+    local hideQualityIcon = options.showProfessionQuality == false
+    local hideReminderGlow = options.showReminderGlow == false
+
+    if button.hideCountText == hideCountText
+        and button.hideDurationText == hideDurationText
+        and button.hideStatusTexture == hideStatusTexture
+        and button.hideQualityIcon == hideQualityIcon
+        and button.hideReminderGlow == hideReminderGlow
+    then
+        return
+    end
+
+    button.hideCountText = hideCountText
+    button.hideDurationText = hideDurationText
+    button.hideStatusTexture = hideStatusTexture
+    button.hideQualityIcon = hideQualityIcon
+    button.hideReminderGlow = hideReminderGlow
 
     if button.consumableState then
         View.ApplyVisual(button, button.consumableState)
@@ -280,17 +295,13 @@ end
 function View.Create(parent, definition, options)
     options = options or {}
 
-    local template = options.combatFlyouts
-        and "SecureHandlerEnterLeaveTemplate"
-        or nil
-    local button = CreateFrame("Frame", nil, parent, template)
+    local button = CreateFrame("Frame", nil, parent)
 
     button.definition = definition
     button.defaultIcon = definition.defaultIcon
     button.weaponSlot = definition.weaponSlot
     button.tooltipAction = definition.tooltipAction
     button.surfaceCapabilities = options.capabilities
-    button.combatFlyouts = options.combatFlyouts == true
     button:SetSize(SIZE, SIZE)
 
     button.texture = button:CreateTexture()
@@ -318,14 +329,6 @@ function View.Create(parent, definition, options)
     end
 
     button:EnableMouse(true)
-
-    if button.combatFlyouts then
-        button:SetPropagateMouseMotion(true)
-
-        if button.click then
-            button.click:SetPropagateMouseMotion(true)
-        end
-    end
 
     if definition.defaultIcon then
         button.texture:SetTexture(definition.defaultIcon)
@@ -360,7 +363,6 @@ function View.CreateSet(parent, options)
 
         buttons[definition.key] = View.Create(parent, definition, {
             clickable = clickable,
-            combatFlyouts = options.combatFlyouts,
             capabilities = options.capabilities,
         })
     end
