@@ -482,8 +482,8 @@ local function collectRaidBuffAura(data, aura, _, column)
     RaidBuffStatus.CollectAura(data, aura, column.index)
 end
 
-local function finalizeRaidBuffScan(data, scan, column)
-    RaidBuffStatus.ApplyScanAvailability(data, scan, column.index)
+local function finalizeRaidBuffScan(data, scan, column, unit, now)
+    RaidBuffStatus.FinalizeScan(data, scan, column.index, unit, now)
 end
 
 local function isRaidBuffBad(member, context, column)
@@ -701,7 +701,7 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
         local data = columnData[column.key]
 
         if column.FinalizeAuraScan then
-            column.FinalizeAuraScan(data, scan, column)
+            column.FinalizeAuraScan(data, scan, column, unit, now)
         elseif column.CollectAura and scan.available then
             if data then
                 data.available = true

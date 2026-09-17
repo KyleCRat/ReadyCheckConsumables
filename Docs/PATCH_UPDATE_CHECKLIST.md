@@ -74,6 +74,10 @@ may replace items or applied spell IDs while retaining familiar names.
 - [ ] Gems, permanent enchants (including leg armor kits), and any class/spec
   applicability changes.
 - [ ] Raid buffs, class spell changes, and removed or newly added classes/specs.
+- [ ] Keep class raid buffs and their variants in `Data/RaidBuffs.lua`. Register
+  item alternatives in `Data/<expansion>/RaidBuffs.lua` and load only the current
+  expansion's file in the TOC. Preserve older files without loading them; confirm
+  their aura IDs no longer participate in matching, queries, or secrecy checks.
 - [ ] Item ranks, preferred ordering, icons, durations, and quality labels.
 - [ ] New data files are loaded in dependency order by
   `ReadyCheckConsumables.toc`.

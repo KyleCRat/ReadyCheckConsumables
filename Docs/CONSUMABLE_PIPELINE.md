@@ -599,6 +599,16 @@ The personal Raid Buff button checks the buff supplied by the player's class
 on eligible group members. Its `groupAuras` input contains each member's
 `available`, `has`, and `expirationTime` values, not their full aura lists.
 
+The baseline in [Data/RaidBuffs.lua](../Data/RaidBuffs.lua) contains the class
+spells and class-specific variants such as Blessing of the Bronze. Item-granted
+alternatives are separate: `RCC.Data.AddRaidBuffItemAuras` maps a primary class
+buff spell ID to a list of applied item aura spell IDs. Put those entries in
+`Data/<expansion>/RaidBuffs.lua`; the TOC loads only the current expansion's file
+after the baseline. Midnight currently has no registered item alternatives.
+The BfA war-scroll entries are retained in their expansion file but not loaded.
+The combined accepted-ID list is shared by matching, targeted queries, and
+secrecy checks, so an unloaded legacy item cannot affect a current buff's status.
+
 [ConsumableInputs.ReadGroupAuras](../Modules/Consumables/ConsumableInputs.lua)
 uses [RaidBuffStatus.lua](../Modules/RaidBuffStatus.lua). That module can reuse a
 fresh full player scan when it gives a definite answer; otherwise it searches
@@ -613,9 +623,17 @@ before it can return `available = true`.
 At login, RCC caches Blizzard's NeverSecret policy for every supported
 raid-buff variant. This also lets a finished full scan confirm those buffs
 missing even when an unrelated aura's ID was unreadable: if all accepted IDs
-are NeverSecret, that unreadable aura cannot be one of them. An inaccessible
-unit or failed scan still cannot establish absence. Flask and other generic
-effect checks do not use that raid-buff-specific exception.
+are NeverSecret, that unreadable aura cannot be one of them.
+
+If the scan still cannot answer a raid-buff category, `RaidBuffStatus.FinalizeScan`
+uses the same targeted lookup, including for Raid Status Frame columns. For
+example, an item alternative may not be NeverSecret but may be readable right
+now. `FindBySpellID` checks `C_Secrets.ShouldSpellAuraBeSecret` before querying
+that alternative. A found buff confirms presence; all alternatives confirmed
+absent means Missing; otherwise the category stays Unknown. Inaccessible units
+stay Unknown. Confirmed full-scan results do not need this extra lookup, and a
+successful lookup does not mark the whole scan available for food, other
+consumables, or chat reports.
 
 ### Managed macros share selection, not the UI snapshot
 

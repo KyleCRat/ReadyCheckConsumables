@@ -12,7 +12,8 @@ local FALLBACK_SPELL_ICON = 134400 -- INV_Misc_QuestionMark
 local auraQueries = {}
 
 -- Build the accepted-ID sets once from the same definitions used by full scans.
--- Keep the primary first, then the scroll, then class-specific equivalents.
+-- Class spells come first, followed by the loaded expansion's item alternatives.
+-- Matching, targeted queries, and secrecy checks all use these same sets.
 for index, def in ipairs(RCC.db.raidBuffDefs) do
     local spellIDs = {}
     local seen = {}
@@ -25,7 +26,6 @@ for index, def in ipairs(RCC.db.raidBuffDefs) do
     end
 
     addSpellID(def.spellID)
-    addSpellID(def.altSpellID)
 
     local equivalents = {}
 
@@ -38,6 +38,10 @@ for index, def in ipairs(RCC.db.raidBuffDefs) do
     table.sort(equivalents)
 
     for _, spellID in ipairs(equivalents) do
+        addSpellID(spellID)
+    end
+
+    for _, spellID in ipairs(RCC.db.raidBuffItemAuras[def.spellID] or {}) do
         addSpellID(spellID)
     end
 
@@ -78,7 +82,6 @@ function Status.GetInfo(index)
         label = def.label,
         providerClass = def.providerClass,
         spellID = spellID,
-        altSpellID = def.altSpellID,
         equivalentSpellIDs = def.equivalentSpellIDs,
         iconID = spellInfo and spellInfo.iconID or FALLBACK_SPELL_ICON,
     }
@@ -139,16 +142,33 @@ function Status.IsMissing(data)
     return data and data.available == true and not data.has
 end
 
--- Raid-buff availability is category-specific, not the whole scan's flag.
--- A finished scan that skipped a secret aura can still prove this buff missing
--- only when ALL accepted variants are NeverSecret. A failed/truncated scan
--- cannot prove absence. Readable matches always remain confirmed.
-function Status.ApplyScanAvailability(data, scan, index)
-    data.available = data.has == true
-        or AuraScan.CanConfirmMissing(scan, auraQueries[index].spellIDs)
+local function applyTargetedStatus(data, unit, index, now)
+    local result = AuraScan.FindFirstBySpellIDs(unit, auraQueries[index].spellIDs)
+
+    data.available = result.available
+
+    if result.aura then
+        local remaining = now and F.GetAuraRemaining(result.aura.expirationTime, now)
+
+        Status.CollectAura(data, result.aura, index, remaining)
+    end
 end
 
-function Status.GetStatusFromScan(scan, index, now)
+-- Raid-buff availability is category-specific, not the whole scan's flag.
+-- Keep readable matches and absence already proven by the scan. Otherwise query
+-- this category's accepted IDs directly, using their current secrecy rules.
+-- A failed or partial full scan alone never proves absence; every targeted
+-- variant must confirm absence unless a readable match is found.
+function Status.FinalizeScan(data, scan, index, unit, now)
+    data.available = data.has == true
+        or AuraScan.CanConfirmMissing(scan, auraQueries[index].spellIDs)
+
+    if not data.available then
+        applyTargetedStatus(data, unit, index, now)
+    end
+end
+
+function Status.GetStatusFromScan(unit, scan, index, now)
     local data = Status.CreateData()
 
     if not auraQueries[index] then
@@ -165,7 +185,7 @@ function Status.GetStatusFromScan(scan, index, now)
         end
     end
 
-    Status.ApplyScanAvailability(data, scan, index)
+    Status.FinalizeScan(data, scan, index, unit, now)
 
     return data
 end
@@ -191,7 +211,7 @@ function Status.ScanUnit(unit, now)
     end)
 
     for index = 1, count do
-        Status.ApplyScanAvailability(statuses[index], scan, index)
+        Status.FinalizeScan(statuses[index], scan, index, unit, now)
     end
 
     return statuses
@@ -199,27 +219,19 @@ end
 
 function Status.GetUnitStatus(unit, index, now)
     local data = Status.CreateData()
-    local query = auraQueries[index]
 
-    if not query then
+    if not auraQueries[index] then
         return data
     end
 
-    local result = AuraScan.FindFirstBySpellIDs(unit, query.spellIDs)
-
-    data.available = result.available
-
-    if result.aura then
-        local remaining = now and F.GetAuraRemaining(result.aura.expirationTime, now)
-
-        Status.CollectAura(data, result.aura, index, remaining)
-    end
+    applyTargetedStatus(data, unit, index, now)
 
     return data
 end
 
--- Refresh Blizzard's policy each login/reload, including every scroll and
--- class-specific equivalent. No copied whitelist or per-aura policy lookups.
+-- Cache Blizzard's base policy each login/reload for the class spells and
+-- loaded item alternatives. Targeted lookups still check current secrecy when
+-- a spell is not NeverSecret.
 local loginFrame = CreateFrame("Frame")
 
 loginFrame:RegisterEvent("PLAYER_LOGIN")

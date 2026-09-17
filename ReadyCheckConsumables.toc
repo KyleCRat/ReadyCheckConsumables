@@ -67,6 +67,7 @@ Data/09_Shadowlands/VantusRunes.lua
 Data/08_BattleForAzeroth/VantusRunes.lua
 
 Data/RaidBuffs.lua
+Data/12_Midnight/RaidBuffs.lua
 
 Data/HealingItems.lua
 Data/12_Midnight/HealingItems.lua

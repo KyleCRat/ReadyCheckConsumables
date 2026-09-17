@@ -3,28 +3,26 @@ local _, RCC = ...
 RCC.db = RCC.db or {}
 
 --------------------------------------------------------------------------------
---- Raid Buff Spell IDs
+--- Class-provided Raid Buff Spell IDs
 --------------------------------------------------------------------------------
 
 local battle_shout                = 6673
-local battle_shout_scroll         = 264761
 local power_word_fortitude        = 21562
-local power_word_fortitude_scroll = 264764
 local arcane_intellect            = 1459
-local arcane_intellect_scroll     = 264760
 local mark_of_the_wild            = 1126
 local skyfury                     = 462854
 local blessing_of_the_bronze      = 381748
 
 --------------------------------------------------------------------------------
---- Raid Buff Definitions
+--- Class-provided Raid Buff Definitions
+--- Always loaded, including class-specific variants of the same ability.
+--- Secrecy is still checked through Blizzard's API, not assumed from this list.
 --- Each entry:
 --- {
 ---     label = display text,
 ---     providerClass = class token expected in UnitClass/GetRaidRosterInfo,
 ---     spellID = primary buff spell,
----     altSpellID = optional scroll/equivalent spell,
----     equivalentSpellIDs = optional map of equivalent aura spell IDs,
+---     equivalentSpellIDs = optional map of class-specific aura spell IDs,
 --- }
 --------------------------------------------------------------------------------
 
@@ -33,19 +31,16 @@ RCC.db.raidBuffDefs = {
         label = ATTACK_POWER_TOOLTIP or "AP",
         providerClass = "WARRIOR",
         spellID = battle_shout,
-        altSpellID = battle_shout_scroll,
     },
     {
         label = SPELL_STAT3_NAME or "Stamina",
         providerClass = "PRIEST",
         spellID = power_word_fortitude,
-        altSpellID = power_word_fortitude_scroll,
     },
     {
         label = SPELL_STAT4_NAME or "Int",
         providerClass = "MAGE",
         spellID = arcane_intellect,
-        altSpellID = arcane_intellect_scroll,
     },
     {
         label = STAT_VERSATILITY or "Vers",
@@ -78,3 +73,30 @@ RCC.db.raidBuffDefs = {
         },
     },
 }
+
+--------------------------------------------------------------------------------
+--- Item-provided Raid Buff Alternatives
+--- Maps a primary class buff spell ID to an ordered list of accepted item aura
+--- spell IDs. These are applied aura IDs, not inventory item or use-spell IDs.
+--- The TOC loads only the current expansion's RaidBuffs.lua after this file.
+--- Older expansion files remain in the repository without joining this list.
+--------------------------------------------------------------------------------
+
+RCC.db.raidBuffItemAuras = {}
+
+RCC.Data = RCC.Data or {}
+
+function RCC.Data.AddRaidBuffItemAuras(alternatives)
+    for classSpellID, spellIDs in pairs(alternatives) do
+        local itemAuras = RCC.db.raidBuffItemAuras[classSpellID]
+
+        if not itemAuras then
+            itemAuras = {}
+            RCC.db.raidBuffItemAuras[classSpellID] = itemAuras
+        end
+
+        for _, spellID in ipairs(spellIDs) do
+            itemAuras[#itemAuras + 1] = spellID
+        end
+    end
+end

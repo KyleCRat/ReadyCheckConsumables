@@ -219,12 +219,10 @@ function Inputs.ReadGroupAuras(roster, context, previous, units, now, freshPlaye
                 local status
 
                 if freshPlayerAuras and F.UnitIsUnitSafe(unit, "player") then
-                    status = RCC.RaidBuffStatus.GetStatusFromScan(freshPlayerAuras, info.index, now)
-                end
-
-                -- Reuse a conclusive full player scan. If it was restricted,
-                -- a targeted public raid-buff query can still answer in combat.
-                if not status or not status.available then
+                    -- The shared resolver reuses conclusive scan data and
+                    -- queries accepted spell IDs only if still unresolved.
+                    status = RCC.RaidBuffStatus.GetStatusFromScan(unit, freshPlayerAuras, info.index, now)
+                else
                     status = RCC.RaidBuffStatus.GetUnitStatus(unit, info.index, now)
                 end
 

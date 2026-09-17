@@ -34,8 +34,11 @@
   aura scan is reused when it can answer their own raid-buff check.
 - The personal Raid Buff button now uses targeted spell-ID queries instead of
   full group-member aura scans, shared by the Consumables Frame and Action Bar.
-  Scroll and class-specific equivalents remain supported, and public raid buffs
-  can still be checked during combat. The Raid Status Frame keeps its full scans.
+  Class-specific equivalents remain supported, and public raid buffs can still
+  be checked during combat. The Raid Status Frame keeps its full scans.
+- Separated baseline class raid buffs from expansion-specific item alternatives.
+  Only the current expansion's item data is loaded, so legacy BfA war-scrolls
+  no longer affect detection or secrecy checks. Their data is retained separately.
 - Separated reusable single-spell aura lookups from first-matching-variant
   searches, keeping their availability and secret-value handling consistent.
 - Read Blizzard's raid-buff secrecy policies once each login/reload rather than
@@ -67,7 +70,9 @@
 ### Fixed
 
 - Missing never-secret raid buffs no longer become Unknown just because an
-  unrelated secret aura is present. Inaccessible units and failed scans remain
+  unrelated secret aura is present. Unresolved raid-buff categories now reuse
+  targeted lookups with current secrecy checks to confirm presence or absence
+  wherever possible. Inaccessible or still-unresolved results remain
   Unknown; food, other consumables, and chat-report completeness rules are unchanged.
 - Fixed Action Bar flyouts failing to switch when hovering directly between
   primary buttons. Hovering inside an open flyout still blocks overlapping

@@ -184,6 +184,11 @@ data.
     rules.
   - Repair devices: keep the ordered item list, per-item reusable metadata, and
     intentional default/fallback item consistent.
+  - Raid buffs: keep class-provided auras in `Data/RaidBuffs.lua` and item-granted
+    alternatives in `Data/<expansion>/RaidBuffs.lua`. When updating expansions,
+    load only the current expansion's item file in the TOC; retain older files
+    without loading them. Verify matching, targeted queries, and secrecy checks
+    use the same accepted aura IDs.
 - Adding an entirely new consumable category also requires tracing the
   canonical catalog, domain resolver, presenter, settings/defaults, both
   personal surfaces, and managed macros where applicable; a `Data/` entry alone
