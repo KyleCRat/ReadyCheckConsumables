@@ -4,6 +4,7 @@ RCC.RaidFrameTitleBar = RCC.RaidFrameTitleBar or {}
 local TitleBar = RCC.RaidFrameTitleBar
 local UI = RCC.UI
 local ReadyCheck = RCC.RaidFrameReadyCheck
+local Status = RCC.ReadyCheckState.Status
 
 local ceil    = ceil
 local GetTime = GetTime
@@ -70,7 +71,7 @@ function TitleBar.Create(parent, layout, options)
 
         icon:SetSize(layout.iconSize, layout.iconSize)
         icon:SetPoint("LEFT", titleBar, "LEFT", column.titleX, 0)
-        icon:SetTexture(ReadyCheck.TEXTURES[ReadyCheck.PENDING])
+        icon:SetTexture(ReadyCheck.TEXTURES[Status.PENDING])
         icon:Hide()
         titleBar.colIcons[columnIndex] = icon
         titleBar.colIconsByKey[column.key] = icon
@@ -162,7 +163,10 @@ function TitleBar.Create(parent, layout, options)
         self.countText:SetText(respondedCount .. "/" .. activeCount)
     end
 
-    function titleBar:ShowFinishedSummary(notReadyCount, afkCount)
+    function titleBar:ShowFinishedSummary(summary)
+        local notReadyCount = summary.notReadyCount
+        local afkCount = summary.pendingCount
+
         if notReadyCount > 0 then
             local c = COLOR_NOT_READY
             local s = notReadyCount == 1 and "Player" or "Players"
@@ -175,11 +179,13 @@ function TitleBar.Create(parent, layout, options)
 
             self.countText:SetTextColor(c.r, c.g, c.b)
             self.countText:SetText(afkCount .. " " .. verb .. " AFK")
-        else
+        elseif summary.allReady then
             local c = COLOR_READY
 
             self.countText:SetTextColor(c.r, c.g, c.b)
             self.countText:SetText("Everyone is Ready!")
+        else
+            self:SetRespondedCount(summary.respondedCount, summary.activeCount)
         end
     end
 

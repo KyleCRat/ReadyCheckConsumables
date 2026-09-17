@@ -42,6 +42,18 @@
 - Centralized Recuperate spell/icon data for personal buttons and the healing-
   potion macro. Clarified the refresh API with named options and made fixed
   event registrations and weapon-slot constants explicit.
+- Centralized ready-check responses, active-roster membership, and summary
+  counts in one shared session used by the Raid Status Frame and Chat Report.
+  In-game previews use the same model in isolation without sending announcements.
+
+### Fixed
+
+- Decoupled the bench-aware ready announcement from the Raid Status Frame so
+  the elected reporter can announce even when their frame is disabled or closed.
+- Wait for the existing reporter-selection window before announcing, retain
+  early completions through that window, and mark announcements sent only after
+  issuing group chat. Keep one reporter for each check and cancel pending work
+  on combat, group exit, travel, difficulty changes, or a replacement ready check.
 
 ## [12.1.0-25] - 2026-09-09
 

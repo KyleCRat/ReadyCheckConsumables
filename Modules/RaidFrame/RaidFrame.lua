@@ -8,7 +8,7 @@ local DisplayContext  = RCC.DisplayContext
 local Feast           = RCC.RaidFrameFeast
 local FrameAnimations = RCC.FrameAnimations
 local Members         = RCC.RaidFrameMembers
-local ReadyCheck      = RCC.RaidFrameReadyCheck
+local ReadyChecks     = RCC.ReadyCheckController
 local Rows            = RCC.RaidFrameRows
 local Test            = RCC.RaidFrameTest
 local TitleBar        = RCC.RaidFrameTitleBar
@@ -79,12 +79,12 @@ frame:SetHeight(frame.rows.initialFrameHeight)
 --- Member data storage
 --------------------------------------------------------------------------------
 
+-- state.readyCheck is a read-only reference to the shared session, not row-owned
+-- response storage. Closing this display must never cancel that session.
 local state = {
     members        = {},  -- [i] = { name, unit, class, online, isDead, columnData }
     unitToIndex    = {},  -- [unit] = i
-    rcStatus       = {},  -- [unit] = ReadyCheck status
     activeCount    = 0,
-    readyAnnounced = false,
 }
 
 local renderContext = {
@@ -100,18 +100,16 @@ local renderContext = {
     rules = Columns.RULES,
 }
 
-local function registerReadyCheckEvents()
+local function registerReadyCheckDataEvents()
     frame:RegisterEvent("UNIT_AURA")
-    frame:RegisterEvent("READY_CHECK_CONFIRM")
     frame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
     frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
     frame:RegisterEvent("WEAPON_ENCHANT_CHANGED")
     frame:RegisterEvent("WEAPON_SLOT_CHANGED")
 end
 
-local function unregisterReadyCheckEvents()
+local function unregisterReadyCheckDataEvents()
     frame:UnregisterEvent("UNIT_AURA")
-    frame:UnregisterEvent("READY_CHECK_CONFIRM")
     frame:UnregisterEvent("UPDATE_INVENTORY_DURABILITY")
     frame:UnregisterEvent("UNIT_INVENTORY_CHANGED")
     frame:UnregisterEvent("WEAPON_ENCHANT_CHANGED")
@@ -158,12 +156,12 @@ end
 
 local function syncDisplayEvents()
     if DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
-        registerReadyCheckEvents()
+        registerReadyCheckDataEvents()
 
         return
     end
 
-    unregisterReadyCheckEvents()
+    unregisterReadyCheckDataEvents()
 
     if frame:IsShown() and DisplayContext.HasAny(displayContext) then
         frame:RegisterEvent("UNIT_AURA")
@@ -178,76 +176,23 @@ local function configureDisplay()
 end
 
 --------------------------------------------------------------------------------
---- Ready check summary helpers
+--- Ready check summary presentation (counts belong to ReadyCheckState)
 --------------------------------------------------------------------------------
 
-local function updateTitleCount()
-    local respondedCount = 0
+local function refreshReadyCheckSummary()
+    local session = state.readyCheck
 
-    for unit in pairs(state.unitToIndex) do
-        local status = state.rcStatus[unit]
-
-        if status == ReadyCheck.READY or status == ReadyCheck.NOT_READY then
-            respondedCount = respondedCount + 1
-        end
+    if not session then
+        return
     end
 
-    titleBar:SetRespondedCount(respondedCount, state.activeCount)
+    local summary = session.summary
 
-    return respondedCount
-end
-
-local function getFinishedCounts()
-    local notReadyCount = 0
-    local afkCount      = 0
-
-    for i = 1, state.activeCount do
-        local member = state.members[i]
-
-        if not member then break end
-
-        local status = state.rcStatus[member.unit]
-
-        if status == ReadyCheck.PENDING then
-            afkCount = afkCount + 1
-        elseif status == ReadyCheck.NOT_READY then
-            notReadyCount = notReadyCount + 1
-        end
-    end
-
-    return notReadyCount, afkCount
-end
-
-local function allActiveMembersReady()
-    if state.activeCount == 0 then
-        return false
-    end
-
-    for i = 1, state.activeCount do
-        local member = state.members[i]
-
-        if not member
-            or state.rcStatus[member.unit] ~= ReadyCheck.READY
-        then
-            return false
-        end
-    end
-
-    return true
-end
-
-local function showFinishedSummary()
-    local notReadyCount, afkCount = getFinishedCounts()
-
-    titleBar:ShowFinishedSummary(notReadyCount, afkCount)
-
-    if allActiveMembersReady()
-        and not state.readyAnnounced
-        and GetNumGroupMembers() > state.activeCount
-    then
-        state.readyAnnounced = true
-
-        RCC.AnnounceAllReady()
+    if not session.inProgress or summary.allResponded then
+        titleBar:StopProgress()
+        titleBar:ShowFinishedSummary(summary)
+    else
+        titleBar:SetRespondedCount(summary.respondedCount, summary.activeCount)
     end
 end
 
@@ -339,7 +284,6 @@ local function beginReadyCheckDisplay(manualShow)
     cancelHideTimer()
     cancelAddonRefreshTimer()
     fadeOut:Cancel()
-    state.readyAnnounced = false
     DisplayContext.Activate(displayContext, Reason.READY_CHECK)
     syncProvisionReasons()
     configureDisplay()
@@ -350,13 +294,14 @@ end
 
 local function showReadyCheckDisplay(duration, showProgress)
     refreshAllRowsAndTitle()
-    updateTitleCount()
 
     if showProgress then
         titleBar:StartProgress(duration or 30)
     else
         titleBar:StopProgress()
     end
+
+    refreshReadyCheckSummary()
 
     controls:RestorePosition()
     controls:SyncScale()
@@ -392,7 +337,7 @@ local function beginProvisionDisplay()
     titleBar:StopProgress()
     syncProvisionReasons()
     configureDisplay()
-    wipe(state.rcStatus)
+    state.readyCheck = nil
 end
 
 local function getProvisionHeaderText()
@@ -493,14 +438,14 @@ local function scheduleTempWeaponEnchantRefresh()
     end)
 end
 
-function frame:OnReadyCheck(initiatorUnit, timeToHide)
+function frame:OnReadyCheckStarted(session)
     cancelSyntheticReadyCheck()
 
     local enabled = RCC.GetSetting("raidFrame_enabled")
 
-    beginReadyCheckDisplay(timeToHide == 0)
+    state.readyCheck = session
+    beginReadyCheckDisplay(false)
 
-    wipe(state.rcStatus)
     cancelTempWeaponEnchantTimer()
     broadcast:Reset()
 
@@ -516,42 +461,30 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
 
     Members.ScanAll(state, LAYOUT, renderContext)
 
-    -- The initiator never receives READY_CHECK_CONFIRM for themselves;
-    -- auto-mark them as ready so their row shows a check immediately.
-    if not issecretvalue(initiatorUnit) and initiatorUnit then
-        for unit in pairs(state.unitToIndex) do
-            if RCC.F.UnitIsUnitSafe(unit, initiatorUnit) then
-                state.rcStatus[unit] = ReadyCheck.READY
+    showReadyCheckDisplay(session.duration, true)
+end
+
+function frame:OnReadyCheckUpdated(session, change)
+    if state.readyCheck ~= session
+        or not DisplayContext.IsActive(displayContext, Reason.READY_CHECK)
+        or not self:IsShown()
+    then
+        return
+    end
+
+    if change.rosterChanged then
+        Members.ScanAll(state, LAYOUT, renderContext)
+        refreshAllRowsAndTitle()
+    else
+        for i = 1, state.activeCount do
+            if state.members[i].key == change.playerKey then
+                refreshRowAndTitle(i)
                 break
             end
         end
     end
 
-    showReadyCheckDisplay(timeToHide or 30, not self.manualShow)
-end
-
-function frame:OnReadyCheckConfirm(unit, ready)
-    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
-        return
-    end
-
-    if issecretvalue(unit) or issecretvalue(ready) then return end
-
-    local index = state.unitToIndex[unit]
-
-    if not index then
-        return
-    end
-
-    state.rcStatus[unit] = ready and ReadyCheck.READY or ReadyCheck.NOT_READY
-    refreshRowAndTitle(index)
-
-    local responded = updateTitleCount()
-
-    if responded >= state.activeCount then
-        titleBar:StopProgress()
-        showFinishedSummary()
-    end
+    refreshReadyCheckSummary()
 end
 
 local function closeReadyCheckDisplay(self)
@@ -572,14 +505,15 @@ local function closeReadyCheckDisplay(self)
     fadeOut:Hide()
 end
 
-function frame:OnReadyCheckFinished()
-    if not DisplayContext.IsActive(displayContext, Reason.READY_CHECK) then
+function frame:OnReadyCheckFinished(session)
+    if state.readyCheck ~= session
+        or not DisplayContext.IsActive(displayContext, Reason.READY_CHECK)
+    then
         return
     end
 
     cancelReadyCheckBroadcastTimer()
-    titleBar:StopProgress()
-    showFinishedSummary()
+    refreshReadyCheckSummary()
 
     if not self:IsShown() then
         closeReadyCheckDisplay(self)
@@ -812,13 +746,14 @@ function frame:OnCombat()
     cancelSyntheticReadyCheck()
 
     DisplayContext.Clear(displayContext)
-    unregisterReadyCheckEvents()
+    unregisterReadyCheckDataEvents()
     cancelHideTimer()
     cancelAddonRefreshTimer()
     cancelReadyCheckBroadcastTimer()
     cancelTempWeaponEnchantTimer()
     fadeOut:Cancel()
     self:Hide()
+    state.readyCheck = nil
 end
 
 function frame:OnUnitAura(unit)
@@ -840,7 +775,7 @@ function frame:OnHide()
     cancelSyntheticReadyCheck()
 
     DisplayContext.Deactivate(displayContext, Reason.READY_CHECK)
-    unregisterReadyCheckEvents()
+    unregisterReadyCheckDataEvents()
     cancelHideTimer()
     cancelAddonRefreshTimer()
     cancelReadyCheckBroadcastTimer()
@@ -848,6 +783,7 @@ function frame:OnHide()
     fadeOut:Cancel()
     titleBar:StopProgress()
     self.manualShow = false
+    state.readyCheck = nil
 end
 
 Test:Attach({
@@ -864,24 +800,25 @@ Test:Attach({
 })
 
 --------------------------------------------------------------------------------
---- Event wiring
+--- Shared ready-check subscriptions and display-only event wiring
 --------------------------------------------------------------------------------
 
-local function onReadyCheck(self, initiatorUnit, duration)
-    if InCombatLockdown() then
-        return
-    end
-
-    self:OnReadyCheck(initiatorUnit, duration)
-end
-
-local function onReadyCheckConfirm(self, unit, isReady)
-    self:OnReadyCheckConfirm(unit, isReady)
-end
-
-local function onReadyCheckFinished(self)
-    self:OnReadyCheckFinished()
-end
+ReadyChecks.Subscribe({
+    OnStarted = function(session)
+        frame:OnReadyCheckStarted(session)
+    end,
+    OnUpdated = function(session, change)
+        frame:OnReadyCheckUpdated(session, change)
+    end,
+    OnFinished = function(session)
+        frame:OnReadyCheckFinished(session)
+    end,
+    OnCancelled = function(session)
+        if state.readyCheck == session then
+            closeReadyCheckDisplay(frame)
+        end
+    end,
+})
 
 local function onPlayerRegenDisabled(self)
     self:OnCombat()
@@ -938,9 +875,6 @@ local EVENT_HANDLERS = {
     ADDON_LOADED                = onAddonLoaded,
     CHAT_MSG_ADDON              = onChatMsgAddon,
     PLAYER_REGEN_DISABLED       = onPlayerRegenDisabled,
-    READY_CHECK                 = onReadyCheck,
-    READY_CHECK_CONFIRM         = onReadyCheckConfirm,
-    READY_CHECK_FINISHED        = onReadyCheckFinished,
     UNIT_AURA                   = onUnitAura,
     UNIT_INVENTORY_CHANGED      = onUnitInventoryChanged,
     UPDATE_INVENTORY_DURABILITY = onUpdateInventoryDurability,
@@ -960,8 +894,6 @@ frame:SetScript("OnHide", function(self)
     self:OnHide()
 end)
 
-frame:RegisterEvent("READY_CHECK")
-frame:RegisterEvent("READY_CHECK_FINISHED")
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 frame:RegisterEvent("CHAT_MSG_ADDON")
 frame:RegisterEvent("ADDON_LOADED")

@@ -5,7 +5,6 @@ local Members = RCC.RaidFrameMembers
 
 local F       = RCC.F
 local Columns = RCC.RaidFrameColumns
-local ReadyCheck = RCC.RaidFrameReadyCheck
 
 local GetTime = GetTime
 
@@ -14,13 +13,21 @@ local function scanMemberColumnData(unit, now, layout, context)
 end
 
 function Members.ScanAll(state, layout, context)
+    local session = state.readyCheck
+
+    -- Preview rows already contain synthetic consumable data. Never replace it
+    -- by scanning their fake unit tokens during a settings/provision refresh.
+    if session and session.synthetic then
+        return
+    end
+
     local now = GetTime()
     local count = 0
 
     wipe(state.members)
     wipe(state.unitToIndex)
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+    local function addMember(name, unit, class, online)
         count = count + 1
 
         local isDead    = UnitIsDeadOrGhost(unit)
@@ -37,11 +44,21 @@ function Members.ScanAll(state, layout, context)
         }
 
         state.unitToIndex[unit] = count
+    end
 
-        if not state.rcStatus[unit] then
-            state.rcStatus[unit] = ReadyCheck.PENDING
+    if session then
+        -- Ready-check rows follow the controller's roster, including its frozen
+        -- final result. Provision-only displays use the current group instead.
+        for i = 1, #session.members do
+            local member = session.members[i]
+
+            addMember(member.name, member.unit, member.class, member.online)
         end
-    end)
+    else
+        F.ForEachActiveRosterMember(function(name, unit, _subgroup, class, online)
+            addMember(name, unit, class, online)
+        end)
+    end
 
     state.activeCount = count
 end

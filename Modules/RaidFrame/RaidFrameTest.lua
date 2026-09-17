@@ -8,7 +8,8 @@ local Cauldron = RCC.RaidFrameCauldron
 local Columns = RCC.RaidFrameColumns
 local COLUMN_TYPE = Columns.COLUMN_TYPE
 local DATA_SOURCE = Columns.DATA_SOURCE
-local ReadyCheck = RCC.RaidFrameReadyCheck
+local ReadyCheckState = RCC.ReadyCheckState
+local Status = ReadyCheckState.Status
 
 local GetTime = GetTime
 local UnitName = UnitName
@@ -259,7 +260,7 @@ local function populateSyntheticState(self)
 
     wipe(state.members)
     wipe(state.unitToIndex)
-    wipe(state.rcStatus)
+    state.readyCheck = nil
     broadcast:Reset()
 
     local playerName = F.unitFullName("player") or UnitName("player")
@@ -275,7 +276,6 @@ local function populateSyntheticState(self)
         columnData = Columns.ScanUnitData("player", GetTime(), layout, context),
     }
     state.unitToIndex["player"] = 1
-    state.rcStatus["player"] = ReadyCheck.READY
 
     if includeCauldrons then
         Cauldron.SetSyntheticTestEntry(state.members[1].key, 1)
@@ -307,7 +307,6 @@ local function populateSyntheticState(self)
         }
 
         state.unitToIndex[fakeUnit] = count
-        state.rcStatus[fakeUnit] = ReadyCheck.PENDING
 
         if member.rccPresent then
             broadcast:SetPresence(
@@ -338,9 +337,40 @@ end
 --- Synthetic ready-check session
 --------------------------------------------------------------------------------
 
+local function createSyntheticReadyCheck(state, duration)
+    local members = {}
+    local responses = {}
+
+    for i = 1, state.activeCount do
+        local member = state.members[i]
+
+        members[i] = {
+            name = member.name,
+            key = member.key,
+            unit = member.unit,
+            class = member.class,
+            online = member.online,
+        }
+        responses[member.key] = member.unit == "player"
+            and Status.READY or Status.PENDING
+    end
+
+    -- Exercise the live model and presentation without publishing anything to
+    -- ReadyCheckController or the real Chat Report subscriber.
+    state.readyCheck = ReadyCheckState.Create({
+        members = members,
+        responses = responses,
+        groupSize = state.activeCount,
+        isRaid = true,
+        duration = duration,
+        synthetic = true,
+    })
+end
+
 local function scheduleSyntheticResponses(self, runID, duration)
     local state = self.env.state
     local frame = self.env.frame
+    local session = state.readyCheck
 
     for unit in pairs(state.unitToIndex) do
         if unit ~= "player" then
@@ -348,11 +378,14 @@ local function scheduleSyntheticResponses(self, runID, duration)
 
             if roll > 0.25 then
                 local delay = math.random(1, duration)
-                local ready = roll > 0.5
+                local response = roll > 0.5 and Status.READY or Status.NOT_READY
+                local playerKey = state.members[state.unitToIndex[unit]].key
 
                 addTimer(self, runID, delay, function()
-                    if frame:IsShown() then
-                        frame:OnReadyCheckConfirm(unit, ready)
+                    if frame:IsShown() and state.readyCheck == session
+                        and ReadyCheckState.SetResponse(session, playerKey, response)
+                    then
+                        frame:OnReadyCheckUpdated(session, { playerKey = playerKey })
                     end
                 end)
             end
@@ -399,7 +432,12 @@ function Test:Finish()
     clearCauldronTestData(self)
 
     if self.env.frame:IsShown() then
-        self.env.frame:OnReadyCheckFinished()
+        local session = self.env.state.readyCheck
+
+        if session then
+            ReadyCheckState.Finish(session)
+            self.env.frame:OnReadyCheckFinished(session)
+        end
     end
 end
 
@@ -425,6 +463,7 @@ function Test:Start(permanent, duration, options)
         includeCauldrons = self.includeCauldrons,
     })
     populateSyntheticState(self)
+    createSyntheticReadyCheck(env.state, duration)
     env.broadcast:SendDurability()
     env.broadcast:SendTempWeaponEnchantStatus()
     env.showDisplay(duration, true)

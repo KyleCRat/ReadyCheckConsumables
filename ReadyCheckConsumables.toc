@@ -94,6 +94,10 @@ Modules/ContextualVisibility.lua
 # Shared status helpers
 Modules/RaidBuffStatus.lua
 
+# Shared ready-check sessions
+Modules/ReadyCheckState.lua
+Modules/ReadyCheckController.lua
+
 ################################################################################
 # Shared consumable state
 Modules/Consumables/ConsumableCatalog.lua

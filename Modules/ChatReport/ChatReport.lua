@@ -3,10 +3,13 @@ local _, RCC = ...
 local Election = RCC.ChatReportElection
 local Output = RCC.ChatReportOutput
 local Reports = RCC.ChatReportReports
+local ReadyChecks = RCC.ReadyCheckController
 
 local REPORT_ELECTION_DELAY = 1
 
-local reportGeneration = 0
+local chatReportFrame = CreateFrame("Frame")
+local reportTimer
+local reportSession
 
 local DIFFICULTY_TO_SETTING = {
     [16]  = "chatReport_mythicRaid",
@@ -51,7 +54,7 @@ local function isInstanceAllowed()
 end
 
 local function shouldReport()
-    if InCombatLockdown() then
+    if InCombatLockdown() or not IsInGroup() then
         return false
     end
 
@@ -70,76 +73,102 @@ local function shouldReport()
     return true
 end
 
-local function nextReportGeneration()
-    reportGeneration = reportGeneration + 1
+--------------------------------------------------------------------------------
+--- Ready-check completion contract
+--- The shared controller owns responses, roster membership, and their summary.
+--- Chat Report owns eligibility, reporter election, and send deduplication only.
+--- Announce when the shared summary is all-ready and the raid has a bench.
+--- Only the elected reporter sends, after the existing collection window. A
+--- skipped send does not consume the announcement. No retry queue is used.
+--------------------------------------------------------------------------------
 
-    return reportGeneration
+local function tryAnnounceAllReady()
+    if not reportSession
+        or reportSession.announced
+        or ReadyChecks.GetCurrent() ~= reportSession.readyCheck
+        or not shouldReport()
+        or not Election.IsCurrentPlayerCandidate()
+        or not Election.IsReporter()
+    then
+        return
+    end
+
+    local summary = reportSession.readyCheck.summary
+
+    if summary.allReady and summary.hasBench
+        and Output.Send("RCC: Everyone in raid is ready!", true)
+    then
+        reportSession.announced = true
+    end
 end
 
-local function sendReadyCheckReports(generation)
-    if generation ~= reportGeneration then
+local function cancelReportSession()
+    if reportTimer then
+        reportTimer:Cancel()
+        reportTimer = nil
+    end
+
+    reportSession = nil
+    Election.Reset()
+end
+
+local function finishReportElection()
+    reportTimer = nil
+
+    if not reportSession
+        or ReadyChecks.GetCurrent() ~= reportSession.readyCheck
+    then
         return
     end
 
-    if not shouldReport() then
-        return
-    end
+    Election.Finalize(reportSession.readyCheck.members)
+    tryAnnounceAllReady()
 
-    if Election.HasMrtReporter() then
-        return
-    end
-
-    if Election.IsReporter() then
+    -- MRT suppresses missing-consumable reports, not the separate announcement
+    -- that the active roster has confirmed ready while the bench is pending.
+    if shouldReport()
+        and Election.IsCurrentPlayerCandidate()
+        and Election.IsReporter()
+        and not Election.HasMrtReporter()
+    then
         Reports.SendAll(true)
     end
 end
 
-local function onReadyCheck()
-    Election.Reset()
-
-    local generation = nextReportGeneration()
+local function onReadyCheckStarted(session)
+    cancelReportSession()
 
     if not shouldReport() then
         return
     end
 
+    reportSession = {
+        readyCheck = session,
+        announced = false,
+    }
+
     Election.BroadcastIntent()
-    C_Timer.After(REPORT_ELECTION_DELAY, function()
-        sendReadyCheckReports(generation)
-    end)
+    reportTimer = C_Timer.NewTimer(REPORT_ELECTION_DELAY, finishReportElection)
 end
 
-local function onAddonMessage(...)
-    local prefix, message, channel, sender = ...
-
-    Election.HandleAddonMessage(prefix, message, channel, sender)
-end
-
-local function onEvent(self, event, ...)
-    if event == "READY_CHECK" then
-        onReadyCheck()
-
-        return
-    end
-
-    if event == "CHAT_MSG_ADDON" then
-        onAddonMessage(...)
+local function onReadyCheckUpdated(session)
+    if reportSession and reportSession.readyCheck == session then
+        tryAnnounceAllReady()
     end
 end
 
-local chatReportFrame = CreateFrame("Frame")
-chatReportFrame:RegisterEvent("READY_CHECK")
+ReadyChecks.Subscribe({
+    OnStarted = onReadyCheckStarted,
+    OnUpdated = onReadyCheckUpdated,
+    OnFinished = onReadyCheckUpdated,
+    OnCancelled = cancelReportSession,
+})
+
+chatReportFrame:SetScript("OnEvent", function(_self, _event, ...)
+    Election.HandleAddonMessage(...)
+end)
+
 chatReportFrame:RegisterEvent("CHAT_MSG_ADDON")
-chatReportFrame:SetScript("OnEvent", onEvent)
-
-function RCC.AnnounceAllReady()
-    if shouldReport()
-        and Election.IsCurrentPlayerCandidate()
-        and Election.IsReporter()
-    then
-        Output.Send("RCC: Everyone in raid is ready!", true)
-    end
-end
 
 RCC.chatReport = {}
 

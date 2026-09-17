@@ -130,10 +130,16 @@ data.
   visibility, automatic-open lifecycle, and its settings.
 - `Modules/ConsumableActionBar/` owns permanent-bar layout, visibility,
   positioning-provider selection, and settings.
-- `Modules/RaidFrame/` owns group state, RCC broadcasts, row/column rendering,
-  feast/cauldron tracking, tests, and frame controls.
-- `Modules/ChatReport/` owns reporter election, report construction, output
-  chunking, and report settings.
+- `Modules/ReadyCheckController.lua` owns real ready-check lifecycle and native
+  responses through the shared model in `Modules/ReadyCheckState.lua`. The Raid
+  Status Frame and Chat Report consume the same active roster and summary;
+  neither keeps a second response store or derives readiness independently.
+  Closing or disabling a display must not cancel the shared session. Synthetic
+  previews use isolated model instances and never drive real chat announcements.
+- `Modules/RaidFrame/` owns group consumable state, RCC broadcasts, row/column
+  rendering, feast/cauldron tracking, tests, and frame controls.
+- `Modules/ChatReport/` owns reporter election, ready-check completion
+  announcements, report construction, output chunking, and report settings.
 - `Modules/ConsumableMacros/ConsumableMacros.lua` owns both managed `#RCC`
   macros and inline `#RCCI` rewrites.
 - LibModernSettings is embedded as the `Libs/LibModernSettings-1.0` submodule

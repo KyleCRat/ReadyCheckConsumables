@@ -24,15 +24,17 @@ function Output.ColorName(name, class)
     return format("|c%s%s|r", color.colorStr, name)
 end
 
+-- True means a group-chat send was issued, not merely printed locally. Blizzard
+-- does not return a delivery acknowledgement from SendChatMessage.
 function Output.Send(msg, toChat)
     if not msg or msg == "" then
-        return
+        return false
     end
 
     if not toChat then
         print(msg)
 
-        return
+        return false
     end
 
     local chatType = F.chatType()
@@ -40,12 +42,14 @@ function Output.Send(msg, toChat)
     if chatType == "SAY" then
         print(msg)
 
-        return
+        return false
     end
 
     msg = msg:gsub("|c%x%x%x%x%x%x%x%x", "")
     msg = msg:gsub("|r", "")
     SendChatMessage(msg, chatType)
+
+    return true
 end
 
 function Output.SendChunked(prefix, entries, toChat)

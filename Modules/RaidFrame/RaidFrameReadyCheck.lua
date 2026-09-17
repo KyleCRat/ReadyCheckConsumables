@@ -3,17 +3,16 @@ local _, RCC = ...
 RCC.RaidFrameReadyCheck = RCC.RaidFrameReadyCheck or {}
 local ReadyCheck = RCC.RaidFrameReadyCheck
 
-ReadyCheck.PENDING   = 0
-ReadyCheck.READY     = 1
-ReadyCheck.NOT_READY = 2
+-- Art belongs to the frame; response meanings belong to the shared model.
+local Status = RCC.ReadyCheckState.Status
 
 ReadyCheck.TEXTURES = {
-    [ReadyCheck.PENDING]   = "Interface\\RaidFrame\\ReadyCheck-Waiting",
-    [ReadyCheck.READY]     = "Interface\\RaidFrame\\ReadyCheck-Ready",
-    [ReadyCheck.NOT_READY] = "Interface\\RaidFrame\\ReadyCheck-NotReady",
+    [Status.PENDING]   = "Interface\\RaidFrame\\ReadyCheck-Waiting",
+    [Status.READY]     = "Interface\\RaidFrame\\ReadyCheck-Ready",
+    [Status.NOT_READY] = "Interface\\RaidFrame\\ReadyCheck-NotReady",
 }
 
 ReadyCheck.TITLE_TEXTURES = {
-    ready    = ReadyCheck.TEXTURES[ReadyCheck.READY],
-    notReady = ReadyCheck.TEXTURES[ReadyCheck.NOT_READY],
+    ready    = ReadyCheck.TEXTURES[Status.READY],
+    notReady = ReadyCheck.TEXTURES[Status.NOT_READY],
 }

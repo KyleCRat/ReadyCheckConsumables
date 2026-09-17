@@ -7,6 +7,8 @@ local Columns = RCC.RaidFrameColumns
 local UI = RCC.UI
 local F = RCC.F
 local ReadyCheck = RCC.RaidFrameReadyCheck
+local ReadyCheckState = RCC.ReadyCheckState
+local Status = ReadyCheckState.Status
 
 local ROW_HEIGHT           = 30
 local V_PAD                = 0
@@ -38,7 +40,7 @@ local function createRow(parent, titleBar, rows, index, layout, options)
     row.rcIcon = row:CreateTexture(nil, "ARTWORK")
     row.rcIcon:SetPoint("CENTER", row, "LEFT", x.readyIconCenter, 0)
     row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
-    row.rcIcon:SetTexture(ReadyCheck.TEXTURES[ReadyCheck.PENDING])
+    row.rcIcon:SetTexture(ReadyCheck.TEXTURES[Status.PENDING])
 
     row.bg = row:CreateTexture(nil, "BACKGROUND")
     row.bg:SetAllPoints(row)
@@ -98,7 +100,7 @@ function Rows.Create(parent, titleBar, layout, options)
     return rows
 end
 
-local function applyRcIcon(row, unit, member, layout, context)
+local function applyRcIcon(row, member, layout, context)
     if not layout.showReadyIcon then
         row.rcIcon:Hide()
 
@@ -107,12 +109,12 @@ local function applyRcIcon(row, unit, member, layout, context)
 
     row.rcIcon:Show()
 
-    local status = context.state.rcStatus[unit] or ReadyCheck.PENDING
+    local status = ReadyCheckState.GetResponse(context.state.readyCheck, member.key)
 
-    if status == ReadyCheck.NOT_READY and not member.online then
+    if status == Status.NOT_READY and not member.online then
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
         row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
-    elseif status == ReadyCheck.PENDING and member.isDead then
+    elseif status == Status.PENDING and member.isDead then
         row.rcIcon:SetSize(
             layout.rcIconWidth * 26 / 33, layout.rcIconWidth
         )
@@ -155,10 +157,8 @@ function Rows.ApplyData(row, member, layout, context)
         return
     end
 
-    local unit = member.unit
-
     row:SetWidth(layout.frameWidth - layout.framePad * 2)
-    applyRcIcon(row, unit, member, layout, context)
+    applyRcIcon(row, member, layout, context)
     applyClassBackground(row, member)
     applyName(row, member, layout)
 

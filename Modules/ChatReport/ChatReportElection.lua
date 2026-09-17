@@ -9,28 +9,16 @@ local ADDON_PREFIX = "RCC"
 
 local reportCandidates = {}
 local mrtWillReport = false
+local collecting = false
+local electedReporter
 
 C_ChatInfo.RegisterAddonMessagePrefix(ADDON_PREFIX)
-
-local function isElectedReporter()
-    local playerName = F.unitFullName("player")
-
-    if not playerName then
-        return false
-    end
-
-    for name in pairs(reportCandidates) do
-        if name < playerName then
-            return false
-        end
-    end
-
-    return true
-end
 
 function Election.Reset()
     wipe(reportCandidates)
     mrtWillReport = false
+    collecting = false
+    electedReporter = nil
 end
 
 function Election.BroadcastIntent()
@@ -40,12 +28,33 @@ function Election.BroadcastIntent()
         return
     end
 
+    collecting = true
     reportCandidates[playerName] = true
 
     local chatType = F.chatType()
 
     if chatType ~= "SAY" then
         C_ChatInfo.SendAddonMessage(ADDON_PREFIX, "REPORT", chatType)
+    end
+end
+
+function Election.Finalize(members)
+    collecting = false
+    electedReporter = nil
+
+    -- Use the current active roster at the end of the collection window. Keep
+    -- this winner for the whole ready check: late intents or a departing winner
+    -- must not cause a second client to repeat an already-sent announcement.
+    -- A replacement election waits for the next ready check. The REPORT wire
+    -- message stays unchanged for previous-release interoperability.
+    for i = 1, #members do
+        local name = members[i].key
+
+        if reportCandidates[name]
+            and (not electedReporter or name < electedReporter)
+        then
+            electedReporter = name
+        end
     end
 end
 
@@ -68,7 +77,9 @@ function Election.HandleAddonMessage(prefix, message, channel, sender)
     end
 
     if isRccReport then
-        reportCandidates[senderKey] = true
+        if collecting then
+            reportCandidates[senderKey] = true
+        end
 
         return
     end
@@ -93,5 +104,6 @@ function Election.IsCurrentPlayerCandidate()
 end
 
 function Election.IsReporter()
-    return isElectedReporter()
+    return electedReporter ~= nil
+        and electedReporter == F.unitFullName("player")
 end
