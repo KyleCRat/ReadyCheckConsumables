@@ -221,11 +221,12 @@ function Visibility.IsReasonAllowed(definition, context, reason)
     ) == true
 end
 
-function Visibility.IsVisible(definition, context, state)
+-- Demand is decided before state/applicability. Consumers still need to
+-- observe enabled controls that can become applicable after an input change.
+function Visibility.IsRequested(definition, context)
     if not definition
         or not context
         or not isGloballyEnabled(definition)
-        or not isApplicable(definition, context, state)
     then
         return false
     end
@@ -237,4 +238,9 @@ function Visibility.IsVisible(definition, context, state)
     end
 
     return false
+end
+
+function Visibility.IsVisible(definition, context, state)
+    return Visibility.IsRequested(definition, context)
+        and isApplicable(definition, context, state)
 end

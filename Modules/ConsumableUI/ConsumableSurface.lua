@@ -52,6 +52,7 @@ function Surface.Create(parent, options)
             or Binder.Capabilities.TEMPORARY,
         preparedStates = {},
         appliedRevisions = {},
+        categories = {},
         secureDirty = false,
         geometry = copyOptions(options.geometry, DEFAULT_GEOMETRY),
         visualOptions = copyOptions(
@@ -141,20 +142,33 @@ function Surface.ApplyVisualOptions(surface, options)
     return true
 end
 
-function Surface.ApplySnapshot(surface, snapshot)
+function Surface.ApplySnapshot(surface, snapshot, categories)
     if not surface or not snapshot or not snapshot.states then
         return false
     end
 
     surface.latestSnapshot = snapshot
+    surface.categories = categories or surface.categories
 
     local inCombat = InCombatLockdown()
     local policyChanged = surface.inCombat ~= inCombat or surface.visualDirty
-    local definitions = Catalog.GetDefinitions()
+    -- Secure frames remain allocated, but inactive categories release their
+    -- prepared actions/flyouts and visual feedback once out of combat.
+    if not inCombat then
+        for key in pairs(surface.preparedStates) do
+            if not surface.categories[key] then
+                local button = surface.buttons[key]
+                Binder.Disable(button)
+                Flyout.SetChoices(button, nil)
+                View.Clear(button)
+                button:Hide()
+                surface.preparedStates[key] = nil
+                surface.appliedRevisions[key] = nil
+            end
+        end
+    end
 
-    for i = 1, #definitions do
-        local definition = definitions[i]
-        local key = definition.key
+    for key in pairs(surface.categories) do
         local button = surface.buttons[key]
         local state = snapshot.states[key]
         local revisions = snapshot.revisions[key]
@@ -225,7 +239,7 @@ function Surface.ApplyTemporaryLayout(surface, context)
 
     for i = 1, #definitions do
         local definition = definitions[i]
-        shown[definition.key] = Visibility.IsVisible(
+        shown[definition.key] = surface.categories[definition.key] == true and Visibility.IsVisible(
             definition, context, surface.buttons[definition.key].consumableState
         )
         if shown[definition.key] then signature[#signature + 1] = definition.key end

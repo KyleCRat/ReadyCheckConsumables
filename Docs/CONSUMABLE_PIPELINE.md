@@ -2,12 +2,14 @@
 
 This covers the temporary Consumables Frame, permanent Action Bar, and shared
 selectors used by managed macros. Group broadcasts and chat reports retain
-their existing contracts. The broader aura-query redesign and disabled-category
-demand filtering are separate follow-ups, not part of this refactor.
+their existing contracts. The broader aura-query redesign remains a separate
+follow-up; personal category demand is handled by this pipeline.
 
 ## Ownership
 
 ```text
+Surface settings/context -> requested categories -> input/event demand
+                                                     |
 WoW events -> pending source invalidations -> public input snapshots
                                              |
                                   category Select + Observe caches
@@ -16,7 +18,7 @@ WoW events -> pending source invalidations -> public input snapshots
                                              |
                                    Present + cached flyout choices
                                              |
-                          complete snapshot + per-category revisions
+                         requested snapshot + per-category revisions
                                              |
                           temporary frame / permanent action bar
 ```
@@ -29,6 +31,10 @@ WoW events -> pending source invalidations -> public input snapshots
 - Each category declares its `Inventory` and `Dependencies` beside its pure
   selectors and status rules. `ConsumableSelection.lua` provides mechanical
   candidate construction, not a universal scoring policy.
+- `ConsumableDemand.lua` derives source, item-ID, and weapon-slot demand from
+  the union of both surfaces' requested categories and the existing domain
+  dependencies. It also includes reader prerequisites, such as roster/context
+  for group aura observations.
 - `ConsumableRuntime.lua` caches selection and observation independently,
   evaluates time/context changes, and publishes read-only normalized state.
 - `ConsumableUI/Presenters/` formats domain results. Presenters cannot read
@@ -61,6 +67,35 @@ loading. Preferences are compared by their individual setting/cache key.
 
 ## Refresh contract
 
+Each consumer supplies a category-key set through `GetCategories()`:
+
+- The temporary frame requests enabled categories allowed by its current
+  display reasons, only while shown out of combat.
+- The Action Bar requests its enabled categories while the module is enabled,
+  even when an off-hand-only bar is hidden because the slot is inapplicable.
+- Demand is decided **before applicability**, never from the current icon's
+  visibility/status. Equipment, roster, and instance changes must still be able
+  to make an enabled category applicable again.
+- During combat the Action Bar keeps its last prepared category set; secure
+  layout/enablement changes take effect after combat. The temporary frame drops
+  its demand when it hides.
+
+The controller observes the union once, then supplies each consumer's own set
+with `ApplySnapshot(snapshot, categories)`. Disabling a category on one surface
+does not remove another surface's demand. Source events are registered only
+while needed; item reads are limited to requested inventory IDs, and weapon
+reads to requested slots. Group aura/life/range observations and repair cooldown
+reads stop when no personal consumer needs those sources. Lifecycle events
+remain registered so the pipeline can wake again.
+
+`RefreshDemand()` reconciles settings/display-context changes immediately.
+Removed categories lose their runtime cache and deadlines; unused input caches
+are dropped. Surfaces release inactive actions/flyouts and clear feedback out
+of combat. New demand refreshes live inputs before preparing controls, without
+resetting the monotonically increasing revision counter. Ordinary input events
+and deadline ticks reuse the resolved demand rather than rereading UI settings.
+With no categories requested, ongoing input reads and refresh/deadline work stop.
+
 Invalidations are a union, not an event replay queue. `inventory` can be a full
 refresh or a set of item IDs; `groupAuras` can be the full eligible roster or a
 set of unit tokens. A full invalidation supersedes narrower ones. The controller
@@ -77,8 +112,10 @@ Controller.Invalidate("preferences", { nextFrame = true })
 
 `nextFrame` schedules a new batch without the normal 0.2-second delay; it is
 still asynchronous. If a batch is already scheduled, the change joins that
-batch without changing its timing. `RequestRefresh` uses the same timing option;
-its `force = true` option allows a full refresh even without an active surface.
+batch without changing its timing. `RequestRefresh` uses the same timing option
+and reconciles demand before rereading requested sources. `RefreshNow(true)` is
+the synchronous fresh-read boundary; it never bypasses category demand to read
+disabled categories. Invalidations for unrequested sources are ignored.
 
 Readers replace observations, never append to an old aura result. A readable
 match remains confirmed when another aura made the scan incomplete. An
@@ -98,7 +135,9 @@ One shared timer wakes for the next relevant deadline. Actual expiry rereads
 the relevant source before deriving the new status; it does not loop through
 retry scans. Repair completion is a deadline even if no new cooldown event fires.
 
-Snapshots are complete and read-only. Unchanged state objects are reused;
+Snapshots are complete for the **currently requested union**, and read-only.
+An absent category means unrequested, not Missing or Unknown. Unchanged state
+objects are reused;
 `visual`, `interaction`, and `applicability` revisions let a surface catch up
 even if it did not receive the most recent delta. Opening/re-enabling explicitly
 refreshes live inputs. Visual options can repaint cached state without rescanning.
@@ -113,8 +152,9 @@ the desired primary. `missingItemVisual` covers a prepared item that was consume
 
 ## Example: a new flask aura
 
-1. `UNIT_AURA` for the player invalidates `playerAuras` and the player's group
-   observation. The controller coalesces the event with other pending changes.
+1. With Flask requested, `UNIT_AURA` for the player invalidates `playerAuras`
+   and, if Raid Buff is also requested, the player's group observation. The
+   controller coalesces the event with other pending changes.
 2. The reader obtains one normalized player aura scan. `Flask.Select` does not
    run unless inventory or the flask preference also changed:
 
@@ -152,6 +192,9 @@ a macro update, including when both personal surfaces are disabled.
 1. Register its domain in the catalog and its files in the TOC.
 2. Declare inventory IDs and selection/observation/evaluation dependencies in
    the domain. Add a new source only for genuinely new input, not a new button.
+   Include any reader prerequisites in `ConsumableDemand.lua`, and wire the
+   source's conditional event subscriptions in the controller. Existing sources
+   need no category-specific controller branch.
    Gameplay IDs belong in `Data/`, including single-spell actions such as
    Recuperate; modules consume that data rather than duplicating IDs.
 3. Implement the pure phases it needs. Omitted `Select`/`Observe` phases use an
@@ -164,6 +207,13 @@ a macro update, including when both personal surfaces are disabled.
 
 ## In-game review checklist
 
+- Demand: disable a category on one surface while keeping it active on the
+  other, then disable it on both. Re-enable it or reopen the temporary frame
+  after changing items/buffs while it was inactive; actions/status must be fresh.
+- Demand scope: try inventory-only buttons, Recuperate alone, and no enabled
+  buttons. Re-enable Repair during a cooldown and Raid Buff after roster changes.
+  Keep off-hand-only, healthstone-without-warlock, and instance-specific Vantus
+  enabled while inapplicable, then make each applicable again.
 - Food: missing, eating, fresh Well Fed, warning threshold, expiration, no food
   in bags, and an unavailable saved food choice.
 - Flask/augment: active/missing/Unknown, empty saved preference, fleeting-family

@@ -161,7 +161,7 @@ end
 -- off-hand enchant definition opts out when the slot cannot be enchanted;
 -- use its resolved applicability, not item availability or enchant status.
 local function shouldShowButton(definition)
-    if RCC.GetSetting(definition.actionBarSettingKey) ~= true then
+    if not frame.surface.categories[definition.key] then
         return false
     end
 
@@ -239,6 +239,8 @@ function ActionBar.ApplyLayout()
     pending.layout = false
     pending.visual = false
 
+    StateController.RefreshDemand()
+
     local definitions = Catalog.GetDefinitions()
     local geometry = ActionBar.GetGeometry()
     local iconsPerRow = getIconsPerRow()
@@ -299,14 +301,9 @@ function ActionBar.ApplyVisibility()
 
     pending.visibility = false
 
-    if not frame:IsShown()
-        and ActionBar.IsEnabled()
-        and ActionBar.GetEnabledCount() > 0
-    then
-        -- Refresh applicability before deciding whether an empty bar can
-        -- reopen, and prepare its secure actions before making it visible.
-        StateController.RefreshNow(true)
-    end
+    -- Reconcile enablement before showing/hiding. New categories get live
+    -- inputs and prepared actions; an off-hand-only hidden bar stays requested.
+    StateController.RefreshDemand()
 
     if ActionBar.ShouldShow() then
         frame:Show()
@@ -380,14 +377,23 @@ function ActionBar.ApplyPending()
 end
 
 StateController.RegisterConsumer("consumablesActionBar", {
-    IsActive = function()
-        -- Keep receiving equipment changes when the only enabled button is
-        -- an inapplicable off-hand enchant and the entire bar is hidden.
-        return ActionBar.IsEnabled()
-            and ActionBar.GetEnabledCount() > 0
+    GetCategories = function()
+        -- Protected buttons cannot adopt settings/layout changes in combat.
+        -- Keep their prepared categories live until out-of-combat reconciliation.
+        if InCombatLockdown() then return frame.surface.categories end
+
+        local categories = {}
+        if not ActionBar.IsEnabled() then return categories end
+
+        for _, definition in ipairs(Catalog.GetDefinitions()) do
+            if RCC.GetSetting(definition.actionBarSettingKey) == true then
+                categories[definition.key] = true
+            end
+        end
+        return categories
     end,
-    ApplySnapshot = function(_, snapshot)
-        Surface.ApplySnapshot(frame.surface, snapshot)
+    ApplySnapshot = function(_, snapshot, categories)
+        Surface.ApplySnapshot(frame.surface, snapshot, categories)
 
         local definitions = Catalog.GetDefinitions()
 

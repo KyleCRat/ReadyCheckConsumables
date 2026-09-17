@@ -6,6 +6,8 @@ local Controller = RCC.ConsumableFrameController
 local DisplayContext = RCC.DisplayContext
 local StateController = RCC.ConsumableStateController
 local Surface = RCC.ConsumableSurface
+local Catalog = RCC.ConsumableCatalog
+local Visibility = RCC.ContextualVisibility
 
 local GetTime = GetTime
 
@@ -426,6 +428,7 @@ local function onHide(self)
         self.drag:Hide()
         self.close:Hide()
     end
+    StateController.RefreshDemand()
 end
 
 --------------------------------------------------------------------------------
@@ -448,14 +451,26 @@ function Controller.Attach(consumablesFrame)
     frame:RegisterEvent("ACTIVE_DELVE_DATA_UPDATE")
 
     StateController.RegisterConsumer("temporaryConsumablesFrame", {
-        IsActive = function()
-            return frame:IsShown()
-        end,
-        ApplySnapshot = function(_, snapshot)
-            frame:UpdateReadyCheckAnchor()
-            Surface.ApplySnapshot(frame.surface, snapshot)
+        GetCategories = function()
+            local categories = {}
+            if InCombatLockdown() or not frame:IsShown()
+                or not RCC.GetSetting("consumables_enabled")
+            then
+                return categories
+            end
 
-            if not InCombatLockdown() then
+            for _, definition in ipairs(Catalog.GetDefinitions()) do
+                if Visibility.IsRequested(definition, displayContext) then
+                    categories[definition.key] = true
+                end
+            end
+            return categories
+        end,
+        ApplySnapshot = function(_, snapshot, categories)
+            Surface.ApplySnapshot(frame.surface, snapshot, categories)
+
+            if frame:IsShown() and not InCombatLockdown() then
+                frame:UpdateReadyCheckAnchor()
                 Surface.ApplyTemporaryLayout(frame.surface, displayContext)
             end
         end,

@@ -42,6 +42,14 @@
 - Centralized Recuperate spell/icon data for personal buttons and the healing-
   potion macro. Clarified the refresh API with named options and made fixed
   event registrations and weapon-slot constants explicit.
+- Personal consumable processing now follows the categories requested by the
+  visible Consumables Frame and enabled Action Bar. Unused categories no longer
+  select items, evaluate status, prepare flyouts, or retain refresh deadlines;
+  unneeded input events, group-aura checks, and repair cooldown reads stop too.
+- Both surfaces share observations for overlapping categories but render only
+  their own requests. Re-enabling refreshes live data, inapplicable enabled
+  buttons keep their recovery inputs, and prepared Action Bar buttons remain
+  usable in combat. Macros, raid broadcasts, and chat reports stay independent.
 - Centralized ready-check responses, active-roster membership, and summary
   counts in one shared session used by the Raid Status Frame and Chat Report.
   In-game previews use the same model in isolation without sending announcements.

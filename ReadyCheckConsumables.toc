@@ -138,6 +138,7 @@ Modules/ConsumableUI/Presenters/RaidBuff.lua
 Modules/ConsumableUI/Presenters/Vantus.lua
 Modules/ConsumableUI/Presenters/WeaponEnchant.lua
 
+Modules/Consumables/ConsumableDemand.lua
 Modules/Consumables/ConsumableRuntime.lua
 Modules/Consumables/ConsumableStateController.lua
 

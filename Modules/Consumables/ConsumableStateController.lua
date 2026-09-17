@@ -4,41 +4,70 @@ RCC.ConsumableStateController = Controller
 
 local Inputs = RCC.ConsumableInputs
 local Runtime = RCC.ConsumableRuntime
+local Demand = RCC.ConsumableDemand
 local F = RCC.F
 local DEFAULT_REFRESH_DELAY_SECONDS = 0.2
 local NEXT_FRAME_DELAY_SECONDS = 0
 local MIN_DEADLINE_DELAY_SECONDS = 0.02
-local SOURCES = {
-    "inventory",
-    "preferences",
-    "context",
-    "spells",
-    "weapons",
-    "roster",
-    "playerAuras",
-    "groupAuras",
-    "cooldowns",
-}
 local consumers, inputs, pending = {}, {}, {}
 local runtime = Runtime.Create()
+local demand = Demand.Build({})
 local latestSnapshot, refreshTimer, deadlineTimer
 local refreshing, combatPending = false, false
 local publishing = false
 local sourceRevision = 0
-local allItemIDs = {}
+local demandDirty, refreshRequested = false, false
+local eventFrame = CreateFrame("Frame")
 
-for _, definition in ipairs(RCC.ConsumableCatalog.GetDefinitions()) do
-    for itemID in pairs(Inputs.GetItemIDs(definition.key)) do allItemIDs[itemID] = true end
+local function setEventEnabled(event, enabled)
+    if enabled then
+        eventFrame:RegisterEvent(event)
+    else
+        eventFrame:UnregisterEvent(event)
+    end
 end
 
-local function hasActiveConsumer()
-    for _, consumer in pairs(consumers) do
-        if not consumer.IsActive or consumer:IsActive() then return true end
-    end
-    return false
+local function updateEventSubscriptions()
+    local sources = demand.sources
+    local auras = sources.playerAuras or sources.groupAuras
+
+    -- Shared observations stay subscribed while any requested category needs
+    -- them. Group life/range events are irrelevant to inventory-only buttons.
+    setEventEnabled("UNIT_AURA", auras)
+    setEventEnabled("UNIT_AURA_BLOCKED", auras)
+    setEventEnabled("UNIT_AURA_BLOCK_LIST_CLEARED", auras)
+    setEventEnabled("GROUP_ROSTER_UPDATE", sources.roster)
+    setEventEnabled("UNIT_CONNECTION", sources.groupAuras)
+    setEventEnabled("UNIT_FLAGS", sources.groupAuras)
+    setEventEnabled("UNIT_PHASE", sources.groupAuras)
+    setEventEnabled("UNIT_IN_RANGE_UPDATE", sources.groupAuras)
+    setEventEnabled("UNIT_HEALTH", sources.groupAuras) -- Life transitions only.
+
+    setEventEnabled("ZONE_CHANGED_NEW_AREA", sources.context or sources.roster)
+    setEventEnabled("PLAYER_DIFFICULTY_CHANGED", sources.context or sources.roster)
+
+    setEventEnabled("BAG_UPDATE_DELAYED", sources.inventory)
+    setEventEnabled("ITEM_COUNT_CHANGED", sources.inventory)
+    setEventEnabled("ITEM_DATA_LOAD_RESULT", sources.inventory)
+    setEventEnabled("BAG_UPDATE_COOLDOWN", sources.cooldowns)
+
+    setEventEnabled("WEAPON_ENCHANT_CHANGED", sources.weapons)
+    setEventEnabled("WEAPON_SLOT_CHANGED", sources.weapons)
+    setEventEnabled("PLAYER_EQUIPMENT_CHANGED", sources.weapons)
+    setEventEnabled("UNIT_INVENTORY_CHANGED", sources.weapons)
+
+    local spellContext = sources.spells or sources.context or sources.weapons
+    setEventEnabled("SPELLS_CHANGED", spellContext)
+    setEventEnabled("SPELL_DATA_LOAD_RESULT", spellContext)
+    setEventEnabled("PLAYER_SPECIALIZATION_CHANGED", spellContext)
+end
+
+local function hasDemand()
+    return next(demand.categories) ~= nil
 end
 
 local function merge(source, scope)
+    if not demand.sources[source] then return end
     scope = scope or true
     if pending[source] == true or scope == true then
         pending[source] = true
@@ -50,7 +79,39 @@ local function merge(source, scope)
 end
 
 local function invalidateAll()
-    for _, source in ipairs(SOURCES) do merge(source) end
+    for source in pairs(demand.sources) do merge(source) end
+end
+
+local function reconcileDemand()
+    local categories = {}
+    local consumersChanged = false
+    for _, entry in pairs(consumers) do
+        local requested = entry.consumer:GetCategories()
+        if not Inputs.Equal(entry.categories, requested) then
+            entry.categories = requested
+            entry.dirty = true
+        end
+        consumersChanged = consumersChanged or entry.dirty
+        for key in pairs(requested) do categories[key] = true end
+    end
+
+    if Inputs.Equal(demand.categories, categories) then
+        return false, consumersChanged
+    end
+
+    demand = Demand.Build(categories)
+    Runtime.RetainCategories(runtime, categories)
+    for source in pairs(inputs) do
+        if not demand.sources[source] then inputs[source] = nil end
+    end
+    for source in pairs(pending) do
+        if not demand.sources[source] then pending[source] = nil end
+    end
+    updateEventSubscriptions()
+    -- Opening/enabling is a fresh-read boundary. This also trims inventory and
+    -- weapon snapshots to the new union, without retaining disabled deadlines.
+    invalidateAll()
+    return true, consumersChanged
 end
 
 local function cancelDeadline()
@@ -66,7 +127,7 @@ local function getRefreshDelay(options)
 end
 
 local function schedule(delaySeconds)
-    if refreshing or refreshTimer or not hasActiveConsumer() then return end
+    if refreshing or refreshTimer or (not hasDemand() and not demandDirty) then return end
     refreshTimer = C_Timer.NewTimer(delaySeconds or DEFAULT_REFRESH_DELAY_SECONDS, function()
         refreshTimer = nil
         Controller.FlushPending()
@@ -77,6 +138,7 @@ end
 -- or unit-token set. nextFrame skips the normal delay when scheduling a new
 -- batch. An already scheduled batch keeps its timing and includes this change.
 function Controller.Invalidate(source, options)
+    if not demand.sources[source] then return end
     merge(source, options and options.scope)
     schedule(getRefreshDelay(options))
 end
@@ -97,19 +159,19 @@ local function readInputs(dirty, now)
         if not Inputs.Equal(inputs.context, context) then
             storeInput("context", context)
             resetGroup = true
-            dirty.playerAuras = true
+            dirty.playerAuras = demand.sources.playerAuras
         end
     end
     if dirty.inventory then
-        storeInput("inventory", Inputs.ReadInventory(allItemIDs, inputs.inventory,
+        storeInput("inventory", Inputs.ReadInventory(demand.itemIDs, inputs.inventory,
             type(dirty.inventory) == "table" and dirty.inventory or nil))
-        dirty.cooldowns = true
+        dirty.cooldowns = demand.sources.cooldowns
     end
     if dirty.spells then storeInput("spells", Inputs.ReadSpells()) end
     if dirty.weapons then
-        storeInput("weapons", Inputs.ReadWeapons(now))
+        storeInput("weapons", Inputs.ReadWeapons(now, demand.weaponSlots))
         Inputs.RememberAppliedEnchants(inputs.weapons)
-        dirty.preferences = true
+        dirty.preferences = demand.sources.preferences
     end
     if dirty.preferences then storeInput("preferences", Inputs.ReadPreferences()) end
 
@@ -126,7 +188,7 @@ local function readInputs(dirty, now)
         storeInput("roster", roster)
     end
     if dirty.playerAuras then storeInput("playerAuras", RCC.HelpfulAuraScan.ScanUnit("player")) end
-    if resetGroup or next(groupUnits) or dirty.roster then
+    if demand.sources.groupAuras and (resetGroup or next(groupUnits) or dirty.roster) then
         local previous = inputs.groupAuras
         if resetGroup then previous, groupUnits = nil, nil end
         storeInput("groupAuras", Inputs.ReadGroupAuras(inputs.roster, inputs.context, previous, groupUnits, now,
@@ -135,20 +197,22 @@ local function readInputs(dirty, now)
     if dirty.cooldowns then storeInput("cooldowns", Inputs.ReadCooldowns(inputs.inventory, now)) end
 end
 
-local function publish(snapshot)
+local function publish(snapshot, includeInactive)
     if publishing then return end
     publishing = true
-    for _, consumer in pairs(consumers) do
-        if (not consumer.IsActive or consumer:IsActive()) and consumer.ApplySnapshot then
-            consumer:ApplySnapshot(snapshot)
+    for _, entry in pairs(consumers) do
+        if next(entry.categories) or entry.dirty or includeInactive then
+            entry.dirty = false
+            entry.consumer:ApplySnapshot(snapshot, entry.categories)
         end
     end
     publishing = false
+    if demandDirty then schedule(NEXT_FRAME_DELAY_SECONDS) end
 end
 
 local function scheduleDeadline()
     cancelDeadline()
-    if not hasActiveConsumer() then return end
+    if not hasDemand() then return end
     local deadline = Runtime.GetDeadline(runtime)
     if deadline then
         deadlineTimer = C_Timer.NewTimer(math.max(MIN_DEADLINE_DELAY_SECONDS, deadline - GetTime()), function()
@@ -158,16 +222,27 @@ local function scheduleDeadline()
     end
 end
 
-function Controller.FlushPending(force)
+function Controller.FlushPending(forceRefresh)
     if refreshing or publishing then return false end
     if refreshTimer then refreshTimer:Cancel(); refreshTimer = nil end
-    if not force and not hasActiveConsumer() then cancelDeadline(); return false end
-    if not latestSnapshot then invalidateAll() end
+
+    local categoriesChanged, consumersChanged = false, false
+    if demandDirty or forceRefresh or not latestSnapshot then
+        demandDirty = false
+        categoriesChanged, consumersChanged = reconcileDemand()
+    end
+    if forceRefresh or refreshRequested then invalidateAll() end
+    refreshRequested = false
 
     local now = GetTime()
     local due, expiredSources = Runtime.GetDue(runtime, now)
     for source in pairs(expiredSources) do merge(source) end
-    if not next(pending) and not next(due) and latestSnapshot then return false end
+    if not next(pending) and not next(due) and latestSnapshot and not categoriesChanged then
+        if consumersChanged then publish(latestSnapshot) end
+        scheduleDeadline()
+        if demandDirty then schedule(NEXT_FRAME_DELAY_SECONDS) end
+        return consumersChanged
+    end
 
     -- Detach before querying/publishing: invalidations raised during this pass
     -- belong to the next batch, never to a table we're about to wipe.
@@ -176,70 +251,73 @@ function Controller.FlushPending(force)
     refreshing = true
     local previousRevision = sourceRevision
     readInputs(dirty, now)
-    if latestSnapshot and previousRevision == sourceRevision and not next(due) then
+    if latestSnapshot and not categoriesChanged and previousRevision == sourceRevision and not next(due) then
+        if consumersChanged then publish(latestSnapshot) end
         refreshing = false
         scheduleDeadline()
-        if next(pending) then schedule() end
-        return false
+        if next(pending) or demandDirty then schedule() end
+        return consumersChanged
     end
-    latestSnapshot = Runtime.Build(runtime, inputs, now, due)
+    latestSnapshot = Runtime.Build(runtime, inputs, now, due, demand.categories)
     publish(latestSnapshot)
     refreshing = false
     scheduleDeadline()
-    if next(pending) then schedule() end
+    if next(pending) or demandDirty then schedule() end
     return true
 end
 
 -- Full refresh is an explicit opening/re-enabling boundary, not the default
--- event path. Cached state remains complete for consumers that were hidden.
+-- event path. It reads only requested inputs, even when force is true.
 function Controller.RefreshNow(force)
-    -- A consumer may open/reflow itself while receiving this very snapshot.
-    -- It must not recursively publish or schedule another full read.
-    if refreshing or publishing then return false end
-    if force then invalidateAll() end
+    -- A consumer may open itself while receiving this very snapshot. Retain
+    -- the request for a trailing pass rather than recursively reading/publishing.
+    if refreshing or publishing then
+        demandDirty = true
+        if force then refreshRequested = true end
+        return false
+    end
     local changed = Controller.FlushPending(force)
-    if not changed and latestSnapshot and hasActiveConsumer() then publish(latestSnapshot) end
+    if not changed and latestSnapshot then publish(latestSnapshot) end
     return changed
 end
 
+-- Visibility/settings can change without an input event, including while a
+-- consumer is applying a snapshot. Preserve a trailing demand reconciliation.
+function Controller.RefreshDemand()
+    demandDirty = true
+    if refreshing or publishing then return false end
+    return Controller.FlushPending()
+end
+
 function Controller.RequestRefresh(options)
-    invalidateAll()
-    if options and options.force == true then
-        -- Force requests still batch; login/settings initialization can occur
-        -- before a visible consumer exists.
-        if refreshTimer then refreshTimer:Cancel() end
-        refreshTimer = C_Timer.NewTimer(getRefreshDelay(options), function()
-            refreshTimer = nil
-            Controller.FlushPending(true)
-        end)
-    else
-        schedule(getRefreshDelay(options))
-    end
+    demandDirty = true
+    refreshRequested = true
+    schedule(getRefreshDelay(options))
 end
 
 function Controller.PrepareOutOfCombat()
     if InCombatLockdown() then return false end
     if combatPending then
         combatPending = false
-        invalidateAll()
+        demandDirty = true
+        refreshRequested = true
     end
     return Controller.FlushPending()
 end
 
 function Controller.RegisterConsumer(key, consumer)
-    consumers[key] = consumer
-    -- Consumers also register while the TOC is loading, before saved settings
-    -- and later modules are ready. Login owns the first live observation.
-    if latestSnapshot and (not consumer.IsActive or consumer:IsActive()) then
-        consumer:ApplySnapshot(latestSnapshot)
-        Controller.RequestRefresh({ nextFrame = true, force = true })
+    consumers[key] = { consumer = consumer, categories = {}, dirty = true }
+    -- Consumers register while the TOC is loading, before saved settings and
+    -- later modules are ready. Surface initialization/login starts observation.
+    if latestSnapshot then
+        Controller.RequestRefresh({ nextFrame = true })
     end
     return true
 end
 
 function Controller.UnregisterConsumer(key)
     consumers[key] = nil
-    if not hasActiveConsumer() then cancelDeadline() end
+    Controller.RefreshDemand()
 end
 
 function Controller.GetLatestSnapshot()
@@ -256,27 +334,25 @@ local function rosterUnit(unit)
     end
 end
 
-local eventFrame = CreateFrame("Frame")
 eventFrame:SetScript("OnEvent", function(_, event, unit)
     if event == "PLAYER_LOGIN" then
-        Controller.RequestRefresh({ nextFrame = true, force = true })
+        Controller.RequestRefresh({ nextFrame = true })
     elseif event == "PLAYER_ENTERING_WORLD" then
-        invalidateAll()
-        schedule(NEXT_FRAME_DELAY_SECONDS)
+        Controller.RequestRefresh({ nextFrame = true })
     elseif event == "PLAYER_REGEN_DISABLED" then
         combatPending = true
         -- Refresh public data and reapply the combat visual policy immediately.
-        invalidateAll()
-        if hasActiveConsumer() then
-            local changed = Controller.FlushPending()
-            if not changed and latestSnapshot then publish(latestSnapshot) end
-        end
+        Controller.RefreshNow(true)
     elseif event == "PLAYER_REGEN_ENABLED" then
         Controller.PrepareOutOfCombat()
-        if latestSnapshot then publish(latestSnapshot) end
+        -- Hidden temporary surfaces may still need to release actions that
+        -- could not be cleared when their demand ended during combat.
+        if latestSnapshot then publish(latestSnapshot, true) end
     elseif event == "UNIT_AURA" or event == "UNIT_AURA_BLOCKED" or event == "UNIT_AURA_BLOCK_LIST_CLEARED" then
-        if F.UnitIsUnitSafe(unit, "player") then Controller.Invalidate("playerAuras") end
-        local token = rosterUnit(unit)
+        if demand.sources.playerAuras and F.UnitIsUnitSafe(unit, "player") then
+            Controller.Invalidate("playerAuras")
+        end
+        local token = demand.sources.groupAuras and rosterUnit(unit)
         if token then
             Controller.Invalidate("groupAuras", { scope = { [token] = true } })
         end
@@ -290,7 +366,6 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         -- Dead/ghost members are excluded from the raid-buff check. Watch only
         -- life-state transitions so resurrected members rejoin that check;
         -- ordinary damage/healing must not invalidate the cached observations.
-        if not hasActiveConsumer() then return end
         if not inputs.context or not inputs.context.raidBuff then return end
 
         local token = rosterUnit(unit)
@@ -314,7 +389,7 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
     elseif event == "BAG_UPDATE_DELAYED" then
         Controller.Invalidate("inventory")
     elseif event == "ITEM_COUNT_CHANGED" or event == "ITEM_DATA_LOAD_RESULT" then
-        if F.IsSafeNumber(unit) and allItemIDs[unit] then
+        if F.IsSafeNumber(unit) and demand.itemIDs[unit] then
             Controller.Invalidate("inventory", { scope = { [unit] = true } })
         end
     elseif event == "BAG_UPDATE_COOLDOWN" then
@@ -337,37 +412,3 @@ eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-
--- Player and group aura observations.
-eventFrame:RegisterEvent("UNIT_AURA")
-eventFrame:RegisterEvent("UNIT_AURA_BLOCKED")
-eventFrame:RegisterEvent("UNIT_AURA_BLOCK_LIST_CLEARED")
-
--- Roster membership and raid-buff eligibility.
-eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-eventFrame:RegisterEvent("UNIT_CONNECTION")
-eventFrame:RegisterEvent("UNIT_FLAGS")
-eventFrame:RegisterEvent("UNIT_PHASE")
-eventFrame:RegisterEvent("UNIT_IN_RANGE_UPDATE")
-eventFrame:RegisterEvent("UNIT_HEALTH") -- Death/resurrection only; no health values read.
-
--- Instance-dependent selection and warning thresholds.
-eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-eventFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED")
-
--- Item availability, metadata, and repair cooldowns.
-eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
-eventFrame:RegisterEvent("ITEM_COUNT_CHANGED")
-eventFrame:RegisterEvent("ITEM_DATA_LOAD_RESULT")
-eventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
-
--- Equipped weapons and their temporary enchants.
-eventFrame:RegisterEvent("WEAPON_ENCHANT_CHANGED")
-eventFrame:RegisterEvent("WEAPON_SLOT_CHANGED")
-eventFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
-eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
-
--- Known spell choices and specialization-dependent slot rules.
-eventFrame:RegisterEvent("SPELLS_CHANGED")
-eventFrame:RegisterEvent("SPELL_DATA_LOAD_RESULT")
-eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")

@@ -4,7 +4,7 @@ RCC.ConsumableRuntime = Runtime
 
 local Inputs = RCC.ConsumableInputs
 local State = RCC.ConsumableState
-local definitions = RCC.ConsumableCatalog.GetDefinitions()
+local Catalog = RCC.ConsumableCatalog
 
 local EMPTY = {}
 
@@ -39,10 +39,19 @@ function Runtime.Create()
     return { categories = {}, revision = 0 }
 end
 
-function Runtime.Build(runtime, inputs, now, due)
+function Runtime.RetainCategories(runtime, categories)
+    for key in pairs(runtime.categories) do
+        if not categories[key] then runtime.categories[key] = nil end
+    end
+end
+
+-- Snapshots are complete for the requested categories only. Absent categories
+-- were not requested, not observed as missing. Dropped caches lose their
+-- deadlines; reactivation starts fresh without resetting the revision counter.
+function Runtime.Build(runtime, inputs, now, due, categories)
     local snapshot = { generatedAt = now, states = {}, revisions = {}, changed = {} }
-    for _, definition in ipairs(definitions) do
-        local key = definition.key
+    for key in pairs(categories) do
+        local definition = Catalog.GetDefinition(key)
         local domain = RCC.Consumables[definition.domain]
         local presenter = RCC.ConsumablePresenters[definition.domain]
         local deps = domain.Dependencies

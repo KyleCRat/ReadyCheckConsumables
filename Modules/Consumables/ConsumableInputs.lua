@@ -153,18 +153,20 @@ function Inputs.ReadWeaponSlot(slotID, now)
     }
 end
 
-function Inputs.ReadWeapons(now)
-    return {
-        [MAIN_HAND_INVENTORY_SLOT] = Inputs.ReadWeaponSlot(MAIN_HAND_INVENTORY_SLOT, now),
-        [OFF_HAND_INVENTORY_SLOT] = Inputs.ReadWeaponSlot(OFF_HAND_INVENTORY_SLOT, now),
-    }
+function Inputs.ReadWeapons(now, requestedSlots)
+    local weapons = {}
+    for _, slotID in ipairs(WEAPON_INVENTORY_SLOTS) do
+        if not requestedSlots or requestedSlots[slotID] then
+            weapons[slotID] = Inputs.ReadWeaponSlot(slotID, now)
+        end
+    end
+    return weapons
 end
 
 function Inputs.RememberAppliedEnchants(weapons)
     -- An explicit, idempotent domain side effect, before selection. Rendering
     -- and macro resolution must never silently change a saved preference.
-    for _, slotID in ipairs(WEAPON_INVENTORY_SLOTS) do
-        local slot = weapons[slotID]
+    for slotID, slot in pairs(weapons) do
         local data = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID]
         if data and data.item then
             Cache.Set(RCC.Consumables.WeaponEnchant.GetCacheKey(slotID), data.item)

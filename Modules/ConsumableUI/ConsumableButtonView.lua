@@ -202,6 +202,21 @@ function View.ApplyVisualOptions(button, options, isFlyout)
     end
 end
 
+-- A released category has no observation to render. Clear stale feedback
+-- without manufacturing a Missing/Unknown state for an unrequested button.
+function View.Clear(button)
+    button.consumableState = nil
+    button.hoverStateActive = false
+    button.count:SetText("")
+    button.detailText:SetText("")
+    button.statustexture:Hide()
+    button.qualityIcon:Hide()
+    if button.unavailableOverlay then button.unavailableOverlay:Hide() end
+    applyCooldown(button)
+    Glow.Stop(button)
+    Glow.SetHovered(button, false)
+end
+
 local function applyIconCrop(texture, width, height)
     if not texture or width <= 0 or height <= 0 then return end
 
