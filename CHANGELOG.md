@@ -7,6 +7,9 @@
 - Reorganized the README around personal consumables, group readiness, and
   macros, with clearer consumable lists, common settings beside each feature,
   and a separate advanced reference for behavior, macro syntax, and commands.
+- Rewrote the contributor consumable guide as an end-to-end Flask walkthrough,
+  with concrete data and snapshot examples, event-to-button tracing, and guidance
+  for adding items or new button categories.
 - Removed the Action Bar Only checkbox. The Consumables Frame and Action Bar
   now use only their independent Enabled settings, and resetting the Action
   Bar no longer changes Consumables Frame enablement.

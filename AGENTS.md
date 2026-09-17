@@ -121,7 +121,8 @@ data.
 - `Modules/Consumables/` owns the canonical consumable catalog, neutral action
   descriptors, public input readers, category dependency declarations, pure
   selection/status resolution, and the shared state controller. See
-  `Docs/CONSUMABLE_PIPELINE.md` for the data flow and extension checklist.
+  `Docs/CONSUMABLE_PIPELINE.md` for the implementation walkthrough and examples
+  of adding items or button categories.
 - `Modules/ConsumableUI/Presenters/` translates domain results into normalized
   personal-surface view state without live queries or preference writes.
 - `Modules/ConsumableUI/` owns shared button rendering, secure action binding,

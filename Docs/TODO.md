@@ -49,6 +49,46 @@ whether those changes already resolve a follow-up before adding more caching.
   neither personal surface requests it. Verify fresh ready-item selection and
   timely cooldown completion after re-enabling, including during a cooldown.
 
+## In-game review checklist
+
+- Demand: disable a category on one surface while keeping it active on the
+  other, then disable it on both. Re-enable it or reopen the temporary frame
+  after changing items/buffs while it was inactive; actions/status must be fresh.
+- Demand scope: try inventory-only buttons, Recuperate alone, and no enabled
+  buttons. Re-enable Repair during a cooldown and Raid Buff after roster changes.
+  Keep off-hand-only, healthstone-without-warlock, and instance-specific Vantus
+  enabled while inapplicable, then make each applicable again.
+- Food: missing, eating, fresh Well Fed, warning threshold, expiration, no food
+  in bags, and an unavailable saved food choice.
+- Flask/augment: active/missing/Unknown, empty saved preference, fleeting-family
+  fallback, unlimited preference, duration warning, and expiry without bag changes.
+- Weapon enchants: empty/non-enchantable slots, applied oils, known spell
+  alternatives and slot restrictions, preference selection, weapon swaps,
+  expiration, and off-hand-only Action Bar hide/reopen.
+- Raid buff: buff/unbuff one member, death/resurrection, offline/reconnect,
+  phase/range changes, subgroup/bench changes, scroll alternatives, and Evoker's
+  class-specific equivalents. Repeat with only Raid Buff enabled and with other
+  aura categories enabled to cover both targeted queries and player-scan reuse.
+- Secret auras: with the Essence of Yu'lon cosmetic active, check present and
+  missing Skyfury on both personal surfaces and the Raid Status Frame. Missing
+  Skyfury should not be Unknown; unresolved food/flask/rune data still can be.
+  Off-map/out-of-phase members stay Unknown rather than becoming missing.
+  Repeat public raid-buff checks in combat, and reload with the cosmetic active
+  to exercise policy-cache initialization.
+- Inventory-only buttons: potion preference/fallback, healthstone charges and
+  warlock roster changes, stasis, and Recuperate.
+- Repair: ready Jeeves, ready Auto-Hammer fallback, both cooling down, cooldown
+  completion with no inventory change, cooldown visuals on flyout choices, and
+  prepared-item visuals when the preferred device changes during combat.
+- Inky Black Potion: colored optional icon/buff, duration, and no ready/missing mark.
+- Vantus: enter/leave a supported raid, apply/remove rune, and action/flyout gating.
+- Both personal surfaces: right-click preferences, hide/reopen, layout and visual
+  settings, non-square icons, each flyout direction, and movement providers.
+- Combat: prepared primary use, closed flyouts, suppressed glows, live status
+  and durations, then fresh action/flyout bindings immediately after combat.
+- Macros: both personal modules disabled, preference/fallback updates, equipment
+  changes, and deferred combat updates.
+
 ## Review
 
 - Review consumable priority/data structures before extracting shared selector
