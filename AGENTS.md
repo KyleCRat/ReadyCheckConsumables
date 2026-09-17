@@ -122,8 +122,7 @@ data.
   selection/status resolution, and the shared state controller. See
   `Docs/CONSUMABLE_PIPELINE.md` for the data flow and extension checklist.
 - `Modules/ConsumableUI/Presenters/` translates domain results into normalized
-  personal-surface view state without live queries or preference writes. The
-  dormant Armor Kit prototype remains under `ConsumableFrame/Presenters/`.
+  personal-surface view state without live queries or preference writes.
 - `Modules/ConsumableUI/` owns shared button rendering, secure action binding,
   flyouts, surface application, and cross-page settings behavior.
 - `Modules/ConsumableFrame/` owns the temporary personal frame, contextual

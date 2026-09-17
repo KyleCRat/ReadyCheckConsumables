@@ -123,7 +123,6 @@ Modules/Consumables/Vantus.lua
 Modules/Consumables/WeaponEnchant.lua
 Modules/Consumables/Recuperate.lua
 
-Modules/ConsumableFrame/Presenters/ArmorKit.lua
 Modules/ConsumableUI/Presenters/Food.lua
 Modules/ConsumableUI/Presenters/Flask.lua
 Modules/ConsumableUI/Presenters/Augment.lua

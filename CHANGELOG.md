@@ -66,6 +66,11 @@
   issuing group chat. Keep one reporter for each check and cancel pending work
   on combat, group exit, travel, difficulty changes, or a replacement ready check.
 
+### Removed
+
+- Removed the unused temporary Armor Kit prototype and its icon configuration.
+  Permanent-enchant data is unchanged; existing consumable features are unaffected.
+
 ## [12.1.0-25] - 2026-09-09
 
 ### Fixed

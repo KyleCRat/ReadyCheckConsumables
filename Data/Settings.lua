@@ -12,7 +12,6 @@ RCC.db = RCC.db or {}
 RCC.settings = {
     [RCC.SHADOWLANDS] = {
         augment       = { iconID = 134078 },
-        armorKit      = { itemID = 3528447 },
     },
     [RCC.DRAGONFLIGHT] = {},
     [RCC.THE_WAR_WITHIN] = {
@@ -47,7 +46,6 @@ RCC.db.augmentIconID        = 4549099
 RCC.db.weaponEnchantIconID  = 463543
 RCC.db.foodIconID           = 136000
 RCC.db.flaskIconID          = 3528447
-RCC.db.armorKitIconID       = 3566840
 RCC.db.healthstoneItemID    = 5512
 RCC.db.healthstoneIconID    = 538745
 RCC.db.raidBuffIconID       = 134400
@@ -67,7 +65,6 @@ local iconKeys = {
     { setting = "healingPotion", dbKey = "healingPotionIconID" },
     { setting = "recuperate",    dbKey = "recuperateIconID" },
     { setting = "weaponEnchant", dbKey = "weaponEnchantIconID" },
-    { setting = "armorKit",      dbKey = "armorKitIconID" },
     { setting = "healthstone",   dbKey = "healthstoneIconID" },
     { setting = "vantusRune",    dbKey = "vantusIconID" },
 }

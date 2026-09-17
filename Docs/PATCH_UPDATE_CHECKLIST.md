@@ -71,8 +71,8 @@ may replace items or applied spell IDs while retaining familiar names.
 - [ ] Augment Rune items and auras.
 - [ ] Temporary weapon-enchant items, effects, enchant IDs, and weapon-slot
   applicability.
-- [ ] Gems, permanent enchants, armor kits, and any class/spec applicability
-  changes.
+- [ ] Gems, permanent enchants (including leg armor kits), and any class/spec
+  applicability changes.
 - [ ] Raid buffs, class spell changes, and removed or newly added classes/specs.
 - [ ] Item ranks, preferred ordering, icons, durations, and quality labels.
 - [ ] New data files are loaded in dependency order by
