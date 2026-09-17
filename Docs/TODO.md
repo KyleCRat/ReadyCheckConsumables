@@ -47,50 +47,6 @@ whether those changes already resolve a follow-up before adding more caching.
   neither personal surface requests it. Verify fresh ready-item selection and
   timely cooldown completion after re-enabling, including during a cooldown.
 
-## 12.1.0 / Interface 120100 Upgrade
-
-- [ ] In the next LibModernSettings release, replace the slider tooltip hooks
-  in `Libs/LibModernSettings-1.0/Controls/Slider.lua` with
-  `Slider:SetTooltipFunc` and `Settings.InitTooltip`. Release the library
-  update, then advance RCC's pinned library commit. Confirm the method exists
-  on the live `MinimalSliderWithSteppersTemplate` slider as part of that
-  library change.
-- [ ] Find and verify the remaining data for the provisional 12.1 consumables.
-  RCC currently includes only the supplied PTR item IDs; combat-potion quality
-  metadata is intentionally unset until it can be confirmed.
-  - Liquid Luster: item `271887`, use spell `1295132`.
-    - https://www.wowhead.com/item=274763/fleeting-liquid-luster
-    - https://www.wowhead.com/item=274764/fleeting-liquid-luster
-  - Alluring Nostrum: item `271890`, use spell `1295015`.
-    - https://www.wowhead.com/item=274765/fleeting-alluring-nostrum
-    - https://www.wowhead.com/item=274766/fleeting-alluring-nostrum
-  - Identify every quality rank, priority order, and fleeting or other alternate
-    item variant.
-  - Confirm final effects, shared cooldown categories, and any separate aura
-    spell IDs on a later PTR build or the final live client.
-
-  - Liquid Luster: item `271887`, use spell `1295132`.
-    - https://www.wowhead.com/item=274763/fleeting-liquid-luster
-    - https://www.wowhead.com/item=274764/fleeting-liquid-luster
-  - Alluring Nostrum: item `271890`, use spell `1295015`.
-    - https://www.wowhead.com/item=274765/fleeting-alluring-nostrum
-    - https://www.wowhead.com/item=274766/fleeting-alluring-nostrum
-
-https://www.wowhead.com/item=275261/sweet-and-sour-skewers
-https://www.wowhead.com/item=275263/hearty-sweet-and-sour-skewers
-
-https://www.wowhead.com/item=275260/puffer-plate
-https://www.wowhead.com/item=275262/hearty-puffer-plate
-
-https://www.wowhead.com/item=275258/venom-spiced-cutlets
-https://www.wowhead.com/item=275259/hearty-venom-spiced-cutlets
-
-https://www.wowhead.com/item=275264/amani-cornucopia
-https://www.wowhead.com/item=275267/hearty-amani-cornucopia
-
-https://www.wowhead.com/item=275266/feast-of-knowledge
-https://www.wowhead.com/item=275269/hearty-feast-of-knowledge
-
 ## Review
 
 - Review consumable priority/data structures before extracting shared selector
