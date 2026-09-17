@@ -2,8 +2,8 @@
 
 This covers the temporary Consumables Frame, permanent Action Bar, and shared
 selectors used by managed macros. Group broadcasts and chat reports retain
-their existing contracts. The broader aura-query redesign remains a separate
-follow-up; personal category demand is handled by this pipeline.
+their existing contracts. Personal raid-buff observations use targeted queries;
+food and the Raid Status Frame still use full helpful-aura scans.
 
 ## Ownership
 
@@ -118,11 +118,55 @@ the synchronous fresh-read boundary; it never bypasses category demand to read
 disabled categories. Invalidations for unrequested sources are ignored.
 
 Readers replace observations, never append to an old aura result. A readable
-match remains confirmed when another aura made the scan incomplete. An
-unresolved buff is Unknown after an incomplete scan, not missing. World/context
-and roster identity changes discard the affected observation cache. Group
-member aura events refresh that member, not every group member; a fresh player
-scan can also answer the player's own raid-buff check.
+match remains confirmed when another aura could not be identified. Unknown is
+not missing: the shared aura boundary distinguishes a finished enumeration from
+one in which every aura was identifiable, as described below. World/context and
+roster identity changes discard the affected observation cache. Group member
+aura events refresh that member, not every group member.
+
+### Raid-buff queries and secrecy
+
+`AuraScan.lua` owns live aura queries and public-field normalization for both
+acquisition paths. `RaidBuffStatus.lua` builds each buff's accepted spell-ID list
+from `Data/RaidBuffs.lua`: primary, optional scroll, and class-specific equivalents.
+At `PLAYER_LOGIN`, it asks the aura boundary to cache Blizzard's base secrecy
+policy for every accepted ID. The cache lasts only until logout/reload; it is
+neither a copied whitelist nor SavedVariables data.
+
+`AuraScan.FindBySpellID(unit, spellID)` owns the single-spell safety checks,
+Blizzard lookup, and normalized result. `available = true` means the query could
+answer; `aura` is present only when the buff was found. `FindFirstBySpellIDs`
+calls that function for each alternative in order and returns the first found
+aura, not the first successful-but-empty query. If none is found, any unavailable
+alternative keeps the combined result Unknown. An empty list is unavailable.
+
+- The personal Raid Buff button queries only the player's class-provided buff
+  with `C_UnitAuras.GetUnitAuraBySpellID`. It stops on a readable matching variant.
+  Missing requires readable absence for every accepted variant. Non-NeverSecret
+  variants also require a current `ShouldSpellAuraBeSecret` check; a suppressed
+  query is Unknown, not a missing buff.
+- General aura restrictions do not block targeted queries for NeverSecret IDs.
+  Unit visibility, connection, phase, API errors, and secret return values still
+  gate what the addon can conclude.
+- The existing per-member observation cache, unit-scoped invalidations, and
+  expiration deadlines are unchanged. Both personal surfaces share that work.
+  When another category already obtained a fresh full player scan, use it if it
+  proves presence or absence; otherwise try the targeted query. A blocked full
+  scan does not prevent a separate public query from answering the raid-buff check.
+- Full scans return `complete` only after reaching the end without a query or
+  invalid-data error, and `available` only if every aura was also identifiable.
+  Found public matches remain valid regardless of those flags. A finished scan
+  containing unidentified secret auras can prove a raid buff missing only if
+  **all** its accepted spell IDs are cached as NeverSecret.
+- The Raid Status Frame still scans all helpful auras for food and the other
+  columns. Its raid-buff columns use the same category-specific absence rule;
+  they do not change the whole scan's `available` flag. Unresolved food/flask/
+  rune observations remain Unknown, and aura-derived chat reports still require
+  a fully available scan for every active online member.
+
+For example, a finished scan with an unidentified cosmetic aura can still show
+missing Skyfury when Blizzard marks Skyfury NeverSecret. RCC never needs to know
+the cosmetic's spell ID or assume that every secret aura is harmless.
 
 Selection dependencies are distinct from observation/evaluation dependencies.
 For example, an aura update can change a flask's status without recounting
@@ -222,7 +266,15 @@ a macro update, including when both personal surfaces are disabled.
   alternatives and slot restrictions, preference selection, weapon swaps,
   expiration, and off-hand-only Action Bar hide/reopen.
 - Raid buff: buff/unbuff one member, death/resurrection, offline/reconnect,
-  phase/range changes, subgroup/bench changes, and incomplete/secret aura scans.
+  phase/range changes, subgroup/bench changes, scroll alternatives, and Evoker's
+  class-specific equivalents. Repeat with only Raid Buff enabled and with other
+  aura categories enabled to cover both targeted queries and player-scan reuse.
+- Secret auras: with the Essence of Yu'lon cosmetic active, check present and
+  missing Skyfury on both personal surfaces and the Raid Status Frame. Missing
+  Skyfury should not be Unknown; unresolved food/flask/rune data still can be.
+  Off-map/out-of-phase members stay Unknown rather than becoming missing.
+  Repeat public raid-buff checks in combat, and reload with the cosmetic active
+  to exercise policy-cache initialization.
 - Inventory-only buttons: potion preference/fallback, healthstone charges and
   warlock roster changes, stasis, and Recuperate.
 - Repair: ready Jeeves, ready Auto-Hammer fallback, both cooling down, cooldown

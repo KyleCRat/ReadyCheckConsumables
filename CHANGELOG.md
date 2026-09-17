@@ -16,8 +16,7 @@
 - Removed persistent reminder glows from the Action Bar to reduce idle CPU
   usage. Hover glows and temporary Consumables Frame reminders are unchanged.
 - Separated flyout configuration from choice updates, avoiding duplicate
-  rendering and unchanged layout work. Deferred the broader aura-lookup review
-  until the first three performance refactors are confirmed in game.
+  rendering and unchanged layout work.
 - Action Bar flyouts now close when combat starts and remain disabled until
   combat ends. Choose preferred items before combat; primary buttons remain
   usable with their preselected items and spells during combat.
@@ -29,7 +28,15 @@
   longer run the full consumable pipeline.
 - Cached raid-buff observations per group member, refreshing affected members
   on aura, connection, phase, range, and life-state changes. The player's fresh
-  aura scan is reused when checking their own raid buff.
+  aura scan is reused when it can answer their own raid-buff check.
+- The personal Raid Buff button now uses targeted spell-ID queries instead of
+  full group-member aura scans, shared by the Consumables Frame and Action Bar.
+  Scroll and class-specific equivalents remain supported, and public raid buffs
+  can still be checked during combat. The Raid Status Frame keeps its full scans.
+- Separated reusable single-spell aura lookups from first-matching-variant
+  searches, keeping their availability and secret-value handling consistent.
+- Read Blizzard's raid-buff secrecy policies once each login/reload rather than
+  maintaining a hardcoded list, covering every supported aura variant.
 - Separated visual, interaction, and applicability revisions so both personal
   surfaces can apply only changed state. Combat-end reconciliation refreshes
   desired data before rebinding secure actions; opening a hidden surface still
@@ -56,6 +63,9 @@
 
 ### Fixed
 
+- Missing never-secret raid buffs no longer become Unknown just because an
+  unrelated secret aura is present. Inaccessible units and failed scans remain
+  Unknown; food, other consumables, and chat-report completeness rules are unchanged.
 - Fixed Action Bar flyouts failing to switch when hovering directly between
   primary buttons. Hovering inside an open flyout still blocks overlapping
   primary buttons, and flyouts remain unavailable in combat.

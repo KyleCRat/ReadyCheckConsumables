@@ -482,6 +482,10 @@ local function collectRaidBuffAura(data, aura, _, column)
     RaidBuffStatus.CollectAura(data, aura, column.index)
 end
 
+local function finalizeRaidBuffScan(data, scan, column)
+    RaidBuffStatus.ApplyScanAvailability(data, scan, column.index)
+end
+
 local function isRaidBuffBad(member, context, column)
     local data = getColumnData(member, column)
 
@@ -502,6 +506,7 @@ local function createRaidBuffColumn(raidBuffIndex)
         statusName         = buffInfo.label,
         CreateData         = createRaidBuffData,
         CollectAura        = collectRaidBuffAura,
+        FinalizeAuraScan    = finalizeRaidBuffScan,
         IsBad              = isRaidBuffBad,
     }
 end
@@ -669,7 +674,7 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
         rules     = rules,
     }
 
-    local scanAvailable = F.ForEachHelpfulAura(unit, function(aura)
+    local scan = RCC.HelpfulAuraScan.ForEachAura(unit, function(aura)
         scanContext.remaining = F.GetAuraRemaining(
             aura.expirationTime,
             now
@@ -689,20 +694,15 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
         end
     end)
 
-    columnData.auraScanAvailable = scanAvailable
-
-    if not scanAvailable then
-        -- CollectAura makes confirmed matches available independently. Keep
-        -- those results while leaving unmatched columns unknown.
-        return columnData
-    end
+    columnData.auraScanAvailable = scan.available
 
     for columnIndex = 1, #columns do
         local column = columns[columnIndex]
+        local data = columnData[column.key]
 
-        if column.CollectAura then
-            local data = columnData[column.key]
-
+        if column.FinalizeAuraScan then
+            column.FinalizeAuraScan(data, scan, column)
+        elseif column.CollectAura and scan.available then
             if data then
                 data.available = true
 

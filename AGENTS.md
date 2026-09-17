@@ -28,7 +28,8 @@ data.
   dot calls.
 - Treat secret or restricted values as an expected runtime state. Use the
   helpers in `Functions.lua` and the centralized scan boundary in `AuraScan.lua`.
-  Never infer "missing" when an aura scan was unavailable.
+  Follow that boundary's availability rules; an unreadable result alone is
+  never evidence that a buff is missing.
 - Use `spellID` in RCC-owned data and APIs. Blizzard's raw aura field is named
   `spellId`; normalize it to `spellID` at the boundary.
 - One released RCC version of backward interoperability is sufficient unless a

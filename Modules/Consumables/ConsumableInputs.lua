@@ -215,24 +215,23 @@ function Inputs.ReadGroupAuras(roster, context, previous, units, now, freshPlaye
         if member.eligible then
             if previous and units and not units[unit] and previous[unit] then
                 observations[unit] = previous[unit]
-            elseif freshPlayerAuras and F.UnitIsUnitSafe(unit, "player") then
-                local observation = { available = freshPlayerAuras.available, has = false }
-                for _, aura in ipairs(freshPlayerAuras.auras) do
-                    if RCC.RaidBuffStatus.AuraMatches(info.index, aura) then
-                        observation.available = true
-                        observation.has = true
-                        observation.expirationTime = aura.expirationTime
-                            and aura.expirationTime > 0 and aura.expirationTime or nil
-                        break
-                    end
-                end
-                observations[unit] = observation
             else
-                local status = RCC.RaidBuffStatus.GetUnitStatus(unit, info.index, now)
+                local status
+
+                if freshPlayerAuras and F.UnitIsUnitSafe(unit, "player") then
+                    status = RCC.RaidBuffStatus.GetStatusFromScan(freshPlayerAuras, info.index, now)
+                end
+
+                -- Reuse a conclusive full player scan. If it was restricted,
+                -- a targeted public raid-buff query can still answer in combat.
+                if not status or not status.available then
+                    status = RCC.RaidBuffStatus.GetUnitStatus(unit, info.index, now)
+                end
+
                 observations[unit] = {
                     available = status.available,
                     has = status.has,
-                    expirationTime = status.time and status.time > 0 and now + status.time or nil,
+                    expirationTime = status.expirationTime,
                 }
             end
         end

@@ -10,26 +10,28 @@
 ## ConsumableActionBar
 - Add icon styling controls (Should have same options as EUI allows for action bars at minimum) (Possibly add to ALL icons so they don't inherit base / eui / dominos look? maybe allow changing between these?)
 
-## Aura Lookup Deep Dive (After Refactors 1-3)
+## Aura Lookup Validation
 
-- [ ] After flyout updates, dependency-aware refreshes, and disabled-category
-  filtering are implemented and individually confirmed in game, review aura
-  acquisition across the addon before deciding on a broader refactor.
-  - Compare targeted `C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)` queries
-    with shared full scans for each consumer, starting with raid-buff checks.
-  - Preserve primary, scroll, and class-specific equivalent aura IDs.
-  - Distinguish confirmed absence from an invisible/unavailable unit or a
-    secret aura; retain normalized public fields and Unknown semantics.
-  - Review unit/event refresh scope, expiration handling, and categories that
-    need generic icon matching or several aura types rather than known IDs.
-  - Measure representative solo, party, raid, and combat cases before choosing
-    targeted queries, shared scans, or caching for each path.
+- [x] Use targeted spell-ID queries for the shared personal Raid Buff button,
+  retaining per-member caching and reusing conclusive fresh player scans.
+  Preserve primary, scroll, and class-specific equivalent IDs. Keep full scans
+  for food and the Raid Status Frame rather than replacing generic icon detection.
+- [x] Cache Blizzard's secrecy policies at login/reload. A finished full scan
+  can confirm missing raid buffs whose accepted IDs are all NeverSecret even
+  after skipping an unrelated secret aura. Do not relax whole-scan availability
+  for other consumables or chat reports.
+- [ ] Confirm the targeted and full-scan paths in game: present/missing buffs
+  with an always-secret cosmetic, scroll and Evoker variants, combat, off-map/
+  out-of-phase members, login/reload, and expiration-driven refreshes.
+- [ ] Measure solo, party, and raid CPU with Raid Buff alone and alongside
+  other aura categories. Confirm that disabled personal raid-buff checks perform
+  no group queries and that both personal surfaces share the observations.
 
 ## Performance Follow-ups (After Major Refactors)
 
 Review these after the flyout update cleanup, dependency-aware consumable
-refreshes, and disabled-category filtering. The separate aura lookup deep dive
-above will determine the scope of any later aura refactor.
+refreshes, and disabled-category filtering. Complete the aura lookup validation
+above before considering further changes to aura acquisition.
 Implement and confirm each major step in game before starting the next. Check
 whether those changes already resolve a follow-up before adding more caching.
 
