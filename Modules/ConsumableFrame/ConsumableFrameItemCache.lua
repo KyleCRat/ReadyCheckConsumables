@@ -45,6 +45,7 @@ function Cache.Set(cacheKey, itemID)
 
     if previousItemID ~= itemID then
         scheduleMacroUpdate()
+        RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
     end
 end
 
@@ -63,6 +64,7 @@ function Cache.Clear(cacheKey)
 
     if previousItemID ~= nil then
         scheduleMacroUpdate()
+        RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
     end
 end
 
@@ -81,41 +83,4 @@ function Cache.Get(cacheKey)
     if type(cachedItemID) == "number" then
         return cachedItemID
     end
-end
-
-function Cache.FindCandidate(candidates, itemID)
-    if not candidates or not itemID then return end
-
-    for i = 1, #candidates do
-        local candidate = candidates[i]
-
-        if candidate.itemID == itemID then
-            return candidate
-        end
-    end
-end
-
-function Cache.SelectCandidate(cacheKey, candidates, unavailableCandidate)
-    local cachedItemID = Cache.Get(cacheKey)
-    local cachedCandidate = Cache.FindCandidate(candidates, cachedItemID)
-
-    if cachedCandidate then
-        return cachedCandidate
-    end
-
-    if unavailableCandidate
-        and cachedItemID
-        and unavailableCandidate.itemID == cachedItemID
-    then
-        return unavailableCandidate
-    end
-
-    return candidates and candidates[1]
-end
-
-function Cache.IsUnavailableCachedCandidate(cacheKey, candidate)
-    if not candidate or not candidate.itemID then return false end
-
-    return candidate.itemID == Cache.Get(cacheKey)
-           and (candidate.count or 0) <= 0
 end

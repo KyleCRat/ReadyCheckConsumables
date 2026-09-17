@@ -1,22 +1,27 @@
 local _, RCC = ...
+local InkyBlackPotion = {}
+RCC.Consumables.InkyBlackPotion = InkyBlackPotion
+local S = RCC.ConsumableSelection
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.InkyBlackPotion =
-    RCC.Consumables.InkyBlackPotion or {}
+InkyBlackPotion.Inventory = { itemID = RCC.db.inkyBlackPotionItemID }
 
-local InkyBlackPotion = RCC.Consumables.InkyBlackPotion
+InkyBlackPotion.Dependencies = {
+    selection = { "inventory" }, observation = { "playerAuras" },
+    evaluation = { "context.warningSeconds" }, expiration = "playerAuras",
+}
 
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+function InkyBlackPotion.Select(inputs)
+    return S.WithItemAction(S.Result(S.Item(inputs.inventory, RCC.db.inkyBlackPotionItemID), {}))
+end
 
 function InkyBlackPotion.GetItemCandidate()
-    local itemID = RCC.db.inkyBlackPotionItemID
+    return InkyBlackPotion.Select(RCC.ConsumableInputs.ReadSelection("inkyBlackPotion")).candidate
+end
 
-    return {
-        itemID = itemID,
-        count = ItemCandidates.GetCount(
-            itemID,
-            ItemCandidates.BAGS_ONLY
-        ),
-        icon = ItemCandidates.GetIcon(itemID),
-    }
+function InkyBlackPotion.Observe(inputs)
+    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.inkyBlackPotionBuffIDs)
+end
+
+function InkyBlackPotion.Evaluate(selection, observation, inputs, now)
+    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
 end

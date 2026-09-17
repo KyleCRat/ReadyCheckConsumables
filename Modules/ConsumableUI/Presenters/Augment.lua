@@ -1,11 +1,9 @@
 local _, RCC = ...
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.Augment = RCC.Consumables.Augment or {}
+RCC.ConsumablePresenters = RCC.ConsumablePresenters or {}
+local Augment = {}
+RCC.ConsumablePresenters.Augment = Augment
 
-local Augment = RCC.Consumables.Augment
-
-local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableState
 
 local CacheKey = RCC.ConsumableItemCacheKey
@@ -13,20 +11,11 @@ local CacheKey = RCC.ConsumableItemCacheKey
 local OUT_OF_ITEMS = "No Augment Runes found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Augment Rune not found in Bags"
 
-local function getAuraState(state)
-    local aura = Auras.FindBySpellID(state, RCC.db.augmentBuffIDs)
-
-    return Auras.ToConsumableState(
-        aura,
-        { includeExpirationState = true }
-    )
-end
-
-function Augment.ResolveState(state)
-    local augmentState = getAuraState(state)
+function Augment.Present(model)
+    local augmentState = model.effect
     local isAugment = augmentState and augmentState.satisfied
     local augmentCandidate, augmentCandidates, outOfCachedAugment =
-        Augment.GetItemCandidate(true)
+        RCC.ConsumableSelection.Unpack(model.selection)
     local augmentItemID = augmentCandidate and augmentCandidate.itemID
     local augmentItemCount = augmentCandidate and augmentCandidate.count
     local augmentItemIcon = augmentCandidate and augmentCandidate.icon
@@ -35,9 +24,9 @@ function Augment.ResolveState(state)
     ButtonState.ApplyActiveAura(buttonState, augmentState)
 
     if augmentItemID then
-        buttonState.countText = Augment.GetCountText(augmentCandidate)
+        buttonState.countText = RCC.Consumables.Augment.GetCountText(augmentCandidate)
         buttonState.tooltipItemID = augmentItemID
-        buttonState.qualityItemID = augmentItemID
+        ButtonState.SetItemQuality(buttonState, augmentCandidate)
 
         if augmentItemIcon then
             buttonState.icon = augmentItemIcon
@@ -47,9 +36,7 @@ function Augment.ResolveState(state)
     end
 
     if augmentItemID and augmentItemCount and augmentItemCount > 0 then
-        buttonState.action = ButtonState.CreateItemAction(augmentItemID, {
-            preferenceKey = CacheKey.AUGMENT,
-        })
+        buttonState.action = model.action
     elseif outOfCachedAugment then
         buttonState.countText = "0"
 
@@ -67,20 +54,25 @@ function Augment.ResolveState(state)
     buttonState.glow = augmentItemCount ~= nil
                        and augmentItemCount > 0
                        and not isAugment
-    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
+
+    ButtonState.ApplyAuraScanAvailability(
+        buttonState,
+        model.available == true
+    )
+
+    return buttonState
+end
+
+function Augment.Choices(selection)
+    local augmentCandidate, augmentCandidates, outOfCachedAugment = RCC.ConsumableSelection.Unpack(selection)
+    local augmentItemID = augmentCandidate and augmentCandidate.itemID
+    return ButtonState.CreateItemFlyoutChoices(
         augmentCandidates,
         augmentItemID,
         {
-            getCountText = Augment.GetCountText,
+            getCountText = RCC.Consumables.Augment.GetCountText,
             preferenceKey = CacheKey.AUGMENT,
             includeSingleChoice = outOfCachedAugment,
         }
     )
-
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        state and state.available == true
-    )
-
-    return buttonState
 end

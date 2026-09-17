@@ -1,18 +1,21 @@
 local _, RCC = ...
+local ConsumableStasis = {}
+RCC.Consumables.ConsumableStasis = ConsumableStasis
+local S = RCC.ConsumableSelection
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.ConsumableStasis =
-    RCC.Consumables.ConsumableStasis or {}
+ConsumableStasis.Inventory = { list = RCC.db.consumableStasisItemIDs }
 
-local ConsumableStasis = RCC.Consumables.ConsumableStasis
+ConsumableStasis.Dependencies = { selection = { "inventory" } }
 
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+function ConsumableStasis.Select(inputs)
+    local candidates = S.List(inputs.inventory, RCC.db.consumableStasisItemIDs)
+    local result = S.Result(candidates[1], candidates)
+    result.fallback = S.Item(inputs.inventory, RCC.db.consumableStasisItemIDs[1])
+    return S.WithItemAction(result)
+end
 
 function ConsumableStasis.GetItemCandidate()
-    return ItemCandidates.FindFirstAvailable(
-        RCC.db.consumableStasisItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
+    return ConsumableStasis.Select(RCC.ConsumableInputs.ReadSelection("consumableStasis")).candidate
 end
 
 function ConsumableStasis.GetDefaultItemID()

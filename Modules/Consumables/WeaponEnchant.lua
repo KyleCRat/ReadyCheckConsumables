@@ -1,25 +1,21 @@
 local _, RCC = ...
-
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.WeaponEnchant = RCC.Consumables.WeaponEnchant or {}
-
-local WeaponEnchant = RCC.Consumables.WeaponEnchant
-
-local F = RCC.F
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local WeaponEnchant = {}
+RCC.Consumables.WeaponEnchant = WeaponEnchant
+local S = RCC.ConsumableSelection
 local State = RCC.ConsumableState
-local Timing = RCC.ConsumableTiming
-
 local CacheKey = RCC.ConsumableItemCacheKey
-local GetSpellInfo = C_Spell.GetSpellInfo
-local IsSpellKnown = C_SpellBook.IsSpellKnown
-local GetItemInfoInstant = C_Item.GetItemInfoInstant
-local GetTemporaryEnchantmentInfo =
-    C_PaperDollInfo.GetTemporaryEnchantmentInfo
 
-local MAIN_HAND_INVENTORY_SLOT = 16
-local OFF_HAND_INVENTORY_SLOT = 17
+local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
+local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
+local MILLISECONDS_PER_SECOND = 1000
+
+WeaponEnchant.Inventory = { map = RCC.db.weaponEnchantItemIDs }
+
+WeaponEnchant.Dependencies = {
+    selection = { "inventory", "slotPreference", "slotWeapon", "spells" },
+    observation = { "slotWeapon" }, evaluation = { "context.warningSeconds" },
+    expiration = "weapons",
+}
 
 WeaponEnchant.MAIN_HAND_INVENTORY_SLOT = MAIN_HAND_INVENTORY_SLOT
 WeaponEnchant.OFF_HAND_INVENTORY_SLOT = OFF_HAND_INVENTORY_SLOT
@@ -32,334 +28,141 @@ function WeaponEnchant.GetCacheKey(slotID)
     end
 end
 
-local function getCachedWeaponEnchantCandidate(slotID)
-    return ItemCandidates.CreateFromMap(
-        RCC.db.weaponEnchantItemIDs,
-        ItemCache.Get(WeaponEnchant.GetCacheKey(slotID)),
-        ItemCandidates.BAGS_ONLY
-    )
+local function knows(inputs, data)
+    local spell = data and data.spellID and inputs.spells[data.spellID]
+    return spell and spell.known == true
 end
 
-function WeaponEnchant.GetData(enchantID)
-    return RCC.db.weaponEnchants[enchantID or 0]
-end
-
-function WeaponEnchant.GetIcon(enchantData)
-    if not enchantData then return end
-
-    local icon = enchantData.icon or ItemCandidates.GetIcon(enchantData.item)
-
-    if icon then
-        return icon
+local function matchesRule(inputs, rule)
+    for _, enchantID in ipairs(rule.requiresKnownEnchants or {}) do
+        if not knows(inputs, RCC.db.weaponEnchants[enchantID]) then return false end
     end
-
-    local spellInfo = enchantData.spellID and GetSpellInfo(enchantData.spellID)
-
-    return spellInfo and spellInfo.iconID
-end
-
-function WeaponEnchant.CacheActiveEnchantItem(slotID, enchantData)
-    if enchantData and enchantData.item then
-        ItemCache.Set(WeaponEnchant.GetCacheKey(slotID), enchantData.item)
+    for _, enchantID in ipairs(rule.blockedByKnownEnchants or {}) do
+        if knows(inputs, RCC.db.weaponEnchants[enchantID]) then return false end
     end
-end
-
-local function isBetterWeaponEnchantCandidate(candidate, best)
-    local data = candidate.data or {}
-    local bestData = best.data or {}
-    local xpac = data.xpac or 0
-    local rank = data.q or 0
-    local bestXpac = bestData.xpac or 0
-    local bestRank = bestData.q or 0
-
-    return xpac > bestXpac
-        or (xpac == bestXpac and rank > bestRank)
-        or (xpac == bestXpac and rank == bestRank
-            and candidate.itemID > (best.itemID or 0))
-end
-
-function WeaponEnchant.CollectItemCandidatesInBags()
-    local candidates = ItemCandidates.CollectAvailableFromMap(
-        RCC.db.weaponEnchantItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-
-    table.sort(candidates, isBetterWeaponEnchantCandidate)
-
-    return candidates
-end
-
-function WeaponEnchant.CanSlotBeEnchanted(slotID)
-    local itemID = GetInventoryItemID("player", slotID)
-
-    if not itemID then return false end
-
-    local itemClassID = select(6, GetItemInfoInstant(itemID))
-
-    return itemClassID == 2
-end
-
-local function getPublicEnchantField(enchantInfo, field)
-    if not enchantInfo
-        or issecretvalue(enchantInfo)
-        or type(enchantInfo) ~= "table"
-    then
-        return nil
-    end
-
-    local value = enchantInfo[field]
-
-    if issecretvalue(value) then
-        return nil
-    end
-
-    return value
-end
-
-function WeaponEnchant.BuildSlotState(slotID, enchantInfo)
-    local canBeEnchanted = WeaponEnchant.CanSlotBeEnchanted(slotID)
-    local hasEnchant = canBeEnchanted
-        and enchantInfo ~= nil
-        and not issecretvalue(enchantInfo)
-        and type(enchantInfo) == "table"
-    local remainingTimeMs = hasEnchant
-        and getPublicEnchantField(enchantInfo, "remainingTimeMs")
-    local enchantID = hasEnchant
-        and getPublicEnchantField(enchantInfo, "enchantID")
-    local chargesRemaining = hasEnchant
-        and getPublicEnchantField(enchantInfo, "chargesRemaining")
-    local hasExpirationTime = hasEnchant
-        and getPublicEnchantField(enchantInfo, "hasExpirationTime") == true
-
-    if not F.IsSafeNumber(remainingTimeMs) then
-        remainingTimeMs = nil
-    end
-
-    if not F.IsSafeNumber(enchantID) or enchantID <= 0 then
-        enchantID = nil
-    end
-
-    if not F.IsSafeNumber(chargesRemaining) then
-        chargesRemaining = nil
-    end
-
-    return {
-        canBeEnchanted = canBeEnchanted,
-        hasEnchant = hasEnchant,
-        remainingTimeMs = remainingTimeMs,
-        enchantID = enchantID,
-        chargesRemaining = chargesRemaining,
-        hasExpirationTime = hasExpirationTime,
-        slotID = slotID,
-    }
-end
-
-function WeaponEnchant.IsExpiringSoon(slotState)
-    return slotState
-           and slotState.hasExpirationTime == true
-           and F.IsSafeNumber(slotState.remainingTimeMs)
-           and Timing.IsExpiringSoon(slotState.remainingTimeMs / 1000)
-end
-
-local function playerKnowsSpellEnchantData(enchantData)
-    return enchantData
-           and type(enchantData.spellID) == "number"
-           and IsSpellKnown(enchantData.spellID)
-end
-
-local function playerKnowsWeaponEnchantSpell(enchantID)
-    local enchantData = RCC.db.weaponEnchants[enchantID]
-
-    return playerKnowsSpellEnchantData(enchantData)
-end
-
-local function spellSlotRuleMatchesKnownSpells(slotRule)
-    local required = slotRule.requiresKnownEnchants
-
-    if required then
-        for i = 1, #required do
-            if not playerKnowsWeaponEnchantSpell(required[i]) then
-                return false
-            end
-        end
-    end
-
-    local blocked = slotRule.blockedByKnownEnchants
-
-    if blocked then
-        for i = 1, #blocked do
-            if playerKnowsWeaponEnchantSpell(blocked[i]) then
-                return false
-            end
-        end
-    end
-
     return true
 end
 
-local function addKnownSpellEnchantCandidate(candidates, enchantID, enchantData,
-                                             slotRule)
-    if playerKnowsSpellEnchantData(enchantData)
-        and spellSlotRuleMatchesKnownSpells(slotRule)
-    then
-        candidates[#candidates + 1] = {
-            enchantID = enchantID,
-            enchantData = enchantData,
-            priority = slotRule.priority or 0,
-        }
-    end
+local function enchantIcon(inputs, data)
+    if not data then return end
+    local item = data.item and inputs.inventory[data.item]
+    local spell = data.spellID and inputs.spells[data.spellID]
+    return data.icon or (item and item.icon) or (spell and spell.icon)
 end
 
-function WeaponEnchant.CollectKnownSpellEnchantCandidatesForSlot(slotID)
-    local candidates = {}
-
-    for enchantID, enchantData in pairs(RCC.db.weaponEnchants) do
-        local slotRule = enchantData.spellSlots
-            and enchantData.spellSlots[slotID]
-
-        if slotRule then
-            addKnownSpellEnchantCandidate(candidates, enchantID, enchantData,
-                                          slotRule)
-        end
-    end
-
-    table.sort(candidates, function(a, b)
-        if a.priority == b.priority then
-            return a.enchantID < b.enchantID
-        end
-
-        return a.priority < b.priority
-    end)
-
-    return candidates
-end
-
-local function selectKnownSpellEnchantForSlot(slotID)
-    local candidates = WeaponEnchant.CollectKnownSpellEnchantCandidatesForSlot(
-        slotID
-    )
-
-    if candidates[1] then
-        return candidates[1].enchantData
-    end
-end
-
-function WeaponEnchant.CreateSpellEnchantAction(enchantData, slotState)
-    if not enchantData or not enchantData.spellID then return end
-
-    local spellInfo = GetSpellInfo(enchantData.spellID)
-    local spellName = spellInfo and spellInfo.name
-
-    if not spellName then return end
-
-    return State.CreateSpellAction(enchantData.spellID, {
-        spellName = spellName,
-        available = slotState.canBeEnchanted,
-        preferenceKey = WeaponEnchant.GetCacheKey(slotState.slotID),
+local function spellAction(inputs, data, slotID)
+    local spell = data and data.spellID and inputs.spells[data.spellID]
+    if not spell or not spell.name then return end
+    return State.CreateSpellAction(data.spellID, {
+        spellName = spell.name,
+        available = inputs.weapons[slotID].canBeEnchanted,
+        preferenceKey = WeaponEnchant.GetCacheKey(slotID),
     })
 end
 
-local function selectSpellEnchantForSlot(slotID, activeEnchantData)
-    if playerKnowsSpellEnchantData(activeEnchantData) then
-        return activeEnchantData
-    end
-
-    return selectKnownSpellEnchantForSlot(slotID)
+local function betterItem(a, b)
+    local ad, bd = a.data, b.data
+    if (ad.xpac or 0) ~= (bd.xpac or 0) then return (ad.xpac or 0) > (bd.xpac or 0) end
+    if (ad.q or 0) ~= (bd.q or 0) then return (ad.q or 0) > (bd.q or 0) end
+    return a.itemID > b.itemID
 end
 
-local function shouldPreferSpellEnchant(hasEnchant, activeEnchantData)
-    return not hasEnchant
-           or playerKnowsSpellEnchantData(activeEnchantData)
-end
+function WeaponEnchant.Select(inputs, _, slotID)
+    local slot = inputs.weapons[slotID]
+    local result = {
+        applicable = slot.canBeEnchanted,
+        slotID = slotID,
+        preferenceKey = WeaponEnchant.GetCacheKey(slotID),
+        candidates = {},
+        spells = {},
+    }
+    if not result.applicable then return result end
 
-function WeaponEnchant.CreateItemEnchantAction(candidate, slotState)
-    if not candidate or not candidate.itemID then return end
-
-    return State.CreateItemAction(candidate.itemID, {
-        targetSlot = slotState.slotID,
-        available = slotState.canBeEnchanted
-                    and (candidate.count or 0) > 0,
-        preferenceKey = WeaponEnchant.GetCacheKey(slotState.slotID),
-    })
-end
-
-local function selectWeaponEnchantItemForSlot(slotID, candidates)
-    return ItemCache.SelectCandidate(
-        WeaponEnchant.GetCacheKey(slotID),
-        candidates,
-        getCachedWeaponEnchantCandidate(slotID)
-    )
-end
-
-function WeaponEnchant.ResolveAction(slotState, activeEnchantData,
-                                     itemCandidates)
-    if not slotState or not slotState.canBeEnchanted then return end
-
-    local spellEnchant = selectSpellEnchantForSlot(
-        slotState.slotID,
-        activeEnchantData
-    )
-
-    if shouldPreferSpellEnchant(slotState.hasEnchant, activeEnchantData) then
-        local spellAction = WeaponEnchant.CreateSpellEnchantAction(
-            spellEnchant,
-            slotState
-        )
-
-        if spellAction then
-            return {
-                kind = "spell",
-                action = spellAction,
-                spellEnchant = spellEnchant,
+    result.active = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID] or nil
+    result.activeIcon = enchantIcon(inputs, result.active)
+    result.candidates = S.Map(inputs.inventory, RCC.db.weaponEnchantItemIDs)
+    table.sort(result.candidates, betterItem)
+    for enchantID, data in pairs(RCC.db.weaponEnchants) do
+        local rule = data.spellSlots and data.spellSlots[slotID]
+        if rule and knows(inputs, data) and matchesRule(inputs, rule) then
+            result.spells[#result.spells + 1] = {
+                enchantID = enchantID, data = data, priority = rule.priority or 0,
+                icon = enchantIcon(inputs, data), action = spellAction(inputs, data, slotID),
             }
         end
     end
+    table.sort(result.spells, function(a, b)
+        if a.priority ~= b.priority then return a.priority < b.priority end
+        return a.enchantID < b.enchantID
+    end)
 
-    local candidate = selectWeaponEnchantItemForSlot(
-        slotState.slotID,
-        itemCandidates
-    )
+    local spellEnchant = knows(inputs, result.active) and result.active
+        or (result.spells[1] and result.spells[1].data)
+    if not slot.hasEnchant or knows(inputs, result.active) then
+        result.action = spellAction(inputs, spellEnchant, slotID)
+        if result.action then
+            result.kind = "spell"
+            result.spellEnchant = spellEnchant
+            result.icon = enchantIcon(inputs, spellEnchant)
+            return result
+        end
+    end
 
-    return {
-        kind = "item",
-        action = WeaponEnchant.CreateItemEnchantAction(candidate, slotState),
-        itemCandidate = candidate,
-        outOfCachedItem = ItemCache.IsUnavailableCachedCandidate(
-            WeaponEnchant.GetCacheKey(slotState.slotID),
-            candidate
-        ),
-    }
+    local preferredID = inputs.preferences[result.preferenceKey]
+    local cached = S.CachedMap(inputs.inventory, RCC.db.weaponEnchantItemIDs, preferredID)
+    result.candidate = S.Preferred(result.candidates, preferredID, cached)
+    result.kind = "item"
+    local candidate = result.candidate
+    result.unavailable = candidate ~= nil and candidate.itemID == preferredID and candidate.count <= 0
+    if candidate then
+        result.icon = candidate.icon
+        result.action = State.CreateItemAction(candidate.itemID, {
+            targetSlot = slotID, available = candidate.count > 0,
+            preferenceKey = result.preferenceKey,
+        })
+    end
+    return result
 end
 
+-- Compatibility adapter for the group broadcaster, not the personal cache.
+-- Keep its millisecond/hasExpirationTime contract while sharing the safe reader.
 function WeaponEnchant.GetCurrentSlotState(slotID)
     if slotID ~= MAIN_HAND_INVENTORY_SLOT
         and slotID ~= OFF_HAND_INVENTORY_SLOT
     then
-        return nil
+        return
     end
-
-    return WeaponEnchant.BuildSlotState(
-        slotID,
-        GetTemporaryEnchantmentInfo(slotID)
-    )
+    local now = GetTime()
+    local slot = RCC.ConsumableInputs.ReadWeaponSlot(slotID, now)
+    slot.remainingTimeMs = slot.expirationTime
+        and math.max(0, slot.expirationTime - now) * MILLISECONDS_PER_SECOND
+    return slot
 end
 
 function WeaponEnchant.GetActionForSlot(slotID)
-    local slotState = WeaponEnchant.GetCurrentSlotState(slotID)
+    local category
+    if slotID == MAIN_HAND_INVENTORY_SLOT then
+        category = "mainHandTempWeaponEnchant"
+    elseif slotID == OFF_HAND_INVENTORY_SLOT then
+        category = "offHandTempWeaponEnchant"
+    else
+        return
+    end
+    return WeaponEnchant.Select(RCC.ConsumableInputs.ReadSelection(category), true, slotID).action
+end
 
-    if not slotState or not slotState.canBeEnchanted then return end
+function WeaponEnchant.Observe(inputs, slotID)
+    return inputs.weapons[slotID]
+end
 
-    local itemCandidates = WeaponEnchant.CollectItemCandidatesInBags()
-    local activeEnchantData = slotState.hasEnchant
-        and WeaponEnchant.GetData(slotState.enchantID)
-
-    WeaponEnchant.CacheActiveEnchantItem(slotID, activeEnchantData)
-
-    local resolution = WeaponEnchant.ResolveAction(
-        slotState,
-        activeEnchantData,
-        itemCandidates
-    )
-
-    return resolution and resolution.action
+function WeaponEnchant.Evaluate(selection, observation, inputs, now)
+    local remaining = observation.expirationTime and observation.expirationTime - now
+    local model = {
+        selection = selection, available = observation.available,
+        hasEnchant = observation.hasEnchant and (not remaining or remaining > 0),
+        remaining = remaining and math.max(0, remaining),
+        expiringSoon = remaining ~= nil and remaining <= inputs.context.warningSeconds,
+    }
+    RCC.ConsumableEffects.AddDeadline(model, observation.expirationTime, inputs.context, now)
+    return model
 end

@@ -35,7 +35,7 @@ local function setTextColor(fontString, bad)
     fontString:SetTextColor(color.r, color.g, color.b)
 end
 
-local function setQualityOverlay(button, itemID)
+local function setQualityOverlay(button, itemID, atlas, resolved)
     local qualityIcon = button.qualityIcon
 
     if not qualityIcon then return end
@@ -49,13 +49,15 @@ local function setQualityOverlay(button, itemID)
         return
     end
 
-    if cache.qualityItemID == itemID and qualityIcon:IsShown() then
+    if cache.qualityItemID == itemID and cache.qualityAtlas == atlas and qualityIcon:IsShown() then
         return
     end
 
-    local info = GetItemReagentQualityInfo(itemID)
-
-    if not info or not info.iconSmall then
+    if not atlas and not resolved then
+        local info = GetItemReagentQualityInfo(itemID)
+        atlas = info and info.iconSmall
+    end
+    if not atlas then
         cache.qualityItemID = nil
         qualityIcon:Hide()
 
@@ -63,7 +65,8 @@ local function setQualityOverlay(button, itemID)
     end
 
     cache.qualityItemID = itemID
-    qualityIcon:SetAtlas(info.iconSmall, false)
+    cache.qualityAtlas = atlas
+    qualityIcon:SetAtlas(atlas, false)
     qualityIcon:Show()
 end
 
@@ -154,7 +157,7 @@ function View.ApplyVisual(button, state)
     button.detailText:SetText(state.detailText or "")
     button.detailText:SetShown(not button.hideDurationText)
     setTextColor(button.detailText, state.detailTextIsBad == true)
-    setQualityOverlay(button, state.qualityItemID)
+    setQualityOverlay(button, state.qualityItemID, state.qualityAtlas, state.qualityResolved)
     applyCooldown(button, state.cooldown)
     Glow.Set(button, state.glow == true and not InCombatLockdown())
     Tooltips.UpdateUnavailableOverlay(button)

@@ -1,11 +1,9 @@
 local _, RCC = ...
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.Vantus = RCC.Consumables.Vantus or {}
+RCC.ConsumablePresenters = RCC.ConsumablePresenters or {}
+local Vantus = {}
+RCC.ConsumablePresenters.Vantus = Vantus
 
-local Vantus = RCC.Consumables.Vantus
-
-local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableState
 local F = RCC.F
 
@@ -24,24 +22,24 @@ local function getAuraBossName(aura)
     return bossName
 end
 
-function Vantus.ResolveState(state)
-    local vantusRuneIDs = Vantus.GetRuneIDsForCurrentRaid()
+function Vantus.Present(model)
+    local selection = model.selection
 
-    if not vantusRuneIDs then
+    if not selection.applicable then
         return ButtonState.Create({ applicable = false })
     end
 
-    local vantusAura = Auras.FindBySpellID(state, RCC.db.vantusBuffIDs)
+    local vantusAura = model.effect
     local bossName = getAuraBossName(vantusAura)
     local candidate, candidates, outOfCachedItem =
-        Vantus.GetItemCandidate(vantusRuneIDs, true)
+        RCC.ConsumableSelection.Unpack(selection)
 
     local itemID = candidate and candidate.itemID
     local count = candidate and candidate.count or 0
     local icon = candidate and candidate.icon
 
     if not itemID then
-        itemID, icon = Vantus.GetFallbackItem(vantusRuneIDs)
+        itemID, icon = selection.fallback.itemID, selection.fallback.icon
     end
 
     local buttonState = ButtonState.Create()
@@ -70,16 +68,9 @@ function Vantus.ResolveState(state)
         end
     elseif count > 0 then
         buttonState.countText = tostring(count)
-        buttonState.qualityItemID = itemID
+        ButtonState.SetItemQuality(buttonState, candidate)
         buttonState.glow = true
-        buttonState.action = ButtonState.CreateItemAction(itemID, {
-            preferenceKey = CacheKey.VANTUS,
-        })
-        buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
-            candidates,
-            itemID,
-            { preferenceKey = CacheKey.VANTUS }
-        )
+        buttonState.action = model.action
     else
         buttonState.countText = "0"
         buttonState.glow = false
@@ -87,20 +78,20 @@ function Vantus.ResolveState(state)
             buttonState,
             outOfCachedItem and OUT_OF_SELECTED_ITEM or OUT_OF_ITEMS
         )
-        buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
-            candidates,
-            itemID,
-            {
-                preferenceKey = CacheKey.VANTUS,
-                includeSingleChoice = outOfCachedItem,
-            }
-        )
     end
 
     ButtonState.ApplyAuraScanAvailability(
         buttonState,
-        state and state.available == true
+        model.available == true
     )
 
     return buttonState
+end
+
+function Vantus.Choices(selection)
+    local candidate = selection.candidate or selection.fallback
+    return ButtonState.CreateItemFlyoutChoices(selection.candidates, candidate and candidate.itemID, {
+        preferenceKey = CacheKey.VANTUS,
+        includeSingleChoice = selection.unavailable,
+    })
 end

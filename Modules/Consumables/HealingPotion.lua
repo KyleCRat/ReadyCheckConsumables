@@ -1,65 +1,26 @@
 local _, RCC = ...
+local HealingPotion = {}
+RCC.Consumables.HealingPotion = HealingPotion
+local S = RCC.ConsumableSelection
+local KEY = RCC.ConsumableItemCacheKey.HEALING_POTION
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.HealingPotion = RCC.Consumables.HealingPotion or {}
+HealingPotion.Inventory = { list = RCC.db.healingPotionItemIDs }
 
-local HealingPotion = RCC.Consumables.HealingPotion
+HealingPotion.Dependencies = { selection = { "inventory", "preferences.healingPotion" } }
 
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
-
-local CacheKey = RCC.ConsumableItemCacheKey
-local HEALING_POTION = CacheKey.HEALING_POTION
-
-function HealingPotion.CollectItemsInBags()
-    return ItemCandidates.CollectAvailableFromList(
-        RCC.db.healingPotionItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-end
-
-local function createCachedPotionCandidate(cachedItemID)
-    return ItemCandidates.CreateFromList(
-        RCC.db.healingPotionItemIDs,
-        cachedItemID,
-        ItemCandidates.BAGS_ONLY
-    )
-end
-
-local function selectPotionCandidate(potionCandidates)
-    local cachedItemID = ItemCache.Get(HEALING_POTION)
-    local cachedPotionCandidate = ItemCache.FindCandidate(
-        potionCandidates,
-        cachedItemID
-    )
-
-    -- Macro selection uses the cached potion when it is available, then falls
-    -- back to list order from Data/HealingItems.lua.
-    return cachedPotionCandidate or potionCandidates[1]
-end
-
-local function getDisplayPotionCandidate(selectedPotionCandidate,
-                                         includeUnavailableCached)
-    if not includeUnavailableCached then
-        return selectedPotionCandidate
+function HealingPotion.Select(inputs, preserveUnavailable)
+    local candidates = S.List(inputs.inventory, RCC.db.healingPotionItemIDs)
+    local preferredID = inputs.preferences[KEY]
+    local selected = S.Preferred(candidates, preferredID)
+    -- UI preserves an unavailable preference; macros use the available fallback.
+    if preserveUnavailable then
+        selected = S.CachedList(inputs.inventory, RCC.db.healingPotionItemIDs, preferredID) or selected
     end
-
-    -- Frame display preserves the cached preference even when its count is 0.
-    return createCachedPotionCandidate(ItemCache.Get(HEALING_POTION))
-        or selectedPotionCandidate
+    return S.WithItemAction(S.Result(selected, candidates, preferredID), {
+        preferenceKey = KEY, selectionOnly = true,
+    })
 end
 
-function HealingPotion.GetItemCandidate(includeUnavailableCached)
-    local potionCandidates = HealingPotion.CollectItemsInBags()
-    local selectedPotionCandidate = selectPotionCandidate(potionCandidates)
-    local displayPotionCandidate = getDisplayPotionCandidate(
-        selectedPotionCandidate,
-        includeUnavailableCached
-    )
-    local outOfCachedPotion = ItemCache.IsUnavailableCachedCandidate(
-        HEALING_POTION,
-        displayPotionCandidate
-    )
-
-    return displayPotionCandidate, potionCandidates, outOfCachedPotion
+function HealingPotion.GetItemCandidate(preserveUnavailable)
+    return S.Unpack(HealingPotion.Select(RCC.ConsumableInputs.ReadSelection("healpot"), preserveUnavailable))
 end

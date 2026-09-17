@@ -13,7 +13,6 @@ RCC.Consumables.ArmorKit = RCC.Consumables.ArmorKit or {}
 local ArmorKit = RCC.Consumables.ArmorKit
 
 local ButtonState = RCC.ConsumableState
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
 
 local ARMOR_KIT_ITEM_ID = 172347
 local CHEST_INVENTORY_SLOT = 5
@@ -21,15 +20,14 @@ local CHEST_INVENTORY_SLOT = 5
 --------------------------------------------------------------------------------
 --- Dormant: Armor Kit handling
 --- Not currently called.
---- To re-enable: create a kit button, add it to layout, restore or verify
---- RCC:KitCheck(), then include ArmorKit.ResolveState() in the controller.
+--- To re-enable: verify RCC:KitCheck(), then implement a category selector,
+--- observer and presenter using the shared pipeline. This legacy prototype
+--- is retained as reference, not registered with ConsumableRuntime.
 --------------------------------------------------------------------------------
 
 function ArmorKit.ResolveState()
-    local kitCount = ItemCandidates.GetCount(
-        ARMOR_KIT_ITEM_ID,
-        ItemCandidates.BAGS_ONLY
-    )
+    local kitCount = C_Item.GetItemCount(ARMOR_KIT_ITEM_ID, false, false)
+    if not RCC.F.IsSafeNumber(kitCount) then kitCount = 0 end
     local kitNow, _, kitTimeLeft = RCC:KitCheck()
     kitNow = kitNow or 0
     local buttonState = ButtonState.Create({

@@ -72,6 +72,7 @@ Data/HealingItems.lua
 Data/12_Midnight/HealingItems.lua
 Data/11_TheWarWithin/HealingItems.lua
 
+Data/Recuperate.lua
 Data/InkyBlackPotion.lua
 Data/RepairItems.lua
 
@@ -99,8 +100,10 @@ Modules/Consumables/ConsumableCatalog.lua
 Modules/Consumables/ConsumableState.lua
 
 Modules/ConsumableFrame/ConsumableFrameItemCache.lua
-Modules/ConsumableFrame/ConsumableFrameItemCandidates.lua
-Modules/ConsumableFrame/ConsumableFrameAuras.lua
+
+Modules/Consumables/ConsumableInputs.lua
+Modules/Consumables/ConsumableSelection.lua
+Modules/Consumables/ConsumableEffects.lua
 
 Modules/Consumables/Food.lua
 Modules/Consumables/Flask.lua
@@ -114,22 +117,24 @@ Modules/Consumables/Repair.lua
 Modules/Consumables/RaidBuff.lua
 Modules/Consumables/Vantus.lua
 Modules/Consumables/WeaponEnchant.lua
+Modules/Consumables/Recuperate.lua
 
 Modules/ConsumableFrame/Presenters/ArmorKit.lua
-Modules/ConsumableFrame/Presenters/Food.lua
-Modules/ConsumableFrame/Presenters/Flask.lua
-Modules/ConsumableFrame/Presenters/Augment.lua
-Modules/ConsumableFrame/Presenters/Healthstone.lua
-Modules/ConsumableFrame/Presenters/CombatPotion.lua
-Modules/ConsumableFrame/Presenters/HealingPotion.lua
-Modules/ConsumableFrame/Presenters/ConsumableStasis.lua
-Modules/ConsumableFrame/Presenters/Recuperate.lua
-Modules/ConsumableFrame/Presenters/InkyBlackPotion.lua
-Modules/ConsumableFrame/Presenters/Repair.lua
-Modules/ConsumableFrame/Presenters/RaidBuff.lua
-Modules/ConsumableFrame/Presenters/Vantus.lua
-Modules/ConsumableFrame/Presenters/WeaponEnchant.lua
+Modules/ConsumableUI/Presenters/Food.lua
+Modules/ConsumableUI/Presenters/Flask.lua
+Modules/ConsumableUI/Presenters/Augment.lua
+Modules/ConsumableUI/Presenters/Healthstone.lua
+Modules/ConsumableUI/Presenters/CombatPotion.lua
+Modules/ConsumableUI/Presenters/HealingPotion.lua
+Modules/ConsumableUI/Presenters/ConsumableStasis.lua
+Modules/ConsumableUI/Presenters/Recuperate.lua
+Modules/ConsumableUI/Presenters/InkyBlackPotion.lua
+Modules/ConsumableUI/Presenters/Repair.lua
+Modules/ConsumableUI/Presenters/RaidBuff.lua
+Modules/ConsumableUI/Presenters/Vantus.lua
+Modules/ConsumableUI/Presenters/WeaponEnchant.lua
 
+Modules/Consumables/ConsumableRuntime.lua
 Modules/Consumables/ConsumableStateController.lua
 
 ################################################################################

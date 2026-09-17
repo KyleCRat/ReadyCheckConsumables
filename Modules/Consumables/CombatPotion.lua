@@ -18,13 +18,16 @@ local CombatPotion = RCC.Consumables.CombatPotion
 -- Healing potions intentionally stay in HealingPotion.lua because they use a
 -- separate cooldown and simpler selection rules.
 
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local S = RCC.ConsumableSelection
 
 local CacheKey = RCC.ConsumableItemCacheKey
 local UTILITY = RCC.CombatPotionType.UTILITY
 local FLEETING = RCC.CombatPotionVariant.FLEETING
 local NO_ORDER = 999999
+
+CombatPotion.Inventory = { list = RCC.db.combatPotionItemIDs }
+
+CombatPotion.Dependencies = { selection = { "inventory", "preferences.combatPotion" } }
 
 -- Higher priority wins. Ties are broken by the family and item order from
 -- Data/CombatPotions.lua, which keeps the selection rules editable in the data
@@ -55,11 +58,8 @@ local function getOrderValue(value)
     return value or NO_ORDER
 end
 
-local function collectPotionCandidatesInBags()
-    local candidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.combatPotionItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
+local function collectPotionCandidates(inventory)
+    local candidates = S.List(inventory, RCC.db.combatPotionItemIDs)
 
     for i = 1, #candidates do
         addPotionData(candidates[i])
@@ -139,57 +139,24 @@ local function isBetterPotionCandidate(candidate, currentSelection,
 end
 
 local function selectPreferredPotionCandidate(candidates, context)
-    return ItemCandidates.SelectBest(candidates, function(candidate,
-                                                         currentSelection)
+    return S.Best(candidates, function(candidate, currentSelection)
         return isBetterPotionCandidate(candidate, currentSelection, context)
     end)
 end
 
-local function createCachedCandidate(context)
-    if not context.cachedData then return end
-
-    return addPotionData(ItemCandidates.CreateFromList(
-        RCC.db.combatPotionItemIDs,
-        context.cachedItemID,
-        ItemCandidates.BAGS_ONLY
-    ))
-end
-
-local function getDisplayCandidate(context, selectedCandidate,
-                                   includeUnavailableCached)
-    if not includeUnavailableCached then
-        return selectedCandidate
+function CombatPotion.Select(inputs, preserveUnavailable)
+    local preferredID = inputs.preferences[CacheKey.COMBAT_POTION]
+    local context = createSelectionContext(preferredID)
+    local candidates = collectPotionCandidates(inputs.inventory)
+    local selected = selectPreferredPotionCandidate(candidates, context)
+    if preserveUnavailable and context.cachedData then
+        selected = addPotionData(S.CachedList(inputs.inventory, RCC.db.combatPotionItemIDs, preferredID)) or selected
     end
-
-    return createCachedCandidate(context) or selectedCandidate
+    return S.WithItemAction(S.Result(selected, candidates, preferredID), {
+        preferenceKey = CacheKey.COMBAT_POTION, selectionOnly = true,
+    })
 end
 
-local function getPotionItemCandidate(cacheKey, includeUnavailableCached)
-    local cachedItemID = ItemCache.Get(cacheKey)
-    local context = createSelectionContext(cachedItemID)
-    local candidates = collectPotionCandidatesInBags()
-    local selectedCandidate = selectPreferredPotionCandidate(candidates, context)
-    local displayCandidate = getDisplayCandidate(
-        context,
-        selectedCandidate,
-        includeUnavailableCached
-    )
-
-    local outOfCachedItem = ItemCache.IsUnavailableCachedCandidate(
-        cacheKey,
-        displayCandidate
-    )
-
-    return displayCandidate, candidates, outOfCachedItem
-end
-
-function CombatPotion.CollectItemsInBags()
-    return collectPotionCandidatesInBags()
-end
-
-function CombatPotion.GetItemCandidate(includeUnavailableCached, cacheKey)
-    return getPotionItemCandidate(
-        cacheKey or CacheKey.COMBAT_POTION,
-        includeUnavailableCached
-    )
+function CombatPotion.GetItemCandidate(preserveUnavailable)
+    return S.Unpack(CombatPotion.Select(RCC.ConsumableInputs.ReadSelection("combatpot"), preserveUnavailable))
 end

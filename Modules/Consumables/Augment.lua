@@ -5,10 +5,17 @@ RCC.Consumables.Augment = RCC.Consumables.Augment or {}
 
 local Augment = RCC.Consumables.Augment
 
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local S = RCC.ConsumableSelection
 
 local CacheKey = RCC.ConsumableItemCacheKey
+
+Augment.Inventory = { map = RCC.db.augmentItemIDs }
+
+Augment.Dependencies = {
+    selection = { "inventory", "preferences.augment", "preferences.preferUnlimitedAugment" },
+    observation = { "playerAuras" }, evaluation = { "context.warningSeconds" },
+    expiration = "playerAuras",
+}
 
 local function isBetterAugmentCandidate(candidate, best, preferUnlimited)
     local data = candidate.data or {}
@@ -47,40 +54,24 @@ function Augment.GetCountText(candidate)
     return tostring(candidate and candidate.count or 0)
 end
 
-function Augment.CollectItemsInBags()
-    local preferUnlimited =
-        RCC.GetSetting("consumables_preferUnlimitedAugment")
-    local candidates = ItemCandidates.CollectAvailableFromMap(
-        RCC.db.augmentItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-
-    sortAugmentCandidates(candidates, preferUnlimited)
-
-    return candidates
+function Augment.Select(inputs, preserveUnavailable)
+    local candidates = S.Map(inputs.inventory, RCC.db.augmentItemIDs)
+    sortAugmentCandidates(candidates, inputs.preferences.preferUnlimitedAugment)
+    local preferredID = inputs.preferences[CacheKey.AUGMENT]
+    local cached = preserveUnavailable and S.CachedMap(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
+    return S.WithItemAction(S.Result(S.Preferred(candidates, preferredID, cached), candidates, preferredID), {
+        preferenceKey = CacheKey.AUGMENT,
+    })
 end
 
-function Augment.GetItemCandidate(includeUnavailableCached)
-    local augmentCandidates = Augment.CollectItemsInBags()
-    local cachedAugmentCandidate
+function Augment.GetItemCandidate(preserveUnavailable)
+    return S.Unpack(Augment.Select(RCC.ConsumableInputs.ReadSelection("augment"), preserveUnavailable))
+end
 
-    if includeUnavailableCached then
-        cachedAugmentCandidate = ItemCandidates.CreateFromMap(
-            RCC.db.augmentItemIDs,
-            ItemCache.Get(CacheKey.AUGMENT),
-            ItemCandidates.BAGS_ONLY
-        )
-    end
+function Augment.Observe(inputs)
+    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.augmentBuffIDs)
+end
 
-    local augmentCandidate = ItemCache.SelectCandidate(
-        CacheKey.AUGMENT,
-        augmentCandidates,
-        cachedAugmentCandidate
-    )
-    local outOfCachedAugment = ItemCache.IsUnavailableCachedCandidate(
-        CacheKey.AUGMENT,
-        augmentCandidate
-    )
-
-    return augmentCandidate, augmentCandidates, outOfCachedAugment
+function Augment.Evaluate(selection, observation, inputs, now)
+    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
 end

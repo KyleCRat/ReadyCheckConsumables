@@ -21,6 +21,27 @@
 - Action Bar flyouts now close when combat starts and remain disabled until
   combat ends. Choose preferred items before combat; primary buttons remain
   usable with their preselected items and spells during combat.
+- Rebuilt personal consumable refreshes around shared public input snapshots,
+  category-owned dependencies, and independently cached item selection and
+  status. Aura updates no longer recount bags or rebuild unchanged flyouts.
+- Added one shared deadline timer for duration labels, expiration warnings,
+  aura rechecks, and repair cooldown completion. Unchanged cooldown events no
+  longer run the full consumable pipeline.
+- Cached raid-buff observations per group member, refreshing affected members
+  on aura, connection, phase, range, and life-state changes. The player's fresh
+  aura scan is reused when checking their own raid buff.
+- Separated visual, interaction, and applicability revisions so both personal
+  surfaces can apply only changed state. Combat-end reconciliation refreshes
+  desired data before rebinding secure actions; opening a hidden surface still
+  refreshes its inputs. Repair cooldown visuals stay tied to the prepared item
+  during combat even if another device becomes preferable.
+- Kept managed macros on live-read adapters over the shared selectors, with
+  their existing fallback policies and support for both personal frames being
+  disabled. Applied-enchant preference tracking is now an explicit operation,
+  and presenters no longer query inventory or change saved preferences.
+- Centralized Recuperate spell/icon data for personal buttons and the healing-
+  potion macro. Clarified the refresh API with named options and made fixed
+  event registrations and weapon-slot constants explicit.
 
 ## [12.1.0-25] - 2026-09-09
 

@@ -1,31 +1,25 @@
 local _, RCC = ...
+local Healthstone = {}
+RCC.Consumables.Healthstone = Healthstone
+local S = RCC.ConsumableSelection
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.Healthstone = RCC.Consumables.Healthstone or {}
+Healthstone.Inventory = { map = RCC.db.healthstoneItemIDs }
 
-local Healthstone = RCC.Consumables.Healthstone
+Healthstone.Dependencies = { selection = { "inventory" }, evaluation = { "roster.hasWarlock" } }
 
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+function Healthstone.Select(inputs)
+    local candidates = S.Map(inputs.inventory, RCC.db.healthstoneItemIDs, true)
+    local result = S.Result(candidates[1], candidates)
+    result.count = 0
+    for _, candidate in ipairs(candidates) do result.count = result.count + candidate.count end
+    result.action = RCC.ConsumableState.CreateItemAction(RCC.db.healthstoneItemID, { available = result.count > 0 })
+    return result
+end
 
 function Healthstone.GetItemCandidate()
-    local best
+    return Healthstone.Select(RCC.ConsumableInputs.ReadSelection("hs")).candidate
+end
 
-    for itemID in pairs(RCC.db.healthstoneItemIDs) do
-        local count = ItemCandidates.GetCount(
-            itemID,
-            ItemCandidates.BAGS_WITH_USES
-        )
-
-        if count > 0
-            and (not best or itemID > best.itemID)
-        then
-            best = {
-                itemID = itemID,
-                count = count,
-                icon = ItemCandidates.GetIcon(itemID),
-            }
-        end
-    end
-
-    return best
+function Healthstone.Evaluate(selection, _, inputs)
+    return { selection = selection, action = selection.action, applicable = inputs.roster.hasWarlock }
 end

@@ -12,8 +12,8 @@ RCC.db = RCC.db or {}
 --- enchants are appended by expansion files.
 --------------------------------------------------------------------------------
 
-local MAIN_HAND_INVENTORY_SLOT = 16
-local OFF_HAND_INVENTORY_SLOT = 17
+local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
+local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
 
 RCC.db.weaponEnchants = {}
 RCC.db.weaponEnchantItemIDs = {}

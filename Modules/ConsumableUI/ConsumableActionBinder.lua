@@ -17,13 +17,6 @@ Binder.Capabilities = {
     },
 }
 
-local function requestRefresh()
-    C_Timer.After(0, function()
-        RCC.ConsumableStateController.RequestRefresh(0, true)
-        RCC.ConsumableMacros.ScheduleUpdate()
-    end)
-end
-
 local function preferClickedItem(self, mouseButton)
     if mouseButton ~= "RightButton" or InCombatLockdown() then return end
 
@@ -33,7 +26,6 @@ local function preferClickedItem(self, mouseButton)
     if not preferenceKey or not itemID then return end
 
     ItemCache.Set(preferenceKey, itemID)
-    requestRefresh()
 end
 
 local function setPreference(click, preferenceKey, itemID)

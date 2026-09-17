@@ -107,7 +107,7 @@ local function refreshConsumableFrame()
 end
 
 local function refreshAugmentRuneSelection()
-    RCC.ConsumableStateController.RequestRefresh(0, true)
+    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
     RCC.ConsumableMacros.ScheduleUpdate()
 end
 

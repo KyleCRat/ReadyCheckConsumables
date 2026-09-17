@@ -118,9 +118,12 @@ data.
   for possible future features but is not part of current runtime readiness
   checks. Do not delete it merely because it is dormant.
 - `Modules/Consumables/` owns the canonical consumable catalog, neutral action
-  descriptors, domain resolution, and the shared state controller.
-- `Modules/ConsumableFrame/Presenters/` translates domain state into normalized
-  personal-surface view state.
+  descriptors, public input readers, category dependency declarations, pure
+  selection/status resolution, and the shared state controller. See
+  `Docs/CONSUMABLE_PIPELINE.md` for the data flow and extension checklist.
+- `Modules/ConsumableUI/Presenters/` translates domain results into normalized
+  personal-surface view state without live queries or preference writes. The
+  dormant Armor Kit prototype remains under `ConsumableFrame/Presenters/`.
 - `Modules/ConsumableUI/` owns shared button rendering, secure action binding,
   flyouts, surface application, and cross-page settings behavior.
 - `Modules/ConsumableFrame/` owns the temporary personal frame, contextual
@@ -194,6 +197,12 @@ data.
 - Preserve unrelated user changes and the existing four-space Lua style.
 - Prefer small, explicit modules and one state owner over cross-module fallback
   chains.
+- Keep gameplay spell/item/icon IDs in `Data/`, including single-ability
+  categories. Use named constants for inventory slots, item classes, and time
+  units rather than unexplained numeric literals in module logic.
+- Favor readability over compactness: register fixed event lists explicitly,
+  grouped by purpose, and use named options when positional arguments would
+  require unexplained `nil`, boolean, or numeric placeholders.
 - Keep detailed contracts next to the relevant implementation. Use this file
   for repository-wide intent and workflow only.
 - Update `README.md` from implemented player-facing behavior, not planned work.

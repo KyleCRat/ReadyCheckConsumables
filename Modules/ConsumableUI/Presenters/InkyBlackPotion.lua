@@ -1,31 +1,16 @@
 local _, RCC = ...
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.InkyBlackPotion =
-    RCC.Consumables.InkyBlackPotion or {}
+RCC.ConsumablePresenters = RCC.ConsumablePresenters or {}
+local InkyBlackPotion = {}
+RCC.ConsumablePresenters.InkyBlackPotion = InkyBlackPotion
 
-local InkyBlackPotion = RCC.Consumables.InkyBlackPotion
-
-local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableState
 
 local OUT_OF_ITEMS = "No Inky Black Potions found in Bags"
 
-local function getAuraState(state)
-    local aura = Auras.FindBySpellID(
-        state,
-        RCC.db.inkyBlackPotionBuffIDs
-    )
-
-    return Auras.ToConsumableState(
-        aura,
-        { includeExpirationState = true }
-    )
-end
-
-function InkyBlackPotion.ResolveState(state)
-    local auraState = getAuraState(state)
-    local candidate = InkyBlackPotion.GetItemCandidate()
+function InkyBlackPotion.Present(model)
+    local auraState = model.effect
+    local candidate = model.selection.candidate
     local itemID = candidate.itemID
     local count = candidate.count or 0
     local buttonState = ButtonState.Create({
@@ -40,7 +25,7 @@ function InkyBlackPotion.ResolveState(state)
     ButtonState.ApplyActiveAura(buttonState, auraState)
 
     if count > 0 then
-        buttonState.action = ButtonState.CreateItemAction(itemID)
+        buttonState.action = model.action
     elseif auraState then
         ButtonState.SetHoverUnavailable(buttonState, OUT_OF_ITEMS)
     else
@@ -49,7 +34,7 @@ function InkyBlackPotion.ResolveState(state)
 
     ButtonState.ApplyAuraScanAvailability(
         buttonState,
-        state and state.available == true
+        model.available == true
     )
 
     -- This is an optional visual effect, not a readiness state. Keep both the

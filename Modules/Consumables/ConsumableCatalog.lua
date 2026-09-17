@@ -5,8 +5,8 @@ RCC.ConsumableCatalog = RCC.ConsumableCatalog or {}
 local Catalog = RCC.ConsumableCatalog
 local Reason = RCC.DisplayReason
 
-local MAIN_HAND_INVENTORY_SLOT = 16
-local OFF_HAND_INVENTORY_SLOT = 17
+local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
+local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
 
 local STANDARD_VISIBILITY = {
     reasons = {
@@ -30,6 +30,7 @@ local STASIS_VISIBILITY = {
 local DEFINITIONS = {
     {
         key = "food",
+        domain = "Food",
         label = "Food",
         settingKey = "icon_food",
         defaultIcon = RCC.db.foodIconID,
@@ -39,6 +40,7 @@ local DEFINITIONS = {
     },
     {
         key = "flask",
+        domain = "Flask",
         label = "Flask",
         settingKey = "icon_flask",
         defaultIcon = RCC.db.flaskIconID,
@@ -47,6 +49,7 @@ local DEFINITIONS = {
     },
     {
         key = "consumableStasis",
+        domain = "ConsumableStasis",
         label = "Consumable Stasis",
         settingKey = "icon_consumableStasis",
         defaultIcon = 134062,
@@ -60,6 +63,7 @@ local DEFINITIONS = {
     },
     {
         key = "mainHandTempWeaponEnchant",
+        domain = "WeaponEnchant",
         label = "Main-hand Enchant",
         weaponSlot = MAIN_HAND_INVENTORY_SLOT,
         settingKey = "icon_mhTempWeaponEnchant",
@@ -69,6 +73,7 @@ local DEFINITIONS = {
     },
     {
         key = "offHandTempWeaponEnchant",
+        domain = "WeaponEnchant",
         label = "Off-hand Enchant",
         weaponSlot = OFF_HAND_INVENTORY_SLOT,
         settingKey = "icon_ohTempWeaponEnchant",
@@ -80,6 +85,7 @@ local DEFINITIONS = {
     },
     {
         key = "augment",
+        domain = "Augment",
         label = "Augment Rune",
         settingKey = "icon_augment",
         defaultIcon = RCC.db.augmentIconID,
@@ -88,6 +94,7 @@ local DEFINITIONS = {
     },
     {
         key = "raidBuff",
+        domain = "RaidBuff",
         label = "Raid Buff",
         settingKey = "icon_raidBuff",
         defaultIcon = RCC.db.raidBuffIconID,
@@ -96,6 +103,7 @@ local DEFINITIONS = {
     },
     {
         key = "hs",
+        domain = "Healthstone",
         label = "Healthstone",
         settingKey = "icon_healthstone",
         defaultIcon = RCC.db.healthstoneIconID,
@@ -104,6 +112,7 @@ local DEFINITIONS = {
     },
     {
         key = "combatpot",
+        domain = "CombatPotion",
         label = "Combat Potion",
         settingKey = "icon_combatPotion",
         defaultIcon = RCC.db.combatPotionIconID,
@@ -112,6 +121,7 @@ local DEFINITIONS = {
     },
     {
         key = "healpot",
+        domain = "HealingPotion",
         label = "Healing Potion",
         settingKey = "icon_healPotion",
         defaultIcon = RCC.db.healingPotionIconID,
@@ -120,6 +130,7 @@ local DEFINITIONS = {
     },
     {
         key = "recuperate",
+        domain = "Recuperate",
         label = "Recuperate",
         settingKey = "icon_recuperate",
         defaultIcon = RCC.db.recuperateIconID,
@@ -128,6 +139,7 @@ local DEFINITIONS = {
     },
     {
         key = "inkyBlackPotion",
+        domain = "InkyBlackPotion",
         label = "Inky Black Potion",
         settingKey = "icon_inkyBlackPotion",
         defaultIcon = RCC.db.inkyBlackPotionIconID,
@@ -136,6 +148,7 @@ local DEFINITIONS = {
     },
     {
         key = "repair",
+        domain = "Repair",
         label = "Repair",
         settingKey = "icon_repair",
         defaultIcon = RCC.db.repairIconID,
@@ -147,6 +160,7 @@ local DEFINITIONS = {
     },
     {
         key = "vantus",
+        domain = "Vantus",
         label = "Vantus Rune",
         settingKey = "icon_vantus",
         defaultIcon = RCC.db.vantusIconID,

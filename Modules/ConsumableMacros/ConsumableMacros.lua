@@ -10,9 +10,8 @@ local Consumables = RCC.Consumables
 local GetItemIcon = C_Item.GetItemIconByID
 local GetSpellInfo = C_Spell.GetSpellInfo
 
-local MAIN_HAND_INVENTORY_SLOT = 16
-local OFF_HAND_INVENTORY_SLOT = 17
-local RECUPERATE_SPELL_ID = 1231411
+local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
+local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
 local UPDATE_DELAY = 0.2
 local DEFAULT_MACRO_ICON = 134400
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
@@ -118,7 +117,7 @@ end
 
 local function healingPotionAction()
     local candidate = Consumables.HealingPotion.GetItemCandidate()
-    local spellName = getSpellName(RECUPERATE_SPELL_ID)
+    local spellName = getSpellName(RCC.db.recuperateSpellID)
 
     if not spellName then
         return itemAction(candidate, CacheKey.HEALING_POTION)
@@ -127,7 +126,7 @@ local function healingPotionAction()
     local action = {
         type = HEALING_POTION_RECUPERATE_MACRO,
         itemID = candidate and candidate.itemID,
-        spellID = RECUPERATE_SPELL_ID,
+        spellID = RCC.db.recuperateSpellID,
         spellName = spellName,
     }
 
@@ -680,6 +679,13 @@ function Macros.UpdateAll()
 
     if not GetNumMacros or not GetMacroInfo or not EditMacro then return end
 
+    -- Keep automatic applied-enchant preferences working with both personal
+    -- surfaces disabled. This explicit reconciliation precedes pure selection;
+    -- getters/presenters no longer write preferences as a side effect.
+    RCC.ConsumableInputs.RememberAppliedEnchants(
+        RCC.ConsumableInputs.ReadWeapons(GetTime())
+    )
+
     local numAccountMacros, numCharacterMacros = GetNumMacros()
     local maxAccountMacros = getMacroLimits()
 
@@ -712,6 +718,8 @@ end
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
 eventFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+eventFrame:RegisterEvent("WEAPON_ENCHANT_CHANGED")
+eventFrame:RegisterEvent("WEAPON_SLOT_CHANGED")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("SPELLS_CHANGED")

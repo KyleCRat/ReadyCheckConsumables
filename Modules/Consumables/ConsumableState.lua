@@ -194,10 +194,18 @@ function State.CreateItemChoice(candidate, options)
         countText = options.countText or tostring(candidate.count or 0),
         tooltipItemID = candidate.itemID,
         qualityItemID = candidate.itemID,
+        qualityAtlas = candidate.qualityAtlas,
+        qualityResolved = candidate.metadataLoaded,
         clickHintItemID = candidate.itemID,
         suppressGlow = options.suppressGlow == true,
         action = State.CreateItemAction(candidate.itemID, options),
     })
+end
+
+function State.SetItemQuality(state, candidate)
+    state.qualityItemID = candidate and candidate.itemID
+    state.qualityAtlas = candidate and candidate.qualityAtlas
+    state.qualityResolved = candidate and candidate.metadataLoaded
 end
 
 function State.CreateItemFlyoutChoices(candidates, selectedItemID, options)
@@ -298,6 +306,8 @@ function State.MergeCombatVisual(prepared, live)
         "tooltipItemID",
         "tooltipSpellID",
         "qualityItemID",
+        "qualityAtlas",
+        "qualityResolved",
         "clickHintItemID",
         "clickHintSpellID",
         "countText",
@@ -307,6 +317,19 @@ function State.MergeCombatVisual(prepared, live)
         local key = frozenFields[i]
 
         merged[key] = prepared[key]
+    end
+
+    -- Optional item-scoped visuals are distinct from category-wide aura status.
+    -- A cooldown must describe the prepared item, not a newly preferred item.
+    -- Missing fields deliberately clear old cooldown/unavailable state.
+    if live.itemVisuals then
+        local itemID = State.GetClickHintItemID(prepared)
+        local itemVisual = (itemID and live.itemVisuals[itemID]) or live.missingItemVisual
+        if itemVisual then
+            merged.cooldown = itemVisual.cooldown
+            merged.desaturated = itemVisual.desaturated
+            merged.unavailable = itemVisual.unavailable
+        end
     end
 
     return merged

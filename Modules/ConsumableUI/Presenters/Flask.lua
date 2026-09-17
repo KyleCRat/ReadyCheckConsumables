@@ -1,11 +1,9 @@
 local _, RCC = ...
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.Flask = RCC.Consumables.Flask or {}
+RCC.ConsumablePresenters = RCC.ConsumablePresenters or {}
+local Flask = {}
+RCC.ConsumablePresenters.Flask = Flask
 
-local Flask = RCC.Consumables.Flask
-
-local Auras = RCC.ConsumableFrameAuras
 local ButtonState = RCC.ConsumableState
 
 local CacheKey = RCC.ConsumableItemCacheKey
@@ -13,20 +11,11 @@ local CacheKey = RCC.ConsumableItemCacheKey
 local OUT_OF_ITEMS = "No Flasks found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Flask not found in Bags"
 
-local function getFlaskAuraState(state)
-    local aura = Auras.FindBySpellID(state, RCC.db.flaskBuffIDs)
-
-    return Auras.ToConsumableState(
-        aura,
-        { includeExpirationState = true }
-    )
-end
-
-function Flask.ResolveState(state)
-    local flaskState = getFlaskAuraState(state)
+function Flask.Present(model)
+    local flaskState = model.effect
     local isFlask = flaskState and flaskState.satisfied
     local flaskCandidate, flaskCandidates, outOfCachedFlask =
-        Flask.GetItemCandidate(true)
+        RCC.ConsumableSelection.Unpack(model.selection)
     local flaskCount = flaskCandidate and flaskCandidate.count or 0
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
     local buttonState = ButtonState.Create()
@@ -35,7 +24,7 @@ function Flask.ResolveState(state)
 
     if flaskItemID then
         buttonState.tooltipItemID = flaskItemID
-        buttonState.qualityItemID = flaskItemID
+        ButtonState.SetItemQuality(buttonState, flaskCandidate)
 
         if flaskCandidate.icon then
             buttonState.icon = flaskCandidate.icon
@@ -43,9 +32,7 @@ function Flask.ResolveState(state)
     end
 
     if flaskCount > 0 then
-        buttonState.action = ButtonState.CreateItemAction(flaskItemID, {
-            preferenceKey = CacheKey.FLASK,
-        })
+        buttonState.action = model.action
     elseif outOfCachedFlask then
         if flaskState then
             ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
@@ -61,7 +48,19 @@ function Flask.ResolveState(state)
     buttonState.countText = flaskItemID and tostring(flaskCount) or ""
     buttonState.glow = not isFlask
         and flaskCount > 0
-    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
+
+    ButtonState.ApplyAuraScanAvailability(
+        buttonState,
+        model.available == true
+    )
+
+    return buttonState
+end
+
+function Flask.Choices(selection)
+    local flaskCandidate, flaskCandidates, outOfCachedFlask = RCC.ConsumableSelection.Unpack(selection)
+    local flaskItemID = flaskCandidate and flaskCandidate.itemID
+    return ButtonState.CreateItemFlyoutChoices(
         flaskCandidates,
         flaskItemID,
         {
@@ -69,11 +68,4 @@ function Flask.ResolveState(state)
             includeSingleChoice = outOfCachedFlask,
         }
     )
-
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        state and state.available == true
-    )
-
-    return buttonState
 end

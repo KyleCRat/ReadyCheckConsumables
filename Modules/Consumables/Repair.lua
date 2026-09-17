@@ -1,114 +1,47 @@
 local _, RCC = ...
+local Repair = {}
+RCC.Consumables.Repair = Repair
+local S = RCC.ConsumableSelection
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.Repair = RCC.Consumables.Repair or {}
+Repair.Inventory = { list = RCC.db.repairItemIDs }
 
-local Repair = RCC.Consumables.Repair
+Repair.Dependencies = { selection = { "inventory", "cooldowns" }, expiration = "cooldowns" }
 
-local F = RCC.F
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
-local GetItemCooldown = C_Item.GetItemCooldown
-
-local Priority = {
-    READY_REUSABLE = 4,
-    READY_CONSUMABLE = 3,
-    COOLDOWN_REUSABLE = 2,
-    COOLDOWN_CONSUMABLE = 1,
-}
-
-local function getActiveCooldown(itemID, now)
-    local start, duration = GetItemCooldown(itemID)
-
-    if not F.IsSafeNumber(start)
-        or not F.IsSafeNumber(duration)
-        or duration <= 0
-        or start + duration <= now
-    then
-        return
-    end
-
-    return {
-        start = start,
-        duration = duration,
-    }
-end
-
-local function addRepairData(candidate, now)
-    local data = candidate
-        and RCC.db.repairItemData[candidate.itemID]
-
-    if not data then return candidate end
-
-    candidate.reusable = data.reusable == true
-    candidate.cooldown = getActiveCooldown(candidate.itemID, now)
-    candidate.ready = candidate.cooldown == nil
-
-    return candidate
-end
-
-local function getPriority(candidate)
-    if candidate.ready then
-        if candidate.reusable then
-            return Priority.READY_REUSABLE
-        end
-
-        return Priority.READY_CONSUMABLE
-    elseif candidate.reusable then
-        return Priority.COOLDOWN_REUSABLE
-    end
-
-    return Priority.COOLDOWN_CONSUMABLE
-end
-
-function Repair.CollectItemsInBags(now)
-    now = F.IsSafeNumber(now) and now or GetTime()
-
-    local candidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.repairItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
-
-    for i = 1, #candidates do
-        addRepairData(candidates[i], now)
-    end
-
-    return candidates
-end
-
-function Repair.GetCooldownSignature(now)
-    -- BAG_UPDATE_COOLDOWN is noisy. The controller compares this compact
-    -- signature so the full consumable pipeline only refreshes on a repair
-    -- item's cooldown start, completion, or candidate change.
-    local candidates = Repair.CollectItemsInBags(now)
-    local fields = {}
-
-    for i = 1, #candidates do
-        local candidate = candidates[i]
+function Repair.Evaluate(selection, observation, inputs, now)
+    local model = { selection = selection, action = selection.action }
+    for _, candidate in ipairs(selection.candidates) do
         local cooldown = candidate.cooldown
-
-        fields[#fields + 1] = tostring(candidate.itemID)
-
-        if cooldown then
-            fields[#fields + 1] = tostring(cooldown.start)
-            fields[#fields + 1] = tostring(cooldown.duration)
-        else
-            fields[#fields + 1] = "ready"
+        local expires = cooldown and cooldown.start + cooldown.duration
+        if expires and expires > now then
+            model.recheckAt = math.min(model.recheckAt or expires, expires)
+            model.nextUpdateAt = model.recheckAt
         end
     end
-
-    return table.concat(fields, ":")
+    return model
 end
 
-function Repair.GetItemCandidate(now)
-    local candidates = Repair.CollectItemsInBags(now)
-    local selected = ItemCandidates.SelectBest(
-        candidates,
-        function(candidate, currentSelection)
-            return getPriority(candidate) > getPriority(currentSelection)
-        end
-    )
+local function priority(candidate)
+    -- Prefer a ready reusable device over a consumable, but never choose a
+    -- cooling-down reusable over a ready consumable.
+    if candidate.ready then return candidate.reusable and 4 or 3 end
+    return candidate.reusable and 2 or 1
+end
 
-    return selected, candidates
+function Repair.Select(inputs)
+    local candidates = S.List(inputs.inventory, RCC.db.repairItemIDs)
+    for _, candidate in ipairs(candidates) do
+        candidate.reusable = RCC.db.repairItemData[candidate.itemID].reusable == true
+        candidate.cooldown = inputs.cooldowns[candidate.itemID]
+        candidate.ready = candidate.cooldown == nil
+    end
+    local selected = S.Best(candidates, function(a, b) return priority(a) > priority(b) end)
+    local result = S.Result(selected, candidates)
+    result.fallback = S.Item(inputs.inventory, RCC.db.repairDefaultItemID)
+    return S.WithItemAction(result, { available = selected and selected.ready })
+end
+
+function Repair.GetItemCandidate()
+    return S.Unpack(Repair.Select(RCC.ConsumableInputs.ReadSelection("repair")))
 end
 
 function Repair.GetDefaultItemID()

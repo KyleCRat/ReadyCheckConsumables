@@ -5,13 +5,20 @@ RCC.Consumables.Flask = RCC.Consumables.Flask or {}
 
 local Flask = RCC.Consumables.Flask
 
-local ItemCache = RCC.ConsumableFrameItemCache
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
+local S = RCC.ConsumableSelection
 
 local CacheKey = RCC.ConsumableItemCacheKey
 local FLEETING = RCC.FlaskVariant.FLEETING
 local FLASK = CacheKey.FLASK
 local NO_ORDER = 999999
+
+Flask.Inventory = { list = RCC.db.flaskItemIDs }
+
+Flask.Dependencies = {
+    selection = { "inventory", "preferences.flask" },
+    observation = { "playerAuras" }, evaluation = { "context.warningSeconds" },
+    expiration = "playerAuras",
+}
 
 -- Higher priority wins. Ties use family and item order from Data/Flasks.lua.
 local Priority = {
@@ -39,11 +46,8 @@ local function getOrderValue(value)
     return value or NO_ORDER
 end
 
-local function collectFlaskCandidatesInBags()
-    local candidates = ItemCandidates.CollectAvailableFromList(
-        RCC.db.flaskItemIDs,
-        ItemCandidates.BAGS_ONLY
-    )
+local function collectFlaskCandidates(inventory)
+    local candidates = S.List(inventory, RCC.db.flaskItemIDs)
 
     for i = 1, #candidates do
         addFlaskData(candidates[i])
@@ -114,48 +118,30 @@ local function isBetterFlaskCandidate(candidate, currentSelection, context)
 end
 
 local function selectPreferredFlaskCandidate(candidates, context)
-    return ItemCandidates.SelectBest(candidates, function(candidate,
-                                                         currentSelection)
+    return S.Best(candidates, function(candidate, currentSelection)
         return isBetterFlaskCandidate(candidate, currentSelection, context)
     end)
 end
 
-local function createCachedCandidate(context)
-    if not context.cachedData then return end
-
-    return addFlaskData(ItemCandidates.CreateFromList(
-        RCC.db.flaskItemIDs,
-        context.cachedItemID,
-        ItemCandidates.BAGS_ONLY
-    ))
-end
-
-local function getDisplayCandidate(context, selectedCandidate,
-                                   includeUnavailableCached)
-    if not includeUnavailableCached then
-        return selectedCandidate
+function Flask.Select(inputs, preserveUnavailable)
+    local preferredID = inputs.preferences[FLASK]
+    local context = createSelectionContext(preferredID)
+    local candidates = collectFlaskCandidates(inputs.inventory)
+    local selected = selectPreferredFlaskCandidate(candidates, context)
+    if preserveUnavailable and context.cachedData then
+        selected = addFlaskData(S.CachedList(inputs.inventory, RCC.db.flaskItemIDs, preferredID)) or selected
     end
-
-    return createCachedCandidate(context) or selectedCandidate
+    return S.WithItemAction(S.Result(selected, candidates, preferredID), { preferenceKey = FLASK })
 end
 
-function Flask.GetItemCandidate(includeUnavailableCached)
-    local cachedItemID = ItemCache.Get(FLASK)
-    local context = createSelectionContext(cachedItemID)
-    local flaskCandidates = collectFlaskCandidatesInBags()
-    local selectedCandidate = selectPreferredFlaskCandidate(
-        flaskCandidates,
-        context
-    )
-    local displayCandidate = getDisplayCandidate(
-        context,
-        selectedCandidate,
-        includeUnavailableCached
-    )
-    local outOfCachedFlask = ItemCache.IsUnavailableCachedCandidate(
-        FLASK,
-        displayCandidate
-    )
+function Flask.GetItemCandidate(preserveUnavailable)
+    return S.Unpack(Flask.Select(RCC.ConsumableInputs.ReadSelection("flask"), preserveUnavailable))
+end
 
-    return displayCandidate, flaskCandidates, outOfCachedFlask
+function Flask.Observe(inputs)
+    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.flaskBuffIDs)
+end
+
+function Flask.Evaluate(selection, observation, inputs, now)
+    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
 end

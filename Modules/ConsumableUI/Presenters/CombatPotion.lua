@@ -1,17 +1,16 @@
 local _, RCC = ...
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.CombatPotion = RCC.Consumables.CombatPotion or {}
-
-local CombatPotion = RCC.Consumables.CombatPotion
+RCC.ConsumablePresenters = RCC.ConsumablePresenters or {}
+local CombatPotion = {}
+RCC.ConsumablePresenters.CombatPotion = CombatPotion
 
 local ButtonState = RCC.ConsumableState
 
 local CacheKey = RCC.ConsumableItemCacheKey
 
-function CombatPotion.ResolveState()
+function CombatPotion.Present(model)
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
-        CombatPotion.GetItemCandidate(true)
+        RCC.ConsumableSelection.Unpack(model.selection)
     local inventoryItem = inventoryItemCandidate
         and inventoryItemCandidate.itemID
     local inventoryItemCount = inventoryItemCandidate
@@ -24,22 +23,24 @@ function CombatPotion.ResolveState()
     if inventoryItem and inventoryItemCount > 0 then
         buttonState.statusTexture = ButtonState.READY_TEXTURE
         buttonState.desaturated = false
-        buttonState.action = ButtonState.CreateItemAction(inventoryItem, {
-            preferenceKey = CacheKey.COMBAT_POTION,
-            selectionOnly = true,
-        })
+        buttonState.action = model.action
     end
 
     if inventoryItem then
         buttonState.tooltipItemID = inventoryItem
-        buttonState.qualityItemID = inventoryItem
+        ButtonState.SetItemQuality(buttonState, inventoryItemCandidate)
 
         if inventoryItemCandidate.icon then
             buttonState.icon = inventoryItemCandidate.icon
         end
     end
+    return buttonState
+end
 
-    buttonState.flyoutChoices = ButtonState.CreateItemFlyoutChoices(
+function CombatPotion.Choices(selection)
+    local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion = RCC.ConsumableSelection.Unpack(selection)
+    local inventoryItem = inventoryItemCandidate and inventoryItemCandidate.itemID
+    return ButtonState.CreateItemFlyoutChoices(
         inventoryItemCandidates,
         inventoryItem,
         {
@@ -49,6 +50,4 @@ function CombatPotion.ResolveState()
             suppressGlow = true,
         }
     )
-
-    return buttonState
 end

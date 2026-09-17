@@ -1,12 +1,10 @@
 local _, RCC = ...
 
-RCC.Consumables = RCC.Consumables or {}
-RCC.Consumables.Repair = RCC.Consumables.Repair or {}
-
-local Repair = RCC.Consumables.Repair
+RCC.ConsumablePresenters = RCC.ConsumablePresenters or {}
+local Repair = {}
+RCC.ConsumablePresenters.Repair = Repair
 
 local ButtonState = RCC.ConsumableState
-local ItemCandidates = RCC.ConsumableFrameItemCandidates
 
 local OUT_OF_ITEMS = "No Repair Items found in Bags"
 
@@ -44,25 +42,34 @@ local function createFlyoutChoices(candidates, selectedItemID)
     end
 end
 
-function Repair.ResolveState(now)
-    local candidate, candidates = Repair.GetItemCandidate(now)
+function Repair.Present(model)
+    local candidate, candidates = RCC.ConsumableSelection.Unpack(model.selection)
     local itemID = candidate and candidate.itemID
-        or Repair.GetDefaultItemID()
+        or model.selection.fallback.itemID
     local buttonState = ButtonState.Create({
         countText = getCountText(candidate),
         tooltipItemID = itemID,
         clickHintItemID = itemID,
         icon = candidate and candidate.icon
-            or ItemCandidates.GetIcon(itemID),
+            or model.selection.fallback.icon,
         showStatusTexture = false,
         suppressGlow = true,
     })
 
+    -- The desired primary can switch when a reusable device comes off cooldown.
+    -- Keep per-item visuals available for whichever action is prepared in combat.
+    buttonState.itemVisuals = {}
+    buttonState.missingItemVisual = { desaturated = true, unavailable = { text = OUT_OF_ITEMS } }
+    for _, item in ipairs(candidates) do
+        buttonState.itemVisuals[item.itemID] = {
+            cooldown = item.cooldown,
+            desaturated = not item.ready,
+        }
+    end
+
     if candidate then
         buttonState.cooldown = candidate.cooldown
-        buttonState.action = ButtonState.CreateItemAction(itemID, {
-            available = candidate.ready,
-        })
+        buttonState.action = model.action
 
         if candidate.ready then
             buttonState.desaturated = false
@@ -70,8 +77,10 @@ function Repair.ResolveState(now)
     else
         ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
     end
-
-    buttonState.flyoutChoices = createFlyoutChoices(candidates, itemID)
-
     return buttonState
+end
+
+function Repair.Choices(selection)
+    local candidate = selection.candidate or selection.fallback
+    return createFlyoutChoices(selection.candidates, candidate.itemID)
 end

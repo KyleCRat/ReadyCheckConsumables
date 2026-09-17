@@ -51,6 +51,7 @@ function Surface.Create(parent, options)
         capabilities = options.capabilities
             or Binder.Capabilities.TEMPORARY,
         preparedStates = {},
+        appliedRevisions = {},
         secureDirty = false,
         geometry = copyOptions(options.geometry, DEFAULT_GEOMETRY),
         visualOptions = copyOptions(
@@ -107,6 +108,7 @@ function Surface.ApplyGeometry(surface, geometry)
     if not surface or InCombatLockdown() then return false end
 
     surface.geometry = copyOptions(geometry, DEFAULT_GEOMETRY)
+    surface.temporaryLayoutSignature = nil
 
     local definitions = Catalog.GetDefinitions()
 
@@ -124,6 +126,7 @@ function Surface.ApplyVisualOptions(surface, options)
     if not surface then return false end
 
     surface.visualOptions = copyOptions(options, DEFAULT_VISUAL_OPTIONS)
+    surface.visualDirty = true
 
     local definitions = Catalog.GetDefinitions()
 
@@ -134,6 +137,7 @@ function Surface.ApplyVisualOptions(surface, options)
         Flyout.ApplyVisualOptions(button, surface.visualOptions)
     end
 
+    if surface.latestSnapshot then Surface.ApplySnapshot(surface, surface.latestSnapshot) end
     return true
 end
 
@@ -145,6 +149,7 @@ function Surface.ApplySnapshot(surface, snapshot)
     surface.latestSnapshot = snapshot
 
     local inCombat = InCombatLockdown()
+    local policyChanged = surface.inCombat ~= inCombat or surface.visualDirty
     local definitions = Catalog.GetDefinitions()
 
     for i = 1, #definitions do
@@ -152,6 +157,8 @@ function Surface.ApplySnapshot(surface, snapshot)
         local key = definition.key
         local button = surface.buttons[key]
         local state = snapshot.states[key]
+        local revisions = snapshot.revisions[key]
+        local applied = surface.appliedRevisions[key] or {}
         local visualState = state
 
         if inCombat and surface.capabilities.allowCombat then
@@ -161,22 +168,32 @@ function Surface.ApplySnapshot(surface, snapshot)
             )
         end
 
-        View.ApplyVisual(button, visualState)
+        if policyChanged or applied.visual ~= revisions.visual then
+            View.ApplyVisual(button, visualState)
+        end
 
         if not inCombat then
-            Binder.Bind(button, state.action, surface.capabilities)
-            Flyout.SetChoices(button, state.flyoutChoices)
+            if applied.interaction ~= revisions.interaction then
+                Binder.Bind(button, state.action, surface.capabilities)
+                Flyout.SetChoices(button, state.flyoutChoices)
+            end
             surface.preparedStates[key] = state
+            applied.interaction = revisions.interaction
         end
+        applied.visual = revisions.visual
+        surface.appliedRevisions[key] = applied
     end
 
     surface.secureDirty = inCombat
+    surface.inCombat = inCombat
+    surface.visualDirty = false
 
     return true
 end
 
 function Surface.ReconcileSecure(surface)
     if not surface or InCombatLockdown() then return false end
+    RCC.ConsumableStateController.PrepareOutOfCombat()
     if not surface.latestSnapshot then return false end
 
     surface.secureDirty = false
@@ -203,15 +220,24 @@ function Surface.ApplyTemporaryLayout(surface, context)
     )
     local previous
     local visibleCount = 0
+    local shown = {}
+    local signature = { tostring(buttonWidth), tostring(buttonHeight), tostring(gapX) }
+
+    for i = 1, #definitions do
+        local definition = definitions[i]
+        shown[definition.key] = Visibility.IsVisible(
+            definition, context, surface.buttons[definition.key].consumableState
+        )
+        if shown[definition.key] then signature[#signature + 1] = definition.key end
+    end
+    signature = table.concat(signature, "|")
+    if signature == surface.temporaryLayoutSignature then return true end
+    surface.temporaryLayoutSignature = signature
 
     for i = 1, #definitions do
         local definition = definitions[i]
         local button = surface.buttons[definition.key]
-        local shouldShow = Visibility.IsVisible(
-            definition,
-            context,
-            button.consumableState
-        )
+        local shouldShow = shown[definition.key]
 
         button:ClearAllPoints()
 

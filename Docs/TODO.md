@@ -43,8 +43,10 @@ whether those changes already resolve a follow-up before adding more caching.
   collector sorts by item ID before the enchant selector sorts by expansion,
   quality, and item ID. Preserve final priority and flyout ordering.
 - [ ] Avoid repair-candidate/cooldown work when no active consumer needs Repair.
-  Revisit the `BAG_UPDATE_COOLDOWN` signature check after disabled-category
-  filtering; retain timely cooldown completion and ready-item selection.
+  The dependency-aware controller now compares cached cooldown observations
+  without recounting or sorting repair candidates on unchanged events. Finish
+  category-specific demand filtering in step 3; retain timely cooldown
+  completion and ready-item selection.
 
 ## 12.1.0 / Interface 120100 Upgrade
 
