@@ -31,8 +31,8 @@ end
 local liveState = createState()
 local syntheticState = createState()
 local syntheticActive = false
-local testFlaskItemID
-local testPotionItemID
+local testFlaskItemIDs
+local testPotionItemIDs
 
 Cauldron.KIND_FLASK = KIND_FLASK
 Cauldron.KIND_POTION = KIND_POTION
@@ -90,8 +90,8 @@ end
 local function resetSyntheticState()
     resetState(syntheticState)
     syntheticActive = false
-    testFlaskItemID = nil
-    testPotionItemID = nil
+    testFlaskItemIDs = nil
+    testPotionItemIDs = nil
 end
 
 local function isValidKind(kind)
@@ -122,12 +122,6 @@ local function getCauldronDataForKind(kind)
     return kind
         and RCC.db.cauldronKindData
         and RCC.db.cauldronKindData[kind]
-end
-
-local function firstPickupItemID(cauldronData)
-    local pickupItemIDs = cauldronData and cauldronData.pickupItemIDs
-
-    return pickupItemIDs and pickupItemIDs[1]
 end
 
 local function parseItemID(message)
@@ -439,8 +433,8 @@ function Cauldron.BeginSyntheticTestData()
     syntheticState.activeTargets[KIND_POTION] = potionTarget
     syntheticState.activePickupQuantities[KIND_FLASK] = flaskPickupQuantity
     syntheticState.activePickupQuantities[KIND_POTION] = potionPickupQuantity
-    testFlaskItemID = firstPickupItemID(flaskCauldron)
-    testPotionItemID = firstPickupItemID(potionCauldron)
+    testFlaskItemIDs = flaskCauldron.pickupItemIDs
+    testPotionItemIDs = potionCauldron.pickupItemIDs
     syntheticActive = true
 
     return true
@@ -458,6 +452,14 @@ function Cauldron.EndSyntheticTestData(suppressRefresh)
     end
 
     return true
+end
+
+local function pickSyntheticItemID(itemIDs)
+    if not itemIDs or #itemIDs == 0 then
+        return
+    end
+
+    return itemIDs[math.random(#itemIDs)]
 end
 
 function Cauldron.SetSyntheticTestEntry(playerKey, index)
@@ -486,8 +488,9 @@ function Cauldron.SetSyntheticTestEntry(playerKey, index)
             getPickupQuantity(syntheticState, KIND_POTION)
     end
 
-    entry.flaskItemID = testFlaskItemID
-    entry.potionItemID = testPotionItemID
+    -- Choose once per player so refreshes do not change their pickup icons.
+    entry.flaskItemID = pickSyntheticItemID(testFlaskItemIDs)
+    entry.potionItemID = pickSyntheticItemID(testPotionItemIDs)
 
     return true
 end

@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Test raids now randomize cauldron flask and potion choices per player in
+  `/rcc t`, `/rcc tp`, and `/rcc ct`, while retaining the existing pickup-count
+  examples. Choices stay fixed until a new test starts.
 - Check and X status icons now use Blizzard's higher-resolution
   `common-icon-checkmark` and `common-icon-redx` artwork across personal
   buttons and raid-frame headers and rows. Existing icon sizes, colors, and
