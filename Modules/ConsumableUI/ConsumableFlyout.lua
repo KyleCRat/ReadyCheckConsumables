@@ -135,10 +135,19 @@ function Flyout.SetPrimaryHovered(button, hovered)
     local wasHovered = owner.primaryHovered == true
 
     if hovered and isClaimedByAnother(owner) then
-        owner.primaryHovered = false
-        View.SetHoverStateActive(owner, false)
+        local activeOwner = owner.consumableFlyoutManager.activeOwner
 
-        return false
+        -- An open flyout consumes hover over any primary beneath it. Outside
+        -- that flyout, entering another primary transfers ownership immediately:
+        -- the old owner's hide delay must not discard the new OnEnter event.
+        if InCombatLockdown() or isMouseOverFrame(activeOwner.flyout) then
+            owner.primaryHovered = false
+            View.SetHoverStateActive(owner, false)
+
+            return false
+        end
+
+        Flyout.Hide(activeOwner)
     end
 
     owner.primaryHovered = hovered == true

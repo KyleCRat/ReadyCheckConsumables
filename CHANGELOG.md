@@ -56,6 +56,9 @@
 
 ### Fixed
 
+- Fixed Action Bar flyouts failing to switch when hovering directly between
+  primary buttons. Hovering inside an open flyout still blocks overlapping
+  primary buttons, and flyouts remain unavailable in combat.
 - Decoupled the bench-aware ready announcement from the Raid Status Frame so
   the elected reporter can announce even when their frame is disabled or closed.
 - Wait for the existing reporter-selection window before announcing, retain
