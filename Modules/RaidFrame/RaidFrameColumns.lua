@@ -726,8 +726,12 @@ function Columns.SyncExternalData(member, layout, context)
     end
 
     member.columnData = member.columnData or createColumnData(layout)
-    member.columnData.rccPresent = member.key ~= nil
-        and context.shared.presenceData[member.key] ~= nil
+
+    -- Local presence never depends on receiving or sending an ACK. Previews
+    -- also use this path without publishing the player's presence.
+    member.columnData.rccPresent = F.UnitIsUnitSafe(member.unit, "player")
+        or (member.key ~= nil
+            and context.shared.presenceData[member.key] ~= nil)
 
     for columnIndex = 1, #layout.activeColumns do
         local column = layout.activeColumns[columnIndex]

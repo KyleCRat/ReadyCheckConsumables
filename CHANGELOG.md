@@ -69,6 +69,9 @@
 
 ### Fixed
 
+- Recognize the local player as having RCC without needing a presence message.
+  Unreadable self-statuses in Raid Status Frame previews now use the Unknown
+  tooltip instead of suggesting RCC might not be installed.
 - Missing never-secret raid buffs no longer become Unknown just because an
   unrelated secret aura is present. Unresolved raid-buff categories now reuse
   targeted lookups with current secrecy checks to confirm presence or absence

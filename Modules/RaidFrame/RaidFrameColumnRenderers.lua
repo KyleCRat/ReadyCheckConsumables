@@ -20,7 +20,7 @@ local GetItemIcon    = C_Item.GetItemIconByID
 --                 result yet; full-color action icon and still counts as bad.
 --   NO_WEAPON   - no enchantable main-hand weapon; desaturated configured icon
 --                 with a title-bar red X overlay, and counts as bad.
---   UNKNOWN     - RCC responded but could not inspect the status; faded
+--   UNKNOWN     - RCC is known to be installed but the status is unavailable; faded
 --                 configured icon with a faded grey X overlay, and neutral for
 --                 header aggregation.
 --   NO_RESPONSE - no compatible status was received; the same faded icon and
