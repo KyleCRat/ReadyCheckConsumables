@@ -14,7 +14,7 @@ function Healthstone.Present(model)
         return ButtonState.Create({
             applicable = showHealthstone,
             countText = tostring(totalCount),
-            statusTexture = ButtonState.READY_TEXTURE,
+            statusIcon = ButtonState.READY_ICON,
             desaturated = false,
             tooltipItemID = RCC.db.healthstoneItemID,
             clickHintItemID = RCC.db.healthstoneItemID,

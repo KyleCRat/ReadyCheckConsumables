@@ -20,8 +20,8 @@ local COLOR_NAME_NORMAL  = { r = 1,   g = 1,   b = 1   }
 local COLOR_NAME_OFFLINE = { r = 0.5, g = 0.5, b = 0.5 }
 local COLOR_NAME_DEAD    = { r = 0.8, g = 0.2, b = 0.2 }
 
-local RC_TEXTURE_OFFLINE = "Interface\\CharacterFrame\\Disconnect-Icon"
-local RC_ATLAS_DEAD      = "Navigation-Tombstone-Icon"
+local RC_ICON_OFFLINE = { texture = "Interface\\CharacterFrame\\Disconnect-Icon" }
+local RC_ICON_DEAD    = { atlas = "Navigation-Tombstone-Icon" }
 
 local function getFrameHeight(rows, layout, activeCount)
     return layout.framePad * 2
@@ -40,7 +40,7 @@ local function createRow(parent, titleBar, rows, index, layout, options)
     row.rcIcon = row:CreateTexture(nil, "ARTWORK")
     row.rcIcon:SetPoint("CENTER", row, "LEFT", x.readyIconCenter, 0)
     row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
-    row.rcIcon:SetTexture(ReadyCheck.TEXTURES[Status.PENDING])
+    UI.SetStatusIcon(row.rcIcon, ReadyCheck.ICONS[Status.PENDING])
 
     row.bg = row:CreateTexture(nil, "BACKGROUND")
     row.bg:SetAllPoints(row)
@@ -113,15 +113,15 @@ local function applyRcIcon(row, member, layout, context)
 
     if status == Status.NOT_READY and not member.online then
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
-        row.rcIcon:SetTexture(RC_TEXTURE_OFFLINE)
+        UI.SetStatusIcon(row.rcIcon, RC_ICON_OFFLINE)
     elseif status == Status.PENDING and member.isDead then
         row.rcIcon:SetSize(
             layout.rcIconWidth * 26 / 33, layout.rcIconWidth
         )
-        row.rcIcon:SetAtlas(RC_ATLAS_DEAD)
+        UI.SetStatusIcon(row.rcIcon, RC_ICON_DEAD)
     else
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
-        row.rcIcon:SetTexture(ReadyCheck.TEXTURES[status])
+        UI.SetStatusIcon(row.rcIcon, ReadyCheck.ICONS[status])
     end
 end
 

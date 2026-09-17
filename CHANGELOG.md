@@ -4,6 +4,19 @@
 
 ### Changed
 
+- Check and X status icons now use Blizzard's higher-resolution
+  `common-icon-checkmark` and `common-icon-redx` artwork across personal
+  buttons and raid-frame headers and rows. Existing icon sizes, colors, and
+  opacity are unchanged.
+- Unknown indicators use common-style question-mark artwork matching RCC's other
+  status icons: grey at 80% opacity on the Raid Status Frame, and fully opaque
+  and colored on personal consumable buttons. No Response keeps a grey X,
+  distinct from No Weapon's red X; faded category icons remain visible behind
+  unavailable raid-frame states.
+- Raid Status Frame unavailable tooltips now have short titles and wrapped
+  descriptions. Buff tooltips explain why secret or unreadable auras prevent
+  confirming absence; No Response explains that no addon confirmation arrived
+  and the player may lack RCC or have been unable to reply.
 - Reorganized the README around personal consumables, group readiness, and
   macros, with clearer consumable lists, common settings beside each feature,
   and a separate advanced reference for behavior, macro syntax, and commands.
@@ -69,6 +82,9 @@
 
 ### Fixed
 
+- The Unknown preview row now keeps public raid buffs readable while simulating
+  an unresolved consumable scan. Random secret-aura cases no longer mark raid
+  buffs Unknown, and the guaranteed-good mirrored columns are preserved.
 - Recognize the local player as having RCC without needing a presence message.
   Unreadable self-statuses in Raid Status Frame previews now use the Unknown
   tooltip instead of suggesting RCC might not be installed.

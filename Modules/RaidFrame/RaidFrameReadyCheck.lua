@@ -2,17 +2,18 @@ local _, RCC = ...
 
 RCC.RaidFrameReadyCheck = RCC.RaidFrameReadyCheck or {}
 local ReadyCheck = RCC.RaidFrameReadyCheck
+local StatusIcons = RCC.UI.StatusIcons
 
--- Art belongs to the frame; response meanings belong to the shared model.
+-- Response-to-icon mapping belongs to the frame; meanings belong to the model.
 local Status = RCC.ReadyCheckState.Status
 
-ReadyCheck.TEXTURES = {
-    [Status.PENDING]   = "Interface\\RaidFrame\\ReadyCheck-Waiting",
-    [Status.READY]     = "Interface\\RaidFrame\\ReadyCheck-Ready",
-    [Status.NOT_READY] = "Interface\\RaidFrame\\ReadyCheck-NotReady",
+ReadyCheck.ICONS = {
+    [Status.PENDING]   = { texture = "Interface\\RaidFrame\\ReadyCheck-Waiting" },
+    [Status.READY]     = StatusIcons.READY,
+    [Status.NOT_READY] = StatusIcons.NOT_READY,
 }
 
-ReadyCheck.TITLE_TEXTURES = {
-    ready    = ReadyCheck.TEXTURES[Status.READY],
-    notReady = ReadyCheck.TEXTURES[Status.NOT_READY],
+ReadyCheck.TITLE_ICONS = {
+    ready    = StatusIcons.READY,
+    notReady = StatusIcons.NOT_READY,
 }

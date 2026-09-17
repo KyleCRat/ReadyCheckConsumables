@@ -6,6 +6,26 @@ local UI = RCC.UI
 local floor = floor
 
 UI.FONT = "Interface\\AddOns\\ReadyCheckConsumables\\Media\\Fonts\\PTSansNarrow-Bold.ttf"
+UI.UNKNOWN_STATUS_ALPHA = 0.5
+
+UI.StatusIcons = {
+    READY = { atlas = "common-icon-checkmark" },
+    NOT_READY = { atlas = "common-icon-redx" },
+    UNKNOWN = {
+        texture = "Interface\\AddOns\\ReadyCheckConsumables\\Media\\Textures\\common_icon_pending.tga",
+    },
+}
+
+-- Keep caller-owned size, color, and opacity when switching status artwork.
+function UI.SetStatusIcon(region, icon)
+    if icon.atlas then
+        region:SetAtlas(icon.atlas, false)
+    else
+        region:SetTexture(icon.texture)
+        -- A standalone image must not retain the previous atlas's coordinates.
+        region:SetTexCoord(0, 1, 0, 1)
+    end
+end
 
 local CONTROL_BG        = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
 local CONTROL_HIGHLIGHT = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 }

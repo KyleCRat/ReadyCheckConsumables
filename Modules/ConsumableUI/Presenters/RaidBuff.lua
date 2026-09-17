@@ -20,7 +20,7 @@ function RaidBuff.Present(model)
         State.SetUnavailable(state, "Raid buff spell unavailable")
     end
     if model.available and not missing then
-        state.statusTexture = State.READY_TEXTURE
+        state.statusIcon = State.READY_ICON
         state.hasConsumableBuff = true
         state.desaturated = false
     end

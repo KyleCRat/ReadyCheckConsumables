@@ -137,15 +137,12 @@ function View.ApplyVisual(button, state)
     state = State.Normalize(state)
     button.consumableState = state
 
-    if state.statusAtlas then
-        button.statustexture:SetAtlas(state.statusAtlas, false)
-    else
-        button.statustexture:SetTexture(state.statusTexture)
-    end
+    UI.SetStatusIcon(button.statustexture, state.statusIcon)
 
     button.statustexture:SetDesaturated(
         state.statusTextureDesaturated == true
     )
+    button.statustexture:SetAlpha(state.statusTextureAlpha)
     button.statustexture:SetShown(
         state.showStatusTexture == true and not button.hideStatusTexture
     )

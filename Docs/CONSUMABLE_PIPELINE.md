@@ -383,7 +383,7 @@ These are some of the fields the renderer understands:
 | `icon`, `desaturated` | Texture and whether it is shown in color |
 | `countText` | Item count or charges text |
 | `detailText`, `detailTextIsBad` | Duration/detail label and warning color |
-| `statusTexture` / `statusAtlas`, `showStatusTexture` | Status overlay and whether this category uses one |
+| `statusIcon`, `showStatusTexture` | Status artwork and whether this category uses an overlay |
 | `tooltipItemID`, `tooltipAuraID` | Item or active-aura tooltip information |
 | `action` | Prepared click behavior described by an item/spell action |
 | `glow`, `suppressGlow` | Reminder request and category-specific glow suppression |
@@ -395,6 +395,10 @@ optional-use category needs to express its different appearance: the
 [Inky Black Potion presenter](../Modules/ConsumableUI/Presenters/InkyBlackPotion.lua),
 for example, sets `showStatusTexture = false`, `suppressGlow = true`, and keeps
 `desaturated = false`.
+
+Choose `statusIcon` from `ConsumableState.READY_ICON`, `NOT_READY_ICON`, or
+`UNKNOWN_ICON`. These shared artwork records identify an atlas or texture;
+`UI.SetStatusIcon` draws it without changing the overlay's size or opacity.
 
 ### Flyout choices use the selection, not another inventory read
 
@@ -426,7 +430,7 @@ snapshot = {
             countText = "3",
             detailText = "1h",
             detailTextIsBad = false,
-            statusTexture = RCC.ConsumableState.READY_TEXTURE,
+            statusIcon = RCC.ConsumableState.READY_ICON,
             showStatusTexture = true,
             desaturated = false,
             hasConsumableBuff = true,

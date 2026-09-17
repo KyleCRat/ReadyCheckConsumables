@@ -12,17 +12,19 @@ RCC.ConsumableActionKind = RCC.ConsumableActionKind or {
 
 local ActionKind = RCC.ConsumableActionKind
 
-State.READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-Ready"
-State.NOT_READY_TEXTURE = "Interface\\RaidFrame\\ReadyCheck-NotReady"
-State.UNKNOWN_ATLAS = "UI-LFG-PendingMark"
+State.READY_ICON = RCC.UI.StatusIcons.READY
+State.NOT_READY_ICON = RCC.UI.StatusIcons.NOT_READY
+State.UNKNOWN_ICON = RCC.UI.StatusIcons.UNKNOWN
 
 local AURA_SCAN_UNAVAILABLE_TEXT =
-    "RCC was unable to see this buff information."
+    "RCC can't confirm whether this buff is missing because some aura "
+    .. "information is secret or unavailable"
 
 State.DEFAULTS = {
     applicable = true,
-    statusTexture = State.NOT_READY_TEXTURE,
+    statusIcon = State.NOT_READY_ICON,
     statusTextureDesaturated = false,
+    statusTextureAlpha = 1,
     showStatusTexture = true,
     desaturated = true,
     countText = "",
@@ -253,7 +255,7 @@ end
 function State.ApplyActiveAura(state, auraState)
     if not state or not auraState or not auraState.active then return end
 
-    state.statusTexture = State.READY_TEXTURE
+    state.statusIcon = State.READY_ICON
     state.hasConsumableBuff = true
     state.desaturated = false
 
@@ -274,19 +276,20 @@ function State.ApplyActiveAura(state, auraState)
     end
 end
 
-function State.ApplyAuraScanAvailability(state, scanAvailable)
+function State.ApplyAuraScanAvailability(state, scanAvailable, unavailableText)
     -- A readable buff is still confirmed even when another aura made the
     -- overall scan incomplete. Only unresolved statuses become unknown.
     if not state or scanAvailable == true or state.hasConsumableBuff == true then
         return
     end
 
-    state.statusAtlas = State.UNKNOWN_ATLAS
-    state.statusTextureDesaturated = true
+    state.statusIcon = State.UNKNOWN_ICON
+    state.statusTextureDesaturated = false
+    state.statusTextureAlpha = 1
     state.desaturated = true
     state.glow = false
     state.suppressGlow = true
-    state.auraScanUnavailableText = AURA_SCAN_UNAVAILABLE_TEXT
+    state.auraScanUnavailableText = unavailableText or AURA_SCAN_UNAVAILABLE_TEXT
 end
 
 -- Secure actions and flyout contents cannot be rebound in combat. Keep their

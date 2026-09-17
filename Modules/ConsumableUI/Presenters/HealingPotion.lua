@@ -21,7 +21,7 @@ function HealingPotion.Present(model)
     })
 
     if inventoryItem and inventoryItemCount > 0 then
-        buttonState.statusTexture = ButtonState.READY_TEXTURE
+        buttonState.statusIcon = ButtonState.READY_ICON
         buttonState.desaturated = false
         buttonState.action = model.action
     end

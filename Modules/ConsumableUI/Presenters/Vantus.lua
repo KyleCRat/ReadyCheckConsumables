@@ -51,7 +51,7 @@ function Vantus.Present(model)
             buttonState.detailText = bossName
         end
 
-        buttonState.statusTexture = ButtonState.READY_TEXTURE
+        buttonState.statusIcon = ButtonState.READY_ICON
         buttonState.hasConsumableBuff = true
         buttonState.desaturated = false
         buttonState.glow = false

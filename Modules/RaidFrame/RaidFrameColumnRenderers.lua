@@ -5,7 +5,6 @@ RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 local Renderers      = RCC.RaidFrameColumnRenderers
 local Broadcast      = RCC.RaidFrameBroadcast
 local F              = RCC.F
-local ReadyCheck     = RCC.RaidFrameReadyCheck
 local UI             = RCC.UI
 local Timing         = RCC.ConsumableTiming
 local formatDuration = F.FormatDuration
@@ -20,14 +19,16 @@ local GetItemIcon    = C_Item.GetItemIconByID
 --                 result yet; full-color action icon and still counts as bad.
 --   NO_WEAPON   - no enchantable main-hand weapon; desaturated configured icon
 --                 with a title-bar red X overlay, and counts as bad.
---   UNKNOWN     - RCC is known to be installed but the status is unavailable; faded
---                 configured icon with a faded grey X overlay, and neutral for
---                 header aggregation.
+--   UNKNOWN     - RCC is known to be installed but the status is unavailable;
+--                 faded configured icon with a faded grey ? overlay, and
+--                 neutral for header aggregation.
 --   NO_RESPONSE - no compatible status was received; the same faded icon and
---                 grey X overlay, and neutral for header aggregation. It is
---                 never blank.
+--                 faded grey X overlay, and neutral for header aggregation.
+--                 It is never blank.
 -- Durability and cauldron cells retain their approved numeric presentations,
 -- but use the same UNKNOWN/NO_RESPONSE distinction where it applies.
+-- Unavailable tooltips use a short status title and a wrapped description.
+-- A missing presence ACK does not prove that the addon is not installed.
 local ROW_STATE = {
     PRESENT     = "present",
     EXPIRING    = "expiring",
@@ -40,8 +41,8 @@ local ROW_STATE = {
 
 local MISSING_ALPHA            = 0.3
 local UNAVAILABLE_ICON_ALPHA   = 0.25
-local UNAVAILABLE_MARKER_ALPHA = 0.8
-local NOT_READY_TEXTURE        = ReadyCheck.TITLE_TEXTURES.notReady
+local NO_RESPONSE_MARKER_ALPHA = 0.8
+local NOT_READY_ICON           = UI.StatusIcons.NOT_READY
 local COLOR_DUR_GREEN          = { r = 0.2, g = 1,    b = 0.2 }
 local COLOR_DUR_YELLOW         = { r = 1,   g = 0.82, b = 0   }
 local COLOR_DUR_RED            = { r = 1,   g = 0.2,  b = 0.2 }
@@ -54,6 +55,24 @@ local COLOR_OVER        = { r = 1,   g = 0.2,  b = 0.2 }
 local FONT_SIZE_TIME    = 14
 local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
 local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
+
+local STATE_OVERLAYS = {
+    [ROW_STATE.NO_WEAPON] = {
+        icon = NOT_READY_ICON,
+        desaturated = false,
+        alpha = 1,
+    },
+    [ROW_STATE.UNKNOWN] = {
+        icon = UI.StatusIcons.UNKNOWN,
+        desaturated = true,
+        alpha = UI.UNKNOWN_STATUS_ALPHA,
+    },
+    [ROW_STATE.NO_RESPONSE] = {
+        icon = NOT_READY_ICON,
+        desaturated = true,
+        alpha = NO_RESPONSE_MARKER_ALPHA,
+    },
+}
 
 local function hasUsableAuraID(auraID)
     return auraID
@@ -69,16 +88,34 @@ local function getMissingTooltip(column)
     return column.statusName .. ": Missing"
 end
 
-local function getUnknownTooltip(column)
-    return "Unable to check " .. column.statusName
-        .. " for this player. They have Ready Check Consumables, but the "
-        .. "information was unavailable."
+local function getUnknownDescription(column)
+    local dataSource = RCC.RaidFrameColumns.DATA_SOURCE
+
+    if column.dataSource == dataSource.AURA then
+        return "This player has Ready Check Consumables\n\n"
+            .. "A secret or otherwise unreadable aura prevents RCC from "
+            .. "confirming whether this buff is missing"
+    elseif column.dataSource == dataSource.RAID_BUFF then
+        return "This player has Ready Check Consumables\n\n"
+            .. "Their raid buff information is currently unavailable, so RCC "
+            .. "cannot confirm whether this buff is missing"
+    end
+
+    return "This player has Ready Check Consumables, but their "
+        .. column.statusName .. " information is currently unavailable"
 end
 
-local function getNoResponseTooltip(column)
-    return "No " .. column.statusName
-        .. " information was received from this player. They may not have "
-        .. "Ready Check Consumables installed."
+local function setUnavailableTooltip(overlay, column, state)
+    if state == ROW_STATE.UNKNOWN then
+        overlay.label = column.statusName .. ": Unknown"
+        overlay.description = getUnknownDescription(column)
+    else
+        overlay.label = column.statusName .. ": No addon response"
+        overlay.description = "RCC did not receive confirmation that this "
+            .. "player has the addon installed\n\n"
+            .. "They either do not have Ready Check Consumables installed "
+            .. "or were unable to send a response"
+    end
 end
 
 local function onOverlayEnter(self)
@@ -115,7 +152,12 @@ local function onOverlayEnter(self)
 
     if label then
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(label)
+        GameTooltip_SetTitle(GameTooltip, label)
+
+        if self.description then
+            GameTooltip_AddNormalLine(GameTooltip, self.description)
+        end
+
         GameTooltip:Show()
 
         return
@@ -159,7 +201,7 @@ local function createStateOverlay(row, icon)
     local stateOverlay = row:CreateTexture(nil, "OVERLAY")
 
     stateOverlay:SetAllPoints(icon)
-    stateOverlay:SetTexture(NOT_READY_TEXTURE)
+    UI.SetStatusIcon(stateOverlay, NOT_READY_ICON)
     stateOverlay:Hide()
 
     return stateOverlay
@@ -325,6 +367,7 @@ end
 -- These helpers own the complete reusable-region reset so a previous row or
 -- visibility change cannot leak into the next render.
 local function resetOverlay(overlay)
+    overlay.description = nil
     overlay.unit    = nil
     overlay.auraID  = nil
     overlay.spellID = nil
@@ -343,7 +386,6 @@ local function resetIconCell(cell)
 
     if cell.stateOverlay then
         cell.stateOverlayActive = false
-        cell.stateOverlay:SetTexture(NOT_READY_TEXTURE)
         cell.stateOverlay:SetDesaturated(false)
         cell.stateOverlay:SetVertexColor(1, 1, 1, 1)
         cell.stateOverlay:Hide()
@@ -356,15 +398,17 @@ local function setIconAppearance(cell, texture, desaturated, alpha)
     cell.icon:SetVertexColor(1, 1, 1, alpha)
 end
 
-local function showStateOverlay(cell, desaturated, alpha)
+local function showStateOverlay(cell, appearance)
     if not cell.stateOverlay then
         return
     end
 
     cell.stateOverlayActive = true
-    cell.stateOverlay:SetTexture(NOT_READY_TEXTURE)
-    cell.stateOverlay:SetDesaturated(desaturated)
-    cell.stateOverlay:SetVertexColor(1, 1, 1, alpha)
+
+    UI.SetStatusIcon(cell.stateOverlay, appearance.icon)
+
+    cell.stateOverlay:SetDesaturated(appearance.desaturated)
+    cell.stateOverlay:SetVertexColor(1, 1, 1, appearance.alpha)
     cell.stateOverlay:Show()
 end
 
@@ -390,16 +434,16 @@ end
 local function setIconCellNoWeapon(cell, column)
     setIconAppearance(cell, column.iconID, true, MISSING_ALPHA)
     cell.bg:SetAlpha(1)
-    showStateOverlay(cell, false, 1)
+    showStateOverlay(cell, STATE_OVERLAYS[ROW_STATE.NO_WEAPON])
     cell.overlay.label = "No enchantable main-hand weapon equipped."
     cell.overlay:EnableMouse(true)
 end
 
-local function setIconCellUnavailable(cell, column, tooltip)
+local function setIconCellUnavailable(cell, column, state)
     setIconAppearance(cell, column.iconID, true, UNAVAILABLE_ICON_ALPHA)
     cell.bg:SetAlpha(UNAVAILABLE_ICON_ALPHA)
-    showStateOverlay(cell, true, UNAVAILABLE_MARKER_ALPHA)
-    cell.overlay.label = tooltip
+    showStateOverlay(cell, STATE_OVERLAYS[state])
+    setUnavailableTooltip(cell.overlay, column, state)
     cell.overlay:EnableMouse(true)
 end
 
@@ -414,10 +458,8 @@ local function applyIconRowState(cell, column, state, iconID)
         setIconCellInProgress(cell, column, iconID)
     elseif state == ROW_STATE.NO_WEAPON then
         setIconCellNoWeapon(cell, column)
-    elseif state == ROW_STATE.UNKNOWN then
-        setIconCellUnavailable(cell, column, getUnknownTooltip(column))
-    elseif state == ROW_STATE.NO_RESPONSE then
-        setIconCellUnavailable(cell, column, getNoResponseTooltip(column))
+    elseif state == ROW_STATE.UNKNOWN or state == ROW_STATE.NO_RESPONSE then
+        setIconCellUnavailable(cell, column, state)
     else
         error("Unknown raid-frame row state: " .. tostring(state), 2)
     end
@@ -577,9 +619,7 @@ local function renderDurabilityCell(row, member, column)
 
         text:SetText(state == ROW_STATE.UNKNOWN and "?" or "-")
         setTextColor(text, COLOR_NEUTRAL)
-        overlay.label = state == ROW_STATE.UNKNOWN
-            and getUnknownTooltip(column)
-            or getNoResponseTooltip(column)
+        setUnavailableTooltip(overlay, column, state)
         overlay:EnableMouse(true)
     end
 end

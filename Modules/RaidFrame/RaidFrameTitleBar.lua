@@ -71,7 +71,7 @@ function TitleBar.Create(parent, layout, options)
 
         icon:SetSize(layout.iconSize, layout.iconSize)
         icon:SetPoint("LEFT", titleBar, "LEFT", column.titleX, 0)
-        icon:SetTexture(ReadyCheck.TEXTURES[Status.PENDING])
+        UI.SetStatusIcon(icon, ReadyCheck.ICONS[Status.PENDING])
         icon:Hide()
         titleBar.colIcons[columnIndex] = icon
         titleBar.colIconsByKey[column.key] = icon
@@ -109,10 +109,11 @@ function TitleBar.Create(parent, layout, options)
             local icon = self.colIconsByKey[column.key]
 
             if icon then
-                icon:SetTexture(
+                UI.SetStatusIcon(
+                    icon,
                     columnStates[column.key]
-                    and ReadyCheck.TITLE_TEXTURES.notReady
-                    or ReadyCheck.TITLE_TEXTURES.ready
+                    and ReadyCheck.TITLE_ICONS.notReady
+                    or ReadyCheck.TITLE_ICONS.ready
                 )
             end
         end

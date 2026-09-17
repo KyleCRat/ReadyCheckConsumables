@@ -129,6 +129,8 @@ local function generateSyntheticMembers(excludeClass)
         auraScanAvailable = false,
     }
 
+    -- A secret aura can leave consumables unresolved without hiding the
+    -- current NeverSecret raid buffs. This is not an inaccessible-unit case.
     members[#members + 1] = {
         name              = "Unknown",
         class             = "MAGE",
@@ -143,6 +145,7 @@ local function generateSyntheticMembers(excludeClass)
         },
         rccPresent        = true,
         auraScanAvailable = false,
+        raidBuffsAvailable = true,
     }
 
     return members
@@ -199,24 +202,17 @@ local function shouldMirrorPlayerColumn(column)
         or column.columnType == COLUMN_TYPE.RAID_BUFF
 end
 
-local function canSimulateUnavailable(column)
-    return column.dataSource == DATA_SOURCE.AURA
-        or column.dataSource == DATA_SOURCE.RAID_BUFF
-end
-
 local function createSyntheticColumnData(
     layout,
     context,
     playerMember,
-    auraScanAvailable
+    member
 )
     local columnData = Columns.CreateColumnData(layout)
 
-    columnData.auraScanAvailable = auraScanAvailable == true
-
-    if not columnData.auraScanAvailable then
-        return columnData
-    end
+    columnData.auraScanAvailable = member.auraScanAvailable == true
+    local raidBuffsAvailable = columnData.auraScanAvailable
+        or member.raidBuffsAvailable == true
 
     for columnIndex = 1, #layout.columns do
         local column = layout.columns[columnIndex]
@@ -224,8 +220,13 @@ local function createSyntheticColumnData(
         local playerData = playerMember
             and playerMember.columnData
             and playerMember.columnData[column.key]
+        local canPopulate = columnData.auraScanAvailable
 
-        if data then
+        if column.dataSource == DATA_SOURCE.RAID_BUFF then
+            canPopulate = raidBuffsAvailable
+        end
+
+        if data and canPopulate then
             -- Preserve the guaranteed-good mirrored columns so the test always
             -- exercises the green title-bar state before adding random neutral
             -- cells to the remaining columns.
@@ -235,7 +236,7 @@ local function createSyntheticColumnData(
                 and playerColumnIsGood(playerMember, context, column)
             then
                 columnData[column.key] = copySyntheticColumnData(playerData)
-            elseif canSimulateUnavailable(column)
+            elseif column.dataSource == DATA_SOURCE.AURA
                 and math.random() < SYNTHETIC_UNAVAILABLE_CHANCE
             then
                 data.available = false
@@ -302,7 +303,7 @@ local function populateSyntheticState(self)
                 layout,
                 context,
                 state.members[1],
-                member.auraScanAvailable
+                member
             ),
         }
 

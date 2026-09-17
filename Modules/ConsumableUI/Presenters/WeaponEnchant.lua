@@ -4,6 +4,9 @@ RCC.ConsumablePresenters.WeaponEnchant = WeaponEnchant
 local State = RCC.ConsumableState
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Weapon Enchant Item not found in Bags"
+local STATUS_UNAVAILABLE =
+    "RCC can't confirm whether this weapon enchant is missing because its "
+    .. "information is unavailable"
 
 function WeaponEnchant.Present(model)
     local selected = model.selection
@@ -12,7 +15,7 @@ function WeaponEnchant.Present(model)
 
     local active = selected.active
     if model.hasEnchant then
-        state.statusTexture = State.READY_TEXTURE
+        state.statusIcon = State.READY_ICON
         state.hasConsumableBuff = true
         state.desaturated = false
         state.icon = selected.activeIcon
@@ -49,7 +52,7 @@ function WeaponEnchant.Present(model)
             State.SetUnavailable(state, OUT_OF_ITEMS)
         end
     end
-    State.ApplyAuraScanAvailability(state, model.available)
+    State.ApplyAuraScanAvailability(state, model.available, STATUS_UNAVAILABLE)
     return state
 end
 
