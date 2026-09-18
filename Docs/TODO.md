@@ -50,4 +50,3 @@ whether those changes already resolve a follow-up before adding more caching.
   until food, augments, weapon enchants, and other consumables are reviewed so a
   shared helper follows real common behavior instead of forcing everything into
   the first family-based shape.
-- Add item:253011 Brawler's Guild health pot to use first if available?

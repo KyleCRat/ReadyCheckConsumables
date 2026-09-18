@@ -4,6 +4,19 @@
 
 ### Changed
 
+- Item macros now include their primary choice and one eligible backup from
+  your bags, selected using the same category rules. The backup remains usable
+  if the primary runs out during combat, without rewriting the macro mid-fight.
+- Healing-potion buttons and macros now share location-aware selection: a
+  carried Brawler's Guild potion (`253011`) takes priority only inside its
+  venues, without replacing your saved normal-potion preference. Leaving the
+  venue restores normal selection. Macros include the normal potion as their
+  one backup; the complete macro still casts Recuperate out of combat. Prepared
+  button actions and macro updates wait until combat ends before switching.
+- Inline potion/healthstone markers now maintain their complete group of item
+  choices and preserve conditions on every line. Updates replace old backups
+  instead of accumulating lines. Oversized macros are left unchanged with a
+  message rather than risking truncated macro text.
 - Test raids now randomize cauldron flask and potion choices per player in
   `/rcc t`, `/rcc tp`, and `/rcc ct`, while retaining the existing pickup-count
   examples. Choices stay fixed until a new test starts.
@@ -85,6 +98,8 @@
 
 ### Fixed
 
+- Combat-potion auto-selection no longer picks an incompatible potion type or
+  utility family when none of the carried items match the saved preference.
 - The Unknown preview row now keeps public raid buffs readable while simulating
   an unresolved consumable scan. Random secret-aura cases no longer mark raid
   buffs Unknown, and the guaranteed-good mirrored columns are preserved.

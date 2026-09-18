@@ -641,23 +641,56 @@ consumables, or chat reports.
 
 ### Managed macros share selection, not the UI snapshot
 
-A macro may need an item while both personal displays are disabled.
-Consequently, its getter reads fresh selection inputs instead of asking for
-the last button snapshot. Flask's adapter is:
+A macro may need an item while both personal displays are disabled. The private
+`selectMacroAction` helper in `ConsumableMacros.lua` reads fresh selection inputs
+instead of asking for the last button snapshot. For Flask, its two selections
+amount to:
 
 ```lua
-function Flask.GetItemCandidate(preserveUnavailable)
-    return S.Unpack(Flask.Select(
-        RCC.ConsumableInputs.ReadSelection("flask"),
-        preserveUnavailable
-    ))
+local inputs = RCC.ConsumableInputs.ReadSelection("flask")
+local primary = Flask.Select(inputs, false).candidate
+
+if primary then
+    inputs.inventory[primary.itemID] = nil
+    local backup = Flask.Select(inputs, false).candidate
+    -- Write the primary and, if present, backup into separate /use lines.
 end
 ```
 
-The Flask macro calls this without `preserveUnavailable`, allowing its available
+Only this macro's fresh inventory table is changed. The second selection sees
+the same preferences and context but cannot choose the primary again. It uses
+Flask's existing priorities for one backup, not just the second flyout entry.
+Other item macros use their own category's selector in the same way. Spell
+actions do not get item backups.
+
+The Flask macro passes `false` for `preserveUnavailable`, allowing its available
 fallback selection. The UI passes `true` to retain an unavailable saved choice.
 Both use the same selector, with an explicit difference in how its result
-should be chosen.
+should be chosen. Food, augment and vantus macros retain their saved primary
+even when absent, with an available backup after it.
+
+Healing-potion location rules live in `HealingPotion.Select`, shared by both
+personal displays and macros. `ReadContext` supplies the player's `uiMapID`,
+and HealingPotion declares `context.uiMapID` as a selection dependency. Its
+inventory declaration combines the normal potion list with the separate
+Brawler's Guild item from `Data/HealingItems.lua`.
+
+Inside a listed venue, the selector puts a carried Guild potion first and
+returns it as the primary. Its action omits `preferenceKey` so it cannot replace
+the saved normal potion; normal candidates still supply the flyout's preference
+choices. Outside the venue, or without the Guild potion, selection follows the
+normal rules. The macro's second selection excludes the Guild potion and finds
+the normal backup, with no macro-specific location override.
+
+Local, indoor, and major zone events refresh location for the personal pipeline
+and macros. Secure button actions and macro text keep their prepared choices
+during combat and switch after combat ends.
+
+Managed and inline macros share these item lists. Inline markers own
+their first line and the adjacent `#RCCI+` continuation lines, so a refresh
+replaces the whole group without duplicating backups or altering unmarked text.
+These lines are prepared outside combat; using a backup in combat does not
+require a macro rewrite.
 
 A new personal button does not automatically add a managed macro, Raid Status
 Frame column, or chat-report section. Macros are defined separately in

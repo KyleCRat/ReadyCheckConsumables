@@ -25,6 +25,15 @@ RCC.db.healthstoneSpellIDs = {
 
 RCC.db.healingPotionItemIDs = {}
 
+-- Automatic primary for buttons and macros inside a Brawler's Guild venue.
+-- Keep it separate from the unrestricted potion list. These are UI map IDs;
+-- Bizmo's Brawlpub has its own floor, separate from the Deeprun Tram (499).
+RCC.db.brawlersGuildHealingPotionItemID = 253011
+RCC.db.brawlersGuildMapIDs = {
+    [500] = true, -- Bizmo's Brawlpub
+    [503] = true, -- Brawl'gar Arena
+}
+
 RCC.Data = RCC.Data or {}
 
 function RCC.Data.AddHealingPotionItems(itemIDs)

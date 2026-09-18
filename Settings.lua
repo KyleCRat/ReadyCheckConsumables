@@ -391,15 +391,19 @@ local function createMacrosSettingsFrame(measurementFrame)
         .. "preference until you right-click another item, even when the "
         .. "selected item is temporarily missing from your bags. If you have "
         .. "not selected a preferred item, RCC uses the best available "
-        .. "option.\n\n"
+        .. "option. Item macros also include one eligible backup from your "
+        .. "bags, ready to use if the primary runs out during combat.\n\n"
         .. "Managed macros are complete macros created and maintained by RCC. "
         .. "The #RCC:<key> marker identifies what each macro should use. Choose "
         .. "Shared or Character below to create one. The Healing Potion macro "
-        .. "casts Recuperate out of combat and uses a potion in combat.\n\n"
-        .. "Inline markers update one line inside a custom macro without "
+        .. "casts Recuperate out of combat. Inside the Brawler's Guild, its "
+        .. "potion becomes the primary when carried, with your normal potion "
+        .. "as backup. Elsewhere it is left out of the macro.\n\n"
+        .. "Inline markers update a group of item-use lines in a custom macro without "
         .. "changing the rest of it. Put an inline marker shown below on its "
         .. "own line. Macro conditions can follow the marker, for example "
-        .. "#RCCI:cp [combat]."
+        .. "#RCCI:cp [combat]. Keep the generated #RCCI+ lines together with "
+        .. "the first marked line; all choices use the same conditions."
 
     layout:AddHeader("Managed Macros", bodyText, {
         marginBottom = 18,

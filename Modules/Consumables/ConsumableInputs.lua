@@ -104,6 +104,7 @@ function Inputs.ReadContext()
     return {
         instanceType = instanceType,
         instanceID = publicNumber(instanceID),
+        uiMapID = publicNumber(C_Map.GetBestMapForUnit("player")),
         class = class,
         warningSeconds = RCC.ConsumableTiming.GetWarningSeconds(instanceType),
         raidBuff = RCC.RaidBuffStatus.GetInfoByProviderClass(class),

@@ -43,6 +43,9 @@ local function updateEventSubscriptions()
     setEventEnabled("UNIT_IN_RANGE_UPDATE", sources.groupAuras)
     setEventEnabled("UNIT_HEALTH", sources.groupAuras) -- Life transitions only.
 
+    -- Local/indoor venue changes can happen without leaving the instance.
+    setEventEnabled("ZONE_CHANGED", sources.context)
+    setEventEnabled("ZONE_CHANGED_INDOORS", sources.context)
     setEventEnabled("ZONE_CHANGED_NEW_AREA", sources.context or sources.roster)
     setEventEnabled("PLAYER_DIFFICULTY_CHANGED", sources.context or sources.roster)
 
@@ -154,6 +157,7 @@ local function readInputs(dirty, now)
     -- Fixed topological order: context/roster -> observations; inventory ->
     -- cooldowns; applied enchant -> saved preference -> category selection.
     local resetGroup = dirty.groupAuras == true
+
     if dirty.context then
         local context = Inputs.ReadContext()
         if not Inputs.Equal(inputs.context, context) then
@@ -162,17 +166,21 @@ local function readInputs(dirty, now)
             dirty.playerAuras = demand.sources.playerAuras
         end
     end
+
     if dirty.inventory then
         storeInput("inventory", Inputs.ReadInventory(demand.itemIDs, inputs.inventory,
             type(dirty.inventory) == "table" and dirty.inventory or nil))
         dirty.cooldowns = demand.sources.cooldowns
     end
+
     if dirty.spells then storeInput("spells", Inputs.ReadSpells()) end
+
     if dirty.weapons then
         storeInput("weapons", Inputs.ReadWeapons(now, demand.weaponSlots))
         Inputs.RememberAppliedEnchants(inputs.weapons)
         dirty.preferences = demand.sources.preferences
     end
+
     if dirty.preferences then storeInput("preferences", Inputs.ReadPreferences()) end
 
     local groupUnits = type(dirty.groupAuras) == "table" and dirty.groupAuras or {}
@@ -187,13 +195,16 @@ local function readInputs(dirty, now)
         end
         storeInput("roster", roster)
     end
+
     if dirty.playerAuras then storeInput("playerAuras", RCC.HelpfulAuraScan.ScanUnit("player")) end
+
     if demand.sources.groupAuras and (resetGroup or next(groupUnits) or dirty.roster) then
         local previous = inputs.groupAuras
         if resetGroup then previous, groupUnits = nil, nil end
         storeInput("groupAuras", Inputs.ReadGroupAuras(inputs.roster, inputs.context, previous, groupUnits, now,
             dirty.playerAuras and inputs.playerAuras or nil))
     end
+
     if dirty.cooldowns then storeInput("cooldowns", Inputs.ReadCooldowns(inputs.inventory, now)) end
 end
 
@@ -386,6 +397,8 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
     elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_DIFFICULTY_CHANGED" then
         Controller.Invalidate("context")
         Controller.Invalidate("roster")
+    elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
+        Controller.Invalidate("context")
     elseif event == "BAG_UPDATE_DELAYED" then
         Controller.Invalidate("inventory")
     elseif event == "ITEM_COUNT_CHANGED" or event == "ITEM_DATA_LOAD_RESULT" then

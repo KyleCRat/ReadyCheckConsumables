@@ -139,9 +139,15 @@ local function isBetterPotionCandidate(candidate, currentSelection,
 end
 
 local function selectPreferredPotionCandidate(candidates, context)
-    return S.Best(candidates, function(candidate, currentSelection)
+    local selected = S.Best(candidates, function(candidate, currentSelection)
         return isBetterPotionCandidate(candidate, currentSelection, context)
     end)
+
+    -- Best starts with the first candidate even if none match the saved
+    -- potion type/family. Keep those items in the flyout, not in auto-selection.
+    if selected and getCandidatePriority(selected, context) then
+        return selected
+    end
 end
 
 function CombatPotion.Select(inputs, preserveUnavailable)

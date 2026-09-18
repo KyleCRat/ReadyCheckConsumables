@@ -106,6 +106,10 @@ Create macros for food, flasks, augment runes, vantus runes, potions,
 healthstones, raid buffs, and weapon enchants. RCC keeps them updated as your
 bags, equipment, known spells, zone, and preferred items change.
 
+Item macros include one eligible backup from your bags, so the macro can still
+work if the primary runs out during combat. Inside the Brawler's Guild, its
+potion takes priority when carried, with your normal healing potion as backup.
+
 To create one:
 
 1. Open the **Macros** settings page.
@@ -143,6 +147,11 @@ Some buttons have different purposes on the two displays:
 | Food, flasks, runes, and weapon enchants | Use or apply the selected item/spell | Use or apply the selected item/spell |
 | Combat and healing potions | Right-click to choose a preferred item | Left-click to use; right-click to prefer |
 | Healthstones | Display available supply | Left-click to use |
+
+Inside Bizmo's Brawlpub or Brawl'gar Arena, both displays automatically show the
+Brawler's Guild healing potion when you carry one. Your normal potion preference
+is kept for when you leave or run out of the Guild potion; normal potions remain
+available in the flyout.
 
 Enabled Action Bar buttons normally remain visible even when unavailable.
 The off-hand enchant button hides when that slot cannot be enchanted, and the
@@ -193,7 +202,7 @@ frame and resets feast/cauldron tracking.
 ### Custom macro markers
 
 RCC-owned macros use `#RCC:<key>` markers. Inline `#RCCI:<key>` markers update
-one line inside your own macro without changing the rest.
+a small group of item-use lines inside your own macro without changing the rest.
 
 | Macro type | Key and aliases | Inline marker |
 |---|---|---|
@@ -216,7 +225,29 @@ for example:
 ```
 
 The complete Healing Potion macro casts Recuperate out of combat and uses a
-potion in combat. Its inline marker selects only the healing potion.
+potion in combat. Its inline marker adds only the potion choices, not Recuperate
+or a combat restriction unless you include `[combat]` yourself.
+
+Each item macro tries its primary choice and then one eligible backup, using
+RCC's usual category priorities. Healing potion macros select the Brawler's
+Guild potion (`253011`) only inside Bizmo's Brawlpub or Brawl'gar Arena when you
+carry one, with your normal potion as the backup. Outside those venues, or if
+you have none, they use the normal primary and backup. There are at most two
+potion-use lines. Both personal displays use the same location-aware primary
+selection without changing your saved preference. Spell-based macros remain
+single casts.
+
+Entering or leaving a venue refreshes the macro outside combat. Choices stay
+fixed during combat, with pending changes applied afterward;
+RCC does not rewrite the macro when you use the last item mid-fight. The backup
+is already included as a second `/use` command. WoW applies its normal item-use
+restrictions and cooldowns to each command.
+
+Inline choices all inherit the marker's conditions. Extra generated lines end
+with `#RCCI+`; keep them immediately below the first marked line so RCC can
+replace them together. To remove an inline marker, remove its generated lines
+too. If an update would exceed WoW's 255-character macro limit, RCC prints a
+message and leaves the macro unchanged so you can shorten it.
 
 ### Command reference
 

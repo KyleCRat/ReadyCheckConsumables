@@ -5,23 +5,24 @@ RCC.ConsumableMacros = RCC.ConsumableMacros or {}
 local Macros = RCC.ConsumableMacros
 
 local ActionKind = RCC.ConsumableActionKind
-local CacheKey = RCC.ConsumableItemCacheKey
 local Consumables = RCC.Consumables
+local Inputs = RCC.ConsumableInputs
 local GetItemIcon = C_Item.GetItemIconByID
 local GetSpellInfo = C_Spell.GetSpellInfo
 
-local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
-local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
 local UPDATE_DELAY = 0.2
 local DEFAULT_MACRO_ICON = 134400
+local MAX_MACRO_LENGTH = 255 -- Blizzard_MacroUI's macro editor limit
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
 local INLINE_MARKER_LINE_PATTERN = "^%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
 local INLINE_USE_LINE_PATTERN = "^%s*/use%s+(.-)%s*item:%d+%s*;?%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
+local INLINE_CONTINUATION_PATTERN = "^%s*/use%s+.-item:%d+%s+#RCCI%+%s*$"
 local AUTOMATED_COMMENT = "#Automated by RCC: use '/rcc s' for settings"
 local HEALING_POTION_RECUPERATE_MACRO = "healingPotionRecuperateMacro"
 local updateScheduled = false
 local updatePendingCombat = false
 local updatingMacros = false
+local macroLengthWarnings = {}
 local eventFrame = CreateFrame("Frame")
 
 local function normalizeToken(token)
@@ -66,82 +67,82 @@ local function getItemIcon(itemID)
     return itemID and GetItemIcon(itemID)
 end
 
-local function itemAction(candidate, cacheKey)
-    if not candidate or not candidate.itemID then return end
+local function selectMacroAction(category, options)
+    local definition = RCC.ConsumableCatalog.GetDefinition(category)
+    local domain = Consumables[definition.domain]
+    local inputs = Inputs.ReadSelection(category)
+    local preserveUnavailable = options and options.preserveUnavailable == true
+    local selection = domain.Select(inputs, preserveUnavailable, definition.weaponSlot)
 
-    return {
+    if selection.action and selection.action.kind == ActionKind.SPELL then
+        return selection.action, getSpellIcon(selection.action.spellID)
+    end
+
+    local primary = selection.candidate
+
+    if not primary then return end
+
+    local action = {
         kind = ActionKind.ITEM,
-        itemID = candidate.itemID,
-        preferenceKey = cacheKey,
-    }, candidate.icon or getItemIcon(candidate.itemID)
+        itemID = primary.itemID,
+        itemIDs = { primary.itemID },
+        targetSlot = definition.weaponSlot,
+    }
+
+    -- ReadSelection gives this macro its own inputs. Exclude the primary and
+    -- select again to reuse the category's ranking and eligibility rules for
+    -- one backup, without changing saved preferences or the UI's inventory.
+    inputs.inventory[primary.itemID] = nil
+    local fallback = domain.Select(inputs, false, definition.weaponSlot).candidate
+
+    if fallback and fallback.count > 0 then
+        action.itemIDs[#action.itemIDs + 1] = fallback.itemID
+    end
+
+    return action, primary.icon or getItemIcon(primary.itemID)
 end
 
 local function foodAction()
-    return itemAction(
-        Consumables.Food.GetItemCandidate(true),
-        CacheKey.FOOD
-    )
+    return selectMacroAction("food", { preserveUnavailable = true })
 end
 
 local function flaskAction()
-    return itemAction(
-        Consumables.Flask.GetItemCandidate(),
-        CacheKey.FLASK
-    )
+    return selectMacroAction("flask")
 end
 
 local function augmentAction()
-    return itemAction(
-        Consumables.Augment.GetItemCandidate(true),
-        CacheKey.AUGMENT
-    )
+    return selectMacroAction("augment", { preserveUnavailable = true })
 end
 
 local function vantusAction()
-    local runeIDs = Consumables.Vantus.GetRuneIDsForCurrentRaid()
-
-    if not runeIDs then return end
-
-    return itemAction(
-        Consumables.Vantus.GetItemCandidate(runeIDs, true),
-        CacheKey.VANTUS
-    )
+    return selectMacroAction("vantus", { preserveUnavailable = true })
 end
 
 local function combatPotionAction()
-    return itemAction(
-        Consumables.CombatPotion.GetItemCandidate(),
-        CacheKey.COMBAT_POTION
-    )
-end
-
-local function healingPotionAction()
-    local candidate = Consumables.HealingPotion.GetItemCandidate()
-    local spellName = getSpellName(RCC.db.recuperateSpellID)
-
-    if not spellName then
-        return itemAction(candidate, CacheKey.HEALING_POTION)
-    end
-
-    local action = {
-        type = HEALING_POTION_RECUPERATE_MACRO,
-        itemID = candidate and candidate.itemID,
-        spellID = RCC.db.recuperateSpellID,
-        spellName = spellName,
-    }
-
-    return action, DEFAULT_MACRO_ICON
+    return selectMacroAction("combatpot")
 end
 
 local function healingPotionItemAction()
-    return itemAction(
-        Consumables.HealingPotion.GetItemCandidate(),
-        CacheKey.HEALING_POTION
-    )
+    return selectMacroAction("healpot")
+end
+
+local function healingPotionAction()
+    local action, icon = healingPotionItemAction()
+    local spellName = getSpellName(RCC.db.recuperateSpellID)
+
+    if not spellName then return action, icon end
+
+    return {
+        type = HEALING_POTION_RECUPERATE_MACRO,
+        itemID = action and action.itemID,
+        itemIDs = action and action.itemIDs,
+        spellID = RCC.db.recuperateSpellID,
+        spellName = spellName,
+    }, DEFAULT_MACRO_ICON
 end
 
 local function healthstoneAction()
-    return itemAction(Consumables.Healthstone.GetItemCandidate())
+    return selectMacroAction("hs")
 end
 
 local function raidBuffAction()
@@ -156,28 +157,12 @@ local function raidBuffAction()
     }, info.iconID or getSpellIcon(info.spellID)
 end
 
-local function weaponEnchantAction(slotID)
-    local action = Consumables.WeaponEnchant.GetActionForSlot(slotID)
-
-    if not action then return end
-
-    local icon
-
-    if action.itemID then
-        icon = getItemIcon(action.itemID)
-    elseif action.spellID then
-        icon = getSpellIcon(action.spellID)
-    end
-
-    return action, icon
-end
-
 local function mainHandEnchantAction()
-    return weaponEnchantAction(MAIN_HAND_INVENTORY_SLOT)
+    return selectMacroAction("mainHandTempWeaponEnchant")
 end
 
 local function offHandEnchantAction()
-    return weaponEnchantAction(OFF_HAND_INVENTORY_SLOT)
+    return selectMacroAction("offHandTempWeaponEnchant")
 end
 
 local MACRO_DEFINITIONS = {
@@ -228,7 +213,7 @@ local MACRO_DEFINITIONS = {
         key = "healpot",
         label = "Healing Potion",
         macroName = "RCC Heal Pot",
-        description = "Casts Recuperate out of combat and uses the preferred healing potion in combat when available, otherwise the best available healing potion.",
+        description = "Casts Recuperate out of combat and uses the selected healing potion with one backup in combat. Inside the Brawler's Guild, its potion becomes the primary when carried, with the normal potion as backup.",
         getAction = healingPotionAction,
         inlineGetAction = healingPotionItemAction,
         aliases = { "healingpotion", "hp" },
@@ -322,6 +307,22 @@ local function printMessage(message)
     print("|" .. RCC.color .. "ffReadyCheckConsumables|r: " .. message)
 end
 
+local function canSaveMacro(name, body)
+    if #body <= MAX_MACRO_LENGTH then
+        macroLengthWarnings[name] = nil
+        return true
+    end
+
+    if not macroLengthWarnings[name] then
+        printMessage("Could not update " .. name .. ": the generated macro exceeds "
+            .. MAX_MACRO_LENGTH .. " characters. Shorten the macro to make room "
+            .. "for its item choices; it has been left unchanged.")
+        macroLengthWarnings[name] = true
+    end
+
+    return false
+end
+
 local function getMacroLimits()
     return Constants.MacroConsts.MAX_ACCOUNT_MACROS,
            Constants.MacroConsts.MAX_CHARACTER_MACROS
@@ -374,13 +375,27 @@ function Macros.CanCreateManagedMacro(characterSpecific)
     return numAccountMacros < maxAccountMacros
 end
 
-local function appendItemMacroLines(lines, itemID, targetSlot)
-    lines[#lines + 1] = "#showtooltip item:" .. itemID
-    lines[#lines + 1] = "/use item:" .. itemID
-
-    if targetSlot then
-        lines[#lines + 1] = "/use " .. targetSlot
+local function itemUseLine(itemID, selectors)
+    if selectors and selectors ~= "" then
+        return "/use " .. selectors .. " item:" .. itemID
     end
+
+    return "/use item:" .. itemID
+end
+
+local function appendItemUseLines(lines, action, selectors)
+    for _, itemID in ipairs(action.itemIDs) do
+        lines[#lines + 1] = itemUseLine(itemID, selectors)
+
+        if action.targetSlot then
+            lines[#lines + 1] = "/use " .. action.targetSlot
+        end
+    end
+end
+
+local function appendItemMacroLines(lines, action)
+    lines[#lines + 1] = "#showtooltip item:" .. action.itemID
+    appendItemUseLines(lines, action)
 end
 
 local function appendSpellMacroLines(lines, action)
@@ -409,7 +424,7 @@ local function appendHealingPotionMacroLines(lines, action)
 
     if itemID then
         lines[#lines + 1] = "/stopcasting [combat]"
-        lines[#lines + 1] = "/use [combat] item:" .. itemID
+        appendItemUseLines(lines, action, "[combat]")
     end
 end
 
@@ -423,7 +438,7 @@ local function buildMacroBody(markerLine, action)
     end
 
     if action.kind == ActionKind.ITEM and action.itemID then
-        appendItemMacroLines(lines, action.itemID, action.targetSlot)
+        appendItemMacroLines(lines, action)
     elseif action.kind == ActionKind.SPELL then
         appendSpellMacroLines(lines, action)
     elseif action.type == HEALING_POTION_RECUPERATE_MACRO then
@@ -434,7 +449,15 @@ local function buildMacroBody(markerLine, action)
         lines[#lines + 1] = "#showtooltip"
     end
 
-    return table.concat(lines, "\n")
+    local body = table.concat(lines, "\n")
+
+    if #body > MAX_MACRO_LENGTH then
+        -- The explanatory comment is optional; never truncate action lines.
+        table.remove(lines, 2)
+        body = table.concat(lines, "\n")
+    end
+
+    return body
 end
 
 local function resolveMacro(token)
@@ -511,16 +534,18 @@ local function parseInlineMacroLine(line)
     return markerToken, selectors
 end
 
-local function buildInlineMacroLine(markerKey, selectors, action)
+local function buildInlineMacroLines(markerKey, selectors, action)
     local marker = "#RCCI:" .. markerKey
-    local itemID = action and action.itemID
 
-    if itemID then
-        if selectors and selectors ~= "" then
-            return "/use " .. selectors .. " item:" .. itemID .. " " .. marker
+    if action then
+        local lines = {}
+
+        for index, itemID in ipairs(action.itemIDs) do
+            local lineMarker = index == 1 and marker or "#RCCI+"
+            lines[#lines + 1] = itemUseLine(itemID, selectors) .. " " .. lineMarker
         end
 
-        return "/use item:" .. itemID .. " " .. marker
+        return table.concat(lines, "\n")
     end
 
     if selectors and selectors ~= "" then
@@ -531,28 +556,38 @@ local function buildInlineMacroLine(markerKey, selectors, action)
 end
 
 local function rewriteInlineMacroBody(body)
+    local sourceLines = {}
     local lines = {}
-    local changed = false
 
     for line in (body .. "\n"):gmatch("([^\n]*)\n") do
-        line = line:gsub("\r", "")
+        sourceLines[#sourceLines + 1] = line:gsub("\r", "")
+    end
 
+    local index = 1
+    local foundMarker = false
+
+    while index <= #sourceLines do
+        local line = sourceLines[index]
         local token, selectors = parseInlineMacroLine(line)
 
         if token then
             local action, markerKey, recognized = resolveInlineMacro(token)
 
             if recognized then
-                local nextLine = buildInlineMacroLine(
+                foundMarker = true
+                lines[#lines + 1] = buildInlineMacroLines(
                     markerKey,
                     selectors,
                     action
                 )
 
-                lines[#lines + 1] = nextLine
-
-                if nextLine ~= line then
-                    changed = true
+                -- Only adjacent #RCCI+ lines belong to this marker. Replace
+                -- them together so repeated updates cannot accumulate backups
+                -- or keep an old choice after the marker's conditions change.
+                while sourceLines[index + 1]
+                    and sourceLines[index + 1]:match(INLINE_CONTINUATION_PATTERN)
+                do
+                    index = index + 1
                 end
             else
                 lines[#lines + 1] = line
@@ -560,10 +595,14 @@ local function rewriteInlineMacroBody(body)
         else
             lines[#lines + 1] = line
         end
+
+        index = index + 1
     end
 
-    if changed then
-        return table.concat(lines, "\n")
+    local nextBody = table.concat(lines, "\n")
+
+    if foundMarker and nextBody ~= body then
+        return nextBody
     end
 end
 
@@ -593,6 +632,9 @@ function Macros.CreateManagedMacro(key, characterSpecific)
     end
 
     local body = buildMacroBody("#RCC:" .. macroType.key, action)
+
+    if not canSaveMacro(macroType.macroName, body) then return false end
+
     local macroIcon = icon or DEFAULT_MACRO_ICON
     local existingIndex = findManagedMacroIndex(
         macroType.key,
@@ -655,6 +697,8 @@ local function updateMacro(index)
             local nextBody = buildMacroBody(markerLine, action)
             local nextIcon = resolvedIcon or icon
 
+            if not canSaveMacro(name, nextBody) then return end
+
             if nextBody ~= body or nextIcon ~= icon then
                 EditMacro(index, nil, nextIcon, nextBody)
             end
@@ -665,7 +709,7 @@ local function updateMacro(index)
 
     local nextBody = rewriteInlineMacroBody(body)
 
-    if nextBody then
+    if nextBody and canSaveMacro(name, nextBody) then
         EditMacro(index, nil, nil, nextBody)
     end
 end
@@ -724,6 +768,10 @@ eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("SPELLS_CHANGED")
 eventFrame:RegisterEvent("UPDATE_MACROS")
+
+-- Venue changes can happen between floors without leaving the instance.
+eventFrame:RegisterEvent("ZONE_CHANGED")
+eventFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
 eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 
 eventFrame:SetScript("OnEvent", function(_, event)
