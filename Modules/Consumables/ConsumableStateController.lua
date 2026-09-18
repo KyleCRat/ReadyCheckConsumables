@@ -29,40 +29,63 @@ end
 
 local function updateEventSubscriptions()
     local sources = demand.sources
-    local auras = sources.playerAuras or sources.groupAuras
 
-    -- Shared observations stay subscribed while any requested category needs
-    -- them. Group life/range events are irrelevant to inventory-only buttons.
+    -- playerAuras / groupAuras: both use the same aura notifications. The
+    -- handler routes each affected unit to the requested player/group input.
+    local auras = sources.playerAuras or sources.groupAuras
     setEventEnabled("UNIT_AURA", auras)
     setEventEnabled("UNIT_AURA_BLOCKED", auras)
     setEventEnabled("UNIT_AURA_BLOCK_LIST_CLEARED", auras)
+
+    -- roster: group membership/composition, also needed by Healthstone's
+    -- Warlock check even when no group-aura checks are requested.
     setEventEnabled("GROUP_ROSTER_UPDATE", sources.roster)
+
+    -- groupAuras: changes to whether a member can be checked. These may also
+    -- refresh that member's roster eligibility; health events only matter when
+    -- alive/dead state changes, not on ordinary damage or healing.
     setEventEnabled("UNIT_CONNECTION", sources.groupAuras)
     setEventEnabled("UNIT_FLAGS", sources.groupAuras)
     setEventEnabled("UNIT_PHASE", sources.groupAuras)
     setEventEnabled("UNIT_IN_RANGE_UPDATE", sources.groupAuras)
-    setEventEnabled("UNIT_HEALTH", sources.groupAuras) -- Life transitions only.
+    setEventEnabled("UNIT_HEALTH", sources.groupAuras)
 
-    -- Local/indoor venue changes can happen without leaving the instance.
-    setEventEnabled("ZONE_CHANGED", sources.context)
-    setEventEnabled("ZONE_CHANGED_INDOORS", sources.context)
-    setEventEnabled("ZONE_CHANGED_NEW_AREA", sources.context or sources.roster)
-    setEventEnabled("PLAYER_DIFFICULTY_CHANGED", sources.context or sources.roster)
-
+    -- inventory: carried item counts and asynchronously loaded item metadata.
     setEventEnabled("BAG_UPDATE_DELAYED", sources.inventory)
     setEventEnabled("ITEM_COUNT_CHANGED", sources.inventory)
     setEventEnabled("ITEM_DATA_LOAD_RESULT", sources.inventory)
+
+    -- cooldowns: repair-device availability, separate from inventory counts.
     setEventEnabled("BAG_UPDATE_COOLDOWN", sources.cooldowns)
 
+    -- weapons: equipped weapons, slot applicability, and temporary enchants.
     setEventEnabled("WEAPON_ENCHANT_CHANGED", sources.weapons)
     setEventEnabled("WEAPON_SLOT_CHANGED", sources.weapons)
     setEventEnabled("PLAYER_EQUIPMENT_CHANGED", sources.weapons)
     setEventEnabled("UNIT_INVENTORY_CHANGED", sources.weapons)
 
-    local spellContext = sources.spells or sources.context or sources.weapons
-    setEventEnabled("SPELLS_CHANGED", spellContext)
-    setEventEnabled("SPELL_DATA_LOAD_RESULT", spellContext)
-    setEventEnabled("PLAYER_SPECIALIZATION_CHANGED", spellContext)
+    -- location: local map/venue changes affect item selection only. They do
+    -- not refresh instance rules, inventory counts, or aura observations.
+    setEventEnabled("ZONE_CHANGED", sources.location)
+    setEventEnabled("ZONE_CHANGED_INDOORS", sources.location)
+
+    -- spells / class / weapons: shared notifications for known enchant spells,
+    -- class-provided raid-buff metadata, and equipped enchant state. Each input
+    -- is refreshed only if requested; these do not request player aura scans.
+    local spellChanges = sources.spells or sources.class or sources.weapons
+    setEventEnabled("SPELLS_CHANGED", spellChanges)
+    setEventEnabled("SPELL_DATA_LOAD_RESULT", spellChanges)
+    setEventEnabled("PLAYER_SPECIALIZATION_CHANGED", spellChanges)
+
+    -- instance / location / roster / auras: major transitions deliberately
+    -- refresh all requested inputs in this group, even if the instance ID/type
+    -- stays the same. This is separate from location-only movement above.
+    local majorTransitions = sources.instance or sources.location or sources.roster or auras
+    setEventEnabled("ZONE_CHANGED_NEW_AREA", majorTransitions)
+    setEventEnabled("PLAYER_DIFFICULTY_CHANGED", majorTransitions)
+
+    -- preferences has no game-event subscription; RCC's item-choice/settings
+    -- code invalidates it directly when a saved preference changes.
 end
 
 local function hasDemand()
@@ -154,16 +177,21 @@ local function storeInput(key, value)
 end
 
 local function readInputs(dirty, now)
-    -- Fixed topological order: context/roster -> observations; inventory ->
+    -- Fixed topological order: class/roster -> group observations; inventory ->
     -- cooldowns; applied enchant -> saved preference -> category selection.
     local resetGroup = dirty.groupAuras == true
 
-    if dirty.context then
-        local context = Inputs.ReadContext()
-        if not Inputs.Equal(inputs.context, context) then
-            storeInput("context", context)
+    -- These inputs affect selection/evaluation, not aura freshness. Major
+    -- transitions request their aura reads explicitly in the event handler.
+    if dirty.instance then storeInput("instance", Inputs.ReadInstance()) end
+    if dirty.location then storeInput("location", Inputs.ReadLocation()) end
+
+    if dirty.class then
+        local class = Inputs.ReadClass()
+        if not Inputs.Equal(inputs.class, class) then
+            storeInput("class", class)
+            -- Group observations describe the buff supplied by this class.
             resetGroup = true
-            dirty.playerAuras = demand.sources.playerAuras
         end
     end
 
@@ -201,7 +229,7 @@ local function readInputs(dirty, now)
     if demand.sources.groupAuras and (resetGroup or next(groupUnits) or dirty.roster) then
         local previous = inputs.groupAuras
         if resetGroup then previous, groupUnits = nil, nil end
-        storeInput("groupAuras", Inputs.ReadGroupAuras(inputs.roster, inputs.context, previous, groupUnits, now,
+        storeInput("groupAuras", Inputs.ReadGroupAuras(inputs.roster, inputs.class, previous, groupUnits, now,
             dirty.playerAuras and inputs.playerAuras or nil))
     end
 
@@ -349,6 +377,8 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
     if event == "PLAYER_LOGIN" then
         Controller.RequestRefresh({ nextFrame = true })
     elseif event == "PLAYER_ENTERING_WORLD" then
+        -- Loading screens are a full freshness boundary, including returns to
+        -- the same instance. RequestRefresh reads only currently needed inputs.
         Controller.RequestRefresh({ nextFrame = true })
     elseif event == "PLAYER_REGEN_DISABLED" then
         combatPending = true
@@ -377,7 +407,7 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         -- Dead/ghost members are excluded from the raid-buff check. Watch only
         -- life-state transitions so resurrected members rejoin that check;
         -- ordinary damage/healing must not invalidate the cached observations.
-        if not inputs.context or not inputs.context.raidBuff then return end
+        if not inputs.class or not inputs.class.raidBuff then return end
 
         local token = rosterUnit(unit)
         if not token then return end
@@ -395,10 +425,16 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
     elseif event == "GROUP_ROSTER_UPDATE" then
         Controller.Invalidate("roster")
     elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_DIFFICULTY_CHANGED" then
-        Controller.Invalidate("context")
+        -- Travel/difficulty changes can invalidate observations without changing
+        -- the instance ID/type. Refresh those sources explicitly, not as a side
+        -- effect of comparing instance or location values.
+        Controller.Invalidate("instance")
+        Controller.Invalidate("location")
         Controller.Invalidate("roster")
+        Controller.Invalidate("playerAuras")
+        Controller.Invalidate("groupAuras")
     elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
-        Controller.Invalidate("context")
+        Controller.Invalidate("location")
     elseif event == "BAG_UPDATE_DELAYED" then
         Controller.Invalidate("inventory")
     elseif event == "ITEM_COUNT_CHANGED" or event == "ITEM_DATA_LOAD_RESULT" then
@@ -414,7 +450,7 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
     elseif event == "SPELLS_CHANGED" or event == "SPELL_DATA_LOAD_RESULT" or event == "PLAYER_SPECIALIZATION_CHANGED" then
         if event ~= "PLAYER_SPECIALIZATION_CHANGED" or F.UnitIsUnitSafe(unit, "player") then
             Controller.Invalidate("spells")
-            Controller.Invalidate("context")
+            Controller.Invalidate("class")
             Controller.Invalidate("weapons")
         end
     end

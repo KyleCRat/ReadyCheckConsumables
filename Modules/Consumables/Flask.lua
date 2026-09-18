@@ -16,7 +16,7 @@ Flask.Inventory = { list = RCC.db.flaskItemIDs }
 
 Flask.Dependencies = {
     selection = { "inventory", "preferences.flask" },
-    observation = { "playerAuras" }, evaluation = { "context.warningSeconds" },
+    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
@@ -143,5 +143,5 @@ function Flask.Observe(inputs)
 end
 
 function Flask.Evaluate(selection, observation, inputs, now)
-    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
+    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
 end

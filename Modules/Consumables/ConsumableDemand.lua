@@ -10,7 +10,7 @@ local PHASES = { "selection", "observation", "evaluation" }
 -- the input readers themselves. Keep this graph source-based, not a second
 -- list of rules for Food, Flask, Repair, etc.
 local SOURCE_REQUIREMENTS = {
-    groupAuras = { "roster", "context" },
+    groupAuras = { "roster", "class" },
     cooldowns = { "inventory" },
 }
 

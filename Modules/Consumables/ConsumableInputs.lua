@@ -96,18 +96,28 @@ function Inputs.ReadPreferences()
     return preferences
 end
 
-function Inputs.ReadContext()
+function Inputs.ReadInstance()
     local _, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
-    local _, class = UnitClass("player")
     instanceType = publicString(instanceType)
-    class = publicString(class)
     return {
         instanceType = instanceType,
         instanceID = publicNumber(instanceID),
-        uiMapID = publicNumber(C_Map.GetBestMapForUnit("player")),
-        class = class,
         warningSeconds = RCC.ConsumableTiming.GetWarningSeconds(instanceType),
-        raidBuff = RCC.RaidBuffStatus.GetInfoByProviderClass(class),
+    }
+end
+
+function Inputs.ReadLocation()
+    return {
+        uiMapID = publicNumber(C_Map.GetBestMapForUnit("player")),
+    }
+end
+
+function Inputs.ReadClass()
+    local _, classToken = UnitClass("player")
+    classToken = publicString(classToken)
+    return {
+        classToken = classToken,
+        raidBuff = RCC.RaidBuffStatus.GetInfoByProviderClass(classToken),
     }
 end
 
@@ -208,9 +218,9 @@ function Inputs.ReadRoster()
     return roster
 end
 
-function Inputs.ReadGroupAuras(roster, context, previous, units, now, freshPlayerAuras)
+function Inputs.ReadGroupAuras(roster, class, previous, units, now, freshPlayerAuras)
     local observations = {}
-    local info = context.raidBuff
+    local info = class.raidBuff
     if not info then return observations end
     for unit, member in pairs(roster.units) do
         if member.eligible then
@@ -248,7 +258,9 @@ function Inputs.ReadSelection(category)
     return {
         inventory = inventory,
         preferences = (needed.preferences or needed.slotPreference) and Inputs.ReadPreferences() or nil,
-        context = needed.context and Inputs.ReadContext() or nil,
+        instance = needed.instance and Inputs.ReadInstance() or nil,
+        location = needed.location and Inputs.ReadLocation() or nil,
+        class = needed.class and Inputs.ReadClass() or nil,
         spells = needed.spells and Inputs.ReadSpells() or nil,
         weapons = needed.slotWeapon and {
             [definition.weaponSlot] = Inputs.ReadWeaponSlot(definition.weaponSlot, now),

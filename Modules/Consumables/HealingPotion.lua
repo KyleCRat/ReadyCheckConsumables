@@ -10,13 +10,13 @@ HealingPotion.Inventory = {
 }
 
 HealingPotion.Dependencies = {
-    selection = { "inventory", "preferences.healingPotion", "context.uiMapID" },
+    selection = { "inventory", "preferences.healingPotion", "location.uiMapID" },
 }
 
 function HealingPotion.Select(inputs, preserveUnavailable)
     local candidates = S.List(inputs.inventory, RCC.db.healingPotionItemIDs)
 
-    if RCC.db.brawlersGuildMapIDs[inputs.context.uiMapID] then
+    if RCC.db.brawlersGuildMapIDs[inputs.location.uiMapID] then
         local brawlersPotion = S.Item(inputs.inventory, RCC.db.brawlersGuildHealingPotionItemID)
 
         if brawlersPotion and brawlersPotion.count > 0 then

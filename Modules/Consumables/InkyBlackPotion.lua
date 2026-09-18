@@ -7,7 +7,7 @@ InkyBlackPotion.Inventory = { itemID = RCC.db.inkyBlackPotionItemID }
 
 InkyBlackPotion.Dependencies = {
     selection = { "inventory" }, observation = { "playerAuras" },
-    evaluation = { "context.warningSeconds" }, expiration = "playerAuras",
+    evaluation = { "instance.warningSeconds" }, expiration = "playerAuras",
 }
 
 function InkyBlackPotion.Select(inputs)
@@ -23,5 +23,5 @@ function InkyBlackPotion.Observe(inputs)
 end
 
 function InkyBlackPotion.Evaluate(selection, observation, inputs, now)
-    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
+    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
 end

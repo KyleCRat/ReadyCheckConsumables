@@ -55,6 +55,10 @@
 - Rebuilt personal consumable refreshes around shared public input snapshots,
   category-owned dependencies, and independently cached item selection and
   status. Aura updates no longer recount bags or rebuild unchanged flyouts.
+- Separated instance rules, local venue detection, and class information so
+  local movement no longer triggers unrelated personal consumable aura scans.
+  Major zone/difficulty transitions explicitly refresh needed aura observations,
+  even when the instance ID and type are unchanged.
 - Added one shared deadline timer for duration labels, expiration warnings,
   aura rechecks, and repair cooldown completion. Unchanged cooldown events no
   longer run the full consumable pipeline.

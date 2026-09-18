@@ -3,12 +3,12 @@ local RaidBuff = {}
 RCC.Consumables.RaidBuff = RaidBuff
 
 RaidBuff.Dependencies = {
-    observation = { "groupAuras" }, evaluation = { "context.raidBuff", "context.warningSeconds" },
+    observation = { "groupAuras" }, evaluation = { "class.raidBuff", "instance.warningSeconds" },
     expiration = "groupAuras",
 }
 
 function RaidBuff.GetPlayerRaidBuffInfo()
-    return RCC.ConsumableInputs.ReadContext().raidBuff
+    return RCC.ConsumableInputs.ReadClass().raidBuff
 end
 
 function RaidBuff.Observe(inputs)
@@ -27,15 +27,15 @@ end
 
 function RaidBuff.Evaluate(_, observation, inputs, now)
     local remaining = observation.expirationTime and observation.expirationTime - now
-    local info = inputs.context.raidBuff
+    local info = inputs.class.raidBuff
     local model = {
         info = info, available = observation.available,
         missing = observation.missing, remaining = remaining and math.max(0, remaining),
-        expiringSoon = remaining ~= nil and remaining <= inputs.context.warningSeconds,
+        expiringSoon = remaining ~= nil and remaining <= inputs.instance.warningSeconds,
     }
     if info and info.spellID then
         model.action = RCC.ConsumableState.CreateSpellAction(info.spellID, { available = true })
     end
-    RCC.ConsumableEffects.AddDeadline(model, observation.expirationTime, inputs.context, now)
+    RCC.ConsumableEffects.AddDeadline(model, observation.expirationTime, inputs.instance, now)
     return model
 end

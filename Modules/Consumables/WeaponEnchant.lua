@@ -13,7 +13,7 @@ WeaponEnchant.Inventory = { map = RCC.db.weaponEnchantItemIDs }
 
 WeaponEnchant.Dependencies = {
     selection = { "inventory", "slotPreference", "slotWeapon", "spells" },
-    observation = { "slotWeapon" }, evaluation = { "context.warningSeconds" },
+    observation = { "slotWeapon" }, evaluation = { "instance.warningSeconds" },
     expiration = "weapons",
 }
 
@@ -161,8 +161,8 @@ function WeaponEnchant.Evaluate(selection, observation, inputs, now)
         selection = selection, available = observation.available,
         hasEnchant = observation.hasEnchant and (not remaining or remaining > 0),
         remaining = remaining and math.max(0, remaining),
-        expiringSoon = remaining ~= nil and remaining <= inputs.context.warningSeconds,
+        expiringSoon = remaining ~= nil and remaining <= inputs.instance.warningSeconds,
     }
-    RCC.ConsumableEffects.AddDeadline(model, observation.expirationTime, inputs.context, now)
+    RCC.ConsumableEffects.AddDeadline(model, observation.expirationTime, inputs.instance, now)
     return model
 end

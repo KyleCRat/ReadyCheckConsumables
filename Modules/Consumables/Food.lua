@@ -8,7 +8,7 @@ Food.Inventory = { list = RCC.db.foodItemIDs }
 
 Food.Dependencies = {
     selection = { "inventory", "preferences.food" },
-    observation = { "playerAuras" }, evaluation = { "context.warningSeconds" },
+    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
@@ -37,8 +37,8 @@ end
 
 function Food.Evaluate(selection, observation, inputs, now)
     local E = RCC.ConsumableEffects
-    local food = E.Aura(observation.food, inputs.context, now)
-    local eating = E.Aura(observation.eating, inputs.context, now)
+    local food = E.Aura(observation.food, inputs.instance, now)
+    local eating = E.Aura(observation.eating, inputs.instance, now)
     local model = {
         selection = selection, action = selection.action, available = observation.available,
         effect = eating and (not food or food.timeIsBad) and eating or food,
@@ -53,7 +53,7 @@ function Food.Evaluate(selection, observation, inputs, now)
             model.cooldown = { start = eating.expiry - eating.duration, duration = eating.duration }
         end
     end
-    if food then E.AddDeadline(model, food.expiry, inputs.context, now) end
-    if eating then E.AddDeadline(model, eating.expiry, inputs.context, now) end
+    if food then E.AddDeadline(model, food.expiry, inputs.instance, now) end
+    if eating then E.AddDeadline(model, eating.expiry, inputs.instance, now) end
     return model
 end

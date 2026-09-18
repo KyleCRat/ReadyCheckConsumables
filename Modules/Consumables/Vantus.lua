@@ -7,13 +7,13 @@ local KEY = RCC.ConsumableItemCacheKey.VANTUS
 Vantus.Inventory = { lists = RCC.db.vantusItemsByRaid }
 
 Vantus.Dependencies = {
-    selection = { "inventory", "preferences.vantus", "context.instanceID" },
-    observation = { "playerAuras" }, evaluation = { "context.warningSeconds" },
+    selection = { "inventory", "preferences.vantus", "instance.instanceID" },
+    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
 function Vantus.Select(inputs, preserveUnavailable, runeIDs)
-    runeIDs = runeIDs or RCC.db.vantusItemsByRaid[inputs.context.instanceID]
+    runeIDs = runeIDs or RCC.db.vantusItemsByRaid[inputs.instance.instanceID]
     local preferredID = inputs.preferences[KEY]
     local candidates = S.List(inputs.inventory, runeIDs)
     local cached = preserveUnavailable and S.CachedList(inputs.inventory, runeIDs, preferredID)
@@ -24,7 +24,7 @@ function Vantus.Select(inputs, preserveUnavailable, runeIDs)
 end
 
 function Vantus.GetRuneIDsForCurrentRaid()
-    return RCC.db.vantusItemsByRaid[RCC.ConsumableInputs.ReadContext().instanceID]
+    return RCC.db.vantusItemsByRaid[RCC.ConsumableInputs.ReadInstance().instanceID]
 end
 
 function Vantus.GetItemCandidate(runeIDs, preserveUnavailable)
@@ -36,7 +36,7 @@ function Vantus.Observe(inputs)
 end
 
 function Vantus.Evaluate(selection, observation, inputs, now)
-    local model = RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
+    local model = RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
     model.allowFlyout = selection.applicable and model.effect == nil
     if not model.allowFlyout then model.action = nil end
     -- Its label is the boss name, not a countdown or a duration warning.

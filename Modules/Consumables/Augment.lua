@@ -13,7 +13,7 @@ Augment.Inventory = { map = RCC.db.augmentItemIDs }
 
 Augment.Dependencies = {
     selection = { "inventory", "preferences.augment", "preferences.preferUnlimitedAugment" },
-    observation = { "playerAuras" }, evaluation = { "context.warningSeconds" },
+    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
@@ -73,5 +73,5 @@ function Augment.Observe(inputs)
 end
 
 function Augment.Evaluate(selection, observation, inputs, now)
-    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.context, now)
+    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
 end

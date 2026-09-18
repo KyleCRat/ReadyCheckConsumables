@@ -32,7 +32,8 @@ end
 
 -- A category implements only the phases it needs: Select, Observe, Evaluate.
 -- Select and Observe cache independently. Evaluate combines their immutable
--- results with time/context. Presenters have no authority to query or save data.
+-- results with their additional inputs and the current time. Presenters have
+-- no authority to query or save data.
 -- Records/snapshots are read-only to consumers. Revisions are per facet and
 -- monotonically increasing, so opening a surface cannot miss a previous delta.
 function Runtime.Create()

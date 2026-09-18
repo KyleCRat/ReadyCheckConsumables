@@ -149,20 +149,34 @@ Flask.Inventory = { list = RCC.db.flaskItemIDs }
 Flask.Dependencies = {
     selection = { "inventory", "preferences.flask" },
     observation = { "playerAuras" },
-    evaluation = { "context.warningSeconds" },
+    evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 ```
 
-An **input** is data already read from the game or saved settings. For Flask,
-that means item counts and icons, the saved flask preference, the player's
-helpful auras, and the duration-warning threshold.
+An **input** is data already read from the game or saved settings, including
+values derived from that information. For Flask, that means item counts and
+icons, the saved flask preference, the player's helpful auras, and the
+duration-warning threshold.
 
 A **reader** is the function that obtains that data. For example,
 `ConsumableInputs.ReadInventory` calls the item APIs and returns a table keyed
 by item ID. `ReadPreferences` reads saved item choices. The controller obtains
 `playerAuras` through `HelpfulAuraScan.ScanUnit("player")` in
 [AuraScan.lua](../AuraScan.lua), which leaves restricted fields out of the result.
+
+Instance, location, and class information have separate readers and inputs:
+
+| Input | Reader and contents | Example use |
+| --- | --- | --- |
+| `instance` | `ReadInstance`: `instanceID`, `instanceType`, and derived `warningSeconds` | Choose the raid's vantus rune; decide whether a buff expires too soon |
+| `location` | `ReadLocation`: `uiMapID` | Offer the Brawler's Guild healing potion in its venues |
+| `class` | `ReadClass`: `classToken` and the provided `raidBuff` definition | Decide which raid buff the personal Raid Buff button checks |
+
+The warning threshold is derived from instance type: 30 minutes in a dungeon
+(`party`) and 10 minutes elsewhere. It is not another live query or a user
+setting. The class input describes which buff to check, not whether it is
+present; actual buff observations are in `playerAuras` and `groupAuras`.
 
 The dependency entries connect those inputs to four jobs:
 
@@ -179,6 +193,8 @@ it is not the only reason that function runs.
 
 The dotted name `preferences.flask` means that specific value in the inputs
 table. A food-preference change does not require Flask to select an item again.
+Likewise, `instance.warningSeconds` compares only the threshold. A new instance
+ID with the same threshold does not by itself require Flask's evaluation to run.
 
 ### How this declaration leads to event handling
 
@@ -193,6 +209,15 @@ handles those events for all categories. Existing examples are:
 | `BAG_UPDATE_DELAYED` | All requested inventory items |
 | `ITEM_DATA_LOAD_RESULT` for a tracked item | That item's count/icon/quality data |
 | Right-clicking a preferred flask | `preferences`, through the item-choice cache |
+| `ZONE_CHANGED` or `ZONE_CHANGED_INDOORS` | `location` only |
+| `ZONE_CHANGED_NEW_AREA` or `PLAYER_DIFFICULTY_CHANGED` | `instance`, `location`, `roster`, `playerAuras`, and `groupAuras`, where requested |
+| `PLAYER_ENTERING_WORLD` | All currently requested inputs |
+
+Local movement does not request another aura scan or inventory read in this
+pipeline. Major zone/difficulty transitions explicitly request fresh aura
+observations, even if the instance ID and type are unchanged. Loading screens
+refresh all requested inputs. Changing the warning threshold itself only
+recalculates status and deadlines using the cached buff expiration times.
 
 The controller only watches data that a personal display currently needs.
 Each display registers a **consumer**, an object with two functions:
@@ -215,7 +240,9 @@ The controller prepares food, flask, and repair, with Flask calculated once
 for both displays. [ConsumableDemand.lua](../Modules/Consumables/ConsumableDemand.lua)
 turns those category names and their dependencies into the required input
 names, item IDs, and weapon slots. Here, Flask contributes its inventory list,
-preferences, player auras, and context.
+preferences, player auras, and instance information. A Flask-only display does
+not request location or class information, so it does not subscribe to local
+zone or spell-data events for those inputs.
 
 The temporary frame requests buttons only while shown out of combat and allowed
 by its current matrix settings. The Action Bar requests its enabled buttons.
@@ -318,7 +345,7 @@ function Flask.Evaluate(selection, observation, inputs, now)
     return RCC.ConsumableEffects.Evaluate(
         selection,
         observation,
-        inputs.context,
+        inputs.instance,
         now
     )
 end
@@ -326,7 +353,7 @@ end
 
 The return value is called the **model**. It combines the selected item/action,
 scan availability, and the buff's current meaning. For the observation above,
-at `now = 1000` with a five-minute warning threshold, the relevant fields are:
+at `now = 1000` with a ten-minute warning threshold, the relevant fields are:
 
 ```lua
 model = {
@@ -581,8 +608,8 @@ Choose the phases that match the button's behavior:
   [Recuperate.lua](../Modules/Consumables/Recuperate.lua) returns an icon and a
   `ConsumableState.CreateSpellAction` from `Select`, with no observation or
   evaluation function.
-- A button whose availability changes with context expresses that in its model
-  and presenter. [Vantus.lua](../Modules/Consumables/Vantus.lua) also sets
+- A button whose availability depends on the current instance expresses that in
+  its model and presenter. [Vantus.lua](../Modules/Consumables/Vantus.lua) also sets
   `allowFlyout = false` and removes the action while a rune is active.
 - A button that renders a cooldown, such as Repair, sets `hasCooldown = true`
   in the catalog so its widget exists, and supplies `cooldown.start` and
@@ -602,6 +629,10 @@ new information, the connection points are
 The personal Raid Buff button checks the buff supplied by the player's class
 on eligible group members. Its `groupAuras` input contains each member's
 `available`, `has`, and `expirationTime` values, not their full aura lists.
+The group reader requires `roster` and `class` to know whom and what to check;
+`ConsumableDemand` includes those inputs whenever `groupAuras` is requested.
+Class/spell-data events reread the class information, and a changed class input
+refreshes its group observations without requesting a full player aura scan.
 
 The baseline in [Data/RaidBuffs.lua](../Data/RaidBuffs.lua) contains the class
 spells and class-specific variants such as Blessing of the Bronze. Item-granted
@@ -658,7 +689,7 @@ end
 ```
 
 Only this macro's fresh inventory table is changed. The second selection sees
-the same preferences and context but cannot choose the primary again. It uses
+the same preferences and other inputs but cannot choose the primary again. It uses
 Flask's existing priorities for one backup, not just the second flyout entry.
 Other item macros use their own category's selector in the same way. Spell
 actions do not get item backups.
@@ -670,8 +701,8 @@ should be chosen. Food, augment and vantus macros retain their saved primary
 even when absent, with an available backup after it.
 
 Healing-potion location rules live in `HealingPotion.Select`, shared by both
-personal displays and macros. `ReadContext` supplies the player's `uiMapID`,
-and HealingPotion declares `context.uiMapID` as a selection dependency. Its
+personal displays and macros. `ReadLocation` supplies the player's `uiMapID`,
+and HealingPotion declares `location.uiMapID` as a selection dependency. Its
 inventory declaration combines the normal potion list with the separate
 Brawler's Guild item from `Data/HealingItems.lua`.
 
@@ -683,8 +714,10 @@ normal rules. The macro's second selection excludes the Guild potion and finds
 the normal backup, with no macro-specific location override.
 
 Local, indoor, and major zone events refresh location for the personal pipeline
-and macros. Secure button actions and macro text keep their prepared choices
-during combat and switch after combat ends.
+and trigger the macros' independent live selection reads. The personal pipeline
+keeps its cached inventory on local movement; macros still read the current
+items they need even if both displays are disabled. Secure button actions and
+macro text keep their prepared choices during combat and switch after combat ends.
 
 Managed and inline macros share these item lists. Inline markers own
 their first line and the adjacent `#RCCI+` continuation lines, so a refresh
