@@ -16,17 +16,18 @@ function WeaponEnchant.Present(model)
 
     local active = selected.active
 
+    -- Status and duration describe the applied enchant. The primary icon,
+    -- item count, quality, and click hints describe the selected next action.
     if model.hasEnchant then
         state.statusIcon = State.READY_ICON
         state.hasConsumableBuff = true
         state.desaturated = false
-        state.icon = selected.activeIcon
         state.detailText = model.remaining and RCC.F.FormatDuration(model.remaining) or ""
         state.detailTextIsBad = model.expiringSoon
 
         if active then
-            state.tooltipItemID = active.item
-            state.tooltipSpellID = not active.item and active.spellID or nil
+            state.tooltipAppliedItemID = active.item
+            state.tooltipAppliedSpellID = not active.item and active.spellID or nil
         end
     end
 
@@ -43,14 +44,11 @@ function WeaponEnchant.Present(model)
         local candidate = selected.candidate
 
         if candidate then
-            if not active then
-                state.icon = selected.icon
-            end
-
+            state.icon = selected.icon
             state.countText = tostring(candidate.count)
             State.SetItemQuality(state, candidate)
             state.clickHintItemID = candidate.itemID
-            state.tooltipItemID = state.tooltipItemID or candidate.itemID
+            state.tooltipItemID = candidate.itemID
             state.glow = candidate.count > 0 and needsEnchant
 
             if selected.unavailable then

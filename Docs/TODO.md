@@ -21,32 +21,6 @@
   other aura categories. Confirm that disabled personal raid-buff checks perform
   no group queries and that both personal surfaces share the observations.
 
-## Performance Follow-ups (After Major Refactors)
-
-Review these after the flyout update cleanup, dependency-aware consumable
-refreshes, and disabled-category filtering. Complete the aura lookup validation
-above before considering further changes to aura acquisition.
-Check whether those changes already resolve a follow-up before adding more
-caching. Keep implementation completion separate from in-game validation.
-
-- [x] Normalize new primary and flyout states once in the runtime. Renderers
-  consume read-only states; combat merges use separate copies only when a
-  button needs a visual update.
-- [x] Cache unchanged icon, text, color, opacity, and visibility values in the
-  shared button renderer, alongside the existing cooldown/quality caches.
-  Reset render state when releasing primary or pooled flyout buttons.
-- [x] Sort weapon-enchant and augment candidates once using their category's
-  priority. Preserve default item-ID ordering and charge counts for Healthstones.
-- [x] Confirm step 3's category-demand filtering in game: Repair now releases
-  its candidates, cooldown observations, event subscription, and deadlines when
-  neither personal surface requests it. Verify fresh ready-item selection and
-  timely cooldown completion after re-enabling, including during a cooldown.
-- [ ] Validate the rendering cleanups on both personal surfaces: hover icon
-  changes, display-option toggles, flyout reuse, disable/re-enable, duration and
-  warning updates, and combat-prepared actions with live status/cooldown visuals.
-- [ ] Confirm weapon-enchant and augment primary/flyout ordering, including the
-  unlimited-augment preference, plus Healthstone selection and charge counts.
-
 ## Review
 
 - Review consumable priority/data structures before extracting shared selector

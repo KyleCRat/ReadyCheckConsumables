@@ -411,7 +411,8 @@ These are some of the fields the renderer understands:
 | `countText` | Item count or charges text |
 | `detailText`, `detailTextIsBad` | Duration/detail label and warning color |
 | `statusIcon`, `showStatusTexture` | Status artwork and whether this category uses an overlay |
-| `tooltipItemID`, `tooltipAuraID` | Item or active-aura tooltip information |
+| `tooltipItemID`, `tooltipSpellID`, `tooltipAuraID` | Item, spell, or active-aura tooltip information |
+| `tooltipAppliedItemID`, `tooltipAppliedSpellID` | Optional "Currently applied" line, separate from the selected click action |
 | `action` | Prepared click behavior described by an item/spell action |
 | `glow`, `suppressGlow` | Reminder request and category-specific glow suppression |
 | `applicable` | Whether this category applies to the current situation |
@@ -580,6 +581,21 @@ That calls `Invalidate("preferences", { nextFrame = true })` and schedules a
 macro update. The next selection uses the new preference; it does not need a
 new aura scan. `nextFrame` skips the normal delay when starting a new batch;
 if one is already scheduled, the change joins it.
+
+Weapon enchants keep the saved item choice separate from what is applied.
+A known class enchant remains primary while active, and a weapon without an
+enchant defaults to its eligible class spell. With an oil applied, selection uses the
+saved item choice; without one, it uses the applied oil as an unsaved default.
+If neither supplies an item, the normal inventory priority applies. When the
+oil expires, an eligible class spell takes priority again without clearing the
+saved oil choice.
+
+For example, preferring Mana Oil while Phoenix Oil is active shows Mana Oil's
+icon, count, quality, and click action. The check and duration still describe
+Phoenix Oil, identified by the tooltip's "Currently applied" line. Weapon scans
+and macro refreshes never save a different preference. During combat, the
+prepared click action and its identifying visuals stay fixed, while the
+applied-enchant status and tooltip details can still update.
 
 ## Adapting the walkthrough to a new button category
 

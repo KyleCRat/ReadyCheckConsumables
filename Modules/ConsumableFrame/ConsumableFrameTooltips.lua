@@ -50,6 +50,21 @@ local function setGameTooltipOwner(button)
     GameTooltip:SetPoint("BOTTOMLEFT", button, "TOPRIGHT", 2, 2)
 end
 
+local function addAppliedEffectHint(button)
+    local state = button.consumableState
+
+    if not state then return end
+
+    local text = getItemLink(state.tooltipAppliedItemID)
+        or getSpellDisplay(state.tooltipAppliedSpellID)
+
+    if not text then return end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Currently applied: " .. text, 1, 1, 1, true)
+    GameTooltip:Show()
+end
+
 local function addClickHint(button)
     if not button.tooltipAction then return end
 
@@ -214,6 +229,7 @@ function Tooltips.ClickButtonOnEnter(self)
     Glow.SetHovered(button, true)
 
     if showButtonTooltip(button, true) then
+        addAppliedEffectHint(button)
         addAuraScanUnavailableHint(button)
         addClickHints(button)
 
@@ -241,6 +257,8 @@ function Tooltips.InfoButtonOnEnter(self)
     Tooltips.UpdateUnavailableOverlay(self)
 
     if showButtonTooltip(self, true) then
+        addAppliedEffectHint(self)
+
         if self.clickEnabled then
             addClickHints(self)
         end

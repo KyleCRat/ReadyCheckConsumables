@@ -207,8 +207,8 @@ local function storeInput(key, value)
 end
 
 local function readInputs(dirty, now)
-    -- Fixed topological order: class/roster -> group observations; inventory ->
-    -- cooldowns; applied enchant -> saved preference -> category selection.
+    -- Read class/roster before group observations, and inventory before
+    -- cooldowns. Weapon observations and saved preferences are independent.
     local resetGroup = dirty.groupAuras == true
 
     -- These inputs affect selection/evaluation, not aura freshness. Major
@@ -247,8 +247,6 @@ local function readInputs(dirty, now)
 
     if dirty.weapons then
         storeInput("weapons", Inputs.ReadWeapons(now, demand.weaponSlots))
-        Inputs.RememberAppliedEnchants(inputs.weapons)
-        dirty.preferences = demand.sources.preferences
     end
 
     if dirty.preferences then

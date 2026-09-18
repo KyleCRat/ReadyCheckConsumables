@@ -89,8 +89,7 @@
   during combat even if another device becomes preferable.
 - Kept managed macros on live-read adapters over the shared selectors, with
   their existing fallback policies and support for both personal frames being
-  disabled. Applied-enchant preference tracking is now an explicit operation,
-  and presenters no longer query inventory or change saved preferences.
+  disabled. Presenters no longer query inventory or change saved preferences.
 - Centralized Recuperate spell/icon data for personal buttons and the healing-
   potion macro. Clarified the refresh API with named options and made fixed
   event registrations and weapon-slot constants explicit.
@@ -108,6 +107,11 @@
 
 ### Fixed
 
+- Weapon-enchant preferences no longer snap back to the applied oil during
+  weapon scans or macro refreshes. Item-mode buttons show the selected next-use
+  item's icon, count, and quality, while the check, duration, and a "Currently
+  applied" tooltip line describe the active enchant. Class-spell priority is
+  unchanged, and an applied oil is only an unsaved default when no item is preferred.
 - Combat-potion auto-selection no longer picks an incompatible potion type or
   utility family when none of the carried items match the saved preference.
 - The Unknown preview row now keeps public raid buffs readable while simulating

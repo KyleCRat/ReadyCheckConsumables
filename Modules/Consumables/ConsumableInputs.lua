@@ -216,18 +216,6 @@ function Inputs.ReadWeapons(now, requestedSlots)
     return weapons
 end
 
-function Inputs.RememberAppliedEnchants(weapons)
-    -- An explicit, idempotent domain side effect, before selection. Rendering
-    -- and macro resolution must never silently change a saved preference.
-    for slotID, slot in pairs(weapons) do
-        local data = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID]
-
-        if data and data.item then
-            Cache.Set(RCC.Consumables.WeaponEnchant.GetCacheKey(slotID), data.item)
-        end
-    end
-end
-
 function Inputs.ReadCooldowns(inventory, now)
     local cooldowns = {}
 

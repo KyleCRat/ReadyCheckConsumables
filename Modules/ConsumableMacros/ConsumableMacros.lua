@@ -724,13 +724,6 @@ function Macros.UpdateAll()
 
     if not GetNumMacros or not GetMacroInfo or not EditMacro then return end
 
-    -- Keep automatic applied-enchant preferences working with both personal
-    -- surfaces disabled. This explicit reconciliation precedes pure selection;
-    -- getters/presenters no longer write preferences as a side effect.
-    RCC.ConsumableInputs.RememberAppliedEnchants(
-        RCC.ConsumableInputs.ReadWeapons(GetTime())
-    )
-
     local numAccountMacros, numCharacterMacros = GetNumMacros()
     local maxAccountMacros = getMacroLimits()
 

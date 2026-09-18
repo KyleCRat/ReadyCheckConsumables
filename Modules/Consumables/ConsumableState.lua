@@ -305,7 +305,7 @@ end
 
 -- Secure actions and flyout contents cannot be rebound in combat. Keep their
 -- identifying visuals aligned with the prepared action while allowing public
--- aura/status fields to continue updating.
+-- aura/status fields, including applied-effect tooltip details, to update.
 function State.MergeCombatVisual(prepared, live)
     if not prepared then
         return live

@@ -82,6 +82,10 @@ local function betterItem(a, b)
     return a.itemID > b.itemID
 end
 
+-- A known active class spell stays primary; a weapon without an enchant
+-- defaults to its eligible spell. Otherwise use the saved item choice, the applied item, or
+-- normal inventory priority, in that order. Applying an enchant never changes
+-- the saved item preference.
 function WeaponEnchant.Select(inputs, _, slotID)
     local slot = inputs.weapons[slotID]
     local result = {
@@ -95,7 +99,6 @@ function WeaponEnchant.Select(inputs, _, slotID)
     if not result.applicable then return result end
 
     result.active = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID] or nil
-    result.activeIcon = enchantIcon(inputs, result.active)
     result.candidates = S.Map(inputs.inventory, RCC.db.weaponEnchantItemIDs, {
         compare = betterItem,
     })
@@ -136,12 +139,14 @@ function WeaponEnchant.Select(inputs, _, slotID)
     end
 
     local preferredID = inputs.preferences[result.preferenceKey]
-    local cached = S.CachedMap(inputs.inventory, RCC.db.weaponEnchantItemIDs, preferredID)
-    result.candidate = S.Preferred(result.candidates, preferredID, cached)
+    local selectedItemID = preferredID or (result.active and result.active.item)
+    local cached = S.CachedMap(inputs.inventory, RCC.db.weaponEnchantItemIDs, selectedItemID)
+
+    result.candidate = S.Preferred(result.candidates, selectedItemID, cached)
     result.kind = "item"
 
     local candidate = result.candidate
-    result.unavailable = candidate ~= nil and candidate.itemID == preferredID and candidate.count <= 0
+    result.unavailable = candidate ~= nil and candidate.count <= 0
 
     if candidate then
         result.icon = candidate.icon
