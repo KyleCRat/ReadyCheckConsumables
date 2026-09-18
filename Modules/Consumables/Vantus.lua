@@ -13,24 +13,19 @@ Vantus.Dependencies = {
     expiration = "playerAuras",
 }
 
-function Vantus.Select(inputs, preserveUnavailable, runeIDs)
-    runeIDs = runeIDs or RCC.db.vantusItemsByRaid[inputs.instance.instanceID]
+function Vantus.Select(inputs)
+    local runeIDs = RCC.db.vantusItemsByRaid[inputs.instance.instanceID]
     local preferredID = inputs.preferences[KEY]
     local candidates = S.List(inputs.inventory, runeIDs)
-    local cached = preserveUnavailable and S.CachedList(inputs.inventory, runeIDs, preferredID)
-    local result = S.Result(S.Preferred(candidates, preferredID, cached), candidates, preferredID)
-    result.applicable = runeIDs ~= nil
-    result.fallback = runeIDs and S.Item(inputs.inventory, runeIDs[1])
+    local preferred = S.FindListItem(inputs.inventory, runeIDs, preferredID)
 
-    return S.WithItemAction(result, { preferenceKey = KEY })
-end
-
-function Vantus.GetRuneIDsForCurrentRaid()
-    return RCC.db.vantusItemsByRaid[RCC.ConsumableInputs.ReadInstance().instanceID]
-end
-
-function Vantus.GetItemCandidate(runeIDs, preserveUnavailable)
-    return S.Unpack(Vantus.Select(RCC.ConsumableInputs.ReadSelection("vantus"), preserveUnavailable, runeIDs))
+    return S.Resolve({
+        preferred = preferred,
+        fallbacks = candidates,
+        candidates = candidates,
+        applicable = runeIDs ~= nil,
+        defaultCandidate = runeIDs and S.Item(inputs.inventory, runeIDs[1]),
+    }, { preferenceKey = KEY })
 end
 
 function Vantus.Observe(inputs)

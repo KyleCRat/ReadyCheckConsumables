@@ -55,13 +55,9 @@ RCC.db.flaskBuffIDs = {
 --- `flaskItems` is the editable source of truth for flask families. Family
 --- order controls fallback order; item order inside a family controls priority.
 --- When a preferred flask is selected, fleeting items from that family are used
---- before the preferred item, then other qualities from the same family. If
---- none are available, selection falls back to the next family in this table.
+--- before the preferred item. Macros may then fall back to other qualities and
+--- families; buttons keep the exact preference even when it is out of stock.
 --------------------------------------------------------------------------------
-
-RCC.FlaskVariant = RCC.FlaskVariant or {
-    FLEETING = "fleeting",
-}
 
 -- Expansion files append their rows through AddFlaskItems so the rest of the
 -- addon can keep reading one combined set of flask tables.
@@ -86,12 +82,16 @@ function RCC.Data.AddFlaskItems(families)
             local item = items[itemIndex]
             local itemID = item.itemID
 
-            item.familyIndex = familyIndex
+            item.family = familyIndex
             item.itemIndex = itemIndex
             item.xpac = item.xpac or family.xpac
 
             RCC.db.flaskItemIDs[#RCC.db.flaskItemIDs + 1] = itemID
             RCC.db.flaskItemData[itemID] = item
+
+            if item.variant == RCC.ConsumableVariant.FLEETING then
+                RCC.db.preferenceBlockedItemIDs[itemID] = true
+            end
         end
     end
 end

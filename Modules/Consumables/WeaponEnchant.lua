@@ -83,10 +83,10 @@ local function betterItem(a, b)
 end
 
 -- A known active class spell stays primary; a weapon without an enchant
--- defaults to its eligible spell. Otherwise use the saved item choice, the applied item, or
--- normal inventory priority, in that order. Applying an enchant never changes
--- the saved item preference.
-function WeaponEnchant.Select(inputs, _, slotID)
+-- defaults to its eligible spell. Otherwise use the saved item choice, the
+-- applied item, or normal inventory priority, in that order. Applying an
+-- enchant never changes the saved item preference.
+function WeaponEnchant.Select(inputs, slotID)
     local slot = inputs.weapons[slotID]
     local result = {
         applicable = slot.canBeEnchanted,
@@ -102,6 +102,24 @@ function WeaponEnchant.Select(inputs, _, slotID)
     result.candidates = S.Map(inputs.inventory, RCC.db.weaponEnchantItemIDs, {
         compare = betterItem,
     })
+
+    local preferredID = inputs.preferences[result.preferenceKey]
+    result.preferred = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, preferredID)
+    result.fallbacks = {}
+
+    if not result.preferred and result.active and result.active.item then
+        -- With no saved choice, keep the applied oil as the automatic default,
+        -- including its zero-count display when none remains in bags.
+        local appliedItem = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, result.active.item)
+
+        if appliedItem then
+            result.fallbacks[#result.fallbacks + 1] = appliedItem
+        end
+    end
+
+    for _, candidate in ipairs(result.candidates) do
+        result.fallbacks[#result.fallbacks + 1] = candidate
+    end
 
     for enchantID, data in pairs(RCC.db.weaponEnchants) do
         local rule = data.spellSlots and data.spellSlots[slotID]
@@ -127,34 +145,27 @@ function WeaponEnchant.Select(inputs, _, slotID)
         or (result.spells[1] and result.spells[1].data)
 
     if not slot.hasEnchant or knows(inputs, result.active) then
-        result.action = spellAction(inputs, spellEnchant, slotID)
+        result.overrideAction = spellAction(inputs, spellEnchant, slotID)
 
-        if result.action then
+        if result.overrideAction then
             result.kind = "spell"
             result.spellEnchant = spellEnchant
             result.icon = enchantIcon(inputs, spellEnchant)
 
-            return result
+            return S.Resolve(result)
         end
     end
 
-    local preferredID = inputs.preferences[result.preferenceKey]
-    local selectedItemID = preferredID or (result.active and result.active.item)
-    local cached = S.CachedMap(inputs.inventory, RCC.db.weaponEnchantItemIDs, selectedItemID)
-
-    result.candidate = S.Preferred(result.candidates, selectedItemID, cached)
     result.kind = "item"
+    S.Resolve(result, {
+        targetSlot = slotID,
+        preferenceKey = result.preferenceKey,
+    })
 
     local candidate = result.candidate
-    result.unavailable = candidate ~= nil and candidate.count <= 0
 
     if candidate then
         result.icon = candidate.icon
-        result.action = State.CreateItemAction(candidate.itemID, {
-            targetSlot = slotID,
-            available = candidate.count > 0,
-            preferenceKey = result.preferenceKey,
-        })
     end
 
     return result
@@ -175,20 +186,6 @@ function WeaponEnchant.GetCurrentSlotState(slotID)
         and math.max(0, slot.expirationTime - now) * MILLISECONDS_PER_SECOND
 
     return slot
-end
-
-function WeaponEnchant.GetActionForSlot(slotID)
-    local category
-
-    if slotID == MAIN_HAND_INVENTORY_SLOT then
-        category = "mainHandTempWeaponEnchant"
-    elseif slotID == OFF_HAND_INVENTORY_SLOT then
-        category = "offHandTempWeaponEnchant"
-    else
-        return
-    end
-
-    return WeaponEnchant.Select(RCC.ConsumableInputs.ReadSelection(category), true, slotID).action
 end
 
 function WeaponEnchant.Observe(inputs, slotID)

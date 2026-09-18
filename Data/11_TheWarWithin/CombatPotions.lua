@@ -2,7 +2,7 @@ local _, RCC = ...
 
 local DAMAGE   = RCC.CombatPotionType.DAMAGE
 local UTILITY  = RCC.CombatPotionType.UTILITY
-local FLEETING = RCC.CombatPotionVariant.FLEETING
+local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddCombatPotionItems({
     {-- Tempered Potion

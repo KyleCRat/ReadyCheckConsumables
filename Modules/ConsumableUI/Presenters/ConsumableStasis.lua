@@ -9,14 +9,14 @@ local ButtonState = RCC.ConsumableState
 function ConsumableStasis.Present(model)
     local candidate = model.selection.candidate
     local itemID = candidate and candidate.itemID
-        or model.selection.fallback.itemID
+        or model.selection.defaultCandidate.itemID
     local count = candidate and candidate.count or 0
     local state = ButtonState.Create({
         showStatusTexture = false,
         countText = tostring(count),
         tooltipItemID = itemID,
         clickHintItemID = itemID,
-        icon = (candidate or model.selection.fallback).icon,
+        icon = (candidate or model.selection.defaultCandidate).icon,
     })
 
     if candidate then

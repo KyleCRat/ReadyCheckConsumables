@@ -4,14 +4,26 @@
 
 ### Changed
 
+- Standardized consumable selection around saved preferences, automatic
+  overrides, and eligible fallbacks. Buttons retain your exact preferred item
+  and rank when it runs out; macros skip unavailable items without changing
+  your preference. Matching-family fleeting flasks and potions take priority
+  while carried, even when your preferred regular rank is out of stock.
+- Fleeting items can no longer be saved as preferred choices. Previously saved
+  fleeting choices are ignored rather than converted to a regular item/rank;
+  select a regular item to establish a new preference.
+- Healthstones use automatic selection, preferring a carried Demonic Healthstone
+  over a normal Healthstone. The button now shows the chosen variant's icon,
+  tooltip, and remaining charges rather than mixing the two variants' information.
 - Item macros now include their primary choice and one eligible backup from
-  your bags, selected using the same category rules. The backup remains usable
+  your bags, drawn from the shared selector's ordered choices without a second
+  selection pass or inventory-input edits. The backup remains usable
   if the primary runs out during combat, without rewriting the macro mid-fight.
 - Healing-potion buttons and macros now share location-aware selection: a
   carried Brawler's Guild potion (`253011`) takes priority only inside its
   venues, without replacing your saved normal-potion preference. Leaving the
-  venue restores normal selection. Macros include the normal potion as their
-  one backup; the complete macro still casts Recuperate out of combat. Prepared
+  venue restores normal selection. Macros include the normal potion selection
+  as their one backup; the complete macro still casts Recuperate out of combat. Prepared
   button actions and macro updates wait until combat ends before switching.
 - Inline potion/healthstone markers now maintain their complete group of item
   choices and preserve conditions on every line. Updates replace old backups
@@ -88,8 +100,9 @@
   refreshes its inputs. Repair cooldown visuals stay tied to the prepared item
   during combat even if another device becomes preferable.
 - Kept managed macros on live-read adapters over the shared selectors, with
-  their existing fallback policies and support for both personal frames being
-  disabled. Presenters no longer query inventory or change saved preferences.
+  category-appropriate fallbacks and support for both personal frames being
+  disabled. Presenters no longer query inventory or change saved preferences;
+  unused legacy selection adapters have been removed.
 - Centralized Recuperate spell/icon data for personal buttons and the healing-
   potion macro. Clarified the refresh API with named options and made fixed
   event registrations and weapon-slot constants explicit.

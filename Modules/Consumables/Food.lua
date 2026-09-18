@@ -13,18 +13,18 @@ Food.Dependencies = {
     expiration = "playerAuras",
 }
 
-function Food.Select(inputs, preserveUnavailable)
+function Food.Select(inputs)
     local candidates = S.List(inputs.inventory, RCC.db.foodItemIDs)
     local preferredID = inputs.preferences[KEY]
-    local cached = preserveUnavailable and S.CachedList(inputs.inventory, RCC.db.foodItemIDs, preferredID)
+    local preferred = S.FindListItem(inputs.inventory, RCC.db.foodItemIDs, preferredID)
 
-    return S.WithItemAction(S.Result(S.Preferred(candidates, preferredID, cached), candidates, preferredID), {
+    return S.Resolve({
+        preferred = preferred,
+        fallbacks = candidates,
+        candidates = candidates,
+    }, {
         preferenceKey = KEY,
     })
-end
-
-function Food.GetItemCandidate(preserveUnavailable)
-    return S.Unpack(Food.Select(RCC.ConsumableInputs.ReadSelection("food"), preserveUnavailable))
 end
 
 function Food.Observe(inputs)

@@ -45,13 +45,13 @@ end
 function Repair.Present(model)
     local candidate, candidates = RCC.ConsumableSelection.Unpack(model.selection)
     local itemID = candidate and candidate.itemID
-        or model.selection.fallback.itemID
+        or model.selection.defaultCandidate.itemID
     local buttonState = ButtonState.Create({
         countText = getCountText(candidate),
         tooltipItemID = itemID,
         clickHintItemID = itemID,
         icon = candidate and candidate.icon
-            or model.selection.fallback.icon,
+            or model.selection.defaultCandidate.icon,
         showStatusTexture = false,
         suppressGlow = true,
     })
@@ -83,7 +83,7 @@ function Repair.Present(model)
 end
 
 function Repair.Choices(selection)
-    local candidate = selection.candidate or selection.fallback
+    local candidate = selection.candidate or selection.defaultCandidate
 
     return createFlyoutChoices(selection.candidates, candidate.itemID)
 end

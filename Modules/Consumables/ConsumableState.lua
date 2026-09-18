@@ -171,13 +171,18 @@ function State.CreateItemAction(itemID, options)
     if not itemID then return end
 
     options = options or {}
+    local preferenceKey
+
+    if options.preferenceKey and RCC.ConsumableFrameItemCache.CanPrefer(itemID) then
+        preferenceKey = options.preferenceKey
+    end
 
     return {
         kind = ActionKind.ITEM,
         itemID = itemID,
         targetSlot = options.targetSlot,
         available = options.available,
-        preferenceKey = options.preferenceKey,
+        preferenceKey = preferenceKey,
         selectionOnly = options.selectionOnly == true,
     }
 end

@@ -8,16 +8,20 @@ local ButtonState = RCC.ConsumableState
 
 function Healthstone.Present(model)
     local showHealthstone = model.applicable
-    local totalCount = model.selection.count
+    local candidate = model.selection.candidate
+    local count = candidate and candidate.count or 0
+    local itemID = candidate and candidate.itemID or RCC.db.healthstoneItemID
+    local icon = candidate and candidate.icon
 
-    if totalCount > 0 then
+    if count > 0 then
         return ButtonState.Create({
             applicable = showHealthstone,
-            countText = tostring(totalCount),
+            countText = tostring(count),
+            icon = icon,
             statusIcon = ButtonState.READY_ICON,
             desaturated = false,
-            tooltipItemID = RCC.db.healthstoneItemID,
-            clickHintItemID = RCC.db.healthstoneItemID,
+            tooltipItemID = itemID,
+            clickHintItemID = itemID,
             action = model.action,
         })
     end
@@ -25,7 +29,7 @@ function Healthstone.Present(model)
     return ButtonState.Create({
         applicable = showHealthstone,
         countText = "0",
-        tooltipItemID = RCC.db.healthstoneItemID,
+        tooltipItemID = itemID,
         action = model.action,
     })
 end

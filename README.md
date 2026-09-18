@@ -140,6 +140,12 @@ right-click an item outside combat to save it as your preferred choice.
 Preferences are shared by the personal displays and managed macros. Item counts
 use your bags, not your bank.
 
+Your preference keeps the exact item and rank you chose. If it runs out, the
+button keeps showing that item with a zero count; macros can use an eligible
+backup without changing your choice. Carried fleeting flasks and potions from
+the same family take priority over your regular choice, even if that rank is
+out of stock. Fleeting items cannot be saved as preferences.
+
 Some buttons have different purposes on the two displays:
 
 | Item type | Consumables Frame | Consumables Action Bar |
@@ -147,6 +153,10 @@ Some buttons have different purposes on the two displays:
 | Food, flasks, runes, and weapon enchants | Use or apply the selected item/spell | Use or apply the selected item/spell |
 | Combat and healing potions | Right-click to choose a preferred item | Left-click to use; right-click to prefer |
 | Healthstones | Display available supply | Left-click to use |
+
+Healthstones are selected automatically: a carried Demonic Healthstone takes
+priority over a normal one. The icon and charge count describe the selected
+stone; there is no saved preference.
 
 Inside Bizmo's Brawlpub or Brawl'gar Arena, both displays automatically show the
 Brawler's Guild healing potion when you carry one. Your normal potion preference
@@ -229,8 +239,10 @@ potion in combat. Its inline marker adds only the potion choices, not Recuperate
 or a combat restriction unless you include `[combat]` yourself.
 
 Each item macro tries its primary choice and then one eligible backup, using
-RCC's usual category priorities. Healing potion macros select the Brawler's
-Guild potion (`253011`) only inside Bizmo's Brawlpub or Brawl'gar Arena when you
+available automatic overrides first, then your available preferred item, then
+the category's fallbacks. These choices never change your saved preference.
+Healing potion macros select the Brawler's Guild potion (`253011`) only inside
+Bizmo's Brawlpub or Brawl'gar Arena when you
 carry one, with your normal potion as the backup. Outside those venues, or if
 you have none, they use the normal primary and backup. There are at most two
 potion-use lines. Both personal displays use the same location-aware primary

@@ -91,7 +91,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         local observation = cache.observation
 
         if selectionDirty then
-            local selected = domain.Select and domain.Select(inputs, true, definition.weaponSlot) or EMPTY
+            local selected = domain.Select and domain.Select(inputs, definition.weaponSlot) or EMPTY
 
             if not Inputs.Equal(selected, selection) then
                 selection = selected

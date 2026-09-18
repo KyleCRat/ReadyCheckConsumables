@@ -30,8 +30,12 @@ local function getSavedCache()
     return ReadyCheckConsumablesDB.consumableItemCache
 end
 
+function Cache.CanPrefer(itemID)
+    return type(itemID) == "number" and not RCC.db.preferenceBlockedItemIDs[itemID]
+end
+
 function Cache.Set(cacheKey, itemID)
-    if not cacheKey or not itemID then return end
+    if not cacheKey or not Cache.CanPrefer(itemID) then return end
 
     local previousItemID = Cache.Get(cacheKey)
 
@@ -74,13 +78,15 @@ function Cache.Get(cacheKey)
     local savedCache = getSavedCache()
     local savedItemID = savedCache and savedCache[cacheKey]
 
-    if type(savedItemID) == "number" then
+    -- Older versions allowed fleeting preferences. Ignore those choices without
+    -- inventing a regular item/rank or changing SavedVariables during a read.
+    if Cache.CanPrefer(savedItemID) then
         return savedItemID
     end
 
     local cachedItemID = cachedItemIDs[cacheKey]
 
-    if type(cachedItemID) == "number" then
+    if Cache.CanPrefer(cachedItemID) then
         return cachedItemID
     end
 end

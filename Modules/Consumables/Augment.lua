@@ -49,7 +49,7 @@ function Augment.GetCountText(candidate)
     return tostring(candidate and candidate.count or 0)
 end
 
-function Augment.Select(inputs, preserveUnavailable)
+function Augment.Select(inputs)
     local preferUnlimited = inputs.preferences.preferUnlimitedAugment
     local candidates = S.Map(inputs.inventory, RCC.db.augmentItemIDs, {
         compare = function(a, b)
@@ -58,15 +58,15 @@ function Augment.Select(inputs, preserveUnavailable)
     })
 
     local preferredID = inputs.preferences[CacheKey.AUGMENT]
-    local cached = preserveUnavailable and S.CachedMap(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
+    local preferred = S.FindMapItem(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
 
-    return S.WithItemAction(S.Result(S.Preferred(candidates, preferredID, cached), candidates, preferredID), {
+    return S.Resolve({
+        preferred = preferred,
+        fallbacks = candidates,
+        candidates = candidates,
+    }, {
         preferenceKey = CacheKey.AUGMENT,
     })
-end
-
-function Augment.GetItemCandidate(preserveUnavailable)
-    return S.Unpack(Augment.Select(RCC.ConsumableInputs.ReadSelection("augment"), preserveUnavailable))
 end
 
 function Augment.Observe(inputs)

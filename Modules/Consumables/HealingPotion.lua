@@ -1,8 +1,9 @@
 local _, RCC = ...
+
 local HealingPotion = {}
 RCC.Consumables.HealingPotion = HealingPotion
-local S = RCC.ConsumableSelection
-local KEY = RCC.ConsumableItemCacheKey.HEALING_POTION
+local Selection = RCC.ConsumableSelection
+local PREFERENCE_KEY = RCC.ConsumableItemCacheKey.HEALING_POTION
 
 HealingPotion.Inventory = {
     list = RCC.db.healingPotionItemIDs,
@@ -13,37 +14,26 @@ HealingPotion.Dependencies = {
     selection = { "inventory", "preferences.healingPotion", "location.uiMapID" },
 }
 
-function HealingPotion.Select(inputs, preserveUnavailable)
-    local candidates = S.List(inputs.inventory, RCC.db.healingPotionItemIDs)
+function HealingPotion.Select(inputs)
+    local choices = Selection.FamilyCandidates(inputs.inventory, {
+        itemIDs = RCC.db.healingPotionItemIDs,
+        itemData = RCC.db.healingPotionItemData,
+        preferredID = inputs.preferences[PREFERENCE_KEY],
+    })
 
     if RCC.db.brawlersGuildMapIDs[inputs.location.uiMapID] then
-        local brawlersPotion = S.Item(inputs.inventory, RCC.db.brawlersGuildHealingPotionItemID)
+        local guildPotion = Selection.Item(inputs.inventory, RCC.db.brawlersGuildHealingPotionItemID)
 
-        if brawlersPotion and brawlersPotion.count > 0 then
-            table.insert(candidates, 1, brawlersPotion)
-
-            -- The venue potion is automatic, not a saved preference. Normal
-            -- potions remain in the flyout so their preferences can still be set.
-            return S.WithItemAction(S.Result(brawlersPotion, candidates), {
-                selectionOnly = true,
-            })
+        if guildPotion and guildPotion.count > 0 then
+            -- The venue override precedes matching fleeting items. Its own
+            -- count/action are displayed, without changing the normal choice.
+            table.insert(choices.overrides, 1, guildPotion)
+            table.insert(choices.candidates, 1, guildPotion)
         end
     end
 
-    local preferredID = inputs.preferences[KEY]
-    local selected = S.Preferred(candidates, preferredID)
-
-    -- UI preserves an unavailable preference; macros use the available fallback.
-    if preserveUnavailable then
-        selected = S.CachedList(inputs.inventory, RCC.db.healingPotionItemIDs, preferredID) or selected
-    end
-
-    return S.WithItemAction(S.Result(selected, candidates, preferredID), {
-        preferenceKey = KEY,
+    return Selection.Resolve(choices, {
+        preferenceKey = PREFERENCE_KEY,
         selectionOnly = true,
     })
-end
-
-function HealingPotion.GetItemCandidate(preserveUnavailable)
-    return S.Unpack(HealingPotion.Select(RCC.ConsumableInputs.ReadSelection("healpot"), preserveUnavailable))
 end

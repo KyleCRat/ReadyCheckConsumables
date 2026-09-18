@@ -39,7 +39,7 @@ function Vantus.Present(model)
     local icon = candidate and candidate.icon
 
     if not itemID then
-        itemID, icon = selection.fallback.itemID, selection.fallback.icon
+        itemID, icon = selection.defaultCandidate.itemID, selection.defaultCandidate.icon
     end
 
     local buttonState = ButtonState.Create()
@@ -89,7 +89,7 @@ function Vantus.Present(model)
 end
 
 function Vantus.Choices(selection)
-    local candidate = selection.candidate or selection.fallback
+    local candidate = selection.candidate or selection.defaultCandidate
 
     return ButtonState.CreateItemFlyoutChoices(selection.candidates, candidate and candidate.itemID, {
         preferenceKey = CacheKey.VANTUS,

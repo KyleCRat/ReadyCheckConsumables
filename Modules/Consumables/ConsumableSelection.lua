@@ -60,58 +60,116 @@ function Selection.Map(inventory, itemData, options)
     return candidates
 end
 
-function Selection.CachedList(inventory, itemIDs, preferredID)
-    for index, itemID in ipairs(itemIDs or {}) do
-        if itemID == preferredID then
+function Selection.FindListItem(inventory, itemIDs, itemID)
+    if not itemID then return end
+
+    for index, registeredItemID in ipairs(itemIDs or {}) do
+        if registeredItemID == itemID then
             return Selection.Item(inventory, itemID, nil, index)
         end
     end
 end
 
-function Selection.CachedMap(inventory, itemData, preferredID)
-    if preferredID and itemData[preferredID] then
-        return Selection.Item(inventory, preferredID, itemData[preferredID])
+function Selection.FindMapItem(inventory, itemData, itemID)
+    if itemID and itemData[itemID] then
+        return Selection.Item(inventory, itemID, itemData[itemID])
     end
 end
 
-function Selection.Preferred(candidates, preferredID, unavailableCandidate)
-    for _, candidate in ipairs(candidates) do
-        if candidate.itemID == preferredID then return candidate end
+-- Selection never writes preferences. Categories supply three independent
+-- choices: the exact preferred item (even at zero count), available overrides
+-- in priority order, and ordered fallbacks. Candidates are the full flyout
+-- list, which can include items ineligible for automatic fallback.
+--
+-- Buttons show an override, otherwise the preference, otherwise the first
+-- fallback. An unavailable preference must not silently bind another item.
+-- Macros skip unavailable choices and take their primary/backup from the same
+-- ordering. A spell override replaces item use, not the saved item preference.
+function Selection.Resolve(selection, actionOptions)
+    if selection.overrideAction then
+        selection.action = selection.overrideAction
+
+        return selection
     end
 
-    return unavailableCandidate or candidates[1]
-end
+    local override = selection.overrides and selection.overrides[1]
+    local fallback = selection.fallbacks and selection.fallbacks[1]
+    local candidate = override or selection.preferred or fallback
 
-function Selection.Result(candidate, candidates, preferredID)
-    return {
-        candidate = candidate,
-        candidates = candidates,
-        unavailable = candidate ~= nil and candidate.itemID == preferredID and candidate.count <= 0,
-    }
-end
-
-function Selection.WithItemAction(result, options)
-    local candidate = result.candidate
+    selection.candidate = candidate
+    selection.unavailable = candidate ~= nil and candidate.count <= 0
 
     if candidate and candidate.count > 0 then
-        result.action = RCC.ConsumableState.CreateItemAction(candidate.itemID, options)
+        selection.action = RCC.ConsumableState.CreateItemAction(candidate.itemID, actionOptions)
     end
 
-    return result
+    return selection
+end
+
+function Selection.GetAvailableCandidates(selection)
+    local candidates = {}
+    local included = {}
+
+    local function add(candidate)
+        if not candidate or candidate.count <= 0 or candidate.ready == false then return end
+        if included[candidate.itemID] then return end
+
+        included[candidate.itemID] = true
+        candidates[#candidates + 1] = candidate
+    end
+
+    for _, candidate in ipairs(selection.overrides or {}) do
+        add(candidate)
+    end
+
+    add(selection.preferred)
+
+    for _, candidate in ipairs(selection.fallbacks or {}) do
+        add(candidate)
+    end
+
+    return candidates
+end
+
+-- Item data defines family membership and ordering. Only fleeting items from
+-- the preferred family override an exact preference. Other families may be
+-- macro fallbacks, subject to the category's own compatibility rules.
+function Selection.FamilyCandidates(inventory, options)
+    local candidates = Selection.List(inventory, options.itemIDs)
+    local preferred = Selection.FindMapItem(inventory, options.itemData, options.preferredID)
+    local selection = {
+        candidates = candidates,
+        preferred = preferred,
+        overrides = {},
+        fallbacks = {},
+    }
+    local otherFamilies = {}
+
+    for _, candidate in ipairs(candidates) do
+        candidate.data = options.itemData[candidate.itemID]
+
+        if not preferred then
+            selection.fallbacks[#selection.fallbacks + 1] = candidate
+        elseif candidate.data.family == preferred.data.family then
+            if candidate.data.variant == RCC.ConsumableVariant.FLEETING then
+                selection.overrides[#selection.overrides + 1] = candidate
+            end
+
+            selection.fallbacks[#selection.fallbacks + 1] = candidate
+        elseif not options.canFallbackToFamily
+            or options.canFallbackToFamily(preferred.data, candidate.data)
+        then
+            otherFamilies[#otherFamilies + 1] = candidate
+        end
+    end
+
+    for _, candidate in ipairs(otherFamilies) do
+        selection.fallbacks[#selection.fallbacks + 1] = candidate
+    end
+
+    return selection
 end
 
 function Selection.Unpack(result)
     return result.candidate, result.candidates, result.unavailable
-end
-
-function Selection.Best(candidates, isBetter)
-    local selected
-
-    for _, candidate in ipairs(candidates) do
-        if not selected or isBetter(candidate, selected) then
-            selected = candidate
-        end
-    end
-
-    return selected
 end

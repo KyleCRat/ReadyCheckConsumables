@@ -107,8 +107,9 @@ data.
   scalar settings.
 - `contextualVisibility` is intentionally sparse: `nil` means use the definition
   default, while explicit `true` or `false` is an override.
-- Preferred consumable item choices are shared by the personal frame and
-  managed macros.
+- Preferred consumable item choices are shared by both personal displays and
+  managed macros. The selection contract for preferences, automatic overrides,
+  and fallbacks lives in `Modules/Consumables/ConsumableSelection.lua`.
 
 ## Module Ownership and Load Order
 
@@ -168,6 +169,8 @@ data.
     `Data/<expansion>/HealingItems.lua`, and every output in the cauldron's
     `pickupItemIDs`. A cauldron definition also needs its placement/use spell
     IDs, cauldron item ranks, pickup target, and pickup quantity.
+    Preserve item family and fleeting-variant metadata: selection uses it to
+    limit overrides to the preferred family and prevent fleeting preferences.
   - Augment Runes: register both inventory item IDs and applied aura spell IDs,
     with matching expansion, priority, and unlimited metadata.
   - Vantus Runes: register the raid instance-to-item mapping and every

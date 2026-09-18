@@ -28,7 +28,7 @@ its existing families is registered like this:
 
 ```lua
 local _, RCC = ...
-local FLEETING = RCC.FlaskVariant.FLEETING
+local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddFlaskItems({
     { -- Flask of Thalassian Resistance
@@ -56,6 +56,12 @@ tables used by the rest of the addon:
 - `RCC.db.flaskItems`: the registered families.
 
 Edit the family definitions, not these generated lists.
+
+Family membership also limits fleeting overrides: a fleeting Resistance flask
+can replace a preferred regular Resistance flask, but not a flask with another
+effect. Registration marks fleeting items as ineligible saved preferences.
+Healing potions use the same `family` and `variant` metadata in their ordered
+item records; concentrated and ordinary Silvermoon potions are separate families.
 
 Knowing which item to use is separate from recognizing its active effect.
 The same base data file contains the applied buff IDs:
@@ -259,25 +265,54 @@ its slot is inapplicable, so equipping a weapon can make the button return.
 category functions and keeps their results until their inputs change.
 Flask answers three different questions.
 
-### `Select(inputs, preserveUnavailable)`: what should clicking use?
+### `Select(inputs)`: what should clicking use?
 
 Flask's selector examines the registered items in `inputs.inventory` and the
-saved choice in `inputs.preferences.flask`. Its family/variant preference rules
-live in `Flask.lua`; the shared
+saved choice in `inputs.preferences.flask`. It asks the shared
 [ConsumableSelection.lua](../Modules/Consumables/ConsumableSelection.lua)
-helpers construct candidates and result tables.
-
-A **candidate** is an item that selection can consider. For example, a result
-might contain:
+helpers to construct and order its choices:
 
 ```lua
+local choices = Selection.FamilyCandidates(inputs.inventory, {
+    itemIDs = RCC.db.flaskItemIDs,
+    itemData = RCC.db.flaskItemData,
+    preferredID = inputs.preferences[PREFERENCE_KEY],
+})
+
+return Selection.Resolve(choices, { preferenceKey = PREFERENCE_KEY })
+```
+
+Every item selector keeps three concepts separate:
+
+| Field | What it contains | Flask example |
+| --- | --- | --- |
+| `preferred` | The exact saved item, including a zero count if it has run out | Regular Resistance R1 |
+| `overrides` | Available special choices that should take priority without changing the preference | Fleeting Resistance, in data-defined rank order |
+| `fallbacks` | Ordered automatic choices when no preference exists, or eligible macro alternatives | Other Resistance ranks first, then other flask families |
+
+Buttons take the first override, otherwise the preference, otherwise the first
+fallback. A different regular rank never replaces an out-of-stock preference
+on the button. A matching fleeting item does: if Resistance R1 is preferred
+but only fleeting Resistance R2 is carried, the button shows fleeting R2.
+When the fleeting item runs out, it returns to R1 and shows its current count.
+Fleeting items from another family are not overrides.
+
+A **candidate** is an item that selection can consider. For example, a result
+with a carried regular preference and no fleeting override might contain:
+
+```lua
+local preferred = {
+    itemID = 241320,
+    count = 3,
+    icon = flaskItemIcon,
+    -- Also includes quality and family metadata.
+}
+
 selection = {
-    candidate = {
-        itemID = 241320,
-        count = 3,
-        icon = flaskItemIcon,
-        -- Also includes quality and family metadata.
-    },
+    preferred = preferred,
+    overrides = {},
+    fallbacks = orderedFlaskFallbacks,
+    candidate = preferred,
     candidates = availableFlaskCandidates,
     unavailable = false,
     action = {
@@ -290,14 +325,24 @@ selection = {
 ```
 
 `candidate` is the primary choice. `candidates` supplies the alternatives for
-the flyout. `action` describes what clicking should do; it does not use the item
-or change a secure button yet. It is created through
-`ConsumableState.CreateItemAction`, via `Selection.WithItemAction`.
+the flyout, including items that may be ineligible for automatic fallback.
+`action` describes what clicking should do; it does not use the item or change
+a secure button yet. `Selection.Resolve` creates it through
+`ConsumableState.CreateItemAction`. If the selected item has zero count,
+`unavailable` is true and there is no action.
 
-The UI calls `Select` with `preserveUnavailable = true`. Flask can therefore
-retain a saved item with a zero count, so its button can explain that the selected
-item is unavailable instead of silently replacing it. With no usable selected
-item, `WithItemAction` supplies no action.
+The same result supplies macros: `Selection.GetAvailableCandidates` returns
+overrides, the preference if carried, and eligible fallbacks, skipping missing
+items and duplicates. A macro uses the first two. There is no macro-specific
+preference flag or second selection pass, and selection never writes a preference.
+
+Categories still decide their own priorities and eligibility. Combat potions
+allow fallbacks within the preferred damage or mana type; utility potions stay
+within their family. Healthstones have no saved preference and order Demonic
+before normal. A weapon spell can supply `overrideAction` instead of an item
+override. Repair orders ready reusable devices before consumables. Categories
+that need an empty-inventory icon use `defaultCandidate` for that display data;
+it is not a usable fallback.
 
 ### `Observe(inputs)`: what flask buff did the scan find?
 
@@ -436,6 +481,11 @@ Choose `statusIcon` from `ConsumableState.READY_ICON`, `NOT_READY_ICON`, or
 `Flask.Choices(selection)` calls `CreateItemFlyoutChoices` with the available
 candidates, the selected item ID, and the Flask preference key. The helper
 returns button-state tables for the alternatives, excluding the primary item.
+
+`CreateItemAction` leaves out `preferenceKey` for items that cannot be preferred,
+such as fleeting consumables and the venue-only Guild potion. Both the primary
+and flyout therefore omit their right-click preference action and hint, while
+retaining left-click use wherever that surface allows it.
 
 The runtime keeps those choices until the selection changes, then attaches them
 to the primary state as `flyoutChoices`. A duration update does not rebuild
@@ -582,6 +632,11 @@ macro update. The next selection uses the new preference; it does not need a
 new aura scan. `nextFrame` skips the normal delay when starting a new batch;
 if one is already scheduled, the change joins it.
 
+The cache also rejects attempts to save blocked items. `ReadPreferences` uses
+its getter, which ignores any fleeting choice saved by an older version rather
+than guessing a regular replacement. Choosing a regular item explicitly creates
+the new preference. Inventory changes, overrides, and macro refreshes only read it.
+
 Weapon enchants keep the saved item choice separate from what is applied.
 A known class enchant remains primary while active, and a weapon without an
 enchant defaults to its eligible class spell. With an oil applied, selection uses the
@@ -621,6 +676,14 @@ If the new button supports a saved item preference, add a named entry to
 collects the keys from that table. Use the same key in the selection dependency
 (like `preferences.flask`) and in the primary/flyout actions' `preferenceKey`,
 so a right-click saves the value that the selector reads.
+
+Have the selector provide its `preferred`, `overrides`, and `fallbacks` to
+`ConsumableSelection.Resolve`. Omit concepts the category does not use; a
+category without preferences only needs ordered fallbacks. Keep the full flyout
+`candidates` separate if manual choices can go beyond automatic fallback rules.
+Flasks, combat potions, and healing potions share `FamilyCandidates` for matching
+fleeting overrides; combat potions add their type restriction through
+`canFallbackToFamily`.
 
 Choose the phases that match the button's behavior:
 
@@ -699,31 +762,25 @@ consumables, or chat reports.
 
 A macro may need an item while both personal displays are disabled. The private
 `selectMacroAction` helper in `ConsumableMacros.lua` reads fresh selection inputs
-instead of asking for the last button snapshot. For Flask, its two selections
-amount to:
+instead of asking for the last button snapshot. For Flask, it uses:
 
 ```lua
 local inputs = RCC.ConsumableInputs.ReadSelection("flask")
-local primary = Flask.Select(inputs, false).candidate
+local selection = Flask.Select(inputs)
+local choices = RCC.ConsumableSelection.GetAvailableCandidates(selection)
+local primary = choices[1]
+local backup = choices[2]
 
-if primary then
-    inputs.inventory[primary.itemID] = nil
-    local backup = Flask.Select(inputs, false).candidate
-    -- Write the primary and, if present, backup into separate /use lines.
-end
+-- Write the primary and, if present, backup into separate /use lines.
 ```
 
-Only this macro's fresh inventory table is changed. The second selection sees
-the same preferences and other inputs but cannot choose the primary again. It uses
-Flask's existing priorities for one backup, not just the second flyout entry.
-Other item macros use their own category's selector in the same way. Spell
-actions do not get item backups.
-
-The Flask macro passes `false` for `preserveUnavailable`, allowing its available
-fallback selection. The UI passes `true` to retain an unavailable saved choice.
-Both use the same selector, with an explicit difference in how its result
-should be chosen. Food, augment and vantus macros retain their saved primary
-even when absent, with an available backup after it.
+This reads the selector's ordering without modifying its inventory inputs or
+selecting again. For every item category, the macro takes the first two distinct
+available choices: automatic overrides first, then the preferred item, then
+eligible fallbacks. With no items available there is no item action. A missing
+preferred rank can remain on the button while the macro uses another rank;
+neither changes the saved choice. Spell actions remain a single cast with no
+item backup.
 
 Healing-potion location rules live in `HealingPotion.Select`, shared by both
 personal displays and macros. `ReadLocation` supplies the player's `uiMapID`,
@@ -732,11 +789,12 @@ inventory declaration combines the normal potion list with the separate
 Brawler's Guild item from `Data/HealingItems.lua`.
 
 Inside a listed venue, the selector puts a carried Guild potion first and
-returns it as the primary. Its action omits `preferenceKey` so it cannot replace
-the saved normal potion; normal candidates still supply the flyout's preference
-choices. Outside the venue, or without the Guild potion, selection follows the
-normal rules. The macro's second selection excludes the Guild potion and finds
-the normal backup, with no macro-specific location override.
+returns it as the primary override, ahead of matching fleeting potions. Its
+action omits `preferenceKey` so it cannot replace the saved normal potion;
+regular candidates still supply the flyout's preference choices. Outside the
+venue, or without the Guild potion, selection follows the normal rules. The
+macro uses the next available choice as backup, with no macro-specific location
+override or second inventory read.
 
 Local, indoor, and major zone events refresh location for the personal pipeline
 and trigger the macros' independent live selection reads. The personal pipeline

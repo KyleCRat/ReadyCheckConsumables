@@ -3,7 +3,7 @@ local _, RCC = ...
 local MANA     = RCC.CombatPotionType.MANA
 local DAMAGE   = RCC.CombatPotionType.DAMAGE
 local UTILITY  = RCC.CombatPotionType.UTILITY
-local FLEETING = RCC.CombatPotionVariant.FLEETING
+local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddCombatPotionItems({
     {-- Liquid Luster (use spell 1295132)

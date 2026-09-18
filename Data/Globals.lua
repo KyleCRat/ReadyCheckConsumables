@@ -1,5 +1,15 @@
 local _, RCC = ...
 
+RCC.db = RCC.db or {}
+
+RCC.ConsumableVariant = {
+    FLEETING = "fleeting",
+}
+
+-- Populated by item registration. Temporary/context-only items may be used,
+-- but must never become a saved preference.
+RCC.db.preferenceBlockedItemIDs = {}
+
 --------------------------------------------------------------------------------
 --- Expansion Version Constants
 --------------------------------------------------------------------------------

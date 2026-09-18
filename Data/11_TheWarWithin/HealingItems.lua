@@ -1,17 +1,29 @@
 local _, RCC = ...
 
+local FLEETING = RCC.ConsumableVariant.FLEETING
+
 RCC.Data.AddHealingPotionItems({
     -- 11.2.0 - Fleeting
-    244849,                 -- Fleeting Invigorating Healing Potion
+    { itemID = 244849, family = "invigorating", variant = FLEETING },
 
     -- 11.2.0 - Full duration
-    244835, 244838, 244839, -- Q3, Q2, Q1 Invigorating Healing Potion
+    { itemID = 244835, family = "invigorating", q = 3 },
+    { itemID = 244838, family = "invigorating", q = 2 },
+    { itemID = 244839, family = "invigorating", q = 1 },
 
     -- 11.0.0 - Fleeting
-    212948, 212949, 212950, -- Q3, Q2, Q1 Fleeting Cavedweller's Delight
-    212942, 212943, 212944, -- Q3, Q2, Q1 Fleeting Algari Healing Potion
+    { itemID = 212948, family = "cavedwellersDelight", q = 3, variant = FLEETING },
+    { itemID = 212949, family = "cavedwellersDelight", q = 2, variant = FLEETING },
+    { itemID = 212950, family = "cavedwellersDelight", q = 1, variant = FLEETING },
+    { itemID = 212942, family = "algariHealing", q = 3, variant = FLEETING },
+    { itemID = 212943, family = "algariHealing", q = 2, variant = FLEETING },
+    { itemID = 212944, family = "algariHealing", q = 1, variant = FLEETING },
 
     -- 11.0.0 - Full duration
-    212242, 212243, 212244, -- Q3, Q2, Q1 Cavedweller's Delight
-    211878, 211879, 211880, -- Q3, Q2, Q1 Algari Healing Potion
+    { itemID = 212242, family = "cavedwellersDelight", q = 3 },
+    { itemID = 212243, family = "cavedwellersDelight", q = 2 },
+    { itemID = 212244, family = "cavedwellersDelight", q = 1 },
+    { itemID = 211878, family = "algariHealing", q = 3 },
+    { itemID = 211879, family = "algariHealing", q = 2 },
+    { itemID = 211880, family = "algariHealing", q = 1 },
 })

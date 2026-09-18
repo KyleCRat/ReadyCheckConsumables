@@ -43,20 +43,19 @@ function Repair.Select(inputs)
         candidate.ready = candidate.cooldown == nil
     end
 
-    local selected = S.Best(candidates, function(a, b)
-        return priority(a) > priority(b)
+    table.sort(candidates, function(a, b)
+        local aPriority, bPriority = priority(a), priority(b)
+
+        if aPriority ~= bPriority then return aPriority > bPriority end
+
+        return a.index < b.index
     end)
 
-    local result = S.Result(selected, candidates)
-    result.fallback = S.Item(inputs.inventory, RCC.db.repairDefaultItemID)
+    local selected = candidates[1]
 
-    return S.WithItemAction(result, { available = selected and selected.ready })
-end
-
-function Repair.GetItemCandidate()
-    return S.Unpack(Repair.Select(RCC.ConsumableInputs.ReadSelection("repair")))
-end
-
-function Repair.GetDefaultItemID()
-    return RCC.db.repairDefaultItemID
+    return S.Resolve({
+        candidates = candidates,
+        fallbacks = candidates,
+        defaultCandidate = S.Item(inputs.inventory, RCC.db.repairDefaultItemID),
+    }, { available = selected and selected.ready })
 end

@@ -1,6 +1,6 @@
 local _, RCC = ...
 
-local FLEETING = RCC.FlaskVariant.FLEETING
+local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddFlaskItems({
     {-- Flask of Thalassian Resistance

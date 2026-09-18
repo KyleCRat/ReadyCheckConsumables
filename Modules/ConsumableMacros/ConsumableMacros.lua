@@ -67,18 +67,18 @@ local function getItemIcon(itemID)
     return itemID and GetItemIcon(itemID)
 end
 
-local function selectMacroAction(category, options)
+local function selectMacroAction(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
     local domain = Consumables[definition.domain]
     local inputs = Inputs.ReadSelection(category)
-    local preserveUnavailable = options and options.preserveUnavailable == true
-    local selection = domain.Select(inputs, preserveUnavailable, definition.weaponSlot)
+    local selection = domain.Select(inputs, definition.weaponSlot)
 
     if selection.action and selection.action.kind == ActionKind.SPELL then
         return selection.action, getSpellIcon(selection.action.spellID)
     end
 
-    local primary = selection.candidate
+    local candidates = RCC.ConsumableSelection.GetAvailableCandidates(selection)
+    local primary = candidates[1]
 
     if not primary then return end
 
@@ -89,13 +89,12 @@ local function selectMacroAction(category, options)
         targetSlot = definition.weaponSlot,
     }
 
-    -- ReadSelection gives this macro its own inputs. Exclude the primary and
-    -- select again to reuse the category's ranking and eligibility rules for
-    -- one backup, without changing saved preferences or the UI's inventory.
-    inputs.inventory[primary.itemID] = nil
-    local fallback = domain.Select(inputs, false, definition.weaponSlot).candidate
+    -- The selector already ordered overrides, the available preference, and
+    -- compatible fallbacks. Macros use the first two without editing inputs or
+    -- selecting again under a different preference policy.
+    local fallback = candidates[2]
 
-    if fallback and fallback.count > 0 then
+    if fallback then
         action.itemIDs[#action.itemIDs + 1] = fallback.itemID
     end
 
@@ -103,7 +102,7 @@ local function selectMacroAction(category, options)
 end
 
 local function foodAction()
-    return selectMacroAction("food", { preserveUnavailable = true })
+    return selectMacroAction("food")
 end
 
 local function flaskAction()
@@ -111,11 +110,11 @@ local function flaskAction()
 end
 
 local function augmentAction()
-    return selectMacroAction("augment", { preserveUnavailable = true })
+    return selectMacroAction("augment")
 end
 
 local function vantusAction()
-    return selectMacroAction("vantus", { preserveUnavailable = true })
+    return selectMacroAction("vantus")
 end
 
 local function combatPotionAction()
@@ -203,7 +202,7 @@ local MACRO_DEFINITIONS = {
         key = "combatpot",
         label = "Combat Potion",
         macroName = "RCC Combat Pot",
-        description = "Uses the preferred combat potion when available, otherwise the best available combat potion.",
+        description = "Uses matching fleeting potions before the preferred item, with fallbacks limited to the same potion type (or family for utility potions).",
         getAction = combatPotionAction,
         inlineGetAction = combatPotionAction,
         aliases = { "combatpotion", "cp" },
@@ -223,7 +222,7 @@ local MACRO_DEFINITIONS = {
         key = "healthstone",
         label = "Healthstone",
         macroName = "RCC Healthstone",
-        description = "Uses the best available healthstone variant.",
+        description = "Uses a carried Demonic Healthstone before a normal Healthstone, without a saved preference.",
         getAction = healthstoneAction,
         inlineGetAction = healthstoneAction,
         aliases = { "hs" },

@@ -13,11 +13,9 @@ InkyBlackPotion.Dependencies = {
 }
 
 function InkyBlackPotion.Select(inputs)
-    return S.WithItemAction(S.Result(S.Item(inputs.inventory, RCC.db.inkyBlackPotionItemID), {}))
-end
+    local candidate = S.Item(inputs.inventory, RCC.db.inkyBlackPotionItemID)
 
-function InkyBlackPotion.GetItemCandidate()
-    return InkyBlackPotion.Select(RCC.ConsumableInputs.ReadSelection("inkyBlackPotion")).candidate
+    return S.Resolve({ candidates = {}, fallbacks = { candidate } })
 end
 
 function InkyBlackPotion.Observe(inputs)

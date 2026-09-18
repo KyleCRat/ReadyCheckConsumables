@@ -16,10 +16,6 @@ RCC.CombatPotionType = RCC.CombatPotionType or {
     UTILITY = "utility_potion",
 }
 
-RCC.CombatPotionVariant = RCC.CombatPotionVariant or {
-    FLEETING = "fleeting",
-}
-
 -- Expansion files append their rows through AddCombatPotionItems so the rest
 -- of the addon can keep reading one combined set of combat potion tables.
 RCC.db.combatPotionItemIDs = {}
@@ -43,7 +39,7 @@ function RCC.Data.AddCombatPotionItems(families)
             local item = items[itemIndex]
             local itemID = item.itemID
 
-            item.familyIndex = familyIndex
+            item.family = familyIndex
             item.itemIndex = itemIndex
             item.type = family.type
             item.xpac = item.xpac or family.xpac
@@ -51,6 +47,10 @@ function RCC.Data.AddCombatPotionItems(families)
             RCC.db.combatPotionItemIDs[#RCC.db.combatPotionItemIDs + 1] =
                 itemID
             RCC.db.combatPotionItemData[itemID] = item
+
+            if item.variant == RCC.ConsumableVariant.FLEETING then
+                RCC.db.preferenceBlockedItemIDs[itemID] = true
+            end
         end
     end
 end
