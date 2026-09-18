@@ -178,16 +178,17 @@ function Surface.ApplySnapshot(surface, snapshot, categories)
         local state = snapshot.states[key]
         local revisions = snapshot.revisions[key]
         local applied = surface.appliedRevisions[key] or {}
-        local visualState = state
-
-        if inCombat and surface.capabilities.allowCombat then
-            visualState = State.MergeCombatVisual(
-                surface.preparedStates[key],
-                state
-            )
-        end
 
         if policyChanged or applied.visual ~= revisions.visual then
+            local visualState = state
+
+            if inCombat and surface.capabilities.allowCombat then
+                visualState = State.MergeCombatVisual(
+                    surface.preparedStates[key],
+                    state
+                )
+            end
+
             View.ApplyVisual(button, visualState)
         end
 

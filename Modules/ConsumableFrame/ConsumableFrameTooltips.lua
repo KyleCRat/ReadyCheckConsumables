@@ -238,9 +238,7 @@ function Tooltips.InfoButtonOnEnter(self)
     local unavailableText = getUnavailableText(self)
     local auraScanUnavailableText = getAuraScanUnavailableText(self)
 
-    if self.unavailableOverlay and unavailableText then
-        self.unavailableOverlay:Show()
-    end
+    Tooltips.UpdateUnavailableOverlay(self)
 
     if showButtonTooltip(self, true) then
         if self.clickEnabled then
@@ -272,9 +270,9 @@ end
 function Tooltips.UpdateUnavailableOverlay(button)
     if not button.unavailableOverlay then return end
 
-    if getUnavailableText(button) then
-        button.unavailableOverlay:Show()
-    else
-        button.unavailableOverlay:Hide()
+    local shown = getUnavailableText(button) ~= nil
+
+    if button.unavailableOverlay:IsShown() ~= shown then
+        button.unavailableOverlay:SetShown(shown)
     end
 end

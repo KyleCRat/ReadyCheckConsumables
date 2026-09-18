@@ -39,12 +39,6 @@ local function isBetterAugmentCandidate(candidate, best, preferUnlimited)
             and candidate.itemID > (best.itemID or 0))
 end
 
-local function sortAugmentCandidates(candidates, preferUnlimited)
-    table.sort(candidates, function(a, b)
-        return isBetterAugmentCandidate(a, b, preferUnlimited)
-    end)
-end
-
 function Augment.GetCountText(candidate)
     local data = candidate and candidate.data
 
@@ -56,8 +50,12 @@ function Augment.GetCountText(candidate)
 end
 
 function Augment.Select(inputs, preserveUnavailable)
-    local candidates = S.Map(inputs.inventory, RCC.db.augmentItemIDs)
-    sortAugmentCandidates(candidates, inputs.preferences.preferUnlimitedAugment)
+    local preferUnlimited = inputs.preferences.preferUnlimitedAugment
+    local candidates = S.Map(inputs.inventory, RCC.db.augmentItemIDs, {
+        compare = function(a, b)
+            return isBetterAugmentCandidate(a, b, preferUnlimited)
+        end,
+    })
 
     local preferredID = inputs.preferences[CacheKey.AUGMENT]
     local cached = preserveUnavailable and S.CachedMap(inputs.inventory, RCC.db.augmentItemIDs, preferredID)

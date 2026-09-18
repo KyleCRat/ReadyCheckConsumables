@@ -11,7 +11,9 @@ Healthstone.Dependencies = {
 }
 
 function Healthstone.Select(inputs)
-    local candidates = S.Map(inputs.inventory, RCC.db.healthstoneItemIDs, true)
+    local candidates = S.Map(inputs.inventory, RCC.db.healthstoneItemIDs, {
+        countUses = true,
+    })
     local result = S.Result(candidates[1], candidates)
     result.count = 0
 

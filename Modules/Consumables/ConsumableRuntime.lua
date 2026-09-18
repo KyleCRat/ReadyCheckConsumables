@@ -116,6 +116,10 @@ function Runtime.Build(runtime, inputs, now, due, categories)
 
             if not previous or selection ~= cache.selection then
                 choices = presenter.Choices and presenter.Choices(selection) or nil
+
+                for _, choice in ipairs(choices or EMPTY) do
+                    State.Normalize(choice)
+                end
             end
 
             local model = domain.Evaluate and domain.Evaluate(selection, observation, inputs, now)

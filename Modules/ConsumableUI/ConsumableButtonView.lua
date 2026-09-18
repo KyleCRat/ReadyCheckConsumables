@@ -24,27 +24,70 @@ View.SIZE = SIZE
 View.SPACING = SPACING
 
 local function getRenderCache(button)
-    button.rccConsumableRenderCache = button.rccConsumableRenderCache or {}
+    button.rccConsumableRenderCache = button.rccConsumableRenderCache or {
+        count = {},
+        detail = {},
+    }
 
     return button.rccConsumableRenderCache
 end
 
-local function setTextColor(fontString, bad)
-    local color = bad and BAD_COLOR or NORMAL_COLOR
+local function applyText(fontString, cache, text, bad, shown)
+    if cache.text ~= text then
+        fontString:SetText(text)
+        cache.text = text
+    end
 
-    fontString:SetTextColor(color.r, color.g, color.b)
+    if cache.bad ~= bad then
+        local color = bad and BAD_COLOR or NORMAL_COLOR
+
+        fontString:SetTextColor(color.r, color.g, color.b)
+        cache.bad = bad
+    end
+
+    if cache.shown ~= shown then
+        fontString:SetShown(shown)
+        cache.shown = shown
+    end
+end
+
+local function applyStatusIcon(button, state)
+    local cache = getRenderCache(button)
+    local texture = button.statustexture
+    local desaturated = state.statusTextureDesaturated == true
+    local shown = state.showStatusTexture == true and not button.hideStatusTexture
+
+    if cache.statusIcon ~= state.statusIcon then
+        UI.SetStatusIcon(texture, state.statusIcon)
+        cache.statusIcon = state.statusIcon
+    end
+
+    if cache.statusDesaturated ~= desaturated then
+        texture:SetDesaturated(desaturated)
+        cache.statusDesaturated = desaturated
+    end
+
+    if cache.statusAlpha ~= state.statusTextureAlpha then
+        texture:SetAlpha(state.statusTextureAlpha)
+        cache.statusAlpha = state.statusTextureAlpha
+    end
+
+    if cache.statusShown ~= shown then
+        texture:SetShown(shown)
+        cache.statusShown = shown
+    end
 end
 
 local function setQualityOverlay(button, itemID, atlas, resolved)
     local qualityIcon = button.qualityIcon
-
-    if not qualityIcon then return end
-
     local cache = getRenderCache(button)
 
     if button.hideQualityIcon or not itemID then
         cache.qualityItemID = nil
-        qualityIcon:Hide()
+
+        if qualityIcon:IsShown() then
+            qualityIcon:Hide()
+        end
 
         return
     end
@@ -61,15 +104,24 @@ local function setQualityOverlay(button, itemID, atlas, resolved)
 
     if not atlas then
         cache.qualityItemID = nil
-        qualityIcon:Hide()
+
+        if qualityIcon:IsShown() then
+            qualityIcon:Hide()
+        end
 
         return
     end
 
     cache.qualityItemID = itemID
-    cache.qualityAtlas = atlas
-    qualityIcon:SetAtlas(atlas, false)
-    qualityIcon:Show()
+
+    if cache.qualityAtlas ~= atlas then
+        qualityIcon:SetAtlas(atlas, false)
+        cache.qualityAtlas = atlas
+    end
+
+    if not qualityIcon:IsShown() then
+        qualityIcon:Show()
+    end
 end
 
 local function applyCooldown(button, cooldown)
@@ -106,14 +158,16 @@ local function applyCooldown(button, cooldown)
 end
 
 local function applyIcon(button)
+    local cache = getRenderCache(button)
     local icon = State.GetIcon(
         button.consumableState,
         button.defaultIcon,
         button.hoverStateActive
     )
 
-    if icon then
+    if icon and cache.icon ~= icon then
         button.texture:SetTexture(icon)
+        cache.icon = icon
     end
 end
 
@@ -136,26 +190,30 @@ end
 function View.ApplyVisual(button, state)
     if not button then return end
 
-    state = State.Normalize(state)
+    -- Keep the latest read-only state for hover/tooltips even when every
+    -- displayed value is unchanged. Only native region writes are cached.
     button.consumableState = state
+    local cache = getRenderCache(button)
+    local desaturated = state.desaturated == true
 
-    UI.SetStatusIcon(button.statustexture, state.statusIcon)
-
-    button.statustexture:SetDesaturated(
-        state.statusTextureDesaturated == true
-    )
-    button.statustexture:SetAlpha(state.statusTextureAlpha)
-    button.statustexture:SetShown(
-        state.showStatusTexture == true and not button.hideStatusTexture
-    )
+    applyStatusIcon(button, state)
     applyIcon(button)
-    button.texture:SetDesaturated(state.desaturated == true)
-    button.count:SetText(state.countText or "")
-    button.count:SetShown(not button.hideCountText)
-    setTextColor(button.count, state.countTextIsBad == true)
-    button.detailText:SetText(state.detailText or "")
-    button.detailText:SetShown(not button.hideDurationText)
-    setTextColor(button.detailText, state.detailTextIsBad == true)
+
+    if cache.desaturated ~= desaturated then
+        button.texture:SetDesaturated(desaturated)
+        cache.desaturated = desaturated
+    end
+
+    applyText(
+        button.count, cache.count,
+        state.countText or "", state.countTextIsBad == true,
+        not button.hideCountText
+    )
+    applyText(
+        button.detailText, cache.detail,
+        state.detailText or "", state.detailTextIsBad == true,
+        not button.hideDurationText
+    )
     setQualityOverlay(button, state.qualityItemID, state.qualityAtlas, state.qualityResolved)
     applyCooldown(button, state.cooldown)
     Glow.Set(button, state.glow == true and not InCombatLockdown())
@@ -218,6 +276,10 @@ function View.Clear(button)
     applyCooldown(button)
     Glow.Stop(button)
     Glow.SetHovered(button, false)
+
+    -- Cleared primary buttons and pooled flyout buttons need a full first
+    -- render when reused, including regions reset directly above.
+    button.rccConsumableRenderCache = nil
 end
 
 local function applyIconCrop(texture, width, height)

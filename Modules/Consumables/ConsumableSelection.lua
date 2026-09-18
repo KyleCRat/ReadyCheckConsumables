@@ -38,20 +38,24 @@ function Selection.List(inventory, itemIDs, uses)
     return candidates
 end
 
-function Selection.Map(inventory, itemData, uses)
+local function higherItemIDFirst(a, b)
+    return a.itemID > b.itemID
+end
+
+-- Sort once using the category's priority, or the default item-ID order.
+function Selection.Map(inventory, itemData, options)
+    options = options or {}
     local candidates = {}
 
     for itemID, data in pairs(itemData) do
-        local candidate = Selection.Item(inventory, itemID, data, nil, uses)
+        local candidate = Selection.Item(inventory, itemID, data, nil, options.countUses)
 
         if candidate and candidate.count > 0 then
             candidates[#candidates + 1] = candidate
         end
     end
 
-    table.sort(candidates, function(a, b)
-        return a.itemID > b.itemID
-    end)
+    table.sort(candidates, options.compare or higherItemIDFirst)
 
     return candidates
 end

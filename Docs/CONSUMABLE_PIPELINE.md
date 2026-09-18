@@ -416,7 +416,10 @@ These are some of the fields the renderer understands:
 | `glow`, `suppressGlow` | Reminder request and category-specific glow suppression |
 | `applicable` | Whether this category applies to the current situation |
 
-`ConsumableState.Normalize` fills omitted fields from `State.DEFAULTS`.
+The runtime calls `ConsumableState.Normalize` once on each newly built primary
+state and flyout choice, filling omitted fields from `State.DEFAULTS` before
+sharing the table. Presenters return fresh tables; renderers and displays read
+the finalized states without changing them or making another normalized copy.
 Those defaults include a not-ready status mark and a desaturated icon. An
 optional-use category needs to express its different appearance: the
 [Inky Black Potion presenter](../Modules/ConsumableUI/Presenters/InkyBlackPotion.lua),
@@ -509,6 +512,10 @@ does the actual handoff:
 | Applicability/visibility | The owning frame decides which buttons occupy its layout |
 
 This is why changing only a duration label does not rebind the item action.
+The button renderer also remembers the values it last drew: changing `25m` to
+`24m` updates that text without resetting the unchanged icon or colors. Hover
+icons and display options use the same checks. Releasing a button clears its
+render cache so it is fully redrawn when reused.
 
 ### The same result can have different display options
 
@@ -524,10 +531,12 @@ Show Duration checkbox. Those options belong to the display:
   reminder glows. The temporary frame can still show Flask's reminder.
 
 In combat, the Action Bar keeps the action prepared before combat. The surface
-merges new public status/duration information with that prepared state, so an
-updated selection cannot make the icon claim to use an item the secure button
-has not been rebound to. Flyouts and glows remain closed/off; protected action
-and layout changes are applied after combat. The temporary frame hides in combat.
+creates a separate merged state only when the button needs a visual update.
+It combines new public status/duration information with the prepared action
+without editing either source table, so an updated selection cannot make the
+icon claim to use an item the secure button has not been rebound to. Flyouts
+and glows remain closed/off; protected action and layout changes are applied
+after combat. The temporary frame hides in combat.
 
 ## Follow one flask use through the running addon
 

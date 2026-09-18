@@ -96,8 +96,9 @@ function WeaponEnchant.Select(inputs, _, slotID)
 
     result.active = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID] or nil
     result.activeIcon = enchantIcon(inputs, result.active)
-    result.candidates = S.Map(inputs.inventory, RCC.db.weaponEnchantItemIDs)
-    table.sort(result.candidates, betterItem)
+    result.candidates = S.Map(inputs.inventory, RCC.db.weaponEnchantItemIDs, {
+        compare = betterItem,
+    })
 
     for enchantID, data in pairs(RCC.db.weaponEnchants) do
         local rule = data.spellSlots and data.spellSlots[slotID]

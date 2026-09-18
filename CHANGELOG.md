@@ -49,6 +49,12 @@
   usage. Hover glows and temporary Consumables Frame reminders are unchanged.
 - Separated flyout configuration from choice updates, avoiding duplicate
   rendering and unchanged layout work.
+- Reduced repeated personal-button work by normalizing shared states once,
+  creating combat-only visual copies only when needed, and skipping unchanged
+  icon, text, color, opacity, and visibility writes. Hover changes and display
+  options still update immediately, and released buttons reset before reuse.
+- Removed duplicate weapon-enchant and augment candidate sorting while keeping
+  their existing priorities, flyout ordering, and Healthstone charge selection.
 - Action Bar flyouts now close when combat starts and remain disabled until
   combat ends. Choose preferred items before combat; primary buttons remain
   usable with their preselected items and spells during combat.

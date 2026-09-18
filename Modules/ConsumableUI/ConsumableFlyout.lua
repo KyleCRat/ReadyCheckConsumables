@@ -5,7 +5,6 @@ RCC.ConsumableFlyout = RCC.ConsumableFlyout or {}
 local Flyout = RCC.ConsumableFlyout
 local Binder = RCC.ConsumableActionBinder
 local Catalog = RCC.ConsumableCatalog
-local State = RCC.ConsumableState
 local Tooltips = RCC.ConsumableTooltips
 local View = RCC.ConsumableButtonView
 
@@ -409,8 +408,8 @@ function Flyout.ApplyVisualOptions(owner, options)
     end
 end
 
--- Update choices only out of combat. Configuration is applied separately;
--- reflow only when the number of choices changes.
+-- Choices arrive normalized and read-only from the runtime. Update them only
+-- out of combat; configuration is separate and only count changes reflow.
 function Flyout.SetChoices(owner, choices)
     if not owner or owner.flyoutOwner or InCombatLockdown() then
         return false
@@ -425,6 +424,7 @@ function Flyout.SetChoices(owner, choices)
         local button = owner.flyout.buttons[i]
 
         Binder.Disable(button)
+        View.Clear(button)
         button:Hide()
     end
 
@@ -438,7 +438,7 @@ function Flyout.SetChoices(owner, choices)
 
     for i = 1, count do
         local button = flyout.buttons[i] or createFlyoutButton(owner, i)
-        local choice = State.Normalize(choices[i])
+        local choice = choices[i]
 
         View.ApplyVisual(button, choice)
         Binder.Bind(button, choice.action, owner.surfaceCapabilities)

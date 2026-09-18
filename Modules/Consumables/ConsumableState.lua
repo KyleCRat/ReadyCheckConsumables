@@ -20,6 +20,21 @@ local AURA_SCAN_UNAVAILABLE_TEXT =
     "RCC can't confirm whether this buff is missing because some aura "
     .. "information is secret or unavailable"
 
+local COMBAT_PREPARED_FIELDS = {
+    "action",
+    "flyoutChoices",
+    "icon",
+    "hoverState",
+    "tooltipItemID",
+    "tooltipSpellID",
+    "qualityItemID",
+    "qualityAtlas",
+    "qualityResolved",
+    "clickHintItemID",
+    "clickHintSpellID",
+    "countText",
+}
+
 State.DEFAULTS = {
     applicable = true,
     statusIcon = State.NOT_READY_ICON,
@@ -48,20 +63,16 @@ function State.Create(fields)
     return state
 end
 
+-- The runtime fills defaults on newly created presenter states before sharing
+-- them. Published primary states, choices, and nested fields are read-only.
 function State.Normalize(state)
-    local normalized = {}
-
     for key, value in pairs(State.DEFAULTS) do
-        normalized[key] = value
-    end
-
-    if state then
-        for key, value in pairs(state) do
-            normalized[key] = value
+        if state[key] == nil then
+            state[key] = value
         end
     end
 
-    return normalized
+    return state
 end
 
 function State.SetUnavailable(state, text)
@@ -300,24 +311,12 @@ function State.MergeCombatVisual(prepared, live)
         return live
     end
 
-    local merged = State.Normalize(live)
-    local frozenFields = {
-        "action",
-        "flyoutChoices",
-        "icon",
-        "hoverState",
-        "tooltipItemID",
-        "tooltipSpellID",
-        "qualityItemID",
-        "qualityAtlas",
-        "qualityResolved",
-        "clickHintItemID",
-        "clickHintSpellID",
-        "countText",
-    }
+    -- Only replace top-level fields on this copy. Both source states and their
+    -- nested records remain shared and read-only.
+    local merged = State.Create(live)
 
-    for i = 1, #frozenFields do
-        local key = frozenFields[i]
+    for i = 1, #COMBAT_PREPARED_FIELDS do
+        local key = COMBAT_PREPARED_FIELDS[i]
 
         merged[key] = prepared[key]
     end
