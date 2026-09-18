@@ -52,8 +52,8 @@ function Augment.Present(model)
     end
 
     buttonState.glow = augmentItemCount ~= nil
-                       and augmentItemCount > 0
-                       and not isAugment
+        and augmentItemCount > 0
+        and not isAugment
 
     ButtonState.ApplyAuraScanAvailability(
         buttonState,
@@ -66,6 +66,7 @@ end
 function Augment.Choices(selection)
     local augmentCandidate, augmentCandidates, outOfCachedAugment = RCC.ConsumableSelection.Unpack(selection)
     local augmentItemID = augmentCandidate and augmentCandidate.itemID
+
     return ButtonState.CreateItemFlyoutChoices(
         augmentCandidates,
         augmentItemID,

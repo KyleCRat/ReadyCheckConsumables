@@ -16,7 +16,9 @@ local SOURCE_REQUIREMENTS = {
 
 local function addSource(sources, source)
     if sources[source] then return end
+
     sources[source] = true
+
     for _, required in ipairs(SOURCE_REQUIREMENTS[source] or {}) do
         addSource(sources, required)
     end
@@ -37,21 +39,26 @@ function Demand.Build(categories)
     for key in pairs(categories) do
         local definition = Catalog.GetDefinition(key)
         local dependencies = RCC.Consumables[definition.domain].Dependencies
+
         for _, phase in ipairs(PHASES) do
             for _, path in ipairs(dependencies[phase] or {}) do
                 local source = path:match("^[^.]+")
+
                 if source == "slotPreference" then
                     source = "preferences"
                 elseif source == "slotWeapon" then
                     source = "weapons"
                     demand.weaponSlots[definition.weaponSlot] = true
                 end
+
                 addSource(demand.sources, source)
             end
         end
+
         if dependencies.expiration then
             addSource(demand.sources, dependencies.expiration)
         end
+
         for itemID in pairs(Inputs.GetItemIDs(key)) do
             demand.itemIDs[itemID] = true
         end

@@ -16,7 +16,8 @@ Flask.Inventory = { list = RCC.db.flaskItemIDs }
 
 Flask.Dependencies = {
     selection = { "inventory", "preferences.flask" },
-    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
+    observation = { "playerAuras" },
+    evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
@@ -104,6 +105,7 @@ local function isBetterFlaskCandidate(candidate, currentSelection, context)
     local currentScore = getCandidateScore(currentSelection, context)
 
     if not currentScore then return candidateScore ~= nil end
+
     if not candidateScore then return false end
 
     if candidateScore.priority ~= currentScore.priority then
@@ -128,9 +130,11 @@ function Flask.Select(inputs, preserveUnavailable)
     local context = createSelectionContext(preferredID)
     local candidates = collectFlaskCandidates(inputs.inventory)
     local selected = selectPreferredFlaskCandidate(candidates, context)
+
     if preserveUnavailable and context.cachedData then
         selected = addFlaskData(S.CachedList(inputs.inventory, RCC.db.flaskItemIDs, preferredID)) or selected
     end
+
     return S.WithItemAction(S.Result(selected, candidates, preferredID), { preferenceKey = FLASK })
 end
 

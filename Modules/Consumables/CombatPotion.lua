@@ -119,12 +119,12 @@ local function getCandidateScore(candidate, context)
     }
 end
 
-local function isBetterPotionCandidate(candidate, currentSelection,
-                                       context)
+local function isBetterPotionCandidate(candidate, currentSelection, context)
     local candidateScore = getCandidateScore(candidate, context)
     local currentScore = getCandidateScore(currentSelection, context)
 
     if not currentScore then return candidateScore ~= nil end
+
     if not candidateScore then return false end
 
     if candidateScore.priority ~= currentScore.priority then
@@ -155,11 +155,14 @@ function CombatPotion.Select(inputs, preserveUnavailable)
     local context = createSelectionContext(preferredID)
     local candidates = collectPotionCandidates(inputs.inventory)
     local selected = selectPreferredPotionCandidate(candidates, context)
+
     if preserveUnavailable and context.cachedData then
         selected = addPotionData(S.CachedList(inputs.inventory, RCC.db.combatPotionItemIDs, preferredID)) or selected
     end
+
     return S.WithItemAction(S.Result(selected, candidates, preferredID), {
-        preferenceKey = CacheKey.COMBAT_POTION, selectionOnly = true,
+        preferenceKey = CacheKey.COMBAT_POTION,
+        selectionOnly = true,
     })
 end
 

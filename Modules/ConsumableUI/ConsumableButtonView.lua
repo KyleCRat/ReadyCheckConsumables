@@ -55,8 +55,10 @@ local function setQualityOverlay(button, itemID, atlas, resolved)
 
     if not atlas and not resolved then
         local info = GetItemReagentQualityInfo(itemID)
+
         atlas = info and info.iconSmall
     end
+
     if not atlas then
         cache.qualityItemID = nil
         qualityIcon:Hide()
@@ -208,7 +210,11 @@ function View.Clear(button)
     button.detailText:SetText("")
     button.statustexture:Hide()
     button.qualityIcon:Hide()
-    if button.unavailableOverlay then button.unavailableOverlay:Hide() end
+
+    if button.unavailableOverlay then
+        button.unavailableOverlay:Hide()
+    end
+
     applyCooldown(button)
     Glow.Stop(button)
     Glow.SetHovered(button, false)

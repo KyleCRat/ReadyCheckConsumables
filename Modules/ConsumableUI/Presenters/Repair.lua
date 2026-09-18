@@ -60,6 +60,7 @@ function Repair.Present(model)
     -- Keep per-item visuals available for whichever action is prepared in combat.
     buttonState.itemVisuals = {}
     buttonState.missingItemVisual = { desaturated = true, unavailable = { text = OUT_OF_ITEMS } }
+
     for _, item in ipairs(candidates) do
         buttonState.itemVisuals[item.itemID] = {
             cooldown = item.cooldown,
@@ -77,10 +78,12 @@ function Repair.Present(model)
     else
         ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
     end
+
     return buttonState
 end
 
 function Repair.Choices(selection)
     local candidate = selection.candidate or selection.fallback
+
     return createFlyoutChoices(selection.candidates, candidate.itemID)
 end

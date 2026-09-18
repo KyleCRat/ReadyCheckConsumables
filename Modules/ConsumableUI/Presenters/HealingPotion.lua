@@ -34,12 +34,14 @@ function HealingPotion.Present(model)
             buttonState.icon = inventoryItemCandidate.icon
         end
     end
+
     return buttonState
 end
 
 function HealingPotion.Choices(selection)
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion = RCC.ConsumableSelection.Unpack(selection)
     local inventoryItem = inventoryItemCandidate and inventoryItemCandidate.itemID
+
     return ButtonState.CreateItemFlyoutChoices(
         inventoryItemCandidates,
         inventoryItem,

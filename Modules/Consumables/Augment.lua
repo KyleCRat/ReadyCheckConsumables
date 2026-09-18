@@ -13,7 +13,8 @@ Augment.Inventory = { map = RCC.db.augmentItemIDs }
 
 Augment.Dependencies = {
     selection = { "inventory", "preferences.augment", "preferences.preferUnlimitedAugment" },
-    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
+    observation = { "playerAuras" },
+    evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
@@ -57,8 +58,10 @@ end
 function Augment.Select(inputs, preserveUnavailable)
     local candidates = S.Map(inputs.inventory, RCC.db.augmentItemIDs)
     sortAugmentCandidates(candidates, inputs.preferences.preferUnlimitedAugment)
+
     local preferredID = inputs.preferences[CacheKey.AUGMENT]
     local cached = preserveUnavailable and S.CachedMap(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
+
     return S.WithItemAction(S.Result(S.Preferred(candidates, preferredID, cached), candidates, preferredID), {
         preferenceKey = CacheKey.AUGMENT,
     })

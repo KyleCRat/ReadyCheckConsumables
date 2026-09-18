@@ -90,6 +90,7 @@ end
 
 function Vantus.Choices(selection)
     local candidate = selection.candidate or selection.fallback
+
     return ButtonState.CreateItemFlyoutChoices(selection.candidates, candidate and candidate.itemID, {
         preferenceKey = CacheKey.VANTUS,
         includeSingleChoice = selection.unavailable,

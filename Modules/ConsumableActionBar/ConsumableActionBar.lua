@@ -383,6 +383,7 @@ StateController.RegisterConsumer("consumablesActionBar", {
         if InCombatLockdown() then return frame.surface.categories end
 
         local categories = {}
+
         if not ActionBar.IsEnabled() then return categories end
 
         for _, definition in ipairs(Catalog.GetDefinitions()) do
@@ -390,6 +391,7 @@ StateController.RegisterConsumer("consumablesActionBar", {
                 categories[definition.key] = true
             end
         end
+
         return categories
     end,
     ApplySnapshot = function(_, snapshot, categories)

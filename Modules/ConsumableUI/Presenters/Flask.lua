@@ -60,6 +60,7 @@ end
 function Flask.Choices(selection)
     local flaskCandidate, flaskCandidates, outOfCachedFlask = RCC.ConsumableSelection.Unpack(selection)
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
+
     return ButtonState.CreateItemFlyoutChoices(
         flaskCandidates,
         flaskItemID,

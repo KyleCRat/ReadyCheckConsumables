@@ -75,6 +75,7 @@ end
 function Food.Choices(selection)
     local foodCandidate, foodCandidates, outOfCachedFood = RCC.ConsumableSelection.Unpack(selection)
     local foodItemID = foodCandidate and foodCandidate.itemID
+
     return ButtonState.CreateItemFlyoutChoices(
         foodCandidates,
         foodItemID,

@@ -8,8 +8,11 @@ RCC.ConsumableSelection = Selection
 -- ordering, preference and fallback rules stay with the individual category.
 function Selection.Item(inventory, itemID, data, index, uses)
     local item = itemID and inventory[itemID]
+
     if not item then return end
+
     data = type(data) == "table" and data or nil
+
     return {
         itemID = itemID,
         count = uses and item.uses or item.count,
@@ -23,24 +26,33 @@ end
 
 function Selection.List(inventory, itemIDs, uses)
     local candidates = {}
+
     for index, itemID in ipairs(itemIDs or {}) do
         local candidate = Selection.Item(inventory, itemID, nil, index, uses)
+
         if candidate and candidate.count > 0 then
             candidates[#candidates + 1] = candidate
         end
     end
+
     return candidates
 end
 
 function Selection.Map(inventory, itemData, uses)
     local candidates = {}
+
     for itemID, data in pairs(itemData) do
         local candidate = Selection.Item(inventory, itemID, data, nil, uses)
+
         if candidate and candidate.count > 0 then
             candidates[#candidates + 1] = candidate
         end
     end
-    table.sort(candidates, function(a, b) return a.itemID > b.itemID end)
+
+    table.sort(candidates, function(a, b)
+        return a.itemID > b.itemID
+    end)
+
     return candidates
 end
 
@@ -62,6 +74,7 @@ function Selection.Preferred(candidates, preferredID, unavailableCandidate)
     for _, candidate in ipairs(candidates) do
         if candidate.itemID == preferredID then return candidate end
     end
+
     return unavailableCandidate or candidates[1]
 end
 
@@ -75,9 +88,11 @@ end
 
 function Selection.WithItemAction(result, options)
     local candidate = result.candidate
+
     if candidate and candidate.count > 0 then
         result.action = RCC.ConsumableState.CreateItemAction(candidate.itemID, options)
     end
+
     return result
 end
 
@@ -87,8 +102,12 @@ end
 
 function Selection.Best(candidates, isBetter)
     local selected
+
     for _, candidate in ipairs(candidates) do
-        if not selected or isBetter(candidate, selected) then selected = candidate end
+        if not selected or isBetter(candidate, selected) then
+            selected = candidate
+        end
     end
+
     return selected
 end

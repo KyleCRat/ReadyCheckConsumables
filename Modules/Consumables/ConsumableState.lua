@@ -328,6 +328,7 @@ function State.MergeCombatVisual(prepared, live)
     if live.itemVisuals then
         local itemID = State.GetClickHintItemID(prepared)
         local itemVisual = (itemID and live.itemVisuals[itemID]) or live.missingItemVisual
+
         if itemVisual then
             merged.cooldown = itemVisual.cooldown
             merged.desaturated = itemVisual.desaturated

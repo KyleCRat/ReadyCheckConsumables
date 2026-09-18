@@ -310,6 +310,7 @@ end
 local function canSaveMacro(name, body)
     if #body <= MAX_MACRO_LENGTH then
         macroLengthWarnings[name] = nil
+
         return true
     end
 

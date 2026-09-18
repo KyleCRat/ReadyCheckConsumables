@@ -11,6 +11,7 @@ function ConsumableStasis.Select(inputs)
     local candidates = S.List(inputs.inventory, RCC.db.consumableStasisItemIDs)
     local result = S.Result(candidates[1], candidates)
     result.fallback = S.Item(inputs.inventory, RCC.db.consumableStasisItemIDs[1])
+
     return S.WithItemAction(result)
 end
 

@@ -428,6 +428,7 @@ local function onHide(self)
         self.drag:Hide()
         self.close:Hide()
     end
+
     StateController.RefreshDemand()
 end
 
@@ -453,7 +454,9 @@ function Controller.Attach(consumablesFrame)
     StateController.RegisterConsumer("temporaryConsumablesFrame", {
         GetCategories = function()
             local categories = {}
-            if InCombatLockdown() or not frame:IsShown()
+
+            if InCombatLockdown()
+                or not frame:IsShown()
                 or not RCC.GetSetting("consumables_enabled")
             then
                 return categories
@@ -464,6 +467,7 @@ function Controller.Attach(consumablesFrame)
                     categories[definition.key] = true
                 end
             end
+
             return categories
         end,
         ApplySnapshot = function(_, snapshot, categories)

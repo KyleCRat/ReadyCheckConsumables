@@ -138,7 +138,10 @@ function Surface.ApplyVisualOptions(surface, options)
         Flyout.ApplyVisualOptions(button, surface.visualOptions)
     end
 
-    if surface.latestSnapshot then Surface.ApplySnapshot(surface, surface.latestSnapshot) end
+    if surface.latestSnapshot then
+        Surface.ApplySnapshot(surface, surface.latestSnapshot)
+    end
+
     return true
 end
 
@@ -152,12 +155,14 @@ function Surface.ApplySnapshot(surface, snapshot, categories)
 
     local inCombat = InCombatLockdown()
     local policyChanged = surface.inCombat ~= inCombat or surface.visualDirty
+
     -- Secure frames remain allocated, but inactive categories release their
     -- prepared actions/flyouts and visual feedback once out of combat.
     if not inCombat then
         for key in pairs(surface.preparedStates) do
             if not surface.categories[key] then
                 local button = surface.buttons[key]
+
                 Binder.Disable(button)
                 Flyout.SetChoices(button, nil)
                 View.Clear(button)
@@ -191,9 +196,11 @@ function Surface.ApplySnapshot(surface, snapshot, categories)
                 Binder.Bind(button, state.action, surface.capabilities)
                 Flyout.SetChoices(button, state.flyoutChoices)
             end
+
             surface.preparedStates[key] = state
             applied.interaction = revisions.interaction
         end
+
         applied.visual = revisions.visual
         surface.appliedRevisions[key] = applied
     end
@@ -207,7 +214,9 @@ end
 
 function Surface.ReconcileSecure(surface)
     if not surface or InCombatLockdown() then return false end
+
     RCC.ConsumableStateController.PrepareOutOfCombat()
+
     if not surface.latestSnapshot then return false end
 
     surface.secureDirty = false
@@ -239,13 +248,22 @@ function Surface.ApplyTemporaryLayout(surface, context)
 
     for i = 1, #definitions do
         local definition = definitions[i]
+
         shown[definition.key] = surface.categories[definition.key] == true and Visibility.IsVisible(
-            definition, context, surface.buttons[definition.key].consumableState
+            definition,
+            context,
+            surface.buttons[definition.key].consumableState
         )
-        if shown[definition.key] then signature[#signature + 1] = definition.key end
+
+        if shown[definition.key] then
+            signature[#signature + 1] = definition.key
+        end
     end
+
     signature = table.concat(signature, "|")
+
     if signature == surface.temporaryLayoutSignature then return true end
+
     surface.temporaryLayoutSignature = signature
 
     for i = 1, #definitions do

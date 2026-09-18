@@ -32,12 +32,15 @@ function HealingPotion.Select(inputs, preserveUnavailable)
 
     local preferredID = inputs.preferences[KEY]
     local selected = S.Preferred(candidates, preferredID)
+
     -- UI preserves an unavailable preference; macros use the available fallback.
     if preserveUnavailable then
         selected = S.CachedList(inputs.inventory, RCC.db.healingPotionItemIDs, preferredID) or selected
     end
+
     return S.WithItemAction(S.Result(selected, candidates, preferredID), {
-        preferenceKey = KEY, selectionOnly = true,
+        preferenceKey = KEY,
+        selectionOnly = true,
     })
 end
 

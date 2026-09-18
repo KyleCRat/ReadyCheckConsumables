@@ -8,7 +8,8 @@ Vantus.Inventory = { lists = RCC.db.vantusItemsByRaid }
 
 Vantus.Dependencies = {
     selection = { "inventory", "preferences.vantus", "instance.instanceID" },
-    observation = { "playerAuras" }, evaluation = { "instance.warningSeconds" },
+    observation = { "playerAuras" },
+    evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
 }
 
@@ -20,6 +21,7 @@ function Vantus.Select(inputs, preserveUnavailable, runeIDs)
     local result = S.Result(S.Preferred(candidates, preferredID, cached), candidates, preferredID)
     result.applicable = runeIDs ~= nil
     result.fallback = runeIDs and S.Item(inputs.inventory, runeIDs[1])
+
     return S.WithItemAction(result, { preferenceKey = KEY })
 end
 
@@ -38,8 +40,13 @@ end
 function Vantus.Evaluate(selection, observation, inputs, now)
     local model = RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
     model.allowFlyout = selection.applicable and model.effect == nil
-    if not model.allowFlyout then model.action = nil end
+
+    if not model.allowFlyout then
+        model.action = nil
+    end
+
     -- Its label is the boss name, not a countdown or a duration warning.
     model.nextUpdateAt = model.recheckAt
+
     return model
 end

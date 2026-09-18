@@ -6,8 +6,10 @@ local S = RCC.ConsumableSelection
 InkyBlackPotion.Inventory = { itemID = RCC.db.inkyBlackPotionItemID }
 
 InkyBlackPotion.Dependencies = {
-    selection = { "inventory" }, observation = { "playerAuras" },
-    evaluation = { "instance.warningSeconds" }, expiration = "playerAuras",
+    selection = { "inventory" },
+    observation = { "playerAuras" },
+    evaluation = { "instance.warningSeconds" },
+    expiration = "playerAuras",
 }
 
 function InkyBlackPotion.Select(inputs)
