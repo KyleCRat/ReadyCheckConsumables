@@ -2,9 +2,10 @@ local _, RCC = ...
 
 RCC.ProfileMigration = {}
 
-local STORAGE_VERSION = 1
-local PREFERENCE_MIGRATION_VERSION = 2
-local PROFILE_PAYLOAD_VERSION = 2
+-- ---------------------------------------------------------------------------
+-- Shared conversion helpers
+-- ---------------------------------------------------------------------------
+-- Both profile and character migrations use the same preference conversion.
 
 local function migrateChoices(payload)
     if payload.consumableItemCache ~= nil and type(payload.consumableItemCache) ~= "table" then
@@ -36,14 +37,12 @@ local function migrateChoices(payload)
     payload.consumableItemCache = nil
 end
 
--- The library stages every payload, including inactive profiles. This version
--- is independent of RCC's original account/character ownership migration.
-function RCC.ProfileMigration.CreateProfileMigration()
-    local migration = LibStub("LibSimpleDBProfiles-1.0"):CreateMigration(PROFILE_PAYLOAD_VERSION)
-    migration:Add(1, migrateChoices)
-
-    return migration
-end
+-- ---------------------------------------------------------------------------
+-- Initial profile migration: legacy account settings into Global
+-- ---------------------------------------------------------------------------
+-- ReadyCheckConsumablesDB.profileStorageVersion records this initial adoption.
+-- Later changes to profile contents use the profile-data migrations below.
+local INITIAL_PROFILE_MIGRATION_VERSION = 1
 
 local function prepareLegacyPreferences(storage)
     if storage.legacyConsumablePreferences ~= nil then
@@ -79,7 +78,7 @@ function RCC.ProfileMigration.Prepare(saved)
     local storage
 
     if saved and saved.profileStorageVersion ~= nil then
-        if saved.profileStorageVersion ~= STORAGE_VERSION
+        if saved.profileStorageVersion ~= INITIAL_PROFILE_MIGRATION_VERSION
             or type(saved.profiles) ~= "table"
         then
             error("RCC: unsupported profile storage; existing data was not replaced")
@@ -90,7 +89,7 @@ function RCC.ProfileMigration.Prepare(saved)
         -- Adopt the entire legacy payload, including false values, sparse
         -- visibility overrides, preferences, and movement-provider positions.
         storage = {
-            profileStorageVersion = STORAGE_VERSION,
+            profileStorageVersion = INITIAL_PROFILE_MIGRATION_VERSION,
             profiles = {
                 global = saved or {},
             },
@@ -101,6 +100,28 @@ function RCC.ProfileMigration.Prepare(saved)
 
     return storage
 end
+
+-- ---------------------------------------------------------------------------
+-- Profile-data migrations: settings stored in every profile
+-- ---------------------------------------------------------------------------
+-- LibSimpleDBProfiles tracks completed versions and stages every stored profile,
+-- including inactive profiles. Add(sourceVersion, callback) advances one version;
+-- keep earlier steps and raise this target when adding the next step.
+local TARGET_PROFILE_DATA_VERSION = 2
+
+function RCC.ProfileMigration.CreateProfileMigration()
+    local migration = LibStub("LibSimpleDBProfiles-1.0"):CreateMigration(TARGET_PROFILE_DATA_VERSION)
+    migration:Add(1, migrateChoices) -- 1 -> 2: normalize saved preferences.
+
+    return migration
+end
+
+-- ---------------------------------------------------------------------------
+-- Character-data migrations: character-owned preferences and history
+-- ---------------------------------------------------------------------------
+-- ReadyCheckConsumablesCharacterDB.preferenceMigrationVersion records completed
+-- steps for each character. This target advances separately from profile data.
+local TARGET_CHARACTER_DATA_VERSION = 2
 
 local function seedCharacterPreferences(storage, legacyPreferences)
     if storage.consumableItemCache == nil and storage.consumablePreferences == nil then
@@ -163,18 +184,18 @@ function RCC.ProfileMigration.PrepareCharacter(saved, legacyPreferences)
     if version == nil then
         version = 0
     elseif type(version) ~= "number" or version % 1 ~= 0
-        or version < 1 or version > PREFERENCE_MIGRATION_VERSION
+        or version < 1 or version > TARGET_CHARACTER_DATA_VERSION
     then
         error("RCC: unsupported character preference storage; existing data was not replaced")
     end
 
-    if version == PREFERENCE_MIGRATION_VERSION then return storage end
+    if version == TARGET_CHARACTER_DATA_VERSION then return storage end
 
     -- Publish only the completed copy. A failed step leaves the original
     -- choices, history, storage toggle, and migration marker untouched.
     storage = CopyTable(storage)
 
-    while version < PREFERENCE_MIGRATION_VERSION do
+    while version < TARGET_CHARACTER_DATA_VERSION do
         CHARACTER_MIGRATIONS[version](storage, legacyPreferences)
         version = version + 1
         storage.preferenceMigrationVersion = version
