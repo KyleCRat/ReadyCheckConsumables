@@ -240,9 +240,9 @@ local function createGeneralSettings(frame, layout)
     addSettingCheckbox(frame, displayFlow, {
         key = "consumables_preferUnlimitedAugment",
         label = "Prefer Unlimited Augment Runes",
-        tooltip = "While you carry an unlimited rune, use it instead of a preferred "
-            .. "consumable rune. Macros will not spend consumable runes as backups; "
-            .. "left-click one in the flyout to use it manually.",
+        tooltip = "When choosing automatically, prefer a carried unlimited rune "
+            .. "over consumable runes, even from a newer expansion. Your explicit "
+            .. "item preference takes priority. Cooldowns do not change the selected rune.",
         onChanged = refreshAugmentRuneSelection,
     })
 

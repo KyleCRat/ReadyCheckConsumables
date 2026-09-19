@@ -338,8 +338,9 @@ a secure button yet. `Selection.Resolve` creates it through
 
 The same result supplies macros: `Selection.GetAvailableCandidates` returns
 overrides, the preference if carried, and eligible fallbacks, skipping missing
-items and duplicates. A macro uses the first two. There is no macro-specific
-preference flag or second selection pass, and selection never writes a preference.
+items and duplicates. Most item macros use the first two; Augment uses only
+the first. There is no macro-specific preference rule or second selection pass,
+and selection never writes a preference.
 
 Categories still decide their own priorities and eligibility. Combat potions
 allow fallbacks within the preferred damage or mana type; utility potions stay
@@ -349,15 +350,14 @@ override. Repair orders ready reusable devices before consumables. Categories
 that need an empty-inventory icon use `defaultCandidate` for that display data;
 it is not a usable fallback.
 
-Augment adds a stricter override when Prefer Unlimited is enabled and an
-unlimited rune is carried. It puts carried unlimited runes in `overrides` and
-sets `exclusiveOverrides = true`. That makes `GetAvailableCandidates` stop
-after the overrides, so a macro cannot spend a consumable rune as its backup.
-A saved unlimited choice stays first among unlimited runes. The full
-`candidates` list still supplies consumable runes for manual flyout clicks, and
-the saved `preferred` item is unchanged. With no unlimited rune carried, or
-with the setting off, the normal preference/fallback rules apply. Cooldown does
-not remove this override: it must not cause automatic consumable use.
+Augment's Prefer Unlimited setting changes only the candidate sort: carried
+unlimited runes come before consumable runes, even from newer expansions.
+The selector supplies `preferred` and ordered `fallbacks`, with no override.
+An explicit choice still wins; an out-of-stock preference remains on the
+button, while macros can select the next available choice when rebuilt.
+Clearing the preference restores automatic selection. Cooldowns are attached
+for display only and never reorder or exclude a rune. Augment macros use one
+item with no backup, so an unlimited rune on cooldown cannot spend a consumable.
 
 ### `Observe(inputs)`: what flask buff did the scan find?
 
@@ -733,7 +733,7 @@ Choose the phases that match the button's behavior:
   earliest item timer finishes, so categories need no separate timer.
 
 An item cooldown need not change selection. Repair uses it to prefer a ready
-device, but Augment keeps its unlimited-rune override even on cooldown, and
+device, but Augment keeps its selected rune even on cooldown, and
 potions keep their preference/family/venue selection rules. The shared
 `itemCooldowns` map lets the Action Bar show the prepared item's cooldown in
 combat even when a different item becomes the desired selection or the
@@ -811,11 +811,13 @@ local backup = choices[2]
 ```
 
 This reads the selector's ordering without modifying its inventory inputs or
-selecting again. For every item category, the macro takes the first two distinct
-available choices: automatic overrides first, then the preferred item, then
-eligible fallbacks, unless `exclusiveOverrides` restricts it to overrides only.
-With no items available there is no item action. A missing
-preferred rank can remain on the button while the macro uses another rank;
+selecting again. Most item macros take the first two distinct available choices:
+automatic overrides first, then the preferred item, then eligible fallbacks.
+Augment calls `selectMacroAction("augment", { includeBackup = false })` to emit
+only the primary item-use line, regardless of which rune or setting is selected.
+A cooling-down unlimited rune stays selected; there is no second item to try.
+With no items available there is no item action. A missing preferred rank can
+remain on the button while the macro selects another rank when rebuilt;
 neither changes the saved choice. Spell actions remain a single cast with no
 item backup.
 

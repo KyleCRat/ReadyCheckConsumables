@@ -67,7 +67,9 @@ local function getItemIcon(itemID)
     return itemID and GetItemIcon(itemID)
 end
 
-local function selectMacroAction(category)
+local function selectMacroAction(category, options)
+    options = options or {}
+
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
     local domain = Consumables[definition.domain]
     local inputs = Inputs.ReadSelection(category)
@@ -90,11 +92,11 @@ local function selectMacroAction(category)
     }
 
     -- The selector already ordered overrides, the available preference, and
-    -- compatible fallbacks. Macros use the first two without editing inputs or
-    -- selecting again under a different preference policy.
+    -- compatible fallbacks. A backup, when allowed, uses that same ordering
+    -- without editing inputs or selecting under a different preference policy.
     local fallback = candidates[2]
 
-    if fallback then
+    if fallback and options.includeBackup ~= false then
         action.itemIDs[#action.itemIDs + 1] = fallback.itemID
     end
 
@@ -110,7 +112,9 @@ local function flaskAction()
 end
 
 local function augmentAction()
-    return selectMacroAction("augment")
+    -- Augment macros attempt one rune only. A cooling-down unlimited rune must
+    -- fail normally, never fall through to a consumable or another rune.
+    return selectMacroAction("augment", { includeBackup = false })
 end
 
 local function vantusAction()
@@ -185,7 +189,7 @@ local MACRO_DEFINITIONS = {
         key = "augment",
         label = "Augment Rune",
         macroName = "RCC Augment",
-        description = "Uses the preferred augment rune when available, otherwise the best available augment rune.",
+        description = "Uses the preferred augment rune when available, otherwise selects one automatically. Includes no backup and never switches runes because of a cooldown.",
         getAction = augmentAction,
         aliases = { "aug" },
         defaultIcon = function() return RCC.db.augmentIconID end,

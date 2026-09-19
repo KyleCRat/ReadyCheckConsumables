@@ -109,10 +109,9 @@ end
 --
 -- Buttons show an override, otherwise the preference, otherwise the first
 -- fallback. An unavailable preference must not silently bind another item.
--- Macros skip unavailable choices and take their primary/backup from the same
--- ordering. A spell override replaces item use, not the saved item preference.
--- An exclusiveOverrides result limits automatic item use to its override list;
--- the saved preference and full manual flyout candidates remain intact.
+-- Macros skip unavailable choices and use the same ordering for their primary
+-- and any permitted backup. A spell override replaces item use, not the saved
+-- item preference.
 function Selection.Resolve(selection, actionOptions)
     if selection.overrideAction then
         selection.action = selection.overrideAction
@@ -149,8 +148,6 @@ function Selection.GetAvailableCandidates(selection)
     for _, candidate in ipairs(selection.overrides or {}) do
         add(candidate)
     end
-
-    if selection.exclusiveOverrides then return candidates end
 
     add(selection.preferred)
 

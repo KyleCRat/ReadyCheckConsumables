@@ -106,9 +106,10 @@ Create macros for food, flasks, augment runes, vantus runes, potions,
 healthstones, raid buffs, and weapon enchants. RCC keeps them updated as your
 bags, equipment, known spells, zone, and preferred items change.
 
-Item macros include one eligible backup from your bags, so the macro can still
-work if the primary runs out during combat. Inside the Brawler's Guild, its
-potion takes priority when carried, with your normal healing potion as backup.
+Item macros, except Augment Rune, include one eligible backup from your bags,
+so the macro can still work if the primary runs out during combat. Augment Rune
+macros use one item only. Inside the Brawler's Guild, its potion takes priority
+when carried, with your normal healing potion as backup.
 
 To create one:
 
@@ -143,18 +144,20 @@ Preferences are shared by the personal displays and managed macros. Item counts
 use your bags, not your bank.
 
 Your preference keeps the exact item and rank you chose. If it runs out, the
-button keeps showing that item with a zero count; macros can use an eligible
-backup without changing your choice. Carried fleeting flasks and potions from
+button keeps showing that item with a zero count; macros can select an available
+alternative without changing your choice. Carried fleeting flasks and potions from
 the same family take priority over your regular choice, even if that rank is
 out of stock. Fleeting items cannot be saved as preferences.
 
 **Prefer Unlimited Augment Runes**, on the Consumables Frame settings page,
-also applies to the Action Bar and macros. While you carry an unlimited rune,
-it overrides a preferred consumable rune, and macros do not include consumable
-runes as backups—even if the unlimited rune is on cooldown. Left-click a
-consumable rune in the flyout to use it manually. Your saved preference remains
-unchanged; normal selection returns when the setting is off or you carry no
-unlimited rune.
+also applies to the Action Bar and macros. It puts carried unlimited runes
+ahead of consumable runes when choosing automatically, even across expansions.
+An explicit item preference takes priority over this setting; clearing it
+restores automatic selection. Cooldowns never change the selected rune.
+Augment Rune macros always contain just one item-use line, with no backup:
+if the selected unlimited rune is on cooldown, it simply cannot be used yet.
+You can still left-click a consumable rune in the flyout or prefer it for your
+primary button and macro.
 
 Some buttons have different purposes on the two displays:
 
@@ -248,9 +251,10 @@ The complete Healing Potion macro casts Recuperate out of combat and uses a
 potion in combat. Its inline marker adds only the potion choices, not Recuperate
 or a combat restriction unless you include `[combat]` yourself.
 
-Each item macro tries its primary choice and then one eligible backup, using
-available automatic overrides first, then your available preferred item, then
-the category's fallbacks. These choices never change your saved preference.
+Item macros choose from available automatic overrides first, then your
+available preferred item, then the category's fallbacks. Augment Rune macros
+use only the first choice; other item macros include one eligible backup.
+These choices never change your saved preference.
 Healing potion macros select the Brawler's Guild potion (`253011`) only inside
 Bizmo's Brawlpub or Brawl'gar Arena when you
 carry one, with your normal potion as the backup. Outside those venues, or if

@@ -18,12 +18,12 @@
 - Fleeting items can no longer be saved as preferred choices. Previously saved
   fleeting choices are ignored rather than converted to a regular item/rank;
   select a regular item to establish a new preference.
-- Prefer Unlimited Augment Runes now overrides a saved consumable-rune choice
-  while an unlimited rune is carried. Buttons and macros select unlimited runes,
-  with no consumable-rune macro backups, even while the unlimited rune is on
-  cooldown. Consumable runes remain available for manual flyout use. Saved
-  preferences are unchanged; normal selection resumes when the setting is off
-  or no unlimited rune is carried.
+- Prefer Unlimited Augment Runes now changes automatic ordering only, favoring
+  carried unlimited runes over newer consumable runes without overriding an
+  explicit item preference. Clearing the preference restores automatic selection.
+  Cooldowns never change rune selection. Augment Rune macros always use one item
+  with no backup, so a cooling-down unlimited rune cannot fall through to a
+  consumable. Manual flyout use remains available.
 - Added shared item-cooldown displays for unlimited augment runes, combat and
   healing potions, and consumable-pausing items on both personal displays and
   their existing flyouts. Cooldowns follow the prepared Action Bar item during
@@ -32,10 +32,11 @@
 - Healthstones use automatic selection, preferring a carried Demonic Healthstone
   over a normal Healthstone. The button now shows the chosen variant's icon,
   tooltip, and remaining charges rather than mixing the two variants' information.
-- Item macros now include their primary choice and one eligible backup from
-  your bags, drawn from the shared selector's ordered choices without a second
-  selection pass or inventory-input edits. The backup remains usable
-  if the primary runs out during combat, without rewriting the macro mid-fight.
+- Item macros other than Augment Rune now include their primary choice and one
+  eligible backup from your bags, drawn from the shared selector's ordered
+  choices without a second selection pass or inventory-input edits. The backup
+  remains usable if the primary runs out during combat, without rewriting the
+  macro mid-fight.
 - Healing-potion buttons and macros now share location-aware selection: a
   carried Brawler's Guild potion (`253011`) takes priority only inside its
   venues, without replacing your saved normal-potion preference. Leaving the
