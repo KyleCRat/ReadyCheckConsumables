@@ -4,6 +4,12 @@
 
 ### Added
 
+- Separate Lethal Poison and Non-lethal Poison buttons for rogues on both
+  personal displays, enabled by default with individual settings toggles.
+  Active poisons show their remaining duration; hover outside combat to cast
+  another known poison, including a second poison with Dragon-Tempered Blades.
+  The initial status display checks one poison per category, not the talent's
+  additional slots. Detection uses targeted, secret-safe player-buff queries.
 - Blizzard's ready-check dialog can now be dragged by its visible background
   outside combat, with its position saved in the active profile. Allow Dragging
   is enabled by default on RCC's main settings page. Ready/Not Ready buttons

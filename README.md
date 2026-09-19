@@ -102,6 +102,14 @@ On the **Consumables Action Bar** settings page:
 Both personal displays also offer optional Inky Black Potion, Repair, and
 Recuperate buttons, which are off by default.
 
+Rogues also get separate **Lethal Poison** and **Non-lethal Poison** buttons,
+independent of weapon enchants. Each shows an active poison and its duration,
+or a known poison to apply when none is active. Hover outside combat to
+left-click another known poison, including a second of each type with
+Dragon-Tempered Blades. For now, each button confirms one active poison; it
+does not check whether the talent's second poison is applied. Toggle these
+buttons independently in either display's settings.
+
 ## Group Readiness
 
 The Raid Status Frame and Chat Reports work independently of the personal

@@ -44,6 +44,8 @@ end
 -- Select and Observe cache independently. Evaluate combines their immutable
 -- results with their additional inputs and the current time. Presenters have
 -- no authority to query or save data.
+-- Select/Observe receive the catalog definition so shared domains can select
+-- their weapon slot, poison type, or other category-specific data explicitly.
 -- Records/snapshots are read-only to consumers. Revisions are per facet and
 -- monotonically increasing, so opening a surface cannot miss a previous delta.
 function Runtime.Create()
@@ -91,7 +93,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         local observation = cache.observation
 
         if selectionDirty then
-            local selected = domain.Select and domain.Select(inputs, definition.weaponSlot) or EMPTY
+            local selected = domain.Select and domain.Select(inputs, definition) or EMPTY
 
             if not Inputs.Equal(selected, selection) then
                 selection = selected
@@ -99,7 +101,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         end
 
         if observationDirty then
-            local observed = domain.Observe and domain.Observe(inputs, definition.weaponSlot) or EMPTY
+            local observed = domain.Observe and domain.Observe(inputs, definition) or EMPTY
 
             if not Inputs.Equal(observed, observation) then
                 observation = observed

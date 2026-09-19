@@ -158,8 +158,8 @@ function ActionBar.GetVisualOptions()
 end
 
 -- Enabled buttons retain their slots when supplies are unavailable. The
--- off-hand enchant definition opts out when the slot cannot be enchanted;
--- use its resolved applicability, not item availability or enchant status.
+-- off-hand enchant and class-specific poison definitions opt out when they
+-- cannot apply. Use resolved applicability, not supplies or current buff status.
 local function shouldShowButton(definition)
     if not frame.surface.categories[definition.key] then
         return false
@@ -180,7 +180,9 @@ function ActionBar.GetEnabledCount()
     local count = 0
 
     for i = 1, #definitions do
-        if RCC.GetSetting(definitions[i].actionBarSettingKey) == true then
+        if RCC.GetSetting(definitions[i].actionBarSettingKey) == true
+            and Catalog.IsAvailableToPlayer(definitions[i])
+        then
             count = count + 1
         end
     end
@@ -387,7 +389,9 @@ StateController.RegisterConsumer("consumablesActionBar", {
         if not ActionBar.IsEnabled() then return categories end
 
         for _, definition in ipairs(Catalog.GetDefinitions()) do
-            if RCC.GetSetting(definition.actionBarSettingKey) == true then
+            if RCC.GetSetting(definition.actionBarSettingKey) == true
+                and Catalog.IsAvailableToPlayer(definition)
+            then
                 categories[definition.key] = true
             end
         end

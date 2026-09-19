@@ -18,6 +18,8 @@
 
 ## Fixes
 - Changing a setting during a test removes all test rows (not critical)
+- Raid buff action bar icon on characters with no raid buff spell should not show red ? icon, it should hide
+- When out of an item Tooltip: "Selected X Item not found in bag" we should be able to right click to clear our preference.
 
 ## Features
 - Add invisibilty potions Potion of the Hushed Zephyr:191395 - need to find newer and older ones

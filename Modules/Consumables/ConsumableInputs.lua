@@ -88,6 +88,34 @@ function Inputs.GetCooldownItemIDs(category)
     return ids
 end
 
+function Inputs.GetSpellIDs(category)
+    local definition = RCC.ConsumableCatalog.GetDefinition(category)
+    local domain = RCC.Consumables[definition.domain]
+    local ids = {}
+
+    if domain.GetSpellIDs then
+        for _, spellID in ipairs(domain.GetSpellIDs(definition)) do
+            ids[spellID] = true
+        end
+    end
+
+    return ids
+end
+
+function Inputs.GetPlayerAuraSpellIDs(category)
+    local definition = RCC.ConsumableCatalog.GetDefinition(category)
+    local domain = RCC.Consumables[definition.domain]
+    local ids = {}
+
+    if domain.GetPlayerAuraSpellIDs then
+        for _, spellID in ipairs(domain.GetPlayerAuraSpellIDs(definition)) do
+            ids[spellID] = true
+        end
+    end
+
+    return ids
+end
+
 function Inputs.ReadInventory(itemIDs, previous, changedIDs)
     local inventory = {}
 
@@ -155,9 +183,14 @@ function Inputs.ReadLocation()
     }
 end
 
-function Inputs.ReadClass()
+function Inputs.ReadClassToken()
     local _, classToken = UnitClass("player")
-    classToken = publicString(classToken)
+
+    return publicString(classToken)
+end
+
+function Inputs.ReadClass()
+    local classToken = Inputs.ReadClassToken()
 
     return {
         classToken = classToken,
@@ -165,23 +198,59 @@ function Inputs.ReadClass()
     }
 end
 
-function Inputs.ReadSpells()
+function Inputs.ReadSpells(spellIDs)
     local spells = {}
 
-    for _, data in pairs(RCC.db.weaponEnchants) do
-        if data.spellID then
-            local info = C_Spell.GetSpellInfo(data.spellID)
-            local known = C_SpellBook.IsSpellKnown(data.spellID)
+    for spellID in pairs(spellIDs) do
+        local info = C_Spell.GetSpellInfo(spellID)
+        local known = C_SpellBook.IsSpellKnown(spellID)
 
-            spells[data.spellID] = {
-                known = not issecretvalue(known) and known == true,
-                name = info and publicString(info.name),
-                icon = info and publicNumber(info.iconID),
-            }
-        end
+        spells[spellID] = {
+            known = not issecretvalue(known) and known == true,
+            name = info and publicString(info.name),
+            icon = info and publicNumber(info.iconID),
+        }
     end
 
     return spells
+end
+
+-- Targeted player buffs are independent of full player scans. Reuse a fresh
+-- scan when conclusive; otherwise ask the existing secret-safe boundary for
+-- each requested ID. Callers provide aura IDs, not cast spell IDs.
+function Inputs.ReadPlayerSpellAuras(spellIDs, freshPlayerAuras)
+    local observations = {}
+    local ids = {}
+    local scannedAuras = {}
+    local AuraScan = RCC.HelpfulAuraScan
+
+    for spellID in pairs(spellIDs) do
+        ids[#ids + 1] = spellID
+    end
+
+    AuraScan.CacheSpellSecrecy(ids)
+
+    if freshPlayerAuras then
+        for _, aura in ipairs(freshPlayerAuras.auras) do
+            if spellIDs[aura.spellID] then
+                scannedAuras[aura.spellID] = aura
+            end
+        end
+    end
+
+    for _, spellID in ipairs(ids) do
+        local aura = scannedAuras[spellID]
+
+        if aura then
+            observations[spellID] = { available = true, aura = aura }
+        elseif freshPlayerAuras and AuraScan.CanConfirmMissing(freshPlayerAuras, { spellID }) then
+            observations[spellID] = { available = true }
+        else
+            observations[spellID] = AuraScan.FindBySpellID("player", spellID)
+        end
+    end
+
+    return observations
 end
 
 function Inputs.ReadWeaponSlot(slotID, now)
@@ -329,7 +398,9 @@ function Inputs.ReadSelection(category)
         instance = needed.instance and Inputs.ReadInstance() or nil,
         location = needed.location and Inputs.ReadLocation() or nil,
         class = needed.class and Inputs.ReadClass() or nil,
-        spells = needed.spells and Inputs.ReadSpells() or nil,
+        spells = needed.spells and Inputs.ReadSpells(Inputs.GetSpellIDs(category)) or nil,
+        playerSpellAuras = needed.playerSpellAuras
+            and Inputs.ReadPlayerSpellAuras(Inputs.GetPlayerAuraSpellIDs(category)) or nil,
         weapons = needed.slotWeapon and {
             [definition.weaponSlot] = Inputs.ReadWeaponSlot(definition.weaponSlot, now),
         } or nil,

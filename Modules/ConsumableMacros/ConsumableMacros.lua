@@ -73,7 +73,7 @@ local function selectMacroAction(category, options)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
     local domain = Consumables[definition.domain]
     local inputs = Inputs.ReadSelection(category)
-    local selection = domain.Select(inputs, definition.weaponSlot)
+    local selection = domain.Select(inputs, definition)
 
     if selection.action and selection.action.kind == ActionKind.SPELL then
         return selection.action, getSpellIcon(selection.action.spellID)

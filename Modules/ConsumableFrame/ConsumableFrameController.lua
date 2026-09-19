@@ -492,7 +492,9 @@ function Controller.Attach(consumablesFrame)
             end
 
             for _, definition in ipairs(Catalog.GetDefinitions()) do
-                if Visibility.IsRequested(definition, displayContext) then
+                if Catalog.IsAvailableToPlayer(definition)
+                    and Visibility.IsRequested(definition, displayContext)
+                then
                     categories[definition.key] = true
                 end
             end

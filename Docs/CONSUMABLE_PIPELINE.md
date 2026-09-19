@@ -19,7 +19,7 @@ unrelated fields and use illustrative counts and times.
 Read the numbered walkthrough in order, or jump to the
 [running event flow](#follow-one-flask-use-through-the-running-addon),
 [new-category examples](#adapting-the-walkthrough-to-a-new-button-category), or
-[raid-buff and macro differences](#two-related-paths-that-do-not-work-exactly-like-flask).
+[poison, raid-buff, and macro differences](#related-paths-that-do-not-work-exactly-like-flask).
 
 ## 1. Register the usable items and their buffs
 
@@ -182,7 +182,9 @@ Instance, location, and class information have separate readers and inputs:
 The warning threshold is derived from instance type: 30 minutes in a dungeon
 (`party`) and 10 minutes elsewhere. It is not another live query or a user
 setting. The class input describes which buff to check, not whether it is
-present; actual buff observations are in `playerAuras` and `groupAuras`.
+present; actual buff observations are in `playerAuras`, `playerSpellAuras`, and
+`groupAuras`. `playerSpellAuras` contains targeted results by spell ID rather
+than a full scan; the poison example below shows how a category requests them.
 
 The dependency entries connect those inputs to four jobs:
 
@@ -210,13 +212,14 @@ handles those events for all categories. Existing examples are:
 
 | Change | Input marked for another read |
 | --- | --- |
-| `UNIT_AURA` for the player | `playerAuras` |
+| `UNIT_AURA` for the player | `playerAuras` and/or `playerSpellAuras`, where requested |
+| Spellbook or player specialization changes | Known `spells`, targeted `playerSpellAuras`, `class`, and `weapons`, where requested |
 | `ITEM_COUNT_CHANGED` for a tracked item | That item in `inventory` |
 | `BAG_UPDATE_DELAYED` | All requested inventory items |
 | `ITEM_DATA_LOAD_RESULT` for a tracked item | That item's count/icon/quality data |
 | Right-clicking a preferred flask | `preferences`, through the item-choice cache |
 | `ZONE_CHANGED` or `ZONE_CHANGED_INDOORS` | `location` only |
-| `ZONE_CHANGED_NEW_AREA` or `PLAYER_DIFFICULTY_CHANGED` | `instance`, `location`, `roster`, `playerAuras`, and `groupAuras`, where requested |
+| `ZONE_CHANGED_NEW_AREA` or `PLAYER_DIFFICULTY_CHANGED` | `instance`, `location`, `roster`, `playerAuras`, `playerSpellAuras`, and `groupAuras`, where requested |
 | `PLAYER_ENTERING_WORLD` | All currently requested inputs |
 
 Local movement does not request another aura scan or inventory read in this
@@ -753,7 +756,39 @@ new information, the connection points are
 `ConsumableDemand.lua` for any prerequisite inputs, and
 `ConsumableStateController.lua` for reading it on the relevant events.
 
-## Two related paths that do not work exactly like Flask
+## Related paths that do not work exactly like Flask
+
+### Rogue poisons are spell choices, not weapon-slot enchants
+
+[Data/RoguePoisons.lua](../Data/RoguePoisons.lua) lists lethal and non-lethal
+poisons separately. For these spells, the cast ID is also the player's buff
+ID. Add a poison to its ordered list; the shared domain and presenter use that
+list for both detection and flyout choices.
+
+Both catalog entries use `domain = "RoguePoison"`, with `poisonType` choosing
+the list. `Select(inputs, definition)` and `Observe(inputs, definition)` receive
+the whole catalog definition, just as WeaponEnchant reads `definition.weaponSlot`.
+The poison entries also declare `classToken = "ROGUE"`, so other classes do not
+request their data or display their buttons.
+
+`GetSpellIDs(definition)` declares which spells need known/name/icon metadata
+in `inputs.spells`. `GetPlayerAuraSpellIDs(definition)` separately declares the
+buff IDs for `inputs.playerSpellAuras`. These two lists happen to match for
+poisons; another category need not use the same cast and buff IDs.
+The controller collects only the IDs requested by active categories.
+
+`ReadPlayerSpellAuras` returns entries such as
+`[2823] = { available = true, aura = <public aura fields> }`. A readable absence
+has no `aura`; an unavailable query has `available = false`. It reuses a fresh
+full scan when conclusive, otherwise calls `HelpfulAuraScan.FindBySpellID`.
+Requesting poisons alone never requests a full player aura scan.
+
+The selector offers only known spells, keeps an active poison primary, and
+otherwise chooses the first known spell in data order. The presenter gives
+the other choices spell actions that the existing secure binder can cast.
+There are no item preferences or weapon-slot targets. The initial display
+confirms one poison per type; a rogue with Dragon-Tempered Blades can cast a
+second from the flyout, but additional-slot readiness is not yet evaluated.
 
 ### Raid buffs use targeted aura queries
 

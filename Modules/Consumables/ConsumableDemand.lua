@@ -35,6 +35,8 @@ function Demand.Build(categories)
         itemIDs = {},
         cooldownItemIDs = {},
         weaponSlots = {},
+        spellIDs = {},
+        playerAuraSpellIDs = {},
     }
 
     for key in pairs(categories) do
@@ -66,6 +68,14 @@ function Demand.Build(categories)
 
         for itemID in pairs(Inputs.GetCooldownItemIDs(key)) do
             demand.cooldownItemIDs[itemID] = true
+        end
+
+        for spellID in pairs(Inputs.GetSpellIDs(key)) do
+            demand.spellIDs[spellID] = true
+        end
+
+        for spellID in pairs(Inputs.GetPlayerAuraSpellIDs(key)) do
+            demand.playerAuraSpellIDs[spellID] = true
         end
     end
 

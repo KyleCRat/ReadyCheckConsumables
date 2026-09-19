@@ -84,6 +84,8 @@ Data/11_TheWarWithin/WeaponEnchants.lua
 Data/10_Dragonflight/WeaponEnchants.lua
 Data/09_Shadowlands/WeaponEnchants.lua
 
+Data/RoguePoisons.lua
+
 Data/Settings.lua
 Data/ConsumableTiming.lua
 
@@ -129,6 +131,7 @@ Modules/Consumables/Repair.lua
 Modules/Consumables/RaidBuff.lua
 Modules/Consumables/Vantus.lua
 Modules/Consumables/WeaponEnchant.lua
+Modules/Consumables/RoguePoison.lua
 Modules/Consumables/Recuperate.lua
 
 Modules/ConsumableUI/Presenters/Food.lua
@@ -144,6 +147,7 @@ Modules/ConsumableUI/Presenters/Repair.lua
 Modules/ConsumableUI/Presenters/RaidBuff.lua
 Modules/ConsumableUI/Presenters/Vantus.lua
 Modules/ConsumableUI/Presenters/WeaponEnchant.lua
+Modules/ConsumableUI/Presenters/RoguePoison.lua
 
 Modules/Consumables/ConsumableDemand.lua
 Modules/Consumables/ConsumableRuntime.lua

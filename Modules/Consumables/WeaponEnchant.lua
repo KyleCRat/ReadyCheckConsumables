@@ -21,6 +21,18 @@ WeaponEnchant.Dependencies = {
 WeaponEnchant.MAIN_HAND_INVENTORY_SLOT = MAIN_HAND_INVENTORY_SLOT
 WeaponEnchant.OFF_HAND_INVENTORY_SLOT = OFF_HAND_INVENTORY_SLOT
 
+function WeaponEnchant.GetSpellIDs()
+    local ids = {}
+
+    for _, data in pairs(RCC.db.weaponEnchants) do
+        if data.spellID then
+            ids[#ids + 1] = data.spellID
+        end
+    end
+
+    return ids
+end
+
 function WeaponEnchant.GetCacheKey(slotID)
     if slotID == MAIN_HAND_INVENTORY_SLOT then
         return CacheKey.MAIN_HAND_TEMP_WEAPON_ENCHANT
@@ -86,7 +98,8 @@ end
 -- defaults to its eligible spell. Otherwise use the saved item choice, the
 -- applied item, or normal inventory priority, in that order. Applying an
 -- enchant never changes the saved item preference.
-function WeaponEnchant.Select(inputs, slotID)
+function WeaponEnchant.Select(inputs, definition)
+    local slotID = definition.weaponSlot
     local slot = inputs.weapons[slotID]
     local result = {
         applicable = slot.canBeEnchanted,
@@ -188,8 +201,8 @@ function WeaponEnchant.GetCurrentSlotState(slotID)
     return slot
 end
 
-function WeaponEnchant.Observe(inputs, slotID)
-    return inputs.weapons[slotID]
+function WeaponEnchant.Observe(inputs, definition)
+    return inputs.weapons[definition.weaponSlot]
 end
 
 function WeaponEnchant.Evaluate(selection, observation, inputs, now)

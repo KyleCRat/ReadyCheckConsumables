@@ -31,9 +31,10 @@ end
 local function updateEventSubscriptions()
     local sources = demand.sources
 
-    -- playerAuras / groupAuras: both use the same aura notifications. The
-    -- handler routes each affected unit to the requested player/group input.
-    local auras = sources.playerAuras or sources.groupAuras
+    -- playerAuras / playerSpellAuras / groupAuras share notifications, but not
+    -- queries. Targeted player buffs do not require a full player aura scan.
+    -- The handler routes each affected unit to its requested inputs.
+    local auras = sources.playerAuras or sources.playerSpellAuras or sources.groupAuras
     setEventEnabled("UNIT_AURA", auras)
     setEventEnabled("UNIT_AURA_BLOCKED", auras)
     setEventEnabled("UNIT_AURA_BLOCK_LIST_CLEARED", auras)
@@ -70,9 +71,10 @@ local function updateEventSubscriptions()
     setEventEnabled("ZONE_CHANGED", sources.location)
     setEventEnabled("ZONE_CHANGED_INDOORS", sources.location)
 
-    -- spells / class / weapons: shared notifications for known enchant spells,
+    -- spells / class / weapons: shared notifications for known action spells,
     -- class-provided raid-buff metadata, and equipped enchant state. Each input
-    -- is refreshed only if requested; these do not request player aura scans.
+    -- is refreshed only if requested. Targeted player buffs refresh too, but
+    -- these events do not request a full player aura scan.
     local spellChanges = sources.spells or sources.class or sources.weapons
     setEventEnabled("SPELLS_CHANGED", spellChanges)
     setEventEnabled("SPELL_DATA_LOAD_RESULT", spellChanges)
@@ -261,7 +263,7 @@ local function readInputs(dirty, now)
     end
 
     if dirty.spells then
-        storeInput("spells", Inputs.ReadSpells())
+        storeInput("spells", Inputs.ReadSpells(demand.spellIDs))
     end
 
     if dirty.weapons then
@@ -292,6 +294,13 @@ local function readInputs(dirty, now)
 
     if dirty.playerAuras then
         storeInput("playerAuras", RCC.HelpfulAuraScan.ScanUnit("player"))
+    end
+
+    if dirty.playerSpellAuras then
+        storeInput("playerSpellAuras", Inputs.ReadPlayerSpellAuras(
+            demand.playerAuraSpellIDs,
+            dirty.playerAuras and inputs.playerAuras or nil
+        ))
     end
 
     if demand.sources.groupAuras and (resetGroup or next(groupUnits) or dirty.roster) then
@@ -553,8 +562,9 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         or event == "UNIT_AURA_BLOCKED"
         or event == "UNIT_AURA_BLOCK_LIST_CLEARED"
     then
-        if demand.sources.playerAuras and F.UnitIsUnitSafe(unit, "player") then
+        if F.UnitIsUnitSafe(unit, "player") then
             Controller.Invalidate("playerAuras")
+            Controller.Invalidate("playerSpellAuras")
         end
 
         local token = demand.sources.groupAuras and rosterUnit(unit)
@@ -601,6 +611,7 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         Controller.Invalidate("location")
         Controller.Invalidate("roster")
         Controller.Invalidate("playerAuras")
+        Controller.Invalidate("playerSpellAuras")
         Controller.Invalidate("groupAuras")
     elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
         Controller.Invalidate("location")
@@ -627,6 +638,7 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
     then
         if event ~= "PLAYER_SPECIALIZATION_CHANGED" or F.UnitIsUnitSafe(unit, "player") then
             Controller.Invalidate("spells")
+            Controller.Invalidate("playerSpellAuras")
             Controller.Invalidate("class")
             Controller.Invalidate("weapons")
         end

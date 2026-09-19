@@ -85,6 +85,32 @@ local DEFINITIONS = {
         actionBarHideWhenInapplicable = true,
     },
     {
+        key = "lethalPoison",
+        domain = "RoguePoison",
+        classToken = "ROGUE",
+        poisonType = "lethal",
+        label = "Lethal Poison",
+        settingKey = "icon_lethalPoison",
+        defaultIcon = RCC.db.roguePoisonFallbackIconID,
+        temporaryClickable = true,
+        tooltipAction = "apply",
+        actionBarHideWhenInapplicable = true,
+        settingsTooltip = "Rogues only: apply a lethal poison or hover to choose another known poison",
+    },
+    {
+        key = "nonLethalPoison",
+        domain = "RoguePoison",
+        classToken = "ROGUE",
+        poisonType = "nonLethal",
+        label = "Non-lethal Poison",
+        settingKey = "icon_nonLethalPoison",
+        defaultIcon = RCC.db.roguePoisonFallbackIconID,
+        temporaryClickable = true,
+        tooltipAction = "apply",
+        actionBarHideWhenInapplicable = true,
+        settingsTooltip = "Rogues only: apply a non-lethal poison or hover to choose another known poison",
+    },
+    {
         key = "augment",
         domain = "Augment",
         label = "Augment Rune",
@@ -191,6 +217,13 @@ end
 
 function Catalog.GetDefinition(key)
     return BY_KEY[key]
+end
+
+-- Class does not change during a session. Unlike equipment or learned spells,
+-- a different class cannot become applicable later, so do not request its data.
+function Catalog.IsAvailableToPlayer(definition)
+    return not definition.classToken
+        or definition.classToken == RCC.ConsumableInputs.ReadClassToken()
 end
 
 function Catalog.GetCount()
