@@ -394,6 +394,9 @@ StateController.RegisterConsumer("consumablesActionBar", {
 
         return categories
     end,
+    GetDisplayedItemIDs = function()
+        return Surface.GetDisplayedItemIDs(frame.surface)
+    end,
     ApplySnapshot = function(_, snapshot, categories)
         Surface.ApplySnapshot(frame.surface, snapshot, categories)
 

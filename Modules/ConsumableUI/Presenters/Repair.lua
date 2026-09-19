@@ -31,7 +31,6 @@ local function createFlyoutChoices(candidates, selectedItemID)
                 suppressGlow = true,
             })
 
-            choice.cooldown = candidate.cooldown
             choice.desaturated = not candidate.ready
             choices[#choices + 1] = choice
         end
@@ -56,6 +55,8 @@ function Repair.Present(model)
         suppressGlow = true,
     })
 
+    ButtonState.ApplyItemCooldowns(buttonState, model.selection)
+
     -- The desired primary can switch when a reusable device comes off cooldown.
     -- Keep per-item visuals available for whichever action is prepared in combat.
     buttonState.itemVisuals = {}
@@ -63,13 +64,11 @@ function Repair.Present(model)
 
     for _, item in ipairs(candidates) do
         buttonState.itemVisuals[item.itemID] = {
-            cooldown = item.cooldown,
             desaturated = not item.ready,
         }
     end
 
     if candidate then
-        buttonState.cooldown = candidate.cooldown
         buttonState.action = model.action
 
         if candidate.ready then

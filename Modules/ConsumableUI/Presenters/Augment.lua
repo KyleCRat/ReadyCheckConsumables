@@ -22,6 +22,16 @@ function Augment.Present(model)
     local buttonState = ButtonState.Create()
 
     ButtonState.ApplyActiveAura(buttonState, augmentState)
+    ButtonState.ApplyItemCooldowns(buttonState, model.selection)
+
+    -- Item availability follows the prepared action during combat, while buff
+    -- status still applies to all runes.
+    buttonState.itemVisuals = {}
+    buttonState.missingItemVisual = { unavailable = { text = OUT_OF_SELECTED_ITEM } }
+
+    for _, candidate in ipairs(augmentCandidates) do
+        buttonState.itemVisuals[candidate.itemID] = {}
+    end
 
     if augmentItemID then
         buttonState.countText = RCC.Consumables.Augment.GetCountText(augmentCandidate)

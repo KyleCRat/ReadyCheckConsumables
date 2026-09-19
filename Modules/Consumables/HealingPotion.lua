@@ -5,13 +5,17 @@ RCC.Consumables.HealingPotion = HealingPotion
 local Selection = RCC.ConsumableSelection
 local PREFERENCE_KEY = RCC.ConsumableItemCacheKey.HEALING_POTION
 
+local cooldownItemIDs = CopyTable(RCC.db.healingPotionItemIDs)
+cooldownItemIDs[#cooldownItemIDs + 1] = RCC.db.brawlersGuildHealingPotionItemID
+
 HealingPotion.Inventory = {
     list = RCC.db.healingPotionItemIDs,
     itemID = RCC.db.brawlersGuildHealingPotionItemID,
+    cooldownItemIDs = cooldownItemIDs,
 }
 
 HealingPotion.Dependencies = {
-    selection = { "inventory", "preferences.healingPotion", "location.uiMapID" },
+    selection = { "inventory", "cooldowns", "preferences.healingPotion", "location.uiMapID" },
 }
 
 function HealingPotion.Select(inputs)
@@ -31,6 +35,8 @@ function HealingPotion.Select(inputs)
             table.insert(choices.candidates, 1, guildPotion)
         end
     end
+
+    Selection.ApplyItemCooldowns(choices, inputs.cooldowns, HealingPotion.Inventory.cooldownItemIDs)
 
     return Selection.Resolve(choices, {
         preferenceKey = PREFERENCE_KEY,

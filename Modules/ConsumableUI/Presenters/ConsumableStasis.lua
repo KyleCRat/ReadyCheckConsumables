@@ -19,6 +19,8 @@ function ConsumableStasis.Present(model)
         icon = (candidate or model.selection.defaultCandidate).icon,
     })
 
+    ButtonState.ApplyItemCooldowns(state, model.selection)
+
     if candidate then
         state.desaturated = false
         state.action = model.action

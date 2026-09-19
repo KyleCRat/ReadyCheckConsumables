@@ -9,10 +9,25 @@ local S = RCC.ConsumableSelection
 
 local CacheKey = RCC.ConsumableItemCacheKey
 
-Augment.Inventory = { map = RCC.db.augmentItemIDs }
+Augment.Inventory = {
+    map = RCC.db.augmentItemIDs,
+    cooldownItemIDs = {},
+}
+
+for itemID, data in pairs(RCC.db.augmentItemIDs) do
+    if data.unlimited then
+        local itemIDs = Augment.Inventory.cooldownItemIDs
+        itemIDs[#itemIDs + 1] = itemID
+    end
+end
 
 Augment.Dependencies = {
-    selection = { "inventory", "preferences.augment", "preferences.preferUnlimitedAugment" },
+    selection = {
+        "inventory",
+        "cooldowns",
+        "preferences.augment",
+        "preferences.preferUnlimitedAugment",
+    },
     observation = { "playerAuras" },
     evaluation = { "instance.warningSeconds" },
     expiration = "playerAuras",
@@ -59,12 +74,35 @@ function Augment.Select(inputs)
 
     local preferredID = inputs.preferences[CacheKey.AUGMENT]
     local preferred = S.FindMapItem(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
+    local overrides = {}
 
-    return S.Resolve({
+    -- While an unlimited rune is carried, this setting makes consumable runes
+    -- manual-use choices only. Keep them in the flyout and keep the saved
+    -- preference, but never let a macro spend one as an automatic backup.
+    if preferUnlimited then
+        for _, candidate in ipairs(candidates) do
+            if candidate.data.unlimited == true then
+                if candidate.itemID == preferredID then
+                    -- A saved unlimited choice still wins among unlimited runes.
+                    table.insert(overrides, 1, candidate)
+                else
+                    overrides[#overrides + 1] = candidate
+                end
+            end
+        end
+    end
+
+    local selection = {
         preferred = preferred,
+        overrides = overrides,
+        exclusiveOverrides = #overrides > 0,
         fallbacks = candidates,
         candidates = candidates,
-    }, {
+    }
+
+    S.ApplyItemCooldowns(selection, inputs.cooldowns, Augment.Inventory.cooldownItemIDs)
+
+    return S.Resolve(selection, {
         preferenceKey = CacheKey.AUGMENT,
     })
 end

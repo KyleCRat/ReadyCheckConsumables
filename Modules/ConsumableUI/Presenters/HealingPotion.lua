@@ -20,6 +20,8 @@ function HealingPotion.Present(model)
         suppressGlow = true,
     })
 
+    ButtonState.ApplyItemCooldowns(buttonState, model.selection)
+
     if inventoryItem and inventoryItemCount > 0 then
         buttonState.statusIcon = ButtonState.READY_ICON
         buttonState.desaturated = false

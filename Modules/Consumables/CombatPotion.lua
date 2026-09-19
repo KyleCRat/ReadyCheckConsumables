@@ -5,10 +5,13 @@ RCC.Consumables.CombatPotion = CombatPotion
 local Selection = RCC.ConsumableSelection
 local PREFERENCE_KEY = RCC.ConsumableItemCacheKey.COMBAT_POTION
 
-CombatPotion.Inventory = { list = RCC.db.combatPotionItemIDs }
+CombatPotion.Inventory = {
+    list = RCC.db.combatPotionItemIDs,
+    cooldownItemIDs = RCC.db.combatPotionItemIDs,
+}
 
 CombatPotion.Dependencies = {
-    selection = { "inventory", "preferences.combatPotion" },
+    selection = { "inventory", "cooldowns", "preferences.combatPotion" },
 }
 
 -- Fleeting overrides stay within the preferred family. Damage and mana macro
@@ -26,6 +29,8 @@ function CombatPotion.Select(inputs)
         preferredID = inputs.preferences[PREFERENCE_KEY],
         canFallbackToFamily = canFallbackToFamily,
     })
+
+    Selection.ApplyItemCooldowns(choices, inputs.cooldowns, CombatPotion.Inventory.cooldownItemIDs)
 
     return Selection.Resolve(choices, {
         preferenceKey = PREFERENCE_KEY,

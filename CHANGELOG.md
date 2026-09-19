@@ -12,6 +12,17 @@
 - Fleeting items can no longer be saved as preferred choices. Previously saved
   fleeting choices are ignored rather than converted to a regular item/rank;
   select a regular item to establish a new preference.
+- Prefer Unlimited Augment Runes now overrides a saved consumable-rune choice
+  while an unlimited rune is carried. Buttons and macros select unlimited runes,
+  with no consumable-rune macro backups, even while the unlimited rune is on
+  cooldown. Consumable runes remain available for manual flyout use. Saved
+  preferences are unchanged; normal selection resumes when the setting is off
+  or no unlimited rune is carried.
+- Added shared item-cooldown displays for unlimited augment runes, combat and
+  healing potions, and consumable-pausing items on both personal displays and
+  their existing flyouts. Cooldowns follow the prepared Action Bar item during
+  combat, including after its last copy is used, without changing preferences,
+  macro fallbacks, or buff status.
 - Healthstones use automatic selection, preferring a carried Demonic Healthstone
   over a normal Healthstone. The button now shows the chosen variant's icon,
   tooltip, and remaining charges rather than mixing the two variants' information.
@@ -78,7 +89,7 @@
   Major zone/difficulty transitions explicitly refresh needed aura observations,
   even when the instance ID and type are unchanged.
 - Added one shared deadline timer for duration labels, expiration warnings,
-  aura rechecks, and repair cooldown completion. Unchanged cooldown events no
+  aura rechecks, and item cooldown completion. Unchanged cooldown events no
   longer run the full consumable pipeline.
 - Cached raid-buff observations per group member, refreshing affected members
   on aura, connection, phase, range, and life-state changes. The player's fresh

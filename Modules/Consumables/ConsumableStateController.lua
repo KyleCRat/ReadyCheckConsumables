@@ -13,6 +13,7 @@ local consumers, inputs, pending = {}, {}, {}
 local runtime = Runtime.Create()
 local demand = Demand.Build({})
 local latestSnapshot, refreshTimer, deadlineTimer
+local cooldownDeadline
 local refreshing, combatPending = false, false
 local publishing = false
 local sourceRevision = 0
@@ -55,7 +56,7 @@ local function updateEventSubscriptions()
     setEventEnabled("ITEM_COUNT_CHANGED", sources.inventory)
     setEventEnabled("ITEM_DATA_LOAD_RESULT", sources.inventory)
 
-    -- cooldowns: repair-device availability, separate from inventory counts.
+    -- cooldowns: item reuse timers, separate from inventory counts and buffs.
     setEventEnabled("BAG_UPDATE_COOLDOWN", sources.cooldowns)
 
     -- weapons: equipped weapons, slot applicability, and temporary enchants.
@@ -154,6 +155,10 @@ local function reconcileDemand()
         end
     end
 
+    if not demand.sources.cooldowns then
+        cooldownDeadline = nil
+    end
+
     updateEventSubscriptions()
 
     -- Opening/enabling is a fresh-read boundary. This also trims inventory and
@@ -204,6 +209,20 @@ local function storeInput(key, value)
         inputs[key] = value
         sourceRevision = sourceRevision + 1
     end
+end
+
+local function getDisplayedItemIDs()
+    local itemIDs = {}
+
+    for _, entry in pairs(consumers) do
+        for key, itemID in pairs(entry.consumer:GetDisplayedItemIDs()) do
+            if entry.categories[key] then
+                itemIDs[itemID] = true
+            end
+        end
+    end
+
+    return itemIDs
 end
 
 local function readInputs(dirty, now)
@@ -293,7 +312,15 @@ local function readInputs(dirty, now)
     end
 
     if dirty.cooldowns then
-        storeInput("cooldowns", Inputs.ReadCooldowns(inputs.inventory, now))
+        local cooldowns, nextExpiration = Inputs.ReadCooldowns(
+            inputs.inventory,
+            demand.cooldownItemIDs,
+            now,
+            getDisplayedItemIDs()
+        )
+
+        storeInput("cooldowns", cooldowns)
+        cooldownDeadline = nextExpiration
     end
 end
 
@@ -322,6 +349,12 @@ local function scheduleDeadline()
     if not hasDemand() then return end
 
     local deadline = Runtime.GetDeadline(runtime)
+
+    -- Cooldown completion refreshes the shared item input, independently of a
+    -- category's buff expiration. Native widgets animate without extra ticks.
+    if cooldownDeadline then
+        deadline = math.min(deadline or cooldownDeadline, cooldownDeadline)
+    end
 
     if deadline then
         deadlineTimer = C_Timer.NewTimer(math.max(MIN_DEADLINE_DELAY_SECONDS, deadline - GetTime()), function()
@@ -357,6 +390,10 @@ function Controller.FlushPending(forceRefresh)
 
     for source in pairs(expiredSources) do
         merge(source)
+    end
+
+    if cooldownDeadline and cooldownDeadline <= now then
+        merge("cooldowns")
     end
 
     if not next(pending) and not next(due) and latestSnapshot and not categoriesChanged then

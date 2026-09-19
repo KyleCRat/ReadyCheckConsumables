@@ -145,6 +145,22 @@ function Surface.ApplyVisualOptions(surface, options)
     return true
 end
 
+-- These are the item identities actually on the primary buttons, not a new
+-- desired selection. During combat, preparedStates stays on the bound items.
+function Surface.GetDisplayedItemIDs(surface)
+    local itemIDs = {}
+
+    for key, state in pairs(surface.preparedStates) do
+        local itemID = State.GetClickHintItemID(state) or state.tooltipItemID
+
+        if itemID then
+            itemIDs[key] = itemID
+        end
+    end
+
+    return itemIDs
+end
+
 function Surface.ApplySnapshot(surface, snapshot, categories)
     if not surface or not snapshot or not snapshot.states then
         return false

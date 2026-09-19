@@ -74,6 +74,20 @@ function Inputs.GetItemIDs(category)
     return ids
 end
 
+function Inputs.GetCooldownItemIDs(category)
+    local definition = RCC.ConsumableCatalog.GetDefinition(category)
+    local inventory = RCC.Consumables[definition.domain].Inventory
+    local ids = {}
+
+    if not inventory then return ids end
+
+    for _, itemID in ipairs(inventory.cooldownItemIDs or {}) do
+        ids[itemID] = true
+    end
+
+    return ids
+end
+
 function Inputs.ReadInventory(itemIDs, previous, changedIDs)
     local inventory = {}
 
@@ -216,21 +230,29 @@ function Inputs.ReadWeapons(now, requestedSlots)
     return weapons
 end
 
-function Inputs.ReadCooldowns(inventory, now)
+function Inputs.ReadCooldowns(inventory, itemIDs, now, displayedItemIDs)
     local cooldowns = {}
+    local nextExpiration
 
-    for _, itemID in ipairs(RCC.db.repairItemIDs) do
-        if inventory[itemID] and inventory[itemID].count > 0 then
+    for itemID in pairs(itemIDs) do
+        local carried = inventory[itemID] and inventory[itemID].count > 0
+        local displayed = displayedItemIDs and displayedItemIDs[itemID]
+
+        -- A prepared combat button can still show an item after its last use.
+        -- Query that exact item's timer without scanning every unowned variant.
+        if carried or displayed then
             local start, duration = C_Item.GetItemCooldown(itemID)
             start, duration = publicNumber(start), publicNumber(duration)
+            local expires = start and duration and start + duration
 
-            if start and duration and duration > 0 and start + duration > now then
+            if expires and duration > 0 and expires > now then
                 cooldowns[itemID] = { start = start, duration = duration }
+                nextExpiration = math.min(nextExpiration or expires, expires)
             end
         end
     end
 
-    return cooldowns
+    return cooldowns, nextExpiration
 end
 
 function Inputs.ReadLifeState(unit)
@@ -311,6 +333,7 @@ function Inputs.ReadSelection(category)
         weapons = needed.slotWeapon and {
             [definition.weaponSlot] = Inputs.ReadWeaponSlot(definition.weaponSlot, now),
         } or nil,
-        cooldowns = needed.cooldowns and Inputs.ReadCooldowns(inventory, now) or nil,
+        cooldowns = needed.cooldowns
+            and Inputs.ReadCooldowns(inventory, Inputs.GetCooldownItemIDs(category), now) or nil,
     }
 end

@@ -76,6 +76,32 @@ function Selection.FindMapItem(inventory, itemData, itemID)
     end
 end
 
+-- Attach public cooldowns before publishing a new selection. Keep a map for
+-- prepared combat items that may no longer be carried, as well as the timing
+-- on each current flyout candidate. This never changes priority or readiness;
+-- categories such as Repair can apply their own readiness rules afterward.
+function Selection.ApplyItemCooldowns(selection, cooldowns, itemIDs)
+    local itemCooldowns = {}
+
+    for _, itemID in ipairs(itemIDs) do
+        itemCooldowns[itemID] = cooldowns[itemID]
+    end
+
+    selection.itemCooldowns = itemCooldowns
+
+    for _, candidate in ipairs(selection.candidates) do
+        candidate.cooldown = itemCooldowns[candidate.itemID]
+    end
+
+    if selection.preferred then
+        selection.preferred.cooldown = itemCooldowns[selection.preferred.itemID]
+    end
+
+    if selection.defaultCandidate then
+        selection.defaultCandidate.cooldown = itemCooldowns[selection.defaultCandidate.itemID]
+    end
+end
+
 -- Selection never writes preferences. Categories supply three independent
 -- choices: the exact preferred item (even at zero count), available overrides
 -- in priority order, and ordered fallbacks. Candidates are the full flyout
@@ -85,6 +111,8 @@ end
 -- fallback. An unavailable preference must not silently bind another item.
 -- Macros skip unavailable choices and take their primary/backup from the same
 -- ordering. A spell override replaces item use, not the saved item preference.
+-- An exclusiveOverrides result limits automatic item use to its override list;
+-- the saved preference and full manual flyout candidates remain intact.
 function Selection.Resolve(selection, actionOptions)
     if selection.overrideAction then
         selection.action = selection.overrideAction
@@ -121,6 +149,8 @@ function Selection.GetAvailableCandidates(selection)
     for _, candidate in ipairs(selection.overrides or {}) do
         add(candidate)
     end
+
+    if selection.exclusiveOverrides then return candidates end
 
     add(selection.preferred)
 

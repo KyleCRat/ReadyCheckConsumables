@@ -146,6 +146,14 @@ backup without changing your choice. Carried fleeting flasks and potions from
 the same family take priority over your regular choice, even if that rank is
 out of stock. Fleeting items cannot be saved as preferences.
 
+**Prefer Unlimited Augment Runes**, on the Consumables Frame settings page,
+also applies to the Action Bar and macros. While you carry an unlimited rune,
+it overrides a preferred consumable rune, and macros do not include consumable
+runes as backups—even if the unlimited rune is on cooldown. Left-click a
+consumable rune in the flyout to use it manually. Your saved preference remains
+unchanged; normal selection returns when the setting is off or you carry no
+unlimited rune.
+
 Some buttons have different purposes on the two displays:
 
 | Item type | Consumables Frame | Consumables Action Bar |

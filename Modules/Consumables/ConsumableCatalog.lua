@@ -55,6 +55,7 @@ local DEFINITIONS = {
         defaultIcon = 134062,
         temporaryClickable = true,
         tooltipAction = "use",
+        hasCooldown = true,
         hiddenByDefault = true,
         visibility = STASIS_VISIBILITY,
         settingsTooltip = "Consumable Stasis items pause the expiration of "
@@ -91,6 +92,7 @@ local DEFINITIONS = {
         defaultIcon = RCC.db.augmentIconID,
         temporaryClickable = true,
         tooltipAction = "use",
+        hasCooldown = true,
     },
     {
         key = "raidBuff",
@@ -118,6 +120,7 @@ local DEFINITIONS = {
         defaultIcon = RCC.db.combatPotionIconID,
         temporaryClickable = true,
         tooltipAction = "use",
+        hasCooldown = true,
     },
     {
         key = "healpot",
@@ -127,6 +130,7 @@ local DEFINITIONS = {
         defaultIcon = RCC.db.healingPotionIconID,
         temporaryClickable = true,
         tooltipAction = "use",
+        hasCooldown = true,
     },
     {
         key = "recuperate",

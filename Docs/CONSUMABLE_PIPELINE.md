@@ -226,10 +226,15 @@ refresh all requested inputs. Changing the warning threshold itself only
 recalculates status and deadlines using the cached buff expiration times.
 
 The controller only watches data that a personal display currently needs.
-Each display registers a **consumer**, an object with two functions:
+Each display registers a **consumer**:
 `GetCategories()` says which buttons it needs, and `ApplySnapshot()` receives
 their results: icon, text, action, and other button instructions. Those results
 are packaged in a snapshot; section 6 shows the table's contents.
+
+`GetDisplayedItemIDs()` returns the primary item ID for each displayed category.
+This keeps an item's cooldown readable after its last copy is used, especially
+when combat prevents rebinding the button. The controller only includes IDs from
+that display's requested categories and the category's registered cooldown items.
 
 For example:
 
@@ -344,6 +349,16 @@ override. Repair orders ready reusable devices before consumables. Categories
 that need an empty-inventory icon use `defaultCandidate` for that display data;
 it is not a usable fallback.
 
+Augment adds a stricter override when Prefer Unlimited is enabled and an
+unlimited rune is carried. It puts carried unlimited runes in `overrides` and
+sets `exclusiveOverrides = true`. That makes `GetAvailableCandidates` stop
+after the overrides, so a macro cannot spend a consumable rune as its backup.
+A saved unlimited choice stays first among unlimited runes. The full
+`candidates` list still supplies consumable runes for manual flyout clicks, and
+the saved `preferred` item is unchanged. With no unlimited rune carried, or
+with the setting off, the normal preference/fallback rules apply. Cooldown does
+not remove this override: it must not cause automatic consumable use.
+
 ### `Observe(inputs)`: what flask buff did the scan find?
 
 The implementation is small because the shared effect helper can match Flask's
@@ -424,6 +439,10 @@ The controller uses the model's `nextUpdateAt` to schedule the next duration
 label or warning change. It can recalculate remaining time from the saved
 expiration timestamp without another aura scan. At `recheckAt`, it rereads the
 source named by `Dependencies.expiration` before deciding the new status.
+
+Item cooldowns have their own completion deadline in the controller, using the
+same timer. Finishing an unlimited rune's cooldown rereads `cooldowns`, not its
+buff aura; its duration label and buff-expiration checks continue independently.
 
 ## 5. Describe the button and its flyout
 
@@ -699,9 +718,23 @@ Choose the phases that match the button's behavior:
 - A button whose availability depends on the current instance expresses that in
   its model and presenter. [Vantus.lua](../Modules/Consumables/Vantus.lua) also sets
   `allowFlyout = false` and removes the action while a rune is active.
-- A button that renders a cooldown, such as Repair, sets `hasCooldown = true`
-  in the catalog so its widget exists, and supplies `cooldown.start` and
-  `cooldown.duration` in its button state.
+- A button that renders an item cooldown, such as Repair, potions, pausing items,
+  or an unlimited augment rune, declares `cooldowns` as an input and lists the
+  tracked items in `Inventory.cooldownItemIDs`. Only carried or displayed items
+  from requested categories are queried. Before resolving the new selection,
+  call `ConsumableSelection.ApplyItemCooldowns(selection, inputs.cooldowns,
+  Inventory.cooldownItemIDs)`. In its presenter, call
+  `ConsumableState.ApplyItemCooldowns(state, model.selection)`; flyout choices
+  inherit `candidate.cooldown`. Set `hasCooldown = true` in the catalog to create
+  the native widget. The controller schedules a fresh cooldown read when the
+  earliest item timer finishes, so categories need no separate timer.
+
+An item cooldown need not change selection. Repair uses it to prefer a ready
+device, but Augment keeps its unlimited-rune override even on cooldown, and
+potions keep their preference/family/venue selection rules. The shared
+`itemCooldowns` map lets the Action Bar show the prepared item's cooldown in
+combat even when a different item becomes the desired selection or the
+prepared item has been used up. Buff status remains separate from item reuse.
 
 Existing input names already have readers and event handling. Adding another
 item-plus-buff category does not need a new controller branch. For genuinely
@@ -777,7 +810,8 @@ local backup = choices[2]
 This reads the selector's ordering without modifying its inventory inputs or
 selecting again. For every item category, the macro takes the first two distinct
 available choices: automatic overrides first, then the preferred item, then
-eligible fallbacks. With no items available there is no item action. A missing
+eligible fallbacks, unless `exclusiveOverrides` restricts it to overrides only.
+With no items available there is no item action. A missing
 preferred rank can remain on the button while the macro uses another rank;
 neither changes the saved choice. Spell actions remain a single cast with no
 item backup.

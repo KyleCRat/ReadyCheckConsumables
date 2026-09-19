@@ -208,6 +208,7 @@ function State.CreateItemChoice(candidate, options)
 
     return State.Create({
         icon = candidate.icon,
+        cooldown = candidate.cooldown,
         desaturated = false,
         countText = options.countText or tostring(candidate.count or 0),
         tooltipItemID = candidate.itemID,
@@ -224,6 +225,12 @@ function State.SetItemQuality(state, candidate)
     state.qualityItemID = candidate and candidate.itemID
     state.qualityAtlas = candidate and candidate.qualityAtlas
     state.qualityResolved = candidate and candidate.metadataLoaded
+end
+
+function State.ApplyItemCooldowns(state, selection)
+    local candidate = selection.candidate or selection.defaultCandidate
+    state.itemCooldowns = selection.itemCooldowns
+    state.cooldown = candidate and state.itemCooldowns[candidate.itemID]
 end
 
 function State.CreateItemFlyoutChoices(candidates, selectedItemID, options)
@@ -326,17 +333,27 @@ function State.MergeCombatVisual(prepared, live)
         merged[key] = prepared[key]
     end
 
+    -- Cooldowns follow the prepared item, even if the last copy was consumed
+    -- and selection now points at another item. Food's eating sweep has no
+    -- itemCooldowns map and remains a category-wide aura visual.
+    local itemID = State.GetClickHintItemID(prepared) or prepared.tooltipItemID
+
+    if live.itemCooldowns then
+        merged.cooldown = itemID and live.itemCooldowns[itemID]
+    end
+
     -- Optional item-scoped visuals are distinct from category-wide aura status.
-    -- A cooldown must describe the prepared item, not a newly preferred item.
-    -- Missing fields deliberately clear old cooldown/unavailable state.
+    -- Missing unavailable fields clear old item state. Desaturation is optional:
+    -- without it, keep the category-wide buff status unchanged.
     if live.itemVisuals then
-        local itemID = State.GetClickHintItemID(prepared)
         local itemVisual = (itemID and live.itemVisuals[itemID]) or live.missingItemVisual
 
         if itemVisual then
-            merged.cooldown = itemVisual.cooldown
-            merged.desaturated = itemVisual.desaturated
             merged.unavailable = itemVisual.unavailable
+
+            if itemVisual.desaturated ~= nil then
+                merged.desaturated = itemVisual.desaturated
+            end
         end
     end
 

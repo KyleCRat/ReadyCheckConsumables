@@ -33,6 +33,7 @@ function Demand.Build(categories)
         categories = categories,
         sources = {},
         itemIDs = {},
+        cooldownItemIDs = {},
         weaponSlots = {},
     }
 
@@ -61,6 +62,10 @@ function Demand.Build(categories)
 
         for itemID in pairs(Inputs.GetItemIDs(key)) do
             demand.itemIDs[itemID] = true
+        end
+
+        for itemID in pairs(Inputs.GetCooldownItemIDs(key)) do
+            demand.cooldownItemIDs[itemID] = true
         end
     end
 
