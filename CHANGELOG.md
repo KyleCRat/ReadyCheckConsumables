@@ -9,6 +9,12 @@
   and rank when it runs out; macros skip unavailable items without changing
   your preference. Matching-family fleeting flasks and potions take priority
   while carried, even when your preferred regular rank is out of stock.
+- Buttons and flyout choices now show `Preferred: [item]` in place of the
+  right-click preference hint when that exact item is already preferred.
+  Right-clicking it again clears the preference and returns both personal
+  displays and managed macros to automatic selection, keeping applicable
+  overrides in effect. The open tooltip updates immediately when a preference
+  changes and follows any resulting primary-button or flyout-item replacement.
 - Fleeting items can no longer be saved as preferred choices. Previously saved
   fleeting choices are ignored rather than converted to a regular item/rank;
   select a regular item to establish a new preference.

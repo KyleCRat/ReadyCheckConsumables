@@ -643,13 +643,16 @@ are reused. The controller also compares newly read inputs with the saved
 values, so an event that reports no actual change need not rebuild the button
 result.
 
-Right-clicking a flyout choice takes a shorter route:
-the binder saves its `preferenceKey` and item ID through
-[ConsumableFrameItemCache.Set](../Modules/ConsumableFrame/ConsumableFrameItemCache.lua).
-That calls `Invalidate("preferences", { nextFrame = true })` and schedules a
-macro update. The next selection uses the new preference; it does not need a
-new aura scan. `nextFrame` skips the normal delay when starting a new batch;
-if one is already scheduled, the change joins it.
+Right-clicking a primary button or flyout choice takes a shorter route:
+the binder compares the clicked item with the saved choice for its `preferenceKey`.
+If it is already preferred, the binder calls `ConsumableFrameItemCache.Clear`;
+otherwise it saves the item through `ConsumableFrameItemCache.Set`. Both live in
+[ConsumableFrameItemCache.lua](../Modules/ConsumableFrame/ConsumableFrameItemCache.lua)
+and call `Invalidate("preferences", { nextFrame = true })` and schedule a macro
+update when the choice changes. The next selection uses the new preference, or
+the category's automatic overrides and fallbacks after clearing it; neither
+needs a new aura scan. `nextFrame` skips the normal delay when starting a new
+batch; if one is already scheduled, the change joins it.
 
 The cache also rejects attempts to save blocked items. `ReadPreferences` uses
 its getter, which ignores any fleeting choice saved by an older version rather

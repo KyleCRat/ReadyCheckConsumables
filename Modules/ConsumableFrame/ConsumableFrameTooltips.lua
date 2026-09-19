@@ -2,6 +2,7 @@ local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
 local State = RCC.ConsumableState
+local ItemCache = RCC.ConsumableFrameItemCache
 local F = RCC.F
 local GetItemInfo = C_Item.GetItemInfo
 local GetSpellInfo = C_Spell.GetSpellInfo
@@ -114,7 +115,13 @@ local function addRightClickPreferenceHint(button, hasHint)
         GameTooltip:AddLine(" ")
     end
 
-    GameTooltip:AddLine("|cff00ff00Right click to prefer|r " .. targetText)
+    if ItemCache.Get(action.preferenceKey) == itemID then
+        GameTooltip:AddLine("|cff00ff00Preferred:|r " .. targetText)
+        GameTooltip:AddLine("|cff00ff00Right click to clear preference|r")
+    else
+        GameTooltip:AddLine("|cff00ff00Right click to prefer|r " .. targetText)
+    end
+
     GameTooltip:Show()
 end
 
@@ -164,6 +171,8 @@ local function showStatusMessageTooltip(button, auraText, unavailableText)
     end
 
     GameTooltip:Show()
+
+    return true
 end
 
 local function showButtonTooltip(button, shoppingTooltip)
@@ -224,22 +233,50 @@ local function showButtonTooltip(button, shoppingTooltip)
     return shownTooltip
 end
 
-function Tooltips.ClickButtonOnEnter(self)
-    local button = self:GetParent()
-    Glow.SetHovered(button, true)
-
+local function showClickButtonTooltip(button)
     if showButtonTooltip(button, true) then
         addAppliedEffectHint(button)
         addAuraScanUnavailableHint(button)
         addClickHints(button)
 
-        return
+        return true
     end
 
-    showStatusMessageTooltip(
+    return showStatusMessageTooltip(
         button,
         getAuraScanUnavailableText(button)
     )
+end
+
+local function showInfoButtonTooltip(button)
+    local unavailableText = getUnavailableText(button)
+    local auraScanUnavailableText = getAuraScanUnavailableText(button)
+
+    if showButtonTooltip(button, true) then
+        addAppliedEffectHint(button)
+
+        if button.clickEnabled then
+            addClickHints(button)
+        end
+
+        addAuraScanUnavailableHint(button)
+        addUnavailableHint(button)
+
+        return true
+    end
+
+    return showStatusMessageTooltip(
+        button,
+        auraScanUnavailableText,
+        unavailableText
+    )
+end
+
+function Tooltips.ClickButtonOnEnter(self)
+    local button = self:GetParent()
+
+    Glow.SetHovered(button, true)
+    showClickButtonTooltip(button)
 end
 
 function Tooltips.ClickButtonOnLeave(self)
@@ -250,30 +287,8 @@ end
 
 function Tooltips.InfoButtonOnEnter(self)
     Glow.SetHovered(self, true)
-
-    local unavailableText = getUnavailableText(self)
-    local auraScanUnavailableText = getAuraScanUnavailableText(self)
-
     Tooltips.UpdateUnavailableOverlay(self)
-
-    if showButtonTooltip(self, true) then
-        addAppliedEffectHint(self)
-
-        if self.clickEnabled then
-            addClickHints(self)
-        end
-
-        addAuraScanUnavailableHint(self)
-        addUnavailableHint(self)
-
-        return
-    end
-
-    showStatusMessageTooltip(
-        self,
-        auraScanUnavailableText,
-        unavailableText
-    )
+    showInfoButtonTooltip(self)
 end
 
 function Tooltips.InfoButtonOnLeave(self)
@@ -283,6 +298,34 @@ function Tooltips.InfoButtonOnLeave(self)
 
     ShoppingTooltip1:Hide()
     GameTooltip:Hide()
+end
+
+-- Preference clicks and item rebinding can change an open tooltip without
+-- another mouse-enter event. Rebuild only its contents, not hover behavior.
+function Tooltips.Refresh(button)
+    if not GameTooltip:IsShown() or not GameTooltip:IsOwned(button) then return end
+
+    ShoppingTooltip1:Hide()
+
+    if not button:IsVisible() or not button.consumableState then
+        GameTooltip:Hide()
+
+        return
+    end
+
+    GameTooltip:ClearLines()
+
+    local shown
+
+    if button.clickEnabled then
+        shown = showClickButtonTooltip(button)
+    else
+        shown = showInfoButtonTooltip(button)
+    end
+
+    if not shown then
+        GameTooltip:Hide()
+    end
 end
 
 function Tooltips.UpdateUnavailableOverlay(button)

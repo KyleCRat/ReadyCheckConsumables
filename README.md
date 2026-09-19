@@ -137,6 +137,8 @@ the syntax.
 
 Left-click usable buttons to consume an item or cast a spell. Where supported,
 right-click an item outside combat to save it as your preferred choice.
+Right-click the preferred item again to clear that choice and return to
+automatic selection, including any applicable overrides.
 Preferences are shared by the personal displays and managed macros. Item counts
 use your bags, not your bank.
 

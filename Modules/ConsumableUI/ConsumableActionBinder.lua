@@ -5,6 +5,7 @@ RCC.ConsumableActionBinder = RCC.ConsumableActionBinder or {}
 local Binder = RCC.ConsumableActionBinder
 local ActionKind = RCC.ConsumableActionKind
 local ItemCache = RCC.ConsumableFrameItemCache
+local Tooltips = RCC.ConsumableTooltips
 
 Binder.Capabilities = {
     TEMPORARY = {
@@ -17,7 +18,7 @@ Binder.Capabilities = {
     },
 }
 
-local function preferClickedItem(self, mouseButton)
+local function toggleClickedPreference(self, mouseButton)
     if mouseButton ~= "RightButton" or InCombatLockdown() then return end
 
     local preferenceKey = self.rccPreferenceKey
@@ -25,7 +26,13 @@ local function preferClickedItem(self, mouseButton)
 
     if not preferenceKey or not itemID then return end
 
-    ItemCache.Set(preferenceKey, itemID)
+    if ItemCache.Get(preferenceKey) == itemID then
+        ItemCache.Clear(preferenceKey)
+    else
+        ItemCache.Set(preferenceKey, itemID)
+    end
+
+    Tooltips.Refresh(self:GetParent())
 end
 
 local function setPreference(click, preferenceKey, itemID)
@@ -33,7 +40,7 @@ local function setPreference(click, preferenceKey, itemID)
     click.rccPreferenceItemID = itemID
 
     if preferenceKey and itemID then
-        click:SetScript("PreClick", preferClickedItem)
+        click:SetScript("PreClick", toggleClickedPreference)
     else
         click:SetScript("PreClick", nil)
     end
@@ -172,14 +179,16 @@ function Binder.Bind(button, action, capabilities)
     capabilities = capabilities or Binder.Capabilities.TEMPORARY
 
     if not action or not action.kind then
-        return disable(button)
+        disable(button)
     elseif action.kind == ActionKind.ITEM and action.itemID then
         setItemAction(button, action, capabilities)
     elseif action.kind == ActionKind.SPELL then
         setSpellAction(button, action)
     else
-        return disable(button)
+        disable(button)
     end
+
+    Tooltips.Refresh(button)
 
     return true
 end
