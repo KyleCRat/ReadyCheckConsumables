@@ -106,11 +106,6 @@ local function refreshConsumableFrame()
     RCC.ConsumableStateController.RefreshNow(true)
 end
 
-local function refreshAugmentRuneSelection()
-    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
-    RCC.ConsumableMacros.ScheduleUpdate()
-end
-
 local function parseIconWidthPercent(text)
     if type(text) ~= "string" then return end
 
@@ -237,14 +232,7 @@ local function createGeneralSettings(frame, layout)
 
     displayFlow:AddSection("Augment Runes")
 
-    addSettingCheckbox(frame, displayFlow, {
-        key = "consumables_preferUnlimitedAugment",
-        label = "Prefer Unlimited Augment Runes",
-        tooltip = "When choosing automatically, prefer a carried unlimited rune "
-            .. "over consumable runes, even from a newer expansion. Your explicit "
-            .. "item preference takes priority. Cooldowns do not change the selected rune.",
-        onChanged = refreshAugmentRuneSelection,
-    })
+    addSettingCheckbox(frame, displayFlow, Shared.PreferUnlimitedAugmentSetting)
 
     addSettingCheckbox(frame, eventsFlow, {
         key = "consumables_cauldronOpen",
@@ -609,6 +597,7 @@ function Page.CreateFrame(measurementFrame)
         RCC.ClearContextualVisibilityOverrides(Surface)
         RCC.consumables:SetScale(RCC.GetSetting("consumables_scale"))
         RCC.consumables:ApplyLayout()
+        Shared.RefreshAugmentRuneSelection()
         refreshConsumableFrame()
         Shared.SyncPages()
     end

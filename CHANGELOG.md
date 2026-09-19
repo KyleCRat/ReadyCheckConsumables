@@ -24,6 +24,10 @@
   Cooldowns never change rune selection. Augment Rune macros always use one item
   with no backup, so a cooling-down unlimited rune cannot fall through to a
   consumable. Manual flyout use remains available.
+- Simplified Action Bar settings by removing the redundant section heading and
+  grouping Icons Per Row with Button Appearance. Both personal settings pages
+  now expose the same synchronized Prefer Unlimited Augment Runes setting
+  under matching Augment Runes sections.
 - Added shared item-cooldown displays for unlimited augment runes, combat and
   healing potions, and consumable-pausing items on both personal displays and
   their existing flyouts. Cooldowns follow the prepared Action Bar item during

@@ -15,6 +15,7 @@ local FEATURE_DISABLED_TOOLTIP =
 
 local ACTION_BAR_SETTING_KEYS = {
     "consumablesActionBar_enabled",
+    "consumables_preferUnlimitedAugment",
     "consumablesActionBar_iconsPerRow",
     "consumablesActionBar_buttonWidth",
     "consumablesActionBar_buttonHeight",
@@ -175,40 +176,16 @@ end
 local function createGeneralSettings(frame, layout)
     local root = layout:GetRootFlow()
 
-    local columns = root:BeginColumns()
-    local featureFlow = columns.left
-    local layoutFlow = columns.right
-
-    featureFlow:AddSection("Action Bar")
-    layoutFlow:AddSection("Wrapping")
-
-    addSettingCheckbox(frame, featureFlow, {
+    addSettingCheckbox(frame, root, {
         key = "consumablesActionBar_enabled",
         label = "Enabled",
         tooltip = "Show the permanent Consumables Action Bar.",
         onChanged = ActionBar.RequestVisibility,
     })
 
-    addSettingSlider(frame, layoutFlow, {
-        key = "consumablesActionBar_iconsPerRow",
-        label = "Icons Per Row",
-        tooltip = "Wrap enabled action-bar buttons after this many icons.",
-        minValue = 1,
-        maxValue = Catalog.GetCount(),
-        step = 1,
-        inputFormatter = function(value)
-            return string.format("%d", value)
-        end,
-        onChanged = refreshLayout,
-    })
-
-    columns:Finish({
-        marginBottom = 12,
-    })
-
     root:AddSection("Button Appearance")
 
-    columns = root:BeginColumns()
+    local columns = root:BeginColumns()
 
     addSettingSlider(frame, columns.left, {
         key = "consumablesActionBar_buttonWidth",
@@ -229,6 +206,19 @@ local function createGeneralSettings(frame, layout)
         tooltip = "Set the height of each action-bar button.",
         minValue = ActionBar.Limits.buttonHeight.min,
         maxValue = ActionBar.Limits.buttonHeight.max,
+        step = 1,
+        inputFormatter = function(value)
+            return string.format("%d", value)
+        end,
+        onChanged = refreshLayout,
+    })
+
+    addSettingSlider(frame, columns.left, {
+        key = "consumablesActionBar_iconsPerRow",
+        label = "Icons Per Row",
+        tooltip = "Wrap enabled action-bar buttons after this many icons.",
+        minValue = 1,
+        maxValue = Catalog.GetCount(),
         step = 1,
         inputFormatter = function(value)
             return string.format("%d", value)
@@ -291,6 +281,10 @@ local function createGeneralSettings(frame, layout)
         choices = DURATION_TEXT_POSITION_CHOICES,
         onChanged = refreshLayout,
     })
+
+    columns.left:AddSection("Augment Runes")
+
+    addSettingCheckbox(frame, columns.left, Shared.PreferUnlimitedAugmentSetting)
 
     columns:Finish({
         marginBottom = 12,
@@ -491,6 +485,7 @@ function Page.CreateFrame(measurementFrame)
         end
 
         Position.ResetCurrent()
+        Shared.RefreshAugmentRuneSelection()
         ActionBar.RequestApplySettings()
         Shared.SyncPages()
     end

@@ -20,6 +20,23 @@ function Shared.SyncPages()
     end
 end
 
+function Shared.RefreshAugmentRuneSelection()
+    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
+    RCC.ConsumableMacros.ScheduleUpdate()
+end
+
+Shared.PreferUnlimitedAugmentSetting = {
+    key = "consumables_preferUnlimitedAugment",
+    label = "Prefer Unlimited Augment Runes",
+    tooltip = "When choosing automatically, prefer a carried unlimited rune "
+        .. "over consumable runes, even from a newer expansion. Your explicit "
+        .. "item preference takes priority. Cooldowns do not change the selected rune.",
+    onChanged = function()
+        Shared.RefreshAugmentRuneSelection()
+        Shared.SyncPages()
+    end,
+}
+
 local function setConsumablesFrameEnabled(enabled)
     RCC.SetSettingValue("consumables_enabled", enabled == true)
 

@@ -149,9 +149,10 @@ alternative without changing your choice. Carried fleeting flasks and potions fr
 the same family take priority over your regular choice, even if that rank is
 out of stock. Fleeting items cannot be saved as preferences.
 
-**Prefer Unlimited Augment Runes**, on the Consumables Frame settings page,
-also applies to the Action Bar and macros. It puts carried unlimited runes
-ahead of consumable runes when choosing automatically, even across expansions.
+**Prefer Unlimited Augment Runes** is a shared setting on both the Consumables
+Frame and Action Bar settings pages, and also applies to macros. It puts carried
+unlimited runes ahead of consumable runes when choosing automatically, even
+across expansions.
 An explicit item preference takes priority over this setting; clearing it
 restores automatic selection. Cooldowns never change the selected rune.
 Augment Rune macros always contain just one item-use line, with no backup:
