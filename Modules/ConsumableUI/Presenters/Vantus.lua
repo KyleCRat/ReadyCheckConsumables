@@ -7,7 +7,7 @@ RCC.ConsumablePresenters.Vantus = Vantus
 local ButtonState = RCC.ConsumableState
 local F = RCC.F
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 local OUT_OF_ITEMS = "No Vantus Runes found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Vantus Rune not found in Bags"
@@ -92,7 +92,7 @@ function Vantus.Choices(selection)
     local candidate = selection.candidate or selection.defaultCandidate
 
     return ButtonState.CreateItemFlyoutChoices(selection.candidates, candidate and candidate.itemID, {
-        preferenceKey = CacheKey.VANTUS,
+        preferenceKey = PreferenceKey.VANTUS,
         includeSingleChoice = selection.unavailable,
     })
 end

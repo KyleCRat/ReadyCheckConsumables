@@ -4,7 +4,7 @@ RCC.ConsumableActionBinder = RCC.ConsumableActionBinder or {}
 
 local Binder = RCC.ConsumableActionBinder
 local ActionKind = RCC.ConsumableActionKind
-local ItemCache = RCC.ConsumableFrameItemCache
+local Preferences = RCC.ConsumablePreferences
 local Tooltips = RCC.ConsumableTooltips
 
 Binder.Capabilities = {
@@ -21,25 +21,19 @@ Binder.Capabilities = {
 local function toggleClickedPreference(self, mouseButton)
     if mouseButton ~= "RightButton" or InCombatLockdown() then return end
 
-    local preferenceKey = self.rccPreferenceKey
-    local itemID = self.rccPreferenceItemID
+    local preference = self.rccPreference
 
-    if not preferenceKey or not itemID then return end
+    if not preference then return end
 
-    if ItemCache.Get(preferenceKey) == itemID then
-        ItemCache.Clear(preferenceKey)
-    else
-        ItemCache.Set(preferenceKey, itemID)
-    end
+    Preferences.Toggle(preference.key, preference.capacity, preference.choice)
 
     Tooltips.Refresh(self:GetParent())
 end
 
-local function setPreference(click, preferenceKey, itemID)
-    click.rccPreferenceKey = preferenceKey
-    click.rccPreferenceItemID = itemID
+local function setPreference(click, preference)
+    click.rccPreference = preference
 
-    if preferenceKey and itemID then
+    if preference then
         click:SetScript("PreClick", toggleClickedPreference)
     else
         click:SetScript("PreClick", nil)
@@ -105,7 +99,6 @@ local function setItemAction(button, action, capabilities)
 
         if click.rccActionSignature ~= signature then
             clearLeftClickAction(click)
-            setPreference(click, preferenceKey, action.itemID)
             click.rccActionSignature = signature
         end
 
@@ -142,7 +135,6 @@ local function setItemAction(button, action, capabilities)
             click:SetAttribute("item1", "item:" .. action.itemID)
         end
 
-        setPreference(click, preferenceKey, action.itemID)
         click.rccActionSignature = signature
     end
 
@@ -172,7 +164,22 @@ local function setSpellAction(button, action)
     setClickShown(button, action.available == true)
 end
 
-function Binder.Bind(button, action, capabilities)
+local function setSpellSequenceAction(button, action, capabilities)
+    local prefix = capabilities.allowCombat and "" or "/stopmacro [combat]\n"
+    local macro = prefix .. "/castsequence reset=combat " .. table.concat(action.spellNames, ", ")
+    local click = button.click
+
+    if click.rccActionSignature ~= macro then
+        clearLeftClickAction(click)
+        click:SetAttribute("type1", "macro")
+        click:SetAttribute("macrotext1", macro)
+        click.rccActionSignature = macro
+    end
+
+    setClickShown(button, true)
+end
+
+function Binder.Bind(button, action, capabilities, preference)
     if not button or not button.click then return true end
     if InCombatLockdown() then return false end
 
@@ -184,8 +191,18 @@ function Binder.Bind(button, action, capabilities)
         setItemAction(button, action, capabilities)
     elseif action.kind == ActionKind.SPELL then
         setSpellAction(button, action)
+    elseif action.kind == ActionKind.SPELL_SEQUENCE then
+        setSpellSequenceAction(button, action, capabilities)
     else
         disable(button)
+    end
+
+    setPreference(button.click, preference)
+
+    if preference then
+        -- Clearing an unavailable preference is still a valid right-click
+        -- action; its missing item must never acquire a fallback left click.
+        setClickShown(button, true)
     end
 
     Tooltips.Refresh(button)

@@ -218,7 +218,7 @@ local function copyIntoActiveProfile()
 
     StaticPopup_ShowGenericDropdown(
         "Choose a profile to copy into " .. getProfileLabel(target)
-            .. ". This replaces its settings and profile-stored item preferences. "
+            .. ". This replaces its settings and profile-stored consumable preferences. "
             .. "Character preferences will not change. This cannot be undone.",
         function(source)
             if validateDialogProfiles({ source, target }, target) then
@@ -314,14 +314,14 @@ end
 local function addPreferenceScopeControl(flow)
     return flow:AddControl("checkbox", {
         label = "Use profile-specific consumable preferences",
-        value = RCC.ConsumableFrameItemCache.UsesProfilePreferences(),
+        value = RCC.ConsumablePreferences.UsesProfilePreferences(),
         tooltip = "For this character, use and save consumable item choices in the "
             .. "selected settings profile. When off, item preferences remain "
             .. "character-specific across profile changes. Switching this option "
             .. "does not copy or delete either set of preferences.",
         onChanged = function(checked)
             if canEdit() then
-                RCC.ConsumableFrameItemCache.SetUseProfilePreferences(checked)
+                RCC.ConsumablePreferences.SetUseProfilePreferences(checked)
             end
 
             Profiles.SyncSettingsPages()
@@ -415,7 +415,7 @@ function ProfileSettings.AddSection(flow)
             reason or "There is no inactive custom profile to delete"
         )
 
-        preferenceScope:SetValue(RCC.ConsumableFrameItemCache.UsesProfilePreferences())
+        preferenceScope:SetValue(RCC.ConsumablePreferences.UsesProfilePreferences())
         preferenceScope:SetControlEnabled(enabled, reason)
     end
 

@@ -8,6 +8,7 @@ local F = RCC.F
 RCC.ConsumableActionKind = RCC.ConsumableActionKind or {
     ITEM = "item",
     SPELL = "spell",
+    SPELL_SEQUENCE = "spellSequence",
 }
 
 local ActionKind = RCC.ConsumableActionKind
@@ -22,6 +23,8 @@ local AURA_SCAN_UNAVAILABLE_TEXT =
 
 local COMBAT_PREPARED_FIELDS = {
     "action",
+    "preference",
+    "summaryCapacity",
     "flyoutChoices",
     "icon",
     "hoverState",
@@ -63,9 +66,51 @@ function State.Create(fields)
     return state
 end
 
+-- Effect changes are visual, not a reason to rebind secure actions or disturb
+-- hover ownership. Choice order and preference targets remain interactions.
+function State.SameInteractions(left, right)
+    local equal = RCC.ConsumableInputs.Equal
+
+    if not equal(left.action, right.action)
+        or not equal(left.preference, right.preference)
+        or left.summaryCapacity ~= right.summaryCapacity
+    then
+        return false
+    end
+
+    local leftChoices = left.flyoutChoices or {}
+    local rightChoices = right.flyoutChoices or {}
+
+    if #leftChoices ~= #rightChoices then return false end
+
+    for index, choice in ipairs(leftChoices) do
+        local other = rightChoices[index]
+
+        if not equal(choice.action, other.action) or not equal(choice.preference, other.preference) then
+            return false
+        end
+    end
+
+    return true
+end
+
 -- The runtime fills defaults on newly created presenter states before sharing
 -- them. Published primary states, choices, and nested fields are read-only.
 function State.Normalize(state)
+    if not state.preference and state.action and state.action.preferenceKey then
+        local action = state.action
+        local choice = action.itemID and RCC.ConsumableChoice.Item(action.itemID)
+            or (action.spellID and RCC.ConsumableChoice.Spell(action.spellID))
+
+        if choice then
+            state.preference = {
+                key = action.preferenceKey,
+                capacity = action.preferenceCapacity or 1,
+                choice = choice,
+            }
+        end
+    end
+
     for key, value in pairs(State.DEFAULTS) do
         if state[key] == nil then
             state[key] = value
@@ -173,7 +218,7 @@ function State.CreateItemAction(itemID, options)
     options = options or {}
     local preferenceKey
 
-    if options.preferenceKey and RCC.ConsumableFrameItemCache.CanPrefer(itemID) then
+    if options.preferenceKey and RCC.ConsumablePreferences.CanPrefer(RCC.ConsumableChoice.Item(itemID)) then
         preferenceKey = options.preferenceKey
     end
 
@@ -198,7 +243,58 @@ function State.CreateSpellAction(spellID, options)
         spellName = options.spellName,
         available = options.available,
         preferenceKey = options.preferenceKey,
+        preferenceCapacity = options.preferenceCapacity,
     }
+end
+
+-- Prepared out of combat. Native castsequence advances per successful cast;
+-- observations never skip or advance its cursor.
+function State.CreateSpellSequenceAction(candidates, capacity)
+    if #candidates == 0 then return end
+
+    if #candidates == 1 then
+        if capacity == 1 then return candidates[1].action end
+
+        return State.CreateSpellAction(candidates[1].spellID, { available = true })
+    end
+
+    local spells = {}
+    local names = {}
+
+    for _, candidate in ipairs(candidates) do
+        if not candidate.name then return end
+
+        spells[#spells + 1] = candidate.spellID
+        names[#names + 1] = candidate.name
+    end
+
+    return {
+        kind = ActionKind.SPELL_SEQUENCE,
+        spellIDs = spells,
+        spellNames = names,
+        available = true,
+    }
+end
+
+-- Capacity selects the summary mode even with no applied effects. Images and
+-- readiness describe observations, never preferences or the prepared action.
+function State.ApplyEffectSummary(state, model)
+    state.summaryCapacity = model.selection.capacity
+    state.summaryEffects = model.effects
+    state.summaryAvailable = model.available
+    state.summaryLabel = model.selection.label
+    state.summaryPreferences = model.selection.preferences
+    state.hasConsumableBuff = model.complete
+    state.desaturated = not model.complete
+    state.statusIcon = model.complete and State.READY_ICON or State.NOT_READY_ICON
+    state.glow = not model.satisfied
+
+    if model.remaining then
+        state.detailText = F.FormatDuration(model.remaining)
+        state.detailTextIsBad = model.timeIsBad
+    end
+
+    State.ApplyAuraScanAvailability(state, model.available)
 end
 
 function State.CreateItemChoice(candidate, options)

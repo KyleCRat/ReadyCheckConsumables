@@ -6,7 +6,7 @@ RCC.ConsumablePresenters.Augment = Augment
 
 local ButtonState = RCC.ConsumableState
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 local OUT_OF_ITEMS = "No Augment Runes found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Augment Rune not found in Bags"
@@ -82,7 +82,7 @@ function Augment.Choices(selection)
         augmentItemID,
         {
             getCountText = RCC.Consumables.Augment.GetCountText,
-            preferenceKey = CacheKey.AUGMENT,
+            preferenceKey = PreferenceKey.AUGMENT,
             includeSingleChoice = outOfCachedAugment,
         }
     )

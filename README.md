@@ -32,7 +32,7 @@ compact **Profiles** section on the main settings page, above the module buttons
 
 Changes affect every character using the same profile.
 
-Preferred consumable items are **character-specific by default**, shared by
+Preferred consumable choices are **character-specific by default**, shared by
 that character's personal displays and macros even when you switch profiles.
 Your existing shared choices are copied to each character once, on their first
 login after this update.
@@ -103,12 +103,12 @@ Both personal displays also offer optional Inky Black Potion, Repair, and
 Recuperate buttons, which are off by default.
 
 Rogues also get separate **Lethal Poison** and **Non-lethal Poison** buttons,
-independent of weapon enchants. Each shows an active poison and its duration,
-or a known poison to apply when none is active. Hover outside combat to
-left-click another known poison, including a second of each type with
-Dragon-Tempered Blades. For now, each button confirms one active poison; it
-does not check whether the talent's second poison is applied. Toggle these
-buttons independently in either display's settings.
+independent of weapon enchants. With Dragon-Tempered Blades, each shows both
+active poisons in a split icon and checks whether both are applied. Hover
+outside combat to see all known choices, with checkmarks on active poisons.
+Left-click the summary once per cast to apply its prepared pair, including
+on the Action Bar in combat. Toggle these buttons independently in either
+display's settings.
 
 ## Group Readiness
 
@@ -194,6 +194,20 @@ automatic selection, including any applicable overrides.
 Preferences are shared by the personal displays and managed macros. They are
 stored for your character unless you opt into profile-specific preferences.
 Item counts use your bags, not your bank.
+
+Poison flyouts also support right-click preferences. Single- and double-poison
+modes remember separate choices, restored when you change talents. In double
+mode you can prefer two poisons; selecting another replaces the oldest
+preference. Remaining choices come from your character's remembered applications,
+not from guessing a second poison. The summary tooltip lists applied poisons
+with their durations, your preferences, and the prepared casting order.
+The cast sequence advances after each successful cast; it does not skip
+already-active poisons and resets when combat ends.
+
+Weapon enchants also remember applied oils for each hand. When no class-spell
+override or explicit item preference wins, RCC tries the most recently applied
+oil you still carry before normal inventory priority. Remembered applications
+stay with your character even when preferences are stored in a profile.
 
 Your preference keeps the exact item and rank you chose. If it runs out, the
 button keeps showing that item with a zero count; macros can select an available

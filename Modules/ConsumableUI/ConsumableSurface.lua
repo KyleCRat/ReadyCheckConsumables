@@ -206,12 +206,15 @@ function Surface.ApplySnapshot(surface, snapshot, categories)
             end
 
             View.ApplyVisual(button, visualState)
+            RCC.ConsumableTooltips.Refresh(button)
         end
 
         if not inCombat then
             if applied.interaction ~= revisions.interaction then
-                Binder.Bind(button, state.action, surface.capabilities)
+                Binder.Bind(button, state.action, surface.capabilities, state.preference)
                 Flyout.SetChoices(button, state.flyoutChoices)
+            elseif policyChanged or applied.visual ~= revisions.visual then
+                Flyout.ApplyChoiceVisuals(button, state.flyoutChoices)
             end
 
             surface.preparedStates[key] = state

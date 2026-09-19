@@ -2,7 +2,7 @@ local _, RCC = ...
 local Food = {}
 RCC.Consumables.Food = Food
 local S = RCC.ConsumableSelection
-local KEY = RCC.ConsumableItemCacheKey.FOOD
+local KEY = RCC.ConsumablePreferenceKey.FOOD
 
 Food.Inventory = { list = RCC.db.foodItemIDs }
 
@@ -15,7 +15,7 @@ Food.Dependencies = {
 
 function Food.Select(inputs)
     local candidates = S.List(inputs.inventory, RCC.db.foodItemIDs)
-    local preferredID = inputs.preferences[KEY]
+    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, KEY)
     local preferred = S.FindListItem(inputs.inventory, RCC.db.foodItemIDs, preferredID)
 
     return S.Resolve({

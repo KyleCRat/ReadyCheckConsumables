@@ -271,7 +271,7 @@ local function readInputs(dirty, now)
     end
 
     if dirty.preferences then
-        storeInput("preferences", Inputs.ReadPreferences())
+        storeInput("preferences", Inputs.ReadPreferences(inputs.preferences))
     end
 
     local groupUnits = type(dirty.groupAuras) == "table" and dirty.groupAuras or {}
@@ -301,6 +301,29 @@ local function readInputs(dirty, now)
             demand.playerAuraSpellIDs,
             dirty.playerAuras and inputs.playerAuras or nil
         ))
+    end
+
+    -- Confirmed applications can update character history without changing
+    -- explicit preferences. Use observations already read for this demand;
+    -- history never requests an extra aura scan or a polling timer.
+    if demand.sources.history then
+        local historyChanged = false
+
+        for key in pairs(demand.categories) do
+            local definition = RCC.ConsumableCatalog.GetDefinition(key)
+
+            if RCC.ConsumableHistory.Observe(inputs, definition) then
+                historyChanged = true
+            end
+        end
+
+        if dirty.history or historyChanged then
+            storeInput("history", RCC.ConsumableHistory.Read(inputs.history))
+        end
+
+        if historyChanged then
+            RCC.ConsumableMacros.ScheduleUpdate()
+        end
     end
 
     if demand.sources.groupAuras and (resetGroup or next(groupUnits) or dirty.roster) then

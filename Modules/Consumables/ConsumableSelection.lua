@@ -14,6 +14,7 @@ function Selection.Item(inventory, itemID, data, index, uses)
     data = type(data) == "table" and data or nil
 
     return {
+        choice = RCC.ConsumableChoice.Item(itemID),
         itemID = itemID,
         count = uses and item.uses or item.count,
         icon = data and data.icon or item.icon,
@@ -112,16 +113,58 @@ end
 -- Macros skip unavailable choices and use the same ordering for their primary
 -- and any permitted backup. A spell override replaces item use, not the saved
 -- item preference.
+function Selection.ResolveChoices(overrides, preferences, fallbacks, capacity, compareFallbacks)
+    local selected = {}
+    local included = {}
+
+    local function add(candidates)
+        for _, candidate in ipairs(candidates or {}) do
+            local key = RCC.ConsumableChoice.Key(candidate.choice)
+
+            if #selected < capacity and not included[key] then
+                included[key] = true
+                selected[#selected + 1] = candidate
+            end
+        end
+    end
+
+    add(overrides)
+    add(preferences)
+    local fixedCount = #selected
+    add(fallbacks)
+
+    -- Priority chooses which fallbacks fill the remaining slots. A stable
+    -- presentation order can then keep the same pair's cast sequence unchanged
+    -- when one member is refreshed. Explicit preference order is never sorted.
+    if compareFallbacks and #selected - fixedCount > 1 then
+        local chosenFallbacks = {}
+
+        for index = fixedCount + 1, #selected do
+            chosenFallbacks[#chosenFallbacks + 1] = selected[index]
+        end
+
+        table.sort(chosenFallbacks, compareFallbacks)
+
+        for index, candidate in ipairs(chosenFallbacks) do
+            selected[fixedCount + index] = candidate
+        end
+    end
+
+    return selected
+end
+
 function Selection.Resolve(selection, actionOptions)
+    selection.preferenceKey = selection.preferenceKey or (actionOptions and actionOptions.preferenceKey)
+
     if selection.overrideAction then
         selection.action = selection.overrideAction
 
         return selection
     end
 
-    local override = selection.overrides and selection.overrides[1]
-    local fallback = selection.fallbacks and selection.fallbacks[1]
-    local candidate = override or selection.preferred or fallback
+    local preferred = selection.preferred and { selection.preferred }
+    local selected = Selection.ResolveChoices(selection.overrides, preferred, selection.fallbacks, 1)
+    local candidate = selected[1]
 
     selection.candidate = candidate
     selection.unavailable = candidate ~= nil and candidate.count <= 0

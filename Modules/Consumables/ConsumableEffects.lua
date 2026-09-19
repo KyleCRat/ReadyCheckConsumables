@@ -76,3 +76,61 @@ function Effects.Evaluate(selection, observation, instance, now)
 
     return model
 end
+
+-- Preserve every readable effect. An absent alternative is unknown only when
+-- that particular targeted lookup was unavailable.
+function Effects.ObserveSpells(inputs, spellIDs)
+    local observation = { available = true, auras = {}, bySpellID = {} }
+
+    for _, spellID in ipairs(spellIDs) do
+        if inputs.spells[spellID].known then
+            local result = inputs.playerSpellAuras[spellID]
+            observation.bySpellID[spellID] = result
+
+            if result.aura then
+                observation.auras[#observation.auras + 1] = result.aura
+            elseif not result.available then
+                observation.available = false
+            end
+        end
+    end
+
+    return observation
+end
+
+function Effects.EvaluateMany(selection, observation, instance, now)
+    local model = {
+        selection = selection,
+        action = selection.action,
+        available = observation.available,
+        effects = {},
+        bySpellID = {},
+        observations = observation.bySpellID,
+        satisfied = true,
+        timeIsBad = false,
+    }
+
+    -- Data order is stable, independent of preferences, history, duration
+    -- sorting, and which member of a pair was refreshed most recently.
+    for _, aura in ipairs(observation.auras) do
+        local effect = Effects.Aura(aura, instance, now)
+
+        if effect then
+            effect.spellID = aura.spellID
+            model.effects[#model.effects + 1] = effect
+            model.bySpellID[aura.spellID] = effect
+            model.satisfied = model.satisfied and effect.satisfied
+            model.timeIsBad = model.timeIsBad or effect.timeIsBad
+            Effects.AddDeadline(model, effect.expiry, instance, now)
+
+            if effect.remaining then
+                model.remaining = math.min(model.remaining or effect.remaining, effect.remaining)
+            end
+        end
+    end
+
+    model.complete = #model.effects >= (selection.capacity or 1)
+    model.satisfied = model.satisfied and model.complete
+
+    return model
+end

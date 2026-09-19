@@ -3,7 +3,7 @@ local WeaponEnchant = {}
 RCC.Consumables.WeaponEnchant = WeaponEnchant
 local S = RCC.ConsumableSelection
 local State = RCC.ConsumableState
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
 local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
@@ -12,7 +12,7 @@ local MILLISECONDS_PER_SECOND = 1000
 WeaponEnchant.Inventory = { map = RCC.db.weaponEnchantItemIDs }
 
 WeaponEnchant.Dependencies = {
-    selection = { "inventory", "slotPreference", "slotWeapon", "spells" },
+    selection = { "inventory", "slotPreference", "slotWeapon", "spells", "categoryHistory" },
     observation = { "slotWeapon" },
     evaluation = { "instance.warningSeconds" },
     expiration = "weapons",
@@ -33,11 +33,11 @@ function WeaponEnchant.GetSpellIDs()
     return ids
 end
 
-function WeaponEnchant.GetCacheKey(slotID)
+function WeaponEnchant.GetPreferenceKey(slotID)
     if slotID == MAIN_HAND_INVENTORY_SLOT then
-        return CacheKey.MAIN_HAND_TEMP_WEAPON_ENCHANT
+        return PreferenceKey.MAIN_HAND_TEMP_WEAPON_ENCHANT
     elseif slotID == OFF_HAND_INVENTORY_SLOT then
-        return CacheKey.OFF_HAND_TEMP_WEAPON_ENCHANT
+        return PreferenceKey.OFF_HAND_TEMP_WEAPON_ENCHANT
     end
 end
 
@@ -78,7 +78,6 @@ local function spellAction(inputs, data, slotID)
     return State.CreateSpellAction(data.spellID, {
         spellName = spell.name,
         available = inputs.weapons[slotID].canBeEnchanted,
-        preferenceKey = WeaponEnchant.GetCacheKey(slotID),
     })
 end
 
@@ -96,7 +95,7 @@ end
 
 -- A known active class spell stays primary; a weapon without an enchant
 -- defaults to its eligible spell. Otherwise use the saved item choice, the
--- applied item, or normal inventory priority, in that order. Applying an
+-- most recently used carried item, or inventory priority. Applying an
 -- enchant never changes the saved item preference.
 function WeaponEnchant.Select(inputs, definition)
     local slotID = definition.weaponSlot
@@ -104,7 +103,7 @@ function WeaponEnchant.Select(inputs, definition)
     local result = {
         applicable = slot.canBeEnchanted,
         slotID = slotID,
-        preferenceKey = WeaponEnchant.GetCacheKey(slotID),
+        preferenceKey = WeaponEnchant.GetPreferenceKey(slotID),
         candidates = {},
         spells = {},
     }
@@ -116,17 +115,17 @@ function WeaponEnchant.Select(inputs, definition)
         compare = betterItem,
     })
 
-    local preferredID = inputs.preferences[result.preferenceKey]
+    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, result.preferenceKey)
     result.preferred = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, preferredID)
     result.fallbacks = {}
 
-    if not result.preferred and result.active and result.active.item then
-        -- With no saved choice, keep the applied oil as the automatic default,
-        -- including its zero-count display when none remains in bags.
-        local appliedItem = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, result.active.item)
+    for _, choice in ipairs(RCC.ConsumableHistory.GetChoices(inputs.history, definition.key)) do
+        if choice.kind == "item" then
+            local candidate = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, choice.id)
 
-        if appliedItem then
-            result.fallbacks[#result.fallbacks + 1] = appliedItem
+            if candidate and candidate.count > 0 then
+                result.fallbacks[#result.fallbacks + 1] = candidate
+            end
         end
     end
 
@@ -203,6 +202,18 @@ end
 
 function WeaponEnchant.Observe(inputs, definition)
     return inputs.weapons[definition.weaponSlot]
+end
+
+function WeaponEnchant.GetApplications(inputs, definition)
+    local slot = inputs.weapons[definition.weaponSlot]
+    local enchant = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID]
+    local applications = {}
+
+    if enchant and enchant.item then
+        applications[1] = RCC.ConsumableChoice.Item(enchant.item)
+    end
+
+    return applications, slot.available, 1
 end
 
 function WeaponEnchant.Evaluate(selection, observation, inputs, now)

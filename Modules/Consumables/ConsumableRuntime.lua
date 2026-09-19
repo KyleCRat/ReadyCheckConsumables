@@ -8,28 +8,12 @@ local Catalog = RCC.ConsumableCatalog
 
 local EMPTY = {}
 
-local function dependencyValue(inputs, path, definition)
-    if path == "slotPreference" then
-        return inputs.preferences[RCC.Consumables.WeaponEnchant.GetCacheKey(definition.weaponSlot)]
-    elseif path == "slotWeapon" then
-        return inputs.weapons[definition.weaponSlot]
-    end
-
-    local value = inputs
-
-    for key in path:gmatch("[^.]+") do
-        value = value[key]
-    end
-
-    return value
-end
-
 local function dependenciesChanged(seen, dependencies, inputs, definition)
     local changed = seen == nil
     local current = {}
 
     for _, path in ipairs(dependencies or EMPTY) do
-        local value = dependencyValue(inputs, path, definition)
+        local value = Inputs.GetDependency(inputs, path, definition)
         current[path] = value
 
         if not seen or seen[path] ~= value then
@@ -95,6 +79,10 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         if selectionDirty then
             local selected = domain.Select and domain.Select(inputs, definition) or EMPTY
 
+            if selected.capacity and not Catalog.SupportsCapacity(definition, selected.capacity) then
+                error("RCC: unsupported selection capacity " .. tostring(selected.capacity) .. " for " .. key)
+            end
+
             if not Inputs.Equal(selected, selection) then
                 selection = selected
             end
@@ -114,19 +102,33 @@ function Runtime.Build(runtime, inputs, now, due, categories)
             or evaluationDirty
             or (due and due[key])
         then
+            local model = domain.Evaluate and domain.Evaluate(selection, observation, inputs, now)
+                or { selection = selection, action = selection.action }
             local choices = cache.choices
 
-            if not previous or selection ~= cache.selection then
-                choices = presenter.Choices and presenter.Choices(selection) or nil
+            if not previous or selection ~= cache.selection or presenter.choicesUseModel then
+                local choiceInput = presenter.choicesUseModel and model or selection
+                choices = presenter.Choices and presenter.Choices(choiceInput) or nil
 
                 for _, choice in ipairs(choices or EMPTY) do
                     State.Normalize(choice)
                 end
             end
 
-            local model = domain.Evaluate and domain.Evaluate(selection, observation, inputs, now)
-                or { selection = selection, action = selection.action }
-            local state = State.Normalize(presenter.Present(model))
+            local state = presenter.Present(model)
+            local candidate = selection.candidate
+
+            if not state.action and not state.summaryCapacity and candidate and selection.preferenceKey
+                and RCC.ConsumablePreferences.CanPrefer(candidate.choice)
+            then
+                state.preference = {
+                    key = selection.preferenceKey,
+                    capacity = selection.capacity or 1,
+                    choice = candidate.choice,
+                }
+            end
+
+            State.Normalize(state)
 
             if model.allowFlyout ~= false then
                 state.flyoutChoices = choices
@@ -135,8 +137,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
             local oldState = cache.state
             local visualChanged = not Inputs.Equal(oldState, state)
             local interactionChanged = not oldState
-                or not Inputs.Equal(oldState.action, state.action)
-                or not Inputs.Equal(oldState.flyoutChoices, state.flyoutChoices)
+                or not State.SameInteractions(oldState, state)
             local applicabilityChanged = not oldState or oldState.applicable ~= state.applicable
             local revisions = cache.revisions or {}
 

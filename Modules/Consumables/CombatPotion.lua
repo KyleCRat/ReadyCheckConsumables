@@ -3,7 +3,7 @@ local _, RCC = ...
 local CombatPotion = {}
 RCC.Consumables.CombatPotion = CombatPotion
 local Selection = RCC.ConsumableSelection
-local PREFERENCE_KEY = RCC.ConsumableItemCacheKey.COMBAT_POTION
+local PREFERENCE_KEY = RCC.ConsumablePreferenceKey.COMBAT_POTION
 
 CombatPotion.Inventory = {
     list = RCC.db.combatPotionItemIDs,
@@ -26,7 +26,7 @@ function CombatPotion.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.combatPotionItemIDs,
         itemData = RCC.db.combatPotionItemData,
-        preferredID = inputs.preferences[PREFERENCE_KEY],
+        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
         canFallbackToFamily = canFallbackToFamily,
     })
 

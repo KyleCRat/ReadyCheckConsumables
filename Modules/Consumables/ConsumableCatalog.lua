@@ -7,6 +7,7 @@ local Reason = RCC.DisplayReason
 
 local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
 local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
+local SINGLE_CAPACITY = { 1 }
 
 local STANDARD_VISIBILITY = {
     reasons = {
@@ -89,6 +90,7 @@ local DEFINITIONS = {
         domain = "RoguePoison",
         classToken = "ROGUE",
         poisonType = "lethal",
+        supportedCapacities = { 1, 2 },
         label = "Lethal Poison",
         settingKey = "icon_lethalPoison",
         defaultIcon = RCC.db.roguePoisonFallbackIconID,
@@ -102,6 +104,7 @@ local DEFINITIONS = {
         domain = "RoguePoison",
         classToken = "ROGUE",
         poisonType = "nonLethal",
+        supportedCapacities = { 1, 2 },
         label = "Non-lethal Poison",
         settingKey = "icon_nonLethalPoison",
         defaultIcon = RCC.db.roguePoisonFallbackIconID,
@@ -206,6 +209,7 @@ for i = 1, #DEFINITIONS do
     local definition = DEFINITIONS[i]
 
     definition.visibility = definition.visibility or STANDARD_VISIBILITY
+    definition.supportedCapacities = definition.supportedCapacities or SINGLE_CAPACITY
     definition.actionBarSettingKey = "consumablesActionBar_icon_"
         .. definition.key
     BY_KEY[definition.key] = definition
@@ -217,6 +221,17 @@ end
 
 function Catalog.GetDefinition(key)
     return BY_KEY[key]
+end
+
+-- Definitions declare the allowed counts; the domain chooses the current one
+-- from its inputs. Neither the renderer nor the saved preference branches
+-- decide which count a category may select.
+function Catalog.SupportsCapacity(definition, capacity)
+    for _, supported in ipairs(definition.supportedCapacities) do
+        if supported == capacity then return true end
+    end
+
+    return false
 end
 
 -- Class does not change during a session. Unlike equipment or learned spells,

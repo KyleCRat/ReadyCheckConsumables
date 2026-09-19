@@ -2,7 +2,7 @@ local _, RCC = ...
 
 local Glow = RCC.ConsumableFrameGlow
 local State = RCC.ConsumableState
-local ItemCache = RCC.ConsumableFrameItemCache
+local Preferences = RCC.ConsumablePreferences
 local F = RCC.F
 local GetItemInfo = C_Item.GetItemInfo
 local GetSpellInfo = C_Spell.GetSpellInfo
@@ -72,6 +72,7 @@ local function addClickHint(button)
     local state = button.consumableState
 
     if not state then return end
+    if state.summaryCapacity then return end
 
     local action = state.action
 
@@ -102,12 +103,18 @@ end
 
 local function addRightClickPreferenceHint(button, hasHint)
     local state = button.consumableState
-    local action = state and state.action
-    local itemID = State.GetClickHintItemID(state)
+    local preference = state and state.preference
 
-    if not action or not action.preferenceKey or not itemID then return end
+    if not preference then return end
 
-    local targetText = getItemLink(itemID)
+    local choice = preference.choice
+    local targetText
+
+    if choice.kind == "item" then
+        targetText = getItemLink(choice.id)
+    else
+        targetText = getSpellDisplay(choice.id)
+    end
 
     if not targetText then return end
 
@@ -115,7 +122,7 @@ local function addRightClickPreferenceHint(button, hasHint)
         GameTooltip:AddLine(" ")
     end
 
-    if ItemCache.Get(action.preferenceKey) == itemID then
+    if Preferences.IsPreferred(preference.key, preference.capacity, choice) then
         GameTooltip:AddLine("|cff00ff00Preferred:|r " .. targetText)
         GameTooltip:AddLine("|cff00ff00Right click to clear preference|r")
     else
@@ -181,6 +188,58 @@ local function showButtonTooltip(button, shoppingTooltip)
 
     if not state then return end
 
+    if state.summaryCapacity then
+        setGameTooltipOwner(button)
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine(state.summaryLabel)
+        GameTooltip:AddLine("Currently applied", 1, 1, 1)
+
+        for _, effect in ipairs(state.summaryEffects or {}) do
+            local name = getSpellDisplay(effect.spellID) or effect.name or "Spell information unavailable"
+            local duration = effect.remaining and F.FormatDuration(effect.remaining) or ""
+            GameTooltip:AddDoubleLine(name, duration, 1, 1, 1, 1, 1, 1)
+        end
+
+        local unfilled = state.summaryCapacity - #(state.summaryEffects or {})
+
+        if unfilled > 0 then
+            local label = state.summaryAvailable and "Not applied" or "Unable to confirm"
+            GameTooltip:AddLine(label .. ": " .. unfilled, 0.7, 0.7, 0.7)
+        end
+
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Preferred", 1, 1, 1)
+
+        if #(state.summaryPreferences or {}) == 0 then
+            GameTooltip:AddLine("None selected", 0.7, 0.7, 0.7)
+        else
+            for _, candidate in ipairs(state.summaryPreferences) do
+                local name = getSpellDisplay(candidate.spellID) or candidate.name or "Spell information unavailable"
+                GameTooltip:AddLine(name, 0.2, 1, 0.2, true)
+            end
+        end
+
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Prepared casts", 1, 1, 1)
+        local action = state.action
+        local spellIDs = action and (action.spellIDs or { action.spellID }) or {}
+
+        if #spellIDs == 0 then
+            GameTooltip:AddLine("Hover to choose an available spell", 0.7, 0.7, 0.7, true)
+        else
+            for index, spellID in ipairs(spellIDs) do
+                local name = getSpellDisplay(spellID) or "Spell information unavailable"
+                GameTooltip:AddLine(index .. ". " .. name, 1, 1, 1, true)
+            end
+
+            GameTooltip:AddLine("Left click once per cast", 0.2, 1, 0.2, true)
+        end
+
+        GameTooltip:Show()
+
+        return true
+    end
+
     if state.tooltipItemID then
         setGameTooltipOwner(button)
         GameTooltip:SetItemByID(state.tooltipItemID)
@@ -237,6 +296,7 @@ local function showClickButtonTooltip(button)
     if showButtonTooltip(button, true) then
         addAppliedEffectHint(button)
         addAuraScanUnavailableHint(button)
+        addUnavailableHint(button)
         addClickHints(button)
 
         return true

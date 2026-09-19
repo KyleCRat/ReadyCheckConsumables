@@ -235,6 +235,7 @@ end
 local function createFlyoutButton(owner, index)
     local button = View.Create(owner.flyout, owner.definition, {
         clickable = true,
+        isFlyout = true,
         capabilities = owner.surfaceCapabilities,
     })
 
@@ -441,7 +442,7 @@ function Flyout.SetChoices(owner, choices)
         local choice = choices[i]
 
         View.ApplyVisual(button, choice)
-        Binder.Bind(button, choice.action, owner.surfaceCapabilities)
+        Binder.Bind(button, choice.action, owner.surfaceCapabilities, choice.preference)
         button:Show()
     end
 
@@ -468,4 +469,19 @@ function Flyout.HideAll(buttons)
     end
 
     return true
+end
+
+-- Existing choices only: no creation, secure binding, layout, show/hide, or
+-- hover transitions when a checkmark or duration changes.
+function Flyout.ApplyChoiceVisuals(owner, choices)
+    if InCombatLockdown() or not owner.flyout then return end
+
+    for index, choice in ipairs(choices or {}) do
+        local button = owner.flyout.buttons[index]
+
+        if button then
+            View.ApplyVisual(button, choice)
+            RCC.ConsumableTooltips.Refresh(button)
+        end
+    end
 end

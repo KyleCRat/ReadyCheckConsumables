@@ -88,6 +88,7 @@ function Profiles.Initialize(defaults, characterDefaults)
         {
             displayName = "Ready Check Consumables",
             initialProfile = "global",
+            migration = RCC.ProfileMigration.CreateProfileMigration(),
         }
     )
 

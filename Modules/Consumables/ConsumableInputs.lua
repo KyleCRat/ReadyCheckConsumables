@@ -8,7 +8,7 @@ local Inputs = {}
 RCC.ConsumableInputs = Inputs
 
 local F = RCC.F
-local Cache = RCC.ConsumableFrameItemCache
+local Preferences = RCC.ConsumablePreferences
 
 local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
 local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
@@ -153,12 +153,8 @@ function Inputs.ReadInventory(itemIDs, previous, changedIDs)
     return inventory
 end
 
-function Inputs.ReadPreferences()
-    local preferences = {}
-
-    for _, cacheKey in pairs(RCC.ConsumableItemCacheKey) do
-        preferences[cacheKey] = Cache.Get(cacheKey)
-    end
+function Inputs.ReadPreferences(previous)
+    local preferences = Preferences.Read(previous)
 
     preferences.preferUnlimitedAugment =
         RCC.GetSetting("consumables_preferUnlimitedAugment") == true
@@ -380,21 +376,51 @@ function Inputs.ReadGroupAuras(roster, class, previous, units, now, freshPlayerA
     return observations
 end
 
+function Inputs.GetDependency(inputs, path, definition)
+    if path == "slotPreference" then
+        local key = RCC.Consumables.WeaponEnchant.GetPreferenceKey(definition.weaponSlot)
+
+        return inputs.preferences[key]
+    elseif path == "slotWeapon" then
+        return inputs.weapons[definition.weaponSlot]
+    elseif path == "categoryPreference" then
+        return inputs.preferences[definition.key]
+    elseif path == "categoryHistory" then
+        return inputs.history[definition.key]
+    end
+
+    local value = inputs
+
+    for key in path:gmatch("[^.]+") do
+        value = value[key]
+    end
+
+    return value
+end
+
 function Inputs.ReadSelection(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
-    local dependencies = RCC.Consumables[definition.domain].Dependencies.selection
+    local domain = RCC.Consumables[definition.domain]
+    local dependencies = domain.Dependencies.selection
     local needed = {}
 
     for _, path in ipairs(dependencies or {}) do
         needed[path:match("^[^.]+")] = true
     end
 
+    if domain.GetApplications then
+        for _, path in ipairs(domain.Dependencies.observation) do
+            needed[path:match("^[^.]+")] = true
+        end
+    end
+
     local now = GetTime()
     local inventory = Inputs.ReadInventory(Inputs.GetItemIDs(category))
 
-    return {
+    local inputs = {
         inventory = inventory,
-        preferences = (needed.preferences or needed.slotPreference) and Inputs.ReadPreferences() or nil,
+        preferences = (needed.preferences or needed.slotPreference or needed.categoryPreference)
+            and Inputs.ReadPreferences() or nil,
         instance = needed.instance and Inputs.ReadInstance() or nil,
         location = needed.location and Inputs.ReadLocation() or nil,
         class = needed.class and Inputs.ReadClass() or nil,
@@ -407,4 +433,14 @@ function Inputs.ReadSelection(category)
         cooldowns = needed.cooldowns
             and Inputs.ReadCooldowns(inventory, Inputs.GetCooldownItemIDs(category), now) or nil,
     }
+
+    if needed.categoryHistory then
+        if RCC.ConsumableHistory.Observe(inputs, definition) then
+            RCC.ConsumableStateController.Invalidate("history", { nextFrame = true })
+        end
+
+        inputs.history = RCC.ConsumableHistory.Read()
+    end
+
+    return inputs
 end

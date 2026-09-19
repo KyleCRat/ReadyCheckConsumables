@@ -3,7 +3,7 @@ local _, RCC = ...
 local HealingPotion = {}
 RCC.Consumables.HealingPotion = HealingPotion
 local Selection = RCC.ConsumableSelection
-local PREFERENCE_KEY = RCC.ConsumableItemCacheKey.HEALING_POTION
+local PREFERENCE_KEY = RCC.ConsumablePreferenceKey.HEALING_POTION
 
 local cooldownItemIDs = CopyTable(RCC.db.healingPotionItemIDs)
 cooldownItemIDs[#cooldownItemIDs + 1] = RCC.db.brawlersGuildHealingPotionItemID
@@ -22,7 +22,7 @@ function HealingPotion.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.healingPotionItemIDs,
         itemData = RCC.db.healingPotionItemData,
-        preferredID = inputs.preferences[PREFERENCE_KEY],
+        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
     })
 
     if RCC.db.brawlersGuildMapIDs[inputs.location.uiMapID] then

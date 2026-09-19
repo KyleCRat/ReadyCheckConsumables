@@ -3,7 +3,7 @@ local _, RCC = ...
 local Flask = {}
 RCC.Consumables.Flask = Flask
 local Selection = RCC.ConsumableSelection
-local PREFERENCE_KEY = RCC.ConsumableItemCacheKey.FLASK
+local PREFERENCE_KEY = RCC.ConsumablePreferenceKey.FLASK
 
 Flask.Inventory = { list = RCC.db.flaskItemIDs }
 
@@ -18,7 +18,7 @@ function Flask.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.flaskItemIDs,
         itemData = RCC.db.flaskItemData,
-        preferredID = inputs.preferences[PREFERENCE_KEY],
+        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
     })
 
     return Selection.Resolve(choices, { preferenceKey = PREFERENCE_KEY })

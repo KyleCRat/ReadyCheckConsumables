@@ -47,8 +47,10 @@ function Demand.Build(categories)
             for _, path in ipairs(dependencies[phase] or {}) do
                 local source = path:match("^[^.]+")
 
-                if source == "slotPreference" then
+                if source == "slotPreference" or source == "categoryPreference" then
                     source = "preferences"
+                elseif source == "categoryHistory" then
+                    source = "history"
                 elseif source == "slotWeapon" then
                     source = "weapons"
                     demand.weaponSlots[definition.weaponSlot] = true

@@ -3,79 +3,129 @@ local RoguePoison = {}
 RCC.Consumables.RoguePoison = RoguePoison
 
 local State = RCC.ConsumableState
+local Selection = RCC.ConsumableSelection
+local Choice = RCC.ConsumableChoice
+local Preferences = RCC.ConsumablePreferences
+local History = RCC.ConsumableHistory
 local Effects = RCC.ConsumableEffects
 
 RoguePoison.Dependencies = {
-    selection = { "class.classToken", "spells", "playerSpellAuras" },
+    selection = { "class.classToken", "spells", "categoryPreference", "categoryHistory" },
     observation = { "spells", "playerSpellAuras" },
     evaluation = { "instance.warningSeconds" },
     expiration = "playerSpellAuras",
 }
 
-function RoguePoison.GetSpellIDs(definition)
+function RoguePoison.GetPlayerAuraSpellIDs(definition)
     return RCC.db.roguePoisons[definition.poisonType]
 end
 
--- Poison casts and their self buffs use the same IDs. Keeping both declarations
--- explicit lets other spell categories use different cast and aura IDs.
-RoguePoison.GetPlayerAuraSpellIDs = RoguePoison.GetSpellIDs
+function RoguePoison.GetSpellIDs(definition)
+    local ids = { RCC.db.roguePoisonCapacity.talentSpellID }
 
-function RoguePoison.Observe(inputs, definition)
-    local available = true
-
-    for _, spellID in ipairs(RoguePoison.GetSpellIDs(definition)) do
-        if inputs.spells[spellID].known then
-            local observation = inputs.playerSpellAuras[spellID]
-
-            if observation.aura then return observation end
-
-            if not observation.available then
-                available = false
-            end
-        end
+    for _, spellID in ipairs(RoguePoison.GetPlayerAuraSpellIDs(definition)) do
+        ids[#ids + 1] = spellID
     end
 
-    return { available = available }
+    return ids
 end
 
--- These are self-buff choices, not weapon-slot enchants or item preferences.
--- Keep an active known poison primary; otherwise use the first known spell in
--- data order. With two active poisons, that same order breaks the tie. Every
--- other known poison remains manually castable from the out-of-combat flyout.
+function RoguePoison.GetCapacity(inputs)
+    local rule = RCC.db.roguePoisonCapacity
+
+    return inputs.spells[rule.talentSpellID].known and rule.talented or rule.default
+end
+
+function RoguePoison.Observe(inputs, definition)
+    return Effects.ObserveSpells(inputs, RoguePoison.GetPlayerAuraSpellIDs(definition))
+end
+
+function RoguePoison.GetApplications(inputs, definition)
+    local observation = RoguePoison.Observe(inputs, definition)
+    local applications = {}
+    local evidence = {}
+
+    for _, aura in ipairs(observation.auras) do
+        local choice = Choice.Spell(aura.spellID)
+
+        applications[#applications + 1] = choice
+        evidence[Choice.Key(choice)] = aura.expirationTime or aura.auraInstanceID or true
+    end
+
+    return applications, observation.available, RoguePoison.GetCapacity(inputs), evidence
+end
+
+local function dataOrder(left, right)
+    return left.index < right.index
+end
+
 function RoguePoison.Select(inputs, definition)
-    local selection = { applicable = false, candidates = {} }
+    local selection = {
+        applicable = false,
+        candidates = {},
+        preferences = {},
+        fallbacks = {},
+        capacity = RoguePoison.GetCapacity(inputs),
+        preferenceKey = definition.key,
+        label = definition.label,
+    }
 
     if inputs.class.classToken ~= "ROGUE" then return selection end
 
-    local observation = RoguePoison.Observe(inputs, definition)
-    local activeSpellID = observation.aura and observation.aura.spellID
+    local byIdentity = {}
 
-    for _, spellID in ipairs(RoguePoison.GetSpellIDs(definition)) do
+    for index, spellID in ipairs(RoguePoison.GetPlayerAuraSpellIDs(definition)) do
         local spell = inputs.spells[spellID]
 
         if spell.known then
             local candidate = {
+                choice = Choice.Spell(spellID),
                 spellID = spellID,
+                index = index,
+                name = spell.name,
                 icon = spell.icon,
-                action = State.CreateSpellAction(spellID, { available = true }),
+                action = State.CreateSpellAction(spellID, {
+                    available = true,
+                    preferenceKey = definition.key,
+                    preferenceCapacity = selection.capacity,
+                }),
             }
             selection.candidates[#selection.candidates + 1] = candidate
-
-            if spellID == activeSpellID then
-                selection.candidate = candidate
-            end
+            byIdentity[Choice.Key(candidate.choice)] = candidate
         end
     end
 
-    selection.candidate = selection.candidate or selection.candidates[1]
-    selection.applicable = selection.candidate ~= nil
-    selection.action = selection.candidate and selection.candidate.action
+    local function appendKnown(target, choices)
+        for _, choice in ipairs(choices) do
+            local candidate = byIdentity[Choice.Key(choice)]
+
+            if candidate then target[#target + 1] = candidate end
+        end
+    end
+
+    appendKnown(selection.preferences, Preferences.GetChoices(
+        inputs.preferences, definition.key, selection.capacity
+    ))
+    appendKnown(selection.fallbacks, History.GetChoices(
+        inputs.history, definition.key, selection.capacity
+    ))
+
+    -- Do not invent a second spell when there is no remembered pair. An
+    -- explicit preference already supplies the first slot when one is set.
+    if #selection.preferences == 0 and #selection.fallbacks == 0 then
+        selection.fallbacks[1] = selection.candidates[1]
+    end
+
+    selection.selected = Selection.ResolveChoices(
+        nil, selection.preferences, selection.fallbacks, selection.capacity, dataOrder
+    )
+    selection.candidate = selection.selected[1]
+    selection.applicable = #selection.candidates > 0
+    selection.action = State.CreateSpellSequenceAction(selection.selected, selection.capacity)
 
     return selection
 end
 
 function RoguePoison.Evaluate(selection, observation, inputs, now)
-    -- This first version confirms one active poison per category. It does not
-    -- yet evaluate the additional slots granted by Dragon-Tempered Blades.
-    return Effects.Evaluate(selection, observation, inputs.instance, now)
+    return Effects.EvaluateMany(selection, observation, inputs.instance, now)
 end

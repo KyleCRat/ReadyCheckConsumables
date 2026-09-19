@@ -19,6 +19,26 @@ local COUNT_TEXT_SIZE = 14
 local QUALITY_ICON_SIZE = 28
 local NORMAL_COLOR = { r = 1, g = 1, b = 1 }
 local BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
+local EMPTY = {}
+
+-- Layouts are keyed by supported effect count, not by consumable category.
+-- The two-part layout samples a solid strip of SquareMask: v-u reveals the
+-- bottom-left triangle and u-v reveals the top-right. Icon cropping is separate.
+-- A new count needs its own layout before a category can declare support.
+local SUMMARY_LAYOUTS = {
+    [2] = {
+        {
+            maskTexCoords = { 0, 0.5, 1, 0.5, -1, 0.5, 0, 0.5 },
+            statusX = 0.25,
+            statusY = 0.25,
+        },
+        {
+            maskTexCoords = { 0, 0.5, -1, 0.5, 1, 0.5, 0, 0.5 },
+            statusX = 0.75,
+            statusY = 0.75,
+        },
+    },
+}
 
 View.SIZE = SIZE
 View.SPACING = SPACING
@@ -56,6 +76,8 @@ local function applyStatusIcon(button, state)
     local texture = button.statustexture
     local desaturated = state.statusTextureDesaturated == true
     local shown = state.showStatusTexture == true and not button.hideStatusTexture
+        and (not button.isFlyout or state.flyoutStatus == true)
+        and (not state.summaryCapacity or state.hasConsumableBuff == true)
 
     if cache.statusIcon ~= state.statusIcon then
         UI.SetStatusIcon(texture, state.statusIcon)
@@ -171,6 +193,67 @@ local function applyIcon(button)
     end
 end
 
+local function applySummary(button, state)
+    local capacity = state.summaryCapacity
+    local summary = capacity and button.summaries and button.summaries[capacity]
+
+    if capacity and not summary then
+        error("RCC: unprepared summary capacity " .. tostring(capacity) .. " for " .. button.definition.key)
+    end
+
+    if not button.summaries then return end
+
+    local cache = getRenderCache(button)
+
+    if cache.summaryCapacity ~= capacity then
+        button.texture:SetShown(not summary)
+
+        for _, regions in pairs(button.summaries) do
+            for _, region in ipairs(regions) do
+                region.icon:SetShown(regions == summary)
+                region.status:Hide()
+                region.renderCache.statusShown = false
+            end
+        end
+
+        cache.summaryCapacity = capacity
+    end
+
+    if not summary then return end
+
+    for index, region in ipairs(summary) do
+        local effect = state.summaryEffects and state.summaryEffects[index]
+        local icon = effect and effect.icon or button.defaultIcon
+        local status = not effect and (state.summaryAvailable and State.NOT_READY_ICON or State.UNKNOWN_ICON)
+        local previous = region.renderCache
+
+        if previous.icon ~= icon then
+            region.icon:SetTexture(icon)
+            previous.icon = icon
+        end
+
+        local inactive = effect == nil
+
+        if previous.inactive ~= inactive then
+            region.icon:SetDesaturated(inactive)
+            region.icon:SetAlpha(inactive and 0.25 or 1)
+            previous.inactive = inactive
+        end
+
+        if status and previous.status ~= status then
+            UI.SetStatusIcon(region.status, status)
+            previous.status = status
+        end
+
+        local statusShown = inactive and not button.hideStatusTexture
+
+        if previous.statusShown ~= statusShown then
+            region.status:SetShown(statusShown)
+            previous.statusShown = statusShown
+        end
+    end
+end
+
 function View.SetHoverStateActive(button, active)
     if not button then return end
 
@@ -198,6 +281,7 @@ function View.ApplyVisual(button, state)
 
     applyStatusIcon(button, state)
     applyIcon(button)
+    applySummary(button, state)
 
     if cache.desaturated ~= desaturated then
         button.texture:SetDesaturated(desaturated)
@@ -226,10 +310,11 @@ function View.ApplyVisualOptions(button, options, isFlyout)
     options = options or {}
     local hideCountText = options.showStackCount == false
     local hideDurationText = options.showDuration == false
-    local hideStatusTexture = isFlyout == true
-        or options.showStatus == false
+    local hideStatusTexture = options.showStatus == false
     local hideQualityIcon = options.showProfessionQuality == false
     local hideReminderGlow = options.showReminderGlow == false
+
+    button.isFlyout = isFlyout == true
 
     if button.hideCountText == hideCountText
         and button.hideDurationText == hideDurationText
@@ -267,6 +352,16 @@ function View.Clear(button)
     button.count:SetText("")
     button.detailText:SetText("")
     button.statustexture:Hide()
+
+    for _, regions in pairs(button.summaries or EMPTY) do
+        for _, region in ipairs(regions) do
+            region.icon:Hide()
+            region.status:Hide()
+            region.renderCache = {}
+        end
+    end
+
+    button.texture:Show()
     button.qualityIcon:Hide()
 
     if button.unavailableOverlay then
@@ -338,6 +433,19 @@ function View.ApplyGeometry(button, geometry)
 
     button:SetSize(width, height)
     applyIconCrop(button.texture, width, height)
+
+    for _, regions in pairs(button.summaries or EMPTY) do
+        for _, region in ipairs(regions) do
+            applyIconCrop(region.icon, width, height)
+            region.status:SetSize(overlaySize, overlaySize)
+            region.status:ClearAllPoints()
+            region.status:SetPoint("CENTER", button, "BOTTOMLEFT",
+                width * region.layout.statusX,
+                height * region.layout.statusY
+            )
+        end
+    end
+
     button.statustexture:SetSize(overlaySize, overlaySize)
     positionDurationText(button, geometry.durationTextPosition or "TOP")
     button.detailText:SetFont(FONT, textSize, "OUTLINE")
@@ -375,6 +483,52 @@ local function createClickOverlay(button)
     button.click = click
 end
 
+local function createSummaries(button)
+    local summaries
+
+    -- Prepare every supported layout out of combat. Selecting a different
+    -- capacity later changes visibility only; it never creates new regions.
+    for _, capacity in ipairs(button.definition.supportedCapacities) do
+        if capacity > 1 then
+            local layout = SUMMARY_LAYOUTS[capacity]
+
+            if not layout or #layout ~= capacity then
+                error("RCC: missing summary layout for capacity " .. tostring(capacity))
+            end
+
+            local regions = {}
+
+            for index, part in ipairs(layout) do
+                local icon = button:CreateTexture(nil, "ARTWORK")
+                icon:SetAllPoints()
+                icon:Hide()
+
+                local mask = button:CreateMaskTexture()
+                mask:SetAllPoints()
+                mask:SetTexture("Interface\\Masks\\SquareMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:SetTexCoord(unpack(part.maskTexCoords))
+                icon:AddMaskTexture(mask)
+
+                local status = button:CreateTexture(nil, "OVERLAY")
+                status:Hide()
+
+                regions[index] = {
+                    icon = icon,
+                    mask = mask,
+                    status = status,
+                    layout = part,
+                    renderCache = {},
+                }
+            end
+
+            summaries = summaries or {}
+            summaries[capacity] = regions
+        end
+    end
+
+    button.summaries = summaries
+end
+
 function View.Create(parent, definition, options)
     options = options or {}
 
@@ -389,6 +543,10 @@ function View.Create(parent, definition, options)
 
     button.texture = button:CreateTexture()
     button.texture:SetAllPoints()
+
+    if not options.isFlyout then
+        createSummaries(button)
+    end
 
     button.statustexture = button:CreateTexture(nil, "OVERLAY", nil, 1)
     button.statustexture:SetPoint("CENTER")

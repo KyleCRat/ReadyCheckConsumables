@@ -90,6 +90,7 @@ Data/Settings.lua
 Data/ConsumableTiming.lua
 
 # Settings and SavedVariables
+Modules/Consumables/ConsumableChoice.lua
 Modules/Profiles/ProfileMigration.lua
 Modules/Profiles/Profiles.lua
 Modules/Profiles/ProfileSettings.lua
@@ -113,7 +114,8 @@ Modules/ReadyCheckMover.lua
 Modules/Consumables/ConsumableCatalog.lua
 Modules/Consumables/ConsumableState.lua
 
-Modules/ConsumableFrame/ConsumableFrameItemCache.lua
+Modules/Consumables/ConsumablePreferences.lua
+Modules/Consumables/ConsumableHistory.lua
 
 Modules/Consumables/ConsumableInputs.lua
 Modules/Consumables/ConsumableSelection.lua

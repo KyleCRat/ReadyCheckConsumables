@@ -111,8 +111,10 @@ data.
   item preferences outside the profiles. Each character is seeded from that
   copy once on login, so later-login alts inherit the original choices and
   cleared choices are never restored. Keep outer storage migrations separate
-  from future per-profile payload migrations, and never discard an unsupported
-  storage version to recover silently.
+  from per-profile payload migrations, and never discard an unsupported
+  storage version to recover silently. Within each store, add sequential
+  migration steps under its existing version marker rather than independent
+  format flags. Keep completed steps for characters that log in later.
 - `ReadyCheckConsumablesCharacterDB` is per-character SavedVariables, wrapped
   by `RCC.characterDB`. It owns item preferences by default and the
   `useProfileConsumablePreferences` toggle, which defaults to false. The toggle
@@ -131,13 +133,18 @@ data.
   scalar settings.
 - `contextualVisibility` is intentionally sparse: `nil` means use the definition
   default, while explicit `true` or `false` is an override.
-- Preferred consumable item choices are shared by both personal displays and
-  managed macros through `ConsumableFrameItemCache`, which owns storage routing.
+- Preferred consumable choices are shared by both personal displays and
+  managed macros through `ConsumablePreferences`, which owns storage routing.
   Do not read/write preference storage directly from individual consumers.
   Prefer Unlimited Augment Runes remains a profile-owned automatic-order setting,
   not a character item preference. The selection contract for preferences,
   automatic overrides, and fallbacks lives in
   `Modules/Consumables/ConsumableSelection.lua`.
+- Preferences use typed item/spell identities in separate numeric-capacity
+  branches. Talent changes must not overwrite a different branch. Confirmed
+  application history is character-owned even when preferences use a profile;
+  it supplies eligible fallbacks, never rewrites explicit preferences. Keep
+  these contracts beside `ConsumablePreferences` and `ConsumableHistory`.
 - Bulk profile switches/copies/resets refresh existing displays and macros;
   they do not create ready-check sessions, reopen closed temporary frames, or
   replay reports. Manual profile changes are blocked in combat and movement

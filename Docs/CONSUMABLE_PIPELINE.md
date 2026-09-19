@@ -199,8 +199,9 @@ The dependency entries connect those inputs to four jobs:
 time updates. The `evaluation` list is for its additional input dependencies;
 it is not the only reason that function runs.
 
-The dotted name `preferences.flask` means that specific value in the inputs
-table. A food-preference change does not require Flask to select an item again.
+The dotted name `preferences.flask` means that category's capacity-keyed lists
+in the inputs table. Unchanged lists retain their identity, so a food-preference
+change does not require Flask to select an item again.
 Likewise, `instance.warningSeconds` compares only the threshold. A new instance
 ID with the same threshold does not by itself require Flask's evaluation to run.
 
@@ -217,7 +218,8 @@ handles those events for all categories. Existing examples are:
 | `ITEM_COUNT_CHANGED` for a tracked item | That item in `inventory` |
 | `BAG_UPDATE_DELAYED` | All requested inventory items |
 | `ITEM_DATA_LOAD_RESULT` for a tracked item | That item's count/icon/quality data |
-| Right-clicking a preferred flask | `preferences`, through the item-choice cache |
+| Right-clicking a preferred flask | `preferences`, through `ConsumablePreferences` |
+| Confirming an opted-in application | `history`, using the observations already read |
 | `ZONE_CHANGED` or `ZONE_CHANGED_INDOORS` | `location` only |
 | `ZONE_CHANGED_NEW_AREA` or `PLAYER_DIFFICULTY_CHANGED` | `instance`, `location`, `roster`, `playerAuras`, `playerSpellAuras`, and `groupAuras`, where requested |
 | `PLAYER_ENTERING_WORLD` | All currently requested inputs |
@@ -284,7 +286,7 @@ helpers to construct and order its choices:
 local choices = Selection.FamilyCandidates(inputs.inventory, {
     itemIDs = RCC.db.flaskItemIDs,
     itemData = RCC.db.flaskItemData,
-    preferredID = inputs.preferences[PREFERENCE_KEY],
+    preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
 })
 
 return Selection.Resolve(choices, { preferenceKey = PREFERENCE_KEY })
@@ -513,6 +515,18 @@ The runtime keeps those choices until the selection changes, then attaches them
 to the primary state as `flyoutChoices`. A duration update does not rebuild
 the choices. A category with no alternatives can omit `Choices` entirely.
 
+Categories whose alternatives display active effects can set
+`choicesUseModel = true` on their presenter. Their `Choices(model)` receives
+the evaluated effects as well as `model.selection`. Set `flyoutStatus = true`
+on those choice states to opt into status overlays; ordinary item flyouts keep
+their existing appearance.
+
+`State.SameInteractions` compares action identities, preference targets, and
+choice order, separately from visual fields. Effect-only changes use
+`Flyout.ApplyChoiceVisuals`: no creation, secure rebinding, layout, or hover
+changes. This is how both active poisons can gain checkmarks without closing
+the flyout.
+
 ## 6. Send the result to each display
 
 A **snapshot** is the output table built by the runtime for one refresh. It
@@ -581,7 +595,7 @@ does the actual handoff:
 | Changed part | Work performed |
 | --- | --- |
 | Visual state | [ConsumableButtonView.ApplyVisual](../Modules/ConsumableUI/ConsumableButtonView.lua) updates textures, text, status, cooldowns, and tooltip state |
-| Action or flyout choices | [ConsumableActionBinder.Bind](../Modules/ConsumableUI/ConsumableActionBinder.lua) prepares the secure click action; [ConsumableFlyout.SetChoices](../Modules/ConsumableUI/ConsumableFlyout.lua) updates alternatives |
+| Action, preference target, or flyout choice order | [ConsumableActionBinder.Bind](../Modules/ConsumableUI/ConsumableActionBinder.lua) prepares the secure click action; [ConsumableFlyout.SetChoices](../Modules/ConsumableUI/ConsumableFlyout.lua) updates alternatives |
 | Applicability/visibility | The owning frame decides which buttons occupy its layout |
 
 This is why changing only a duration label does not rebind the item action.
@@ -647,33 +661,101 @@ values, so an event that reports no actual change need not rebuild the button
 result.
 
 Right-clicking a primary button or flyout choice takes a shorter route:
-the binder compares the clicked item with the saved choice for its `preferenceKey`.
-If it is already preferred, the binder calls `ConsumableFrameItemCache.Clear`;
-otherwise it saves the item through `ConsumableFrameItemCache.Set`. Both live in
-[ConsumableFrameItemCache.lua](../Modules/ConsumableFrame/ConsumableFrameItemCache.lua)
-and call `Invalidate("preferences", { nextFrame = true })` and schedule a macro
+the binder passes its typed identity, preference key, and capacity to
+[ConsumablePreferences.Toggle](../Modules/Consumables/ConsumablePreferences.lua).
+An existing preference is removed; a new choice is appended, evicting the oldest
+preference if the branch is full. This calls
+`Invalidate("preferences", { nextFrame = true })` and schedules a macro
 update when the choice changes. The next selection uses the new preference, or
 the category's automatic overrides and fallbacks after clearing it; neither
 needs a new aura scan. `nextFrame` skips the normal delay when starting a new
 batch; if one is already scheduled, the change joins it.
 
-The cache also rejects attempts to save blocked items. `ReadPreferences` uses
-its getter, which ignores any fleeting choice saved by an older version rather
+The preference owner also rejects attempts to save blocked items.
+`ReadPreferences` returns a detached snapshot, ignoring any fleeting choice
+saved by an older version rather
 than guessing a regular replacement. Choosing a regular item explicitly creates
 the new preference. Inventory changes, overrides, and macro refreshes only read it.
 
-The same cache routes these reads and writes to character storage by default.
+The preference owner routes these reads and writes to character storage by default.
 The character-owned **Use profile-specific consumable preferences** checkbox
 switches it to the active settings profile instead. No consumer needs its own
 storage check: `ReadPreferences`, the tooltips, and right-click actions all use
-the cache. Switching stores refreshes the preference input and macros without
+that owner. Switching stores refreshes the preference input and macros without
 copying choices or falling back to the other store when a choice is absent.
+
+All categories use the same storage shape, including ordinary single-item ones:
+
+```lua
+consumablePreferences = {
+    flask = {
+        [1] = { { kind = "item", id = flaskItemID } },
+    },
+    lethalPoison = {
+        [1] = { { kind = "spell", id = 2823 } },
+        [2] = {
+            { kind = "spell", id = 2823 },
+            { kind = "spell", id = 381664 },
+        },
+    },
+}
+```
+
+The numeric keys are capacities, not array positions. The inner lists are dense,
+ordered by preference selection age. Changing talents selects another branch;
+it does not truncate, copy, or overwrite the previous one.
+`GetItemID(preferences, key)` reads the ordinary capacity-one item choice.
+Multi-choice selectors use `GetChoices(preferences, key, capacity)`.
+
+`ProfileMigration` converts the old flat item choices for every profile through
+the Profiles library's payload migration from version 1 to 2, including inactive
+profiles. Characters use their own ordered `preferenceMigrationVersion` steps:
+0 to 1 seeds the original shared choices once; 1 to 2 converts their format.
+A character already at version 1 runs only the conversion. Completed steps
+do not run again, and choices already converted by a development build are kept.
+The original frozen legacy seed remains available for later-login characters;
+an already-migrated character's cleared preferences are never seeded again.
+
+### Remembering applications without changing preferences
+
+[ConsumableHistory](../Modules/Consumables/ConsumableHistory.lua) always writes
+to the character DB. It uses the same category/capacity/typed-identity shape,
+but stores a bounded recent-use list rather than explicit preferences.
+It never copies a profile's choices.
+
+A domain opts in with `GetApplications(inputs, definition)`, returning an
+ordered list of confirmed choices, observation availability, and capacity.
+It can also return a fourth value: public application evidence indexed by typed
+identity. Poisons use expiry timestamps to recognize a genuine reapplication,
+while weapon enchants need only recognize a different applied item.
+Its observation dependencies must include the evidence and capacity inputs.
+The shared owner records newly observed applications; repeated reads,
+failed clicks, and preference changes do not record use. Unavailable observations
+and expired effects do not erase history. Reloading does not reorder an
+established list.
+
+The controller calls this after the requested observations are read and before
+selection. It does not scan auras again. A `categoryHistory` selection dependency
+compares only `inputs.history[definition.key]`; `categoryPreference` similarly
+reads that category's saved preferences. Weapon enchants retain their
+`slotPreference` and `slotWeapon` aliases.
+
+History supplies eligible **fallbacks**, not another priority tier.
+`Selection.ResolveChoices(overrides, preferences, fallbacks, capacity)` takes
+distinct typed identities in that order. The ordinary item `Resolve` also uses
+this helper with capacity one. Missing explicit items still occupy their slot;
+unavailable historical items do not become automatic choices.
+An optional fallback comparator stabilizes casting order after the recent-use
+list chooses membership. Thus refreshing either member of the same remembered
+pair does not change its cast sequence, while a newly used third spell can
+replace the least recently used one. Explicit preference order is untouched.
 
 Weapon enchants keep the saved item choice separate from what is applied.
 A known class enchant remains primary while active, and a weapon without an
 enchant defaults to its eligible class spell. With an oil applied, selection uses the
-saved item choice; without one, it uses the applied oil as an unsaved default.
-If neither supplies an item, the normal inventory priority applies. When the
+saved item choice; without one, it tries the most recently applied oil still
+carried, then normal inventory priority. Applying a class spell does not erase
+oil history. When the
 oil expires, an eligible class spell takes priority again without clearing the
 saved oil choice.
 
@@ -703,9 +785,8 @@ the catalog. Its fallback icon goes in `Data/Settings.lua`. Add its files to
 the TOC alongside their equivalents: gameplay data before modules, domain and
 presenter files before the runtime/controller and UI consumers.
 
-If the new button supports a saved item preference, add a named entry to
-`ConsumableItemCacheKey` in `ConsumableFrameItemCache.lua`. `ReadPreferences`
-collects the keys from that table. Use the same key in the selection dependency
+If the new button supports saved preferences, add a named entry to
+`ConsumablePreferenceKey` in `ConsumablePreferences.lua`. Use the same key in the selection dependency
 (like `preferences.flask`) and in the primary/flyout actions' `preferenceKey`,
 so a right-click saves the value that the selector reads.
 
@@ -769,12 +850,15 @@ Both catalog entries use `domain = "RoguePoison"`, with `poisonType` choosing
 the list. `Select(inputs, definition)` and `Observe(inputs, definition)` receive
 the whole catalog definition, just as WeaponEnchant reads `definition.weaponSlot`.
 The poison entries also declare `classToken = "ROGUE"`, so other classes do not
-request their data or display their buttons.
+request their data or display their buttons. Their `supportedCapacities = { 1, 2 }`
+declares the allowed selection counts; categories without a declaration default
+to `{ 1 }`. The domain selects the current count from its inputs, and the runtime
+checks that it is supported by the category.
 
 `GetSpellIDs(definition)` declares which spells need known/name/icon metadata
 in `inputs.spells`. `GetPlayerAuraSpellIDs(definition)` separately declares the
-buff IDs for `inputs.playerSpellAuras`. These two lists happen to match for
-poisons; another category need not use the same cast and buff IDs.
+buff IDs for `inputs.playerSpellAuras`. The poison spell list also includes
+Dragon-Tempered Blades for its capacity check, but the aura list does not.
 The controller collects only the IDs requested by active categories.
 
 `ReadPlayerSpellAuras` returns entries such as
@@ -783,12 +867,38 @@ has no `aura`; an unavailable query has `available = false`. It reuses a fresh
 full scan when conclusive, otherwise calls `HelpfulAuraScan.FindBySpellID`.
 Requesting poisons alone never requests a full player aura scan.
 
-The selector offers only known spells, keeps an active poison primary, and
-otherwise chooses the first known spell in data order. The presenter gives
-the other choices spell actions that the existing secure binder can cast.
-There are no item preferences or weapon-slot targets. The initial display
-confirms one poison per type; a rogue with Dragon-Tempered Blades can cast a
-second from the flyout, but additional-slot readiness is not yet evaluated.
+The data defines capacity one normally and two with Dragon-Tempered Blades.
+The selector passes known explicit preferences and remembered applications to
+`ResolveChoices`. It fills distinct slots in that order, using the existing
+first-known default only when neither preferences nor history supplies a choice.
+It never invents a second spell to complete an unestablished pair.
+
+`Effects.ObserveSpells` retains all readable matches and per-spell availability.
+`EvaluateMany` checks every slot, schedules the existing duration/expiry
+deadlines, and finds the earliest remaining duration. This replaces the former
+first-match-only poison result.
+
+At capacity two, `State.ApplyEffectSummary` supplies the applied effects to the
+shared view. Native texture masks reveal the first icon in the bottom-left and
+the second in the top-right; the icons keep their normal aspect-ratio crop.
+Empty halves explicitly show missing or unknown status. All known poisons move
+into the flyout, where each applied spell has its own checkmark and duration.
+The summary's tooltip separates applied effects, preferences, and prepared casts.
+
+`ConsumableButtonView` keeps summary layouts keyed by count in `SUMMARY_LAYOUTS`.
+It prepares the category's declared layouts before combat and switches their
+visibility when the active count changes. Supporting a third effect requires a
+three-part layout and a declared capacity of 3; the preference/history format
+does not change. Declaring a count without a layout raises an error instead of
+silently drawing it with the two-part layout.
+
+`CreateSpellSequenceAction` emits one ordinary spell action for one resolved
+choice, or a `spellSequence` descriptor for a pair. The shared binder prepares
+`/castsequence reset=combat` with localized spell names outside combat.
+Each successful click advances one spell; current buffs never advance or skip
+the sequence. During combat its action remains fixed while applied icons,
+durations, and status can change. Flyouts remain disabled in combat. No managed
+poison macro is added.
 
 ### Raid buffs use targeted aura queries
 

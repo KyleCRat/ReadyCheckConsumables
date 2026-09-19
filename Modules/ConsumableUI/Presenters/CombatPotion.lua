@@ -6,7 +6,7 @@ RCC.ConsumablePresenters.CombatPotion = CombatPotion
 
 local ButtonState = RCC.ConsumableState
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 function CombatPotion.Present(model)
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
@@ -48,7 +48,7 @@ function CombatPotion.Choices(selection)
         inventoryItemCandidates,
         inventoryItem,
         {
-            preferenceKey = CacheKey.COMBAT_POTION,
+            preferenceKey = PreferenceKey.COMBAT_POTION,
             selectionOnly = true,
             includeSingleChoice = outOfCachedPotion,
             suppressGlow = true,

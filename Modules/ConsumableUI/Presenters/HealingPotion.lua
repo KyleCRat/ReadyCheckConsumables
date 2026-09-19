@@ -6,7 +6,7 @@ RCC.ConsumablePresenters.HealingPotion = HealingPotion
 
 local ButtonState = RCC.ConsumableState
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 function HealingPotion.Present(model)
     local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
@@ -48,7 +48,7 @@ function HealingPotion.Choices(selection)
         inventoryItemCandidates,
         inventoryItem,
         {
-            preferenceKey = CacheKey.HEALING_POTION,
+            preferenceKey = PreferenceKey.HEALING_POTION,
             selectionOnly = true,
             includeSingleChoice = outOfCachedPotion,
             suppressGlow = true,

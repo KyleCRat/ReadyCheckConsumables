@@ -6,10 +6,16 @@
 
 - Separate Lethal Poison and Non-lethal Poison buttons for rogues on both
   personal displays, enabled by default with individual settings toggles.
-  Active poisons show their remaining duration; hover outside combat to cast
-  another known poison, including a second poison with Dragon-Tempered Blades.
-  The initial status display checks one poison per category, not the talent's
-  additional slots. Detection uses targeted, secret-safe player-buff queries.
+  With Dragon-Tempered Blades, each becomes a diagonal two-poison summary,
+  checks both active effects, and shows the earliest remaining duration.
+  Hover outside combat to see all known poisons and checkmarks on active ones.
+  The summary casts its prepared pair with one left click per cast, including
+  in combat; flyouts remain out-of-combat only. Detection uses targeted,
+  secret-safe player-buff queries.
+- Poison preferences are saved separately for single- and double-poison modes.
+  Right-click to add or remove a preference; a new choice replaces the oldest
+  preference when the list is full. Unselected slots use remembered applications.
+  Summary tooltips distinguish applied effects, preferences, and prepared casts.
 - Blizzard's ready-check dialog can now be dragged by its visible background
   outside combat, with its position saved in the active profile. Allow Dragging
   is enabled by default on RCC's main settings page. Ready/Not Ready buttons
@@ -36,6 +42,20 @@
 
 ### Changed
 
+- Normalized saved item and spell preferences into capacity-specific lists,
+  preserving character/profile ownership and migrating existing choices in
+  every profile, including inactive profiles and later-login characters.
+  Character ownership and format migrations now run as ordered version steps;
+  previously converted choices are preserved and completed steps are not rerun.
+- Consumable categories now declare supported selection counts explicitly.
+  Summary layouts are registered by count, keeping future multi-effect layouts
+  separate from talent selection and saved preference/history formats.
+- Added character-owned application history shared by poison and weapon-enchant
+  selection. Weapon enchants use the most recently applied carried oil before
+  normal inventory priority, without changing explicit preferences or existing
+  class-spell overrides. History survives reloads, expiration, and profile changes.
+- Flyout checkmarks and durations update independently of secure action binding,
+  without rebuilding, repositioning, or closing an unchanged flyout.
 - Standardized consumable selection around saved preferences, automatic
   overrides, and eligible fallbacks. Buttons retain your exact preferred item
   and rank when it runs out; macros skip unavailable items without changing
@@ -178,7 +198,8 @@
   weapon scans or macro refreshes. Item-mode buttons show the selected next-use
   item's icon, count, and quality, while the check, duration, and a "Currently
   applied" tooltip line describe the active enchant. Class-spell priority is
-  unchanged, and an applied oil is only an unsaved default when no item is preferred.
+  unchanged. Without an explicit preference, eligible application history
+  supplies oil fallbacks before normal inventory priority.
 - Combat-potion auto-selection no longer picks an incompatible potion type or
   utility family when none of the carried items match the saved preference.
 - The Unknown preview row now keeps public raid buffs readable while simulating

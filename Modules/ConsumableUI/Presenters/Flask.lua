@@ -6,7 +6,7 @@ RCC.ConsumablePresenters.Flask = Flask
 
 local ButtonState = RCC.ConsumableState
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 local OUT_OF_ITEMS = "No Flasks found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Flask not found in Bags"
@@ -65,7 +65,7 @@ function Flask.Choices(selection)
         flaskCandidates,
         flaskItemID,
         {
-            preferenceKey = CacheKey.FLASK,
+            preferenceKey = PreferenceKey.FLASK,
             includeSingleChoice = outOfCachedFlask,
         }
     )

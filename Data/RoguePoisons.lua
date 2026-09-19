@@ -18,3 +18,9 @@ RCC.db.roguePoisons = {
 
 -- Used only until the known spell's icon metadata is available.
 RCC.db.roguePoisonFallbackIconID = 134400 -- INV_Misc_QuestionMark
+
+RCC.db.roguePoisonCapacity = {
+    default = 1,
+    talentSpellID = 381801, -- Dragon-Tempered Blades
+    talented = 2,
+}

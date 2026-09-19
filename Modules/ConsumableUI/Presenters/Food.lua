@@ -6,7 +6,7 @@ RCC.ConsumablePresenters.Food = Food
 
 local ButtonState = RCC.ConsumableState
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 local OUT_OF_ITEMS = "No Food found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Food not found in Bags"
@@ -80,7 +80,7 @@ function Food.Choices(selection)
         foodCandidates,
         foodItemID,
         {
-            preferenceKey = CacheKey.FOOD,
+            preferenceKey = PreferenceKey.FOOD,
             includeSingleChoice = outOfCachedFood,
         }
     )

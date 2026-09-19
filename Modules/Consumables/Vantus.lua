@@ -2,7 +2,7 @@ local _, RCC = ...
 local Vantus = {}
 RCC.Consumables.Vantus = Vantus
 local S = RCC.ConsumableSelection
-local KEY = RCC.ConsumableItemCacheKey.VANTUS
+local KEY = RCC.ConsumablePreferenceKey.VANTUS
 
 Vantus.Inventory = { lists = RCC.db.vantusItemsByRaid }
 
@@ -15,7 +15,7 @@ Vantus.Dependencies = {
 
 function Vantus.Select(inputs)
     local runeIDs = RCC.db.vantusItemsByRaid[inputs.instance.instanceID]
-    local preferredID = inputs.preferences[KEY]
+    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, KEY)
     local candidates = S.List(inputs.inventory, runeIDs)
     local preferred = S.FindListItem(inputs.inventory, runeIDs, preferredID)
 

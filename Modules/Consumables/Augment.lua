@@ -7,7 +7,7 @@ local Augment = RCC.Consumables.Augment
 
 local S = RCC.ConsumableSelection
 
-local CacheKey = RCC.ConsumableItemCacheKey
+local PreferenceKey = RCC.ConsumablePreferenceKey
 
 Augment.Inventory = {
     map = RCC.db.augmentItemIDs,
@@ -74,7 +74,7 @@ function Augment.Select(inputs)
         end,
     })
 
-    local preferredID = inputs.preferences[CacheKey.AUGMENT]
+    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PreferenceKey.AUGMENT)
     local preferred = S.FindMapItem(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
 
     local selection = {
@@ -86,7 +86,7 @@ function Augment.Select(inputs)
     S.ApplyItemCooldowns(selection, inputs.cooldowns, Augment.Inventory.cooldownItemIDs)
 
     return S.Resolve(selection, {
-        preferenceKey = CacheKey.AUGMENT,
+        preferenceKey = PreferenceKey.AUGMENT,
     })
 end
 
