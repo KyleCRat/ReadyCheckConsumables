@@ -4,20 +4,12 @@ RCC.ConsumableSettingsShared = RCC.ConsumableSettingsShared or {}
 
 local Shared = RCC.ConsumableSettingsShared
 
-local pages = {}
-
 function Shared.RegisterPage(page)
-    pages[#pages + 1] = page
+    RCC.Profiles.RegisterSettingsPage(page)
 end
 
 function Shared.SyncPages()
-    for i = 1, #pages do
-        local page = pages[i]
-
-        if page.Sync then
-            page:Sync()
-        end
-    end
+    RCC.Profiles.SyncSettingsPages()
 end
 
 function Shared.RefreshAugmentRuneSelection()

@@ -4,3 +4,9 @@
 [submodule "Libs/LibEditMode"]
 	path = Libs/LibEditMode
 	url = https://github.com/p3lim-wow/LibEditMode.git
+[submodule "Libs/LibSimpleDB-2.0"]
+	path = Libs/LibSimpleDB-2.0
+	url = https://github.com/KyleCRat/LibSimpleDB.git
+[submodule "Libs/LibSimpleDBProfiles-1.0"]
+	path = Libs/LibSimpleDBProfiles-1.0
+	url = https://github.com/KyleCRat/LibSimpleDBProfiles.git

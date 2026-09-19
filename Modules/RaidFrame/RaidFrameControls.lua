@@ -15,20 +15,21 @@ local SCALE_BUTTON_WIDTH = 86
 local function savePosition(self)
     self:StopMovingOrSizing()
 
-    if not ReadyCheckConsumablesDB then
+    if not RCC.settingsDB then
         return
     end
 
     local point, _, relPoint, x, y = self:GetPoint(1)
-    ReadyCheckConsumablesDB.raidFramePos = {
+    RCC.settingsDB:Set("raidFramePos", {
         point    = point,
         relPoint = relPoint,
         x        = x,
         y        = y,
-    }
+    })
 end
 
 function Controls.Create(frame)
+    local syncingScale = false
     local controls = {
         frame = frame,
         positionRestored = false,
@@ -57,8 +58,8 @@ function Controls.Create(frame)
             frame.scaleButton.text:SetText("Scale: " .. value .. "%")
             frame:SetScale(value / 100)
 
-            if ReadyCheckConsumablesDB then
-                ReadyCheckConsumablesDB.raidFrame_scale = value / 100
+            if not syncingScale then
+                RCC.SetSettingValue("raidFrame_scale", value / 100)
             end
         end,
     })
@@ -75,32 +76,35 @@ function Controls.Create(frame)
 ]])
 
     function controls:SyncScale()
-        local scale = ReadyCheckConsumablesDB
-            and ReadyCheckConsumablesDB.raidFrame_scale
-            or 1
+        local scale = RCC.GetSetting("raidFrame_scale")
 
+        syncingScale = true
         self.scalePopup:SetValue(floor(scale * 100 + 0.5))
+        syncingScale = false
+        frame:SetScale(scale)
     end
 
-    function controls:RestorePosition()
-        if self.positionRestored then
+    function controls:RestorePosition(force)
+        if self.positionRestored and not force then
             return
         end
 
         self.positionRestored = true
 
-        if not ReadyCheckConsumablesDB then
+        if not RCC.settingsDB then
             return
         end
 
-        local pos = ReadyCheckConsumablesDB.raidFramePos
+        local pos = RCC.settingsDB:Get("raidFramePos")
 
-        if not pos then
-            return
-        end
-
+        frame:StopMovingOrSizing()
         frame:ClearAllPoints()
-        frame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
+
+        if type(pos) == "table" then
+            frame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
+        else
+            frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        end
     end
 
     function frame:SyncScaleControl()

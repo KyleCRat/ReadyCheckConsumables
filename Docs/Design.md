@@ -53,7 +53,8 @@ filtered from one ordered registry and positioned left to right for every
 layout, so arbitrary subsets do not leave gaps.
 
 Context overrides are stored sparsely in
-`ReadyCheckConsumablesDB.contextualVisibility`. Use
+the active profile's `contextualVisibility` table, accessed through
+`RCC.settingsDB`. Use
 `RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)` to
 set `true` or `false`, and pass `nil` to restore the definition default. The
 setter refreshes both frames. The Consumables Frame exposes these overrides

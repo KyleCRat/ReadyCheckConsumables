@@ -7,8 +7,43 @@ your inventory changes.
 
 Open settings with `/rcc s` or **Options > AddOns > Ready Check Consumables**.
 Each display and automatic chat reporting has its own **Enabled** checkbox,
-so you can use only the features you want. Settings and item preferences are
-account-wide.
+so you can use only the features you want. Settings and saved positions are
+controlled by the **Active Profile** selector on the main RCC settings page.
+
+## Settings Profiles
+
+Your existing setup is preserved in **Global**, which remains selected by
+default. Leave it selected to keep sharing one setup across your characters.
+Choose **Character** for an individual setup, or **Specialization** to switch
+automatically with your spec and share that spec's setup across characters.
+Class, Realm, Faction, and named custom profiles are also available.
+
+Profiles include all module settings and saved positions. Manage them in the
+compact **Profiles** section on the main settings page, above the module buttons:
+
+- **Active Profile** selects your setup. An unused profile starts with RCC's defaults.
+- **New Profile** asks for a name, creates a default setup, and selects it.
+- **Copy Into Active** lets you choose another profile, such as Global, to
+  replace the selected profile's settings after confirmation.
+- **Reset Active** restores the selected profile's defaults after confirmation.
+- **Rename Profile** and **Delete Profile** apply to custom profiles; the active
+  profile cannot be deleted. Permanent profiles can be copied into or reset,
+  but not renamed or deleted.
+
+Changes affect every character using the same profile.
+
+Preferred consumable items are **character-specific by default**, shared by
+that character's personal displays and macros even when you switch profiles.
+Your existing shared choices are copied to each character once, on their first
+login after this update.
+
+Enable **Use profile-specific consumable preferences** in that section
+to use the selected profile's choices instead. This checkbox applies
+only to your character and stays set across profile changes. Switching it does
+not copy or delete either set of choices; turning it off restores your
+character's choices. A profile with no saved preferences uses automatic item
+selection. Copying, resetting, or deleting a profile never changes your
+character's stored preferences or this checkbox.
 
 ## Personal Consumables
 
@@ -140,8 +175,9 @@ Left-click usable buttons to consume an item or cast a spell. Where supported,
 right-click an item outside combat to save it as your preferred choice.
 Right-click the preferred item again to clear that choice and return to
 automatic selection, including any applicable overrides.
-Preferences are shared by the personal displays and managed macros. Item counts
-use your bags, not your bank.
+Preferences are shared by the personal displays and managed macros. They are
+stored for your character unless you opt into profile-specific preferences.
+Item counts use your bags, not your bank.
 
 Your preference keeps the exact item and rank you chose. If it runs out, the
 button keeps showing that item with a zero count; macros can select an available

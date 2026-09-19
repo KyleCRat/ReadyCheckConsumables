@@ -659,6 +659,13 @@ its getter, which ignores any fleeting choice saved by an older version rather
 than guessing a regular replacement. Choosing a regular item explicitly creates
 the new preference. Inventory changes, overrides, and macro refreshes only read it.
 
+The same cache routes these reads and writes to character storage by default.
+The character-owned **Use profile-specific consumable preferences** checkbox
+switches it to the active settings profile instead. No consumer needs its own
+storage check: `ReadPreferences`, the tooltips, and right-click actions all use
+the cache. Switching stores refreshes the preference input and macros without
+copying choices or falling back to the other store when a choice is absent.
+
 Weapon enchants keep the saved item choice separate from what is applied.
 A known class enchant remains primary while active, and a weapon without an
 enchant defaults to its eligible class spell. With an oil applied, selection uses the

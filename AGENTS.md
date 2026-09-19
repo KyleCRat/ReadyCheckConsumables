@@ -98,22 +98,62 @@ data.
 
 ## SavedVariables and Settings
 
-- `ReadyCheckConsumablesDB` is account-wide. There are no profiles.
+- `ReadyCheckConsumablesDB` is an account-wide profile container, not a settings
+  payload. LibSimpleDBProfiles owns profile selection and storage;
+  `RCC.settingsDB` is the stable LibSimpleDB instance for the active profile.
+  Do not confuse it with `RCC.db`, which remains the gameplay-data registry.
+- Module settings and saved positions belong to the active profile.
+  New characters start on Global; choosing Specialization shares a
+  profile by spec across characters, while Character is individual. Profiles
+  do not inherit settings from Global; missing values use addon defaults.
+- `Modules/Profiles/ProfileMigration.lua` adopts the complete pre-profile
+  settings table into Global once and freezes a detached copy of the legacy
+  item preferences outside the profiles. Each character is seeded from that
+  copy once on login, so later-login alts inherit the original choices and
+  cleared choices are never restored. Keep outer storage migrations separate
+  from future per-profile payload migrations, and never discard an unsupported
+  storage version to recover silently.
+- `ReadyCheckConsumablesCharacterDB` is per-character SavedVariables, wrapped
+  by `RCC.characterDB`. It owns item preferences by default and the
+  `useProfileConsumablePreferences` toggle, which defaults to false. The toggle
+  is not a profile setting: switching/copying/resetting profiles cannot change
+  it or the character's stored choices. Opting in uses only the active profile's
+  preferences; opting out uses only the character's. Never copy, merge, delete,
+  or fall back between the two stores when toggling. An empty selected store
+  means automatic item selection.
 - Each module owns its own Enabled setting. Do not add combined enable/disable
   modes or let one module's settings reset change another module's enablement.
-- `Settings.lua` owns defaults and nil-only default backfilling. Preserve stored
-  `false` values and validate or migrate malformed structured data explicitly.
+- `Settings.lua` owns defaults; LibSimpleDB supplies nil-only default lookup.
+  Preserve stored `false` values and validate or migrate malformed structured
+  data explicitly. Read returned tables without mutating them; write structured
+  settings through `RCC.settingsDB:Set`/`ResetPath`.
 - Prefer `RCC.GetSetting` and `RCC.SetSettingValue` over direct access for normal
   scalar settings.
 - `contextualVisibility` is intentionally sparse: `nil` means use the definition
   default, while explicit `true` or `false` is an override.
 - Preferred consumable item choices are shared by both personal displays and
-  managed macros. The selection contract for preferences, automatic overrides,
-  and fallbacks lives in `Modules/Consumables/ConsumableSelection.lua`.
+  managed macros through `ConsumableFrameItemCache`, which owns storage routing.
+  Do not read/write preference storage directly from individual consumers.
+  Prefer Unlimited Augment Runes remains a profile-owned automatic-order setting,
+  not a character item preference. The selection contract for preferences,
+  automatic overrides, and fallbacks lives in
+  `Modules/Consumables/ConsumableSelection.lua`.
+- Bulk profile switches/copies/resets refresh existing displays and macros;
+  they do not create ready-check sessions, reopen closed temporary frames, or
+  replay reports. Manual profile changes are blocked in combat and movement
+  editing; protected refreshes from automatic changes wait until safe.
+- Profile management belongs in a compact section of the base RCC settings
+  page, between its subtitle and module Settings buttons, not a separate page.
+  Use the YvBags-style selector, New/Copy/Reset button row, Rename/Delete
+  dropdowns, and native dialogs. Keep the character preference-storage toggle
+  in that section and revalidate dialog targets before changing profile data.
 
 ## Module Ownership and Load Order
 
 - `ReadyCheckConsumables.toc` is the authoritative load order.
+- `Modules/Profiles/` owns legacy storage adoption, profile lifecycle refreshes,
+  and the selector/management UI. All settings pages register their `Sync`
+  method with this shared owner so a profile change updates hidden pages too.
 - `Data/` builds normalized registries in `RCC.db`; expansion files append to
   those registries before runtime modules load.
 - Permanent enchant data under `Data/*/Enchants.lua` is intentionally retained
@@ -150,6 +190,10 @@ data.
 - LibEditMode is embedded as the `Libs/LibEditMode` submodule and is only the
   fallback movement provider when EllesmereUI is unavailable. Keep its gitlink
   and `.pkgmeta` tag aligned.
+- LibSimpleDB and LibSimpleDBProfiles are embedded submodules at
+  `Libs/LibSimpleDB-2.0` and `Libs/LibSimpleDBProfiles-1.0`. Load the database
+  library before Profiles. Release library API changes before pointing an RCC
+  package at them, then align its gitlink and `.pkgmeta` release tag.
 
 ## Data Completeness
 
@@ -226,6 +270,13 @@ data.
 - Do not add test harnesses or LibStub stubs as routine work. The primary
   validation path is in-game testing by the maintainer, assisted by `/rcc t`,
   `/rcc rt`, and `/rcc ct`. Static syntax or whitespace checks are still useful.
+- For profile changes, verify legacy-to-Global adoption and a second login,
+  Character and Specialization isolation, one-time preference migration on a
+  later-login alt, toggling preference storage without copying, and preservation
+  of character preferences/toggle through profile copy/reset. Verify both
+  displays and macros, frame positions with both movement providers, and
+  combat-safe application. Never test migration by overwriting the maintainer's
+  live SV file.
 - When changing ready-check state, test at least: a compatible RCC response,
   aura-unavailable response, no response/addon absent, missing consumable, no
   weapon, and an all-good column.

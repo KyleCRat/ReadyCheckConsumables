@@ -1,5 +1,23 @@
 # TODO
 
+## Profile Migration Release Gate
+
+- [ ] Release the LibSimpleDBProfiles `initialProfile` API change from
+  `Libs/LibSimpleDBProfiles-1.0`, then update RCC's submodule commit and `.pkgmeta`
+  tag together. The released `1.0.0` pin does not include this API. Until the
+  implementation minor is bumped for that release, an older equal-minor embed
+  loaded first can mask this development copy; isolate it for in-game testing.
+- [ ] Confirm the profile migration in game with a backup of the pre-migration
+  SavedVariables: existing settings/positions survive in Global, preferences
+  seed each character once from the original shared choices (including a
+  later-login alt), and reload never restores a cleared preference. Confirm
+  the character-owned storage toggle defaults off, persists through profile
+  changes, and switches stores without copying. Profile copy/reset must leave
+  character preferences and the toggle untouched. Character and Specialization settings
+  must stay separate, both displays/macros must refresh, and both movement
+  providers must use the active profile's positions. Confirm no temporary
+  frames reopen or chat reports replay on a profile change.
+
 ## Fixes
 - Changing a setting during a test removes all test rows (not critical)
 

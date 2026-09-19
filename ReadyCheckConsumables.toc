@@ -7,6 +7,7 @@
 ## IconTexture: Interface\AddOns\ReadyCheckConsumables\ReadyCheckConsumables.tga
 ## OptionalDeps: BigWigs, DBM-Core, EllesmereUI
 ## SavedVariables: ReadyCheckConsumablesDB
+## SavedVariablesPerCharacter: ReadyCheckConsumablesCharacterDB
 
 embeds.xml
 
@@ -87,6 +88,9 @@ Data/Settings.lua
 Data/ConsumableTiming.lua
 
 # Settings and SavedVariables
+Modules/Profiles/ProfileMigration.lua
+Modules/Profiles/Profiles.lua
+Modules/Profiles/ProfileSettings.lua
 Settings.lua
 
 # Shared contextual visibility

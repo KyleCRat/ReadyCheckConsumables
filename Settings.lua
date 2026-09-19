@@ -102,6 +102,10 @@ local DEFAULTS = {
     chatReport_normalDungeon = false,
 }
 
+local CHARACTER_DEFAULTS = {
+    useProfileConsumablePreferences = false,
+}
+
 local function normalizeConsumablesIconWidthPercent(value)
     value = tonumber(value)
 
@@ -140,13 +144,13 @@ end
 --------------------------------------------------------------------------------
 
 function RCC.GetSetting(key)
-    local db = ReadyCheckConsumablesDB
+    local db = RCC.settingsDB
 
     if not db then
         return normalizeSettingValue(key, DEFAULTS[key])
     end
 
-    local val = db[key]
+    local val = db:Get(key)
 
     if val == nil then
         return normalizeSettingValue(key, DEFAULTS[key])
@@ -160,40 +164,21 @@ function RCC.GetSettingDefault(key)
 end
 
 function RCC.SetSettingValue(key, value)
-    if not ReadyCheckConsumablesDB or DEFAULTS[key] == nil then
+    if not RCC.settingsDB or DEFAULTS[key] == nil then
         return false
     end
 
-    ReadyCheckConsumablesDB[key] = normalizeSettingValue(key, value)
+    RCC.settingsDB:Set(key, normalizeSettingValue(key, value))
 
     return true
 end
 
-local function getContextualVisibilityOverrides()
-    local db = ReadyCheckConsumablesDB
-
-    if not db or type(db.contextualVisibility) ~= "table" then
-        return
-    end
-
-    return db.contextualVisibility
-end
-
 function RCC.GetContextualVisibilityOverride(surface, elementKey, reason)
-    local overrides = getContextualVisibilityOverrides()
-    local surfaceOverrides = overrides and overrides[surface]
+    if not RCC.settingsDB then return end
 
-    if type(surfaceOverrides) ~= "table" then
-        return
-    end
-
-    local elementOverrides = surfaceOverrides[elementKey]
-
-    if type(elementOverrides) ~= "table" then
-        return
-    end
-
-    local value = elementOverrides[reason]
+    local value = RCC.settingsDB:GetRaw(
+        "contextualVisibility", surface, elementKey, reason
+    )
 
     if type(value) == "boolean" then
         return value
@@ -212,28 +197,6 @@ function RCC.GetContextualVisibility(surface, elementKey, reason, defaultValue)
     end
 
     return defaultValue == true
-end
-
-local function removeEmptyOverrideTables(overrides, surface, elementKey)
-    local surfaceOverrides = overrides[surface]
-
-    if type(surfaceOverrides) ~= "table" then
-        overrides[surface] = nil
-
-        return
-    end
-
-    local elementOverrides = surfaceOverrides[elementKey]
-
-    if type(elementOverrides) ~= "table" then
-        surfaceOverrides[elementKey] = nil
-    elseif next(elementOverrides) == nil then
-        surfaceOverrides[elementKey] = nil
-    end
-
-    if next(surfaceOverrides) == nil then
-        overrides[surface] = nil
-    end
 end
 
 local function refreshContextualVisibility()
@@ -255,38 +218,16 @@ function RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)
         return false
     end
 
-    local db = ReadyCheckConsumablesDB
+    local db = RCC.settingsDB
 
     if not db then
         return false
     end
 
-    db.contextualVisibility = type(db.contextualVisibility) == "table"
-        and db.contextualVisibility
-        or {}
-
-    local overrides = db.contextualVisibility
-
     if value == nil then
-        local surfaceOverrides = overrides[surface]
-        local elementOverrides = type(surfaceOverrides) == "table"
-            and surfaceOverrides[elementKey]
-            or nil
-
-        if type(elementOverrides) == "table" then
-            elementOverrides[reason] = nil
-            removeEmptyOverrideTables(overrides, surface, elementKey)
-        end
+        db:ResetPath("contextualVisibility", surface, elementKey, reason)
     else
-        if type(overrides[surface]) ~= "table" then
-            overrides[surface] = {}
-        end
-
-        if type(overrides[surface][elementKey]) ~= "table" then
-            overrides[surface][elementKey] = {}
-        end
-
-        overrides[surface][elementKey][reason] = value
+        db:Set("contextualVisibility", surface, elementKey, reason, value)
     end
 
     refreshContextualVisibility()
@@ -295,19 +236,11 @@ function RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)
 end
 
 function RCC.ClearContextualVisibilityOverrides(surface)
-    if not ReadyCheckConsumablesDB or not surface then
+    if not RCC.settingsDB or not surface then
         return false
     end
 
-    local overrides = getContextualVisibilityOverrides()
-
-    if overrides then
-        overrides[surface] = nil
-
-        if next(overrides) == nil then
-            ReadyCheckConsumablesDB.contextualVisibility = nil
-        end
-    end
+    RCC.settingsDB:ResetPath("contextualVisibility", surface)
 
     refreshContextualVisibility()
 
@@ -486,13 +419,10 @@ local function openSettingsDestination(button)
     RCC.OpenSettings(button.settingsCategoryID)
 end
 
-local function populateMainSettingsFrame(
-    frame,
-    destinations,
-    measurementFrame
-)
+local function populateMainSettingsFrame(frame, destinations, measurementFrame)
     local layout = CanvasControls:CreateCanvasLayout(frame, {
         measurementFrame = measurementFrame,
+        scrollable = true,
     })
     local root = layout:GetRootFlow()
 
@@ -501,6 +431,7 @@ local function populateMainSettingsFrame(
         "Configure RCC's personal consumable bar, raid status frame, "
             .. "chat reporting, and managed macros."
     )
+    RCC.ProfileSettings.AddSection(frame, root)
     root:AddSection("Settings")
 
     for firstIndex = 1, #destinations, 2 do
@@ -553,18 +484,7 @@ end
 --------------------------------------------------------------------------------
 
 local function registerPanel()
-    local db = ReadyCheckConsumablesDB
     local measurementFrame = SettingsPanel:GetSettingsCanvas()
-
-    for key, default in pairs(DEFAULTS) do
-        if db[key] == nil then
-            db[key] = default
-        end
-    end
-
-    for key, normalizer in pairs(SETTING_NORMALIZERS) do
-        db[key] = normalizer(db[key])
-    end
 
     local mainFrame = CreateFrame("Frame")
     local category = Settings.RegisterCanvasLayoutCategory(
@@ -599,6 +519,7 @@ local function registerPanel()
     ----------------------------------------------------------------------------
 
     local rfFrame = RCC.RaidFrameSettings.CreateFrame(measurementFrame)
+    RCC.Profiles.RegisterSettingsPage(rfFrame)
     local rfCat = Settings.RegisterCanvasLayoutSubcategory(
         category, rfFrame, "Raid Frame"
     )
@@ -608,6 +529,7 @@ local function registerPanel()
     ----------------------------------------------------------------------------
 
     local crFrame = RCC.ChatReportSettings.CreateFrame(measurementFrame)
+    RCC.Profiles.RegisterSettingsPage(crFrame)
     local crCat = Settings.RegisterCanvasLayoutSubcategory(
         category, crFrame, "Chat Report"
     )
@@ -718,8 +640,6 @@ settingsFrame:SetScript("OnEvent", function(self, event, ...)
     if addonName ~= "ReadyCheckConsumables" then return end
 
     self:UnregisterEvent("ADDON_LOADED")
-    ReadyCheckConsumablesDB = ReadyCheckConsumablesDB or {}
-    ReadyCheckConsumablesDB.consumableItemCache =
-        ReadyCheckConsumablesDB.consumableItemCache or {}
+    RCC.Profiles.Initialize(DEFAULTS, CHARACTER_DEFAULTS)
     registerPanel()
 end)

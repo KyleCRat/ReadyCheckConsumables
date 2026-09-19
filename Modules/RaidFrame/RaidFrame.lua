@@ -702,6 +702,23 @@ function frame:RefreshContextualVisibility()
     return refreshShownDisplay(self, true)
 end
 
+function frame:ApplyProfile()
+    controls:RestorePosition(true)
+    controls:SyncScale()
+
+    if not RCC.GetSetting("raidFrame_enabled") then
+        self:Hide()
+
+        return
+    end
+
+    self:RefreshContextualVisibility()
+
+    if state.readyCheck and not state.readyCheck.inProgress then
+        self:OnReadyCheckFinished(state.readyCheck)
+    end
+end
+
 function frame:RefreshProvisionTracking(allowAutoShow)
     if InCombatLockdown() then
         return false
@@ -862,17 +879,7 @@ local function onChatMsgAddon(_self, prefix, message, channel, sender)
     end
 end
 
-local function onAddonLoaded(self, addonName)
-    if addonName ~= "ReadyCheckConsumables" then
-        return
-    end
-
-    ReadyCheckConsumablesDB = ReadyCheckConsumablesDB or {}
-    self:UnregisterEvent("ADDON_LOADED")
-end
-
 local EVENT_HANDLERS = {
-    ADDON_LOADED                = onAddonLoaded,
     CHAT_MSG_ADDON              = onChatMsgAddon,
     PLAYER_REGEN_DISABLED       = onPlayerRegenDisabled,
     UNIT_AURA                   = onUnitAura,
@@ -896,4 +903,3 @@ end)
 
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 frame:RegisterEvent("CHAT_MSG_ADDON")
-frame:RegisterEvent("ADDON_LOADED")

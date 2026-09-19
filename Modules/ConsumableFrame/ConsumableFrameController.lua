@@ -436,6 +436,35 @@ end
 --- Public API
 --------------------------------------------------------------------------------
 
+function Controller.ApplyProfile()
+    local wasWaitingToHide = frame.readyCheckHideDelay ~= nil
+
+    cancelReadyCheckHideDelay(frame)
+    cancelInstanceHideDelay(frame)
+
+    if not RCC.GetSetting("consumables_enabled") then
+        hideImmediately(frame)
+
+        return
+    end
+
+    frame:SetScale(RCC.GetSetting("consumables_scale"))
+    frame:ApplyLayout()
+
+    -- A profile switch changes an existing display; it is not an open event.
+    if not frame:IsShown() then return end
+
+    frame:Update()
+
+    if wasWaitingToHide then
+        startReadyCheckHideDelay(frame)
+    end
+
+    if DisplayContext.IsActive(displayContext, Reason.INSTANCE_ENTRY) then
+        startInstanceHideDelay(frame)
+    end
+end
+
 function Controller.Attach(consumablesFrame)
     frame = consumablesFrame
     frame.displayContext = displayContext

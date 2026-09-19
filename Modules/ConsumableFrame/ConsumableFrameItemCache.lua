@@ -15,19 +15,30 @@ RCC.ConsumableItemCacheKey = RCC.ConsumableItemCacheKey or {
     OFF_HAND_TEMP_WEAPON_ENCHANT  = "offHandTempWeaponEnchant",
 }
 
-local cachedItemIDs = {}
-
-local function scheduleMacroUpdate()
+local function refreshPreferences()
     RCC.ConsumableMacros.ScheduleUpdate()
+    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
 end
 
-local function getSavedCache()
-    if not ReadyCheckConsumablesDB then return end
+function Cache.UsesProfilePreferences()
+    return RCC.characterDB:Get("useProfileConsumablePreferences") == true
+end
 
-    ReadyCheckConsumablesDB.consumableItemCache =
-        ReadyCheckConsumablesDB.consumableItemCache or {}
+function Cache.SetUseProfilePreferences(enabled)
+    if Cache.UsesProfilePreferences() == enabled then return end
 
-    return ReadyCheckConsumablesDB.consumableItemCache
+    -- This choice belongs to the character, never the selected profile.
+    -- Switching stores does not copy, merge, or clear either set of choices.
+    RCC.characterDB:Set("useProfileConsumablePreferences", enabled)
+    refreshPreferences()
+end
+
+local function getPreferenceDB()
+    if Cache.UsesProfilePreferences() then
+        return RCC.settingsDB
+    end
+
+    return RCC.characterDB
 end
 
 function Cache.CanPrefer(itemID)
@@ -36,57 +47,39 @@ end
 
 function Cache.Set(cacheKey, itemID)
     if not cacheKey or not Cache.CanPrefer(itemID) then return end
+    if not RCC.settingsDB then return end
 
     local previousItemID = Cache.Get(cacheKey)
 
-    cachedItemIDs[cacheKey] = itemID
-
-    local savedCache = getSavedCache()
-
-    if savedCache then
-        savedCache[cacheKey] = itemID
-    end
+    getPreferenceDB():Set("consumableItemCache", cacheKey, itemID)
 
     if previousItemID ~= itemID then
-        scheduleMacroUpdate()
-        RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
+        refreshPreferences()
     end
 end
 
 function Cache.Clear(cacheKey)
     if not cacheKey then return end
+    if not RCC.settingsDB then return end
 
     local previousItemID = Cache.Get(cacheKey)
 
-    cachedItemIDs[cacheKey] = nil
-
-    local savedCache = getSavedCache()
-
-    if savedCache then
-        savedCache[cacheKey] = nil
-    end
+    getPreferenceDB():ResetPath("consumableItemCache", cacheKey)
 
     if previousItemID ~= nil then
-        scheduleMacroUpdate()
-        RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
+        refreshPreferences()
     end
 end
 
 function Cache.Get(cacheKey)
     if not cacheKey then return end
+    if not RCC.settingsDB then return end
 
-    local savedCache = getSavedCache()
-    local savedItemID = savedCache and savedCache[cacheKey]
+    local savedItemID = getPreferenceDB():Get("consumableItemCache", cacheKey)
 
     -- Older versions allowed fleeting preferences. Ignore those choices without
     -- inventing a regular item/rank or changing SavedVariables during a read.
     if Cache.CanPrefer(savedItemID) then
         return savedItemID
-    end
-
-    local cachedItemID = cachedItemIDs[cacheKey]
-
-    if Cache.CanPrefer(cachedItemID) then
-        return cachedItemID
     end
 end

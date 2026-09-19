@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- Full settings profiles, including module enablement, appearance, saved
+  positions, and optional shared consumable preferences. Existing settings
+  migrate intact into Global, which remains the default. Choose Character,
+  Specialization, Class, Realm, Faction, or a custom profile in the compact
+  Profiles section of the main RCC settings page. New/Copy/Reset buttons and
+  Rename/Delete dropdowns use dialogs; no separate profile-management page is needed.
+- Consumable item preferences now belong to each character by default. Existing
+  shared choices are copied once to each character on their first login. A
+  character-owned Use profile-specific consumable preferences checkbox, off by
+  default, switches to the selected profile's choices without copying or
+  deleting either set. Profile operations leave character preferences and this
+  storage choice untouched; both personal displays and macros use the same choices.
+- Embedded LibSimpleDB and LibSimpleDBProfiles as submodules. The Profiles
+  library now accepts a configurable first-use profile policy, letting RCC
+  start on Global without changing the library's existing most-specific default.
+
 ### Changed
 
 - Standardized consumable selection around saved preferences, automatic
