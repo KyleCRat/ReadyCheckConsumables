@@ -2,11 +2,9 @@
 
 ## Profile Migration Release Gate
 
-- [ ] Release the LibSimpleDBProfiles `initialProfile` API change from
-  `Libs/LibSimpleDBProfiles-1.0`, then update RCC's submodule commit and `.pkgmeta`
-  tag together. The released `1.0.0` pin does not include this API. Until the
-  implementation minor is bumped for that release, an older equal-minor embed
-  loaded first can mask this development copy; isolate it for in-game testing.
+- [x] Released LibSimpleDBProfiles 1.1.0 with the `initialProfile` API and
+  aligned RCC's submodule checkout and `.pkgmeta` tag. Implementation minor 2
+  takes precedence over older 1.0.0 embeds regardless of addon load order.
 - [ ] Confirm the profile migration in game with a backup of the pre-migration
   SavedVariables: existing settings/positions survive in Global, preferences
   seed each character once from the original shared choices (including a

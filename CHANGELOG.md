@@ -16,9 +16,10 @@
   default, switches to the selected profile's choices without copying or
   deleting either set. Profile operations leave character preferences and this
   storage choice untouched; both personal displays and macros use the same choices.
-- Embedded LibSimpleDB and LibSimpleDBProfiles as submodules. The Profiles
-  library now accepts a configurable first-use profile policy, letting RCC
-  start on Global without changing the library's existing most-specific default.
+- Embedded LibSimpleDB and LibSimpleDBProfiles as submodules, with Profiles
+  pinned to release 1.1.0 in both the checkout and package. Its configurable
+  first-use profile policy lets RCC start on Global without changing the
+  library's existing most-specific default.
 
 ### Changed
 
