@@ -4,6 +4,13 @@
 
 ### Added
 
+- Blizzard's ready-check dialog can now be dragged by its visible background
+  outside combat, with its position saved in the active profile. Allow Dragging
+  is enabled by default on RCC's main settings page. Ready/Not Ready buttons
+  keep their normal behavior; hiding the dialog leaves no RCC drag overlay.
+  Disabling RCC's mover forgets its saved position without moving the dialog
+  or disabling the shared frame's movement capability for other movers.
+  Re-enabling starts at the current location instead of restoring an old one.
 - Full settings profiles, including module enablement, appearance, saved
   positions, and optional shared consumable preferences. Existing settings
   migrate intact into Global, which remains the default. Choose Character,

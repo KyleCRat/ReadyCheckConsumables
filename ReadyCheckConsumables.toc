@@ -103,6 +103,9 @@ Modules/RaidBuffStatus.lua
 Modules/ReadyCheckState.lua
 Modules/ReadyCheckController.lua
 
+# Blizzard ready-check popup movement
+Modules/ReadyCheckMover.lua
+
 ################################################################################
 # Shared consumable state
 Modules/Consumables/ConsumableCatalog.lua

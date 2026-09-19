@@ -18,6 +18,9 @@ local ICON_WIDTH_LIMITS = RCC.ConsumableFrameLimits.iconWidthPercent
 --------------------------------------------------------------------------------
 
 local DEFAULTS = {
+    -- Blizzard ready-check popup
+    readyCheckMover_enabled = true,
+
     -- Consumables Frame
     consumables_enabled      = true,
     consumables_scale        = 1.0,
@@ -431,7 +434,7 @@ local function populateMainSettingsFrame(frame, destinations, measurementFrame)
         "Configure RCC's personal consumable bar, raid status frame, "
             .. "chat reporting, and managed macros."
     )
-    RCC.ProfileSettings.AddSection(frame, root)
+    local syncProfiles = RCC.ProfileSettings.AddSection(root)
     root:AddSection("Settings")
 
     for firstIndex = 1, #destinations, 2 do
@@ -464,6 +467,22 @@ local function populateMainSettingsFrame(frame, destinations, measurementFrame)
         columns:Finish()
     end
 
+    root:AddSection("Ready Check Frame")
+
+    local readyCheckMover = root:AddControl("checkbox", {
+        label = "Allow Dragging",
+        value = RCC.GetSetting("readyCheckMover_enabled"),
+        tooltip = "Drag to move the ready-check window and save its position",
+        onChanged = function(checked)
+            if not InCombatLockdown() then
+                RCC.SetSettingValue("readyCheckMover_enabled", checked)
+                RCC.ReadyCheckMover.ApplySettings()
+            end
+
+            frame:Sync()
+        end,
+    })
+
     local version = C_AddOns.GetAddOnMetadata(
         "ReadyCheckConsumables",
         "Version"
@@ -477,6 +496,20 @@ local function populateMainSettingsFrame(frame, destinations, measurementFrame)
     })
     layout:Finalize()
     frame.layout = layout
+
+    function frame:Sync()
+        syncProfiles()
+        readyCheckMover:SetValue(RCC.GetSetting("readyCheckMover_enabled"))
+        readyCheckMover:SetControlEnabled(
+            not InCombatLockdown(),
+            "Ready-check movement cannot be changed in combat"
+        )
+    end
+
+    frame.OnRefresh = frame.Sync
+    frame:HookScript("OnShow", frame.Sync)
+    RCC.Profiles.RegisterSettingsPage(frame)
+    frame:Sync()
 end
 
 --------------------------------------------------------------------------------

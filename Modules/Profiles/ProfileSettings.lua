@@ -329,7 +329,7 @@ local function addPreferenceScopeControl(flow)
     })
 end
 
-function ProfileSettings.AddSection(frame, flow)
+function ProfileSettings.AddSection(flow)
     flow:AddSection("Profiles", { marginTop = 0 })
 
     local selector = flow:AddControl("dropdown", {
@@ -383,7 +383,7 @@ function ProfileSettings.AddSection(frame, flow)
 
     local preferenceScope = addPreferenceScopeControl(flow)
 
-    function frame:Sync()
+    local function sync()
         local active = RCC.profileManager:GetActiveProfile()
         local choices = getChoices()
         local renameChoices = getChoices(canRename, "Choose a profile...")
@@ -419,8 +419,5 @@ function ProfileSettings.AddSection(frame, flow)
         preferenceScope:SetControlEnabled(enabled, reason)
     end
 
-    frame.OnRefresh = frame.Sync
-    frame:HookScript("OnShow", frame.Sync)
-    Profiles.RegisterSettingsPage(frame)
-    frame:Sync()
+    return sync
 end

@@ -49,6 +49,7 @@ local function applyProfile()
 
     -- This is a settings refresh, not a new ready check. Each display retains
     -- ownership of its live session, timers, and visibility reasons.
+    RCC.ReadyCheckMover.ApplySettings()
     RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
     RCC.ConsumableFrameController.ApplyProfile()
     RCC.ConsumableActionBar.RequestApplySettings()
@@ -64,6 +65,7 @@ end
 local function onProfileDataChanged()
     -- Never apply an old profile's pending coordinate edits to the new one.
     RCC.ConsumableActionBarPosition.DiscardPending()
+    RCC.ReadyCheckMover.DiscardPending()
     pendingApply = true
 
     if runtimeReady and not applyScheduled then

@@ -57,6 +57,14 @@ weapon enchants, raid buffs, and other essentials together during ready checks.
 Remaining buff durations, item counts, and warnings help you see what needs
 attention. Hover an icon to see details and available alternatives.
 
+You can drag Blizzard's ready-check dialog by its background outside combat;
+the attached consumable buttons move with it. Its position is remembered in
+your active profile. To turn off dragging, uncheck **Allow Dragging** under
+**Ready Check Frame** on RCC's main settings page. Turning it off forgets
+RCC's saved position without moving the dialog; re-enabling starts from its
+current location. Use one ready-check mover at a time to avoid conflicting
+saved positions.
+
 On the **Consumables Frame** settings page:
 
 - **Choose buttons:** Use **Buttons by Open Event**. Each row's **Enabled**
