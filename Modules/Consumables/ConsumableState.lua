@@ -278,10 +278,11 @@ end
 
 -- Capacity selects the summary mode even with no applied effects. Images and
 -- readiness describe observations, never preferences or the prepared action.
+-- One shared status covers the whole summary: check when every effect is
+-- applied, X when incomplete, or unknown when absence cannot be confirmed.
 function State.ApplyEffectSummary(state, model)
     state.summaryCapacity = model.selection.capacity
     state.summaryEffects = model.effects
-    state.summaryAvailable = model.available
     state.summaryLabel = model.selection.label
     state.summaryPreferences = model.selection.preferences
     state.hasConsumableBuff = model.complete

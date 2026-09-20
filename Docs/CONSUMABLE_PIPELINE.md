@@ -881,8 +881,12 @@ first-match-only poison result.
 At capacity two, `State.ApplyEffectSummary` supplies the applied effects to the
 shared view. Native texture masks reveal the first icon in the bottom-left and
 the second in the top-right; the icons keep their normal aspect-ratio crop.
-Empty halves explicitly show missing or unknown status. All known poisons move
-into the flyout, where each applied spell has its own checkmark and duration.
+Masks are positioned and rotated for the button's dimensions, since changing
+texture coordinates on a mask is unsupported by the client.
+Empty halves show faded category artwork. One centered status covers the whole
+summary: a check when both effects are applied, an X when either is missing,
+or a question mark when absence cannot be confirmed. All known poisons move
+into the flyout, where each applied spell still has its own checkmark and duration.
 The summary's tooltip separates applied effects, preferences, and prepared casts.
 
 `ConsumableButtonView` keeps summary layouts keyed by count in `SUMMARY_LAYOUTS`.

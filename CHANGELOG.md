@@ -7,7 +7,10 @@
 - Separate Lethal Poison and Non-lethal Poison buttons for rogues on both
   personal displays, enabled by default with individual settings toggles.
   With Dragon-Tempered Blades, each becomes a diagonal two-poison summary,
-  checks both active effects, and shows the earliest remaining duration.
+  with proportionally cropped icon halves and the earliest remaining duration.
+  Split icons use positioned, rotated masks to avoid blank artwork.
+  One centered check confirms both effects are applied; an X means either is
+  missing, and a question mark means RCC could not confirm their absence.
   Hover outside combat to see all known poisons and checkmarks on active ones.
   The summary casts its prepared pair with one left click per cast, including
   in combat; flyouts remain out-of-combat only. Detection uses targeted,

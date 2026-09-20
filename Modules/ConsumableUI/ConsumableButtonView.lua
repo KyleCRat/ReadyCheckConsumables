@@ -21,22 +21,40 @@ local NORMAL_COLOR = { r = 1, g = 1, b = 1 }
 local BAD_COLOR = { r = 1, g = 0.2, b = 0.2 }
 local EMPTY = {}
 
+local function positionDiagonalMask(mask, button, width, height, corner)
+    local diagonal = math.sqrt(width * width + height * height)
+    local offsetX = height / 2
+    local offsetY = width / 2
+
+    if corner == "BOTTOMLEFT" then
+        offsetX = -offsetX
+        offsetY = -offsetY
+    end
+
+    -- Put one edge through the button's center, parallel to its top-left to
+    -- bottom-right diagonal. The oversized rectangle covers that entire half.
+    -- Offsets use the perpendicular to the diagonal, hence height for X and
+    -- width for Y. Recalculate from the actual size for non-square buttons.
+    mask:ClearAllPoints()
+    mask:SetSize(diagonal * 2, diagonal)
+    mask:SetPoint("CENTER", button, "CENTER", offsetX, offsetY)
+    mask:SetRotation(-math.atan2(height, width))
+end
+
 -- Layouts are keyed by supported effect count, not by consumable category.
--- The two-part layout samples a solid strip of SquareMask: v-u reveals the
--- bottom-left triangle and u-v reveals the top-right. Icon cropping is separate.
+-- Each part positions a native mask. Mask texture-coordinate transforms are
+-- unsupported (Blizzard's EncounterTimelineTrackView documents this); use
+-- region position/rotation instead. Icon aspect-ratio cropping stays separate.
 -- A new count needs its own layout before a category can declare support.
 local SUMMARY_LAYOUTS = {
     [2] = {
-        {
-            maskTexCoords = { 0, 0.5, 1, 0.5, -1, 0.5, 0, 0.5 },
-            statusX = 0.25,
-            statusY = 0.25,
-        },
-        {
-            maskTexCoords = { 0, 0.5, -1, 0.5, 1, 0.5, 0, 0.5 },
-            statusX = 0.75,
-            statusY = 0.75,
-        },
+        function(mask, button, width, height)
+            positionDiagonalMask(mask, button, width, height, "BOTTOMLEFT")
+        end,
+
+        function(mask, button, width, height)
+            positionDiagonalMask(mask, button, width, height, "TOPRIGHT")
+        end,
     },
 }
 
@@ -77,7 +95,6 @@ local function applyStatusIcon(button, state)
     local desaturated = state.statusTextureDesaturated == true
     local shown = state.showStatusTexture == true and not button.hideStatusTexture
         and (not button.isFlyout or state.flyoutStatus == true)
-        and (not state.summaryCapacity or state.hasConsumableBuff == true)
 
     if cache.statusIcon ~= state.statusIcon then
         UI.SetStatusIcon(texture, state.statusIcon)
@@ -211,8 +228,6 @@ local function applySummary(button, state)
         for _, regions in pairs(button.summaries) do
             for _, region in ipairs(regions) do
                 region.icon:SetShown(regions == summary)
-                region.status:Hide()
-                region.renderCache.statusShown = false
             end
         end
 
@@ -224,7 +239,6 @@ local function applySummary(button, state)
     for index, region in ipairs(summary) do
         local effect = state.summaryEffects and state.summaryEffects[index]
         local icon = effect and effect.icon or button.defaultIcon
-        local status = not effect and (state.summaryAvailable and State.NOT_READY_ICON or State.UNKNOWN_ICON)
         local previous = region.renderCache
 
         if previous.icon ~= icon then
@@ -238,18 +252,6 @@ local function applySummary(button, state)
             region.icon:SetDesaturated(inactive)
             region.icon:SetAlpha(inactive and 0.25 or 1)
             previous.inactive = inactive
-        end
-
-        if status and previous.status ~= status then
-            UI.SetStatusIcon(region.status, status)
-            previous.status = status
-        end
-
-        local statusShown = inactive and not button.hideStatusTexture
-
-        if previous.statusShown ~= statusShown then
-            region.status:SetShown(statusShown)
-            previous.statusShown = statusShown
         end
     end
 end
@@ -356,7 +358,6 @@ function View.Clear(button)
     for _, regions in pairs(button.summaries or EMPTY) do
         for _, region in ipairs(regions) do
             region.icon:Hide()
-            region.status:Hide()
             region.renderCache = {}
         end
     end
@@ -437,12 +438,7 @@ function View.ApplyGeometry(button, geometry)
     for _, regions in pairs(button.summaries or EMPTY) do
         for _, region in ipairs(regions) do
             applyIconCrop(region.icon, width, height)
-            region.status:SetSize(overlaySize, overlaySize)
-            region.status:ClearAllPoints()
-            region.status:SetPoint("CENTER", button, "BOTTOMLEFT",
-                width * region.layout.statusX,
-                height * region.layout.statusY
-            )
+            region.positionMask(region.mask, button, width, height)
         end
     end
 
@@ -498,25 +494,22 @@ local function createSummaries(button)
 
             local regions = {}
 
-            for index, part in ipairs(layout) do
+            for index, positionMask in ipairs(layout) do
                 local icon = button:CreateTexture(nil, "ARTWORK")
                 icon:SetAllPoints()
                 icon:Hide()
 
                 local mask = button:CreateMaskTexture()
-                mask:SetAllPoints()
                 mask:SetTexture("Interface\\Masks\\SquareMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-                mask:SetTexCoord(unpack(part.maskTexCoords))
+                mask:SetSnapToPixelGrid(false)
+                mask:SetTexelSnappingBias(0)
+                positionMask(mask, button, button:GetWidth(), button:GetHeight())
                 icon:AddMaskTexture(mask)
-
-                local status = button:CreateTexture(nil, "OVERLAY")
-                status:Hide()
 
                 regions[index] = {
                     icon = icon,
                     mask = mask,
-                    status = status,
-                    layout = part,
+                    positionMask = positionMask,
                     renderCache = {},
                 }
             end
