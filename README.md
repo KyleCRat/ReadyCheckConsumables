@@ -106,9 +106,9 @@ Rogues also get separate **Lethal Poison** and **Non-lethal Poison** buttons,
 independent of weapon enchants. With Dragon-Tempered Blades, each shows both
 active poisons in a split icon and checks whether both are applied. Hover
 outside combat to see all known choices, with checkmarks on active poisons.
-Left-click the summary once per cast to apply its prepared pair, including
-on the Action Bar in combat. Toggle these buttons independently in either
-display's settings.
+Left-click the button to apply the selected poisons, one poison per click,
+including on the Action Bar in combat. Toggle these buttons independently in
+either display's settings.
 
 ## Group Readiness
 
@@ -199,10 +199,11 @@ Poison flyouts also support right-click preferences. Single- and double-poison
 modes remember separate choices, restored when you change talents. In double
 mode you can prefer two poisons; selecting another replaces the oldest
 preference. Remaining choices come from your character's remembered applications,
-not from guessing a second poison. The summary tooltip lists applied poisons
-with their durations, your preferences, and the prepared casting order.
-The cast sequence advances after each successful cast; it does not skip
-already-active poisons and resets when combat ends.
+not from guessing a second poison. The summary tooltip shows active poisons
+with their durations and which poisons left-click will apply, in order.
+Preferred choices are marked in the flyout. Each successful application moves
+to the next poison; already-active poisons are not skipped, and the order
+starts again when combat ends.
 
 Weapon enchants also remember applied oils for each hand. When no class-spell
 override or explicit item preference wins, RCC tries the most recently applied
@@ -244,8 +245,10 @@ is kept for when you leave or run out of the Guild potion; normal potions remain
 available in the flyout.
 
 Enabled Action Bar buttons normally remain visible even when unavailable.
-The off-hand enchant button hides when that slot cannot be enchanted, and the
-bar closes the gap. Equipment changes during combat update the layout afterward.
+The off-hand enchant button hides when that slot cannot be enchanted, and Raid
+Buff hides on classes without a raid-buff spell. Poison buttons only appear
+when you know a poison of that type. The bar closes gaps left by hidden buttons;
+equipment or spell changes during combat update the layout afterward.
 
 The temporary Consumables Frame and Raid Status Frame hide in combat. Action
 Bar flyouts close when combat starts and cannot open during combat. The bar's
