@@ -9,41 +9,8 @@ Open settings with `/rcc s` or **Options > AddOns > Ready Check Consumables**.
 Each display and automatic chat reporting has its own **Enabled** checkbox,
 so you can use only the features you want. Settings and saved positions are
 controlled by the **Active Profile** selector on the main RCC settings page.
-
-## Settings Profiles
-
-Your existing setup is preserved in **Global**, which remains selected by
-default. Leave it selected to keep sharing one setup across your characters.
-Choose **Character** for an individual setup, or **Specialization** to switch
-automatically with your spec and share that spec's setup across characters.
-Class, Realm, Faction, and named custom profiles are also available.
-
-Profiles include all module settings and saved positions. Manage them in the
-compact **Profiles** section on the main settings page, above the module buttons:
-
-- **Active Profile** selects your setup. An unused profile starts with RCC's defaults.
-- **New Profile** asks for a name, creates a default setup, and selects it.
-- **Copy Into Active** lets you choose another profile, such as Global, to
-  replace the selected profile's settings after confirmation.
-- **Reset Active** restores the selected profile's defaults after confirmation.
-- **Rename Profile** and **Delete Profile** apply to custom profiles; the active
-  profile cannot be deleted. Permanent profiles can be copied into or reset,
-  but not renamed or deleted.
-
-Changes affect every character using the same profile.
-
-Preferred consumable choices are **character-specific by default**, shared by
-that character's personal displays and macros even when you switch profiles.
-Your existing shared choices are copied to each character once, on their first
-login after this update.
-
-Enable **Use profile-specific consumable preferences** in that section
-to use the selected profile's choices instead. This checkbox applies
-only to your character and stays set across profile changes. Switching it does
-not copy or delete either set of choices; turning it off restores your
-character's choices. A profile with no saved preferences uses automatic item
-selection. Copying, resetting, or deleting a profile never changes your
-character's stored preferences or this checkbox.
+Preferred consumables are character-specific by default; see
+[Settings Profiles](#settings-profiles) to change how your setup is shared.
 
 ## Personal Consumables
 
@@ -54,16 +21,13 @@ buttons are configured separately, while preferred item choices are shared.
 
 A temporary, clickable bar brings food, flasks, augment runes, vantus runes,
 weapon enchants, raid buffs, and other essentials together during ready checks.
-Remaining buff durations, item counts, and warnings help you see what needs
-attention. Hover an icon to see details and available alternatives.
+Remaining buff durations, item counts, cooldowns, and reminder glows help you
+see what needs attention. Hover an icon to see details and available alternatives.
 
-You can drag Blizzard's ready-check dialog by its background outside combat;
-the attached consumable buttons move with it. Its position is remembered in
-your active profile. To turn off dragging, uncheck **Allow Dragging** under
-**Ready Check Frame** on RCC's main settings page. Turning it off forgets
-RCC's saved position without moving the dialog; re-enabling starts from its
-current location. Use one ready-check mover at a time to avoid conflicting
-saved positions.
+Drag Blizzard's ready-check dialog by its background outside combat; attached
+consumable buttons move with it. **Allow Dragging**, under **Ready Check Frame**
+on the main settings page, is on by default and saves the position in your
+profile. Turning it off forgets that saved position.
 
 On the **Consumables Frame** settings page:
 
@@ -90,7 +54,8 @@ for everyday use as well as preparation before a pull.
 On the **Consumables Action Bar** settings page:
 
 - **Turn it on:** Check **Enabled**; the permanent bar is off by default.
-  Choose individual icons under **Buttons**.
+  Choose individual icons under **Buttons**. If you only want the permanent bar,
+  turn off **Enabled** on the separate Consumables Frame page.
 - **Arrange it:** Set **Icons Per Row**, button width and height, and horizontal
   and vertical gaps. Non-square icons are cropped rather than stretched.
 - **Choose the information shown:** Adjust text size, duration-text side, and
@@ -99,16 +64,25 @@ On the **Consumables Action Bar** settings page:
 - **Move it:** Use EllesmereUI Unlock Mode when available, or Blizzard Edit
   Mode otherwise. The settings page also offers anchor and X/Y position controls.
 
-Both personal displays also offer optional Inky Black Potion, Repair, and
-Recuperate buttons, which are off by default.
+The permanent bar uses hover highlights rather than persistent reminder glows.
+Buff information and item cooldowns continue updating during combat when WoW
+makes that information available.
 
-Rogues also get separate **Lethal Poison** and **Non-lethal Poison** buttons,
-independent of weapon enchants. With Dragon-Tempered Blades, each shows both
-active poisons in a split icon and checks whether both are applied. Hover
-outside combat to see all known choices, with checkmarks on active poisons.
-Left-click the button to apply the selected poisons, one poison per click,
-including on the Action Bar in combat. Toggle these buttons independently in
-either display's settings.
+### Additional Buttons
+
+- **Rogue poisons** have separate lethal and non-lethal buttons, independent of
+  weapon enchants. With Dragon-Tempered Blades, split icons show both active
+  poisons; apply the selected pair with one click per poison.
+- **Repair** prefers a ready reusable device such as Jeeves before a consumable
+  such as Auto-Hammer. It shows cooldowns rather than ready/missing marks.
+- **Inky Black Potion** shows the item or active buff without ready/missing marks.
+- **Recuperate** adds a dedicated button for the recovery spell also used by
+  the healing-potion macro.
+- **Consumable Stasis** offers items that pause consumable buff durations during
+  breaks. Its temporary-frame button appears for break timers by default.
+
+Repair, Inky Black Potion, and Recuperate are off by default. Enable the ones
+you want on each display's settings page.
 
 ## Group Readiness
 
@@ -151,6 +125,10 @@ On the **Chat Report** settings page:
 By default, automatic reporting is enabled for Heroic and Mythic raids and
 limited to raid leaders or assistants. Dungeon reporting is off by default.
 
+When a raid has benched members, RCC can also announce when every active member
+has answered Ready, without waiting for the bench. This follows Chat Report
+settings and works even with the Raid Status Frame closed or disabled.
+
 ## Managed Macros
 
 Create macros for food, flasks, augment runes, vantus runes, potions,
@@ -173,6 +151,24 @@ You can also include automatically updated potion or healthstone lines in your
 own custom macros. See [custom macro markers](#custom-macro-markers) below for
 the syntax.
 
+## Settings Profiles
+
+Use **Active Profile** on the main settings page to choose how settings and
+saved positions are shared:
+
+- **Global** keeps one setup across your characters and is selected by default.
+  Your existing settings are preserved here when upgrading to profiles.
+- **Character** keeps an individual setup for the current character.
+- **Specialization** switches automatically with your spec and shares that
+  spec's setup across characters.
+- **Class**, **Realm**, **Faction**, and named custom profiles are also available.
+
+Preferred consumables remain **character-specific by default**, shared by your
+personal displays and macros. Enable **Use profile-specific consumable
+preferences** in the same section if you want choices tied to your selected
+profile instead. See [profile management](#profile-management) for copying,
+resetting, and preference storage details.
+
 ## Preview and Open Frames
 
 - `/rcc c` opens the enabled Consumables Frame outside combat.
@@ -185,7 +181,32 @@ the syntax.
 
 ## Advanced Reference
 
-### Buttons, item choices, and combat
+### Profile management
+
+The **Profiles** section on the main settings page includes:
+
+- **New Profile:** Create and select a named profile with RCC's defaults.
+- **Copy Into Active:** Replace the selected profile's settings and saved
+  profile preferences with another profile's, after confirmation. To start a
+  character or spec profile from your current setup, select it first, then copy
+  from Global or whichever profile holds that setup.
+- **Reset Active:** Restore defaults and clear that profile's preferences.
+- **Rename Profile** and **Delete Profile:** Manage custom profiles. The active
+  profile cannot be deleted; built-in profiles cannot be renamed or deleted.
+
+Unused profiles start with addon defaults, not inherited Global settings.
+Changes affect every character using the same profile. Profile changes are
+blocked during combat and while Edit Mode or Unlock Mode is open.
+
+When upgrading from account-wide preferences, each character receives a copy
+of the old choices once, on their first login. **Use profile-specific consumable
+preferences** applies only to your character and stays set across profile changes.
+Switching it does not copy or delete choices: turning it off restores your
+character's preferences, while turning it on uses only the selected profile's.
+A profile with no preferences uses automatic selection. Copying or resetting
+profiles never changes your character's saved choices or this checkbox.
+
+### Choosing consumables
 
 Left-click usable buttons to consume an item or cast a spell. Where supported,
 right-click an item outside combat to save it as your preferred choice.
@@ -195,20 +216,14 @@ Preferences are shared by the personal displays and managed macros. They are
 stored for your character unless you opt into profile-specific preferences.
 Item counts use your bags, not your bank.
 
-Poison flyouts also support right-click preferences. Single- and double-poison
-modes remember separate choices, restored when you change talents. In double
-mode you can prefer two poisons; selecting another replaces the oldest
-preference. Remaining choices come from your character's remembered applications,
-not from guessing a second poison. The summary tooltip shows active poisons
-with their durations and which poisons left-click will apply, in order.
-Preferred choices are marked in the flyout. Each successful application moves
-to the next poison; already-active poisons are not skipped, and the order
-starts again when combat ends.
+Some buttons have different purposes on the two displays:
 
-Weapon enchants also remember applied oils for each hand. When no class-spell
-override or explicit item preference wins, RCC tries the most recently applied
-oil you still carry before normal inventory priority. Remembered applications
-stay with your character even when preferences are stored in a profile.
+| Button | Consumables Frame | Consumables Action Bar |
+|---|---|---|
+| Food, flasks, runes, and weapon enchants | Use or apply the selected item/spell | Use or apply the selected item/spell |
+| Combat and healing potions | Right-click to choose a preferred item | Left-click to use; right-click to prefer |
+| Healthstones | Display available supply | Left-click to use |
+| Raid buffs and rogue poisons | Apply the selected buff or poison | Apply the selected buff or poison |
 
 Your preference keeps the exact item and rank you chose. If it runs out, the
 button keeps showing that item with a zero count; macros can select an available
@@ -216,24 +231,32 @@ alternative without changing your choice. Carried fleeting flasks and potions fr
 the same family take priority over your regular choice, even if that rank is
 out of stock. Fleeting items cannot be saved as preferences.
 
+Unlimited augment runes, combat and healing potions, repair devices, and
+consumable-pausing items show cooldowns on their buttons and flyout choices.
+
+#### Augment runes
+
 **Prefer Unlimited Augment Runes** is a shared setting on both the Consumables
 Frame and Action Bar settings pages, and also applies to macros. It puts carried
 unlimited runes ahead of consumable runes when choosing automatically, even
-across expansions.
-An explicit item preference takes priority over this setting; clearing it
-restores automatic selection. Cooldowns never change the selected rune.
+across expansions, and is on by default. An explicit item preference takes
+priority; clearing it restores automatic selection. Cooldowns never change
+the selected rune.
+
 Augment Rune macros always contain just one item-use line, with no backup:
 if the selected unlimited rune is on cooldown, it simply cannot be used yet.
 You can still left-click a consumable rune in the flyout or prefer it for your
 primary button and macro.
 
-Some buttons have different purposes on the two displays:
+#### Weapon enchants
 
-| Item type | Consumables Frame | Consumables Action Bar |
-|---|---|---|
-| Food, flasks, runes, and weapon enchants | Use or apply the selected item/spell | Use or apply the selected item/spell |
-| Combat and healing potions | Right-click to choose a preferred item | Left-click to use; right-click to prefer |
-| Healthstones | Display available supply | Left-click to use |
+The button's item icon shows what you will apply next; its buff duration and
+status mark describe the enchant currently on your weapon. When no class-spell
+override or explicit item preference wins, RCC tries the most recently applied
+oil you still carry before normal item selection. Remembered applications stay
+with your character even when preferences are stored in a profile.
+
+#### Healthstones and healing potions
 
 Healthstones are selected automatically: a carried Demonic Healthstone takes
 priority over a normal one. The icon and charge count describe the selected
@@ -243,6 +266,14 @@ Inside Bizmo's Brawlpub or Brawl'gar Arena, both displays automatically show the
 Brawler's Guild healing potion when you carry one. Your normal potion preference
 is kept for when you leave or run out of the Guild potion; normal potions remain
 available in the flyout.
+
+#### Rogue poisons
+
+Single- and double-poison modes keep separate preferences. With Dragon-Tempered
+Blades, prefer up to two poisons of each type; choosing another replaces the
+oldest preference. Other choices come from recently applied poisons.
+
+### Combat and button visibility
 
 Enabled Action Bar buttons normally remain visible even when unavailable.
 The off-hand enchant button hides when that slot cannot be enchanted, and Raid
@@ -259,15 +290,6 @@ glows stay hidden. Managed macro updates also wait until combat ends.
 Settings requested in combat open afterward. Manual Consumables Frame and
 Feast/Cauldron Frame opens are blocked during combat, not queued.
 
-### Optional utility buttons
-
-- **Repair** prefers a ready reusable device such as Jeeves before a consumable
-  such as Auto-Hammer. It shows cooldowns rather than ready/missing marks.
-- **Inky Black Potion** shows the item or active buff without ready/missing marks.
-- **Consumable Stasis** provides access to items that pause consumable buff
-  durations during breaks. Its temporary-frame button appears for break timers
-  by default.
-
 ### Reading group status
 
 The Raid Status Frame covers active party or raid members, excluding bench
@@ -279,14 +301,17 @@ groups outside the instance size.
   buff appears.
 - **Weapons:** A missing temporary weapon enchant or having no enchantable
   main-hand weapon equipped is a failure.
-- **Unavailable information:** Tooltips distinguish a responding RCC user whose
-  information could not be checked from a player with no compatible response.
+- **Grey question mark:** RCC is present, but the information could not be
+  confirmed. The tooltip explains why the result is unknown.
+- **Grey X:** No addon response arrived. The player may not have RCC installed
+  or may have been unable to reply.
 
 Readable buffs still show when another buff is restricted; buffs that cannot
-be confirmed remain unknown. When WoW prevents a reliable check of the active
-group's buffs, RCC omits the affected buff-based chat-report sections instead
-of reporting false missing buffs. RCC also reads Method Raid Tools durability
-data.
+be confirmed remain unknown. Raid buffs that WoW never hides can still be
+identified as missing even with an unrelated secret aura present. When WoW
+prevents a reliable check of the active group's buffs, RCC omits the affected
+buff-based chat-report sections instead of reporting false missing buffs.
+RCC also reads Method Raid Tools durability data.
 
 Closing the ready-check display also closes its feast/cauldron display.
 `/rcc ca` reopens provision tracking while it remains active. Combat hides the
@@ -324,14 +349,10 @@ or a combat restriction unless you include `[combat]` yourself.
 Item macros choose from available automatic overrides first, then your
 available preferred item, then the category's fallbacks. Augment Rune macros
 use only the first choice; other item macros include one eligible backup.
-These choices never change your saved preference.
-Healing potion macros select the Brawler's Guild potion (`253011`) only inside
-Bizmo's Brawlpub or Brawl'gar Arena when you
-carry one, with your normal potion as the backup. Outside those venues, or if
-you have none, they use the normal primary and backup. There are at most two
-potion-use lines. Both personal displays use the same location-aware primary
-selection without changing your saved preference. Spell-based macros remain
-single casts.
+These choices never change your saved preference. Inside the Brawler's Guild,
+the Guild potion is used first when carried, with your normal potion as backup.
+Otherwise, normal primary and backup selection applies. Spell-based macros
+remain single casts.
 
 Entering or leaving a venue refreshes the macro outside combat. Choices stay
 fixed during combat, with pending changes applied afterward;
