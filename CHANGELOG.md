@@ -9,16 +9,22 @@
   With Dragon-Tempered Blades, each becomes a diagonal two-poison summary,
   with proportionally cropped icon halves and the earliest remaining duration.
   Split icons use positioned, rotated masks to avoid blank artwork.
+  Empty halves use desaturated lethal/non-lethal poison artwork at full opacity,
+  matching other personal buttons instead of showing faded question marks.
   One centered check confirms both effects are applied; an X means either is
   missing, and a question mark means RCC could not confirm their absence.
   Hover outside combat to see all known poisons and checkmarks on active ones.
-  The summary casts its prepared pair with one left click per cast, including
+  The summary applies the selected poisons with one left click per poison, including
   in combat; flyouts remain out-of-combat only. Detection uses targeted,
   secret-safe player-buff queries.
 - Poison preferences are saved separately for single- and double-poison modes.
   Right-click to add or remove a preference; a new choice replaces the oldest
   preference when the list is full. Unselected slots use remembered applications.
-  Summary tooltips distinguish applied effects, preferences, and prepared casts.
+  Summary tooltips show active poisons and what left-click will apply, with a
+  reminder to click once for each poison. Preference details stay on the flyout
+  choices instead of adding another list to the summary.
+  Unfilled effects are labeled `Missing: N` in red instead of the confusing
+  "Unable to confirm" message.
 - Blizzard's ready-check dialog can now be dragged by its visible background
   outside combat, with its position saved in the active profile. Allow Dragging
   is enabled by default on RCC's main settings page. Ready/Not Ready buttons

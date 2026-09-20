@@ -284,7 +284,6 @@ function State.ApplyEffectSummary(state, model)
     state.summaryCapacity = model.selection.capacity
     state.summaryEffects = model.effects
     state.summaryLabel = model.selection.label
-    state.summaryPreferences = model.selection.preferences
     state.hasConsumableBuff = model.complete
     state.desaturated = not model.complete
     state.statusIcon = model.complete and State.READY_ICON or State.NOT_READY_ICON

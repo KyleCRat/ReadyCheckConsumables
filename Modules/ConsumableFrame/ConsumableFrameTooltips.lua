@@ -192,47 +192,49 @@ local function showButtonTooltip(button, shoppingTooltip)
         setGameTooltipOwner(button)
         GameTooltip:ClearLines()
         GameTooltip:AddLine(state.summaryLabel)
-        GameTooltip:AddLine("Currently applied", 1, 1, 1)
+        local effects = state.summaryEffects or {}
 
-        for _, effect in ipairs(state.summaryEffects or {}) do
-            local name = getSpellDisplay(effect.spellID) or effect.name or "Spell information unavailable"
+        if #effects > 0 then
+            GameTooltip:AddLine("Active", 1, 1, 1)
+        end
+
+        for _, effect in ipairs(effects) do
+            local name = getSpellDisplay(effect.spellID) or effect.name or "Name unavailable"
             local duration = effect.remaining and F.FormatDuration(effect.remaining) or ""
             GameTooltip:AddDoubleLine(name, duration, 1, 1, 1, 1, 1, 1)
         end
 
-        local unfilled = state.summaryCapacity - #(state.summaryEffects or {})
+        local unfilled = state.summaryCapacity - #effects
 
         if unfilled > 0 then
-            local label = state.summaryAvailable and "Not applied" or "Unable to confirm"
-            GameTooltip:AddLine(label .. ": " .. unfilled, 0.7, 0.7, 0.7)
+            GameTooltip:AddLine("Missing: " .. unfilled, 1, 0.2, 0.2)
         end
 
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("Preferred", 1, 1, 1)
-
-        if #(state.summaryPreferences or {}) == 0 then
-            GameTooltip:AddLine("None selected", 0.7, 0.7, 0.7)
-        else
-            for _, candidate in ipairs(state.summaryPreferences) do
-                local name = getSpellDisplay(candidate.spellID) or candidate.name or "Spell information unavailable"
-                GameTooltip:AddLine(name, 0.2, 1, 0.2, true)
-            end
-        end
-
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("Prepared casts", 1, 1, 1)
         local action = state.action
         local spellIDs = action and (action.spellIDs or { action.spellID }) or {}
 
         if #spellIDs == 0 then
-            GameTooltip:AddLine("Hover to choose an available spell", 0.7, 0.7, 0.7, true)
+            local hint = InCombatLockdown() and "Choose an option after combat"
+                or "Choose an option from the menu"
+
+            GameTooltip:AddLine(hint, 0.7, 0.7, 0.7, true)
         else
+            GameTooltip:AddLine("Left click to " .. button.tooltipAction, 0.2, 1, 0.2)
+
             for index, spellID in ipairs(spellIDs) do
-                local name = getSpellDisplay(spellID) or "Spell information unavailable"
-                GameTooltip:AddLine(index .. ". " .. name, 1, 1, 1, true)
+                local name = getSpellDisplay(spellID) or "Name unavailable"
+
+                if #spellIDs > 1 then
+                    name = index .. ". " .. name
+                end
+
+                GameTooltip:AddLine(name, 1, 1, 1, true)
             end
 
-            GameTooltip:AddLine("Left click once per cast", 0.2, 1, 0.2, true)
+            if #spellIDs > 1 then
+                GameTooltip:AddLine("Click once for each, in the order shown", 0.2, 1, 0.2, true)
+            end
         end
 
         GameTooltip:Show()

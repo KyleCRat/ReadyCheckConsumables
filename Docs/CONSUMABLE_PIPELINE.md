@@ -893,11 +893,18 @@ shared view. Native texture masks reveal the first icon in the bottom-left and
 the second in the top-right; the icons keep their normal aspect-ratio crop.
 Masks are positioned and rotated for the button's dimensions, since changing
 texture coordinates on a mask is unsupported by the client.
-Empty halves show faded category artwork. One centered status covers the whole
-summary: a check when both effects are applied, an X when either is missing,
+Empty halves show the category's default artwork desaturated at full opacity,
+matching other personal buttons with missing buffs. Poisons use separate lethal
+and non-lethal fallback icons from `Data/RoguePoisons.lua`, not question marks.
+Applied halves retain their colored buff icons. One centered status covers the
+whole summary: a check when both effects are applied, an X when either is missing,
 or a question mark when absence cannot be confirmed. All known poisons move
 into the flyout, where each applied spell still has its own checkmark and duration.
-The summary's tooltip separates applied effects, preferences, and prepared casts.
+The summary's tooltip lists active effects and their remaining time, then names
+what left-click will apply. Multiple choices are shown in order with a reminder
+to click once for each. The click list comes from `state.action`, so it continues
+to describe the button's bound action during combat. Preference labels and
+right-click instructions stay on the individual flyout choices.
 
 `ConsumableButtonView` keeps summary layouts keyed by count in `SUMMARY_LAYOUTS`.
 It prepares the category's declared layouts before combat and switches their

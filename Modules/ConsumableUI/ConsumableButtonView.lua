@@ -246,11 +246,12 @@ local function applySummary(button, state)
             previous.icon = icon
         end
 
+        -- Missing effects use the normal personal-button treatment:
+        -- desaturated category artwork at full opacity, not a faded status icon.
         local inactive = effect == nil
 
         if previous.inactive ~= inactive then
             region.icon:SetDesaturated(inactive)
-            region.icon:SetAlpha(inactive and 0.25 or 1)
             previous.inactive = inactive
         end
     end

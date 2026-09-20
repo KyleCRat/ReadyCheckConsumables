@@ -16,8 +16,11 @@ RCC.db.roguePoisons = {
     },
 }
 
--- Used only until the known spell's icon metadata is available.
-RCC.db.roguePoisonFallbackIconID = 134400 -- INV_Misc_QuestionMark
+-- Category artwork for missing summary effects and unavailable spell icons.
+RCC.db.roguePoisonFallbackIcons = {
+    lethal = "Interface\\Icons\\Ability_Poisons",
+    nonLethal = "Interface\\Icons\\Ability_PoisonSting",
+}
 
 RCC.db.roguePoisonCapacity = {
     default = 1,
