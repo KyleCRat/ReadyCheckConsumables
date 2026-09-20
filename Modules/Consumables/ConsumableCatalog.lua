@@ -141,6 +141,7 @@ local DEFINITIONS = {
         defaultIcon = RCC.db.raidBuffIconID,
         temporaryClickable = true,
         tooltipAction = "cast",
+        actionBarHideWhenInapplicable = true,
     },
     {
         key = "hs",

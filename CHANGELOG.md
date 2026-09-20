@@ -200,6 +200,8 @@
 
 ### Fixed
 
+- The Action Bar now hides the Raid Buff button on classes without a raid-buff
+  spell and closes the gap instead of showing a question-mark placeholder.
 - Weapon-enchant preferences no longer snap back to the applied oil during
   weapon scans or macro refreshes. Item-mode buttons show the selected next-use
   item's icon, count, and quality, while the check, duration, and a "Currently

@@ -158,8 +158,8 @@ function ActionBar.GetVisualOptions()
 end
 
 -- Enabled buttons retain their slots when supplies are unavailable. The
--- off-hand enchant and class-specific poison definitions opt out when they
--- cannot apply. Use resolved applicability, not supplies or current buff status.
+-- definitions can opt out when they cannot apply. Use resolved applicability,
+-- not supplies or current buff status.
 local function shouldShowButton(definition)
     if not frame.surface.categories[definition.key] then
         return false
