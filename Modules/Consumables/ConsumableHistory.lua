@@ -14,16 +14,16 @@ local activeCapacity = {}
 -- evidence (such as expiry timestamps) to distinguish a refresh from a repeated
 -- read. Selection keeps an unchanged fallback pair in a stable casting order.
 function History.Observe(inputs, definition)
-    local domain = RCC.Consumables[definition.domain]
+    local logic = definition.logic
 
-    if not domain.GetApplications then return false end
+    if not logic.GetApplications then return false end
 
     local Inputs = RCC.ConsumableInputs
     local previousInputs = seenInputs[definition.key]
     local currentInputs = {}
     local changedInputs = previousInputs == nil
 
-    for _, path in ipairs(domain.Dependencies.observation) do
+    for _, path in ipairs(logic.Dependencies.observation) do
         local value = Inputs.GetDependency(inputs, path, definition)
         currentInputs[path] = value
 
@@ -35,7 +35,7 @@ function History.Observe(inputs, definition)
     if not changedInputs then return false end
 
     seenInputs[definition.key] = currentInputs
-    local applications, available, capacity, evidence = domain.GetApplications(inputs, definition)
+    local applications, available, capacity, evidence = logic.GetApplications(inputs, definition)
     local key = definition.key
     capacity = capacity or 1
     observed[key] = observed[key] or {}

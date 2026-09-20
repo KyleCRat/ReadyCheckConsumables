@@ -111,7 +111,6 @@ Modules/ReadyCheckMover.lua
 
 ################################################################################
 # Shared consumable state
-Modules/Consumables/ConsumableCatalog.lua
 Modules/Consumables/ConsumableState.lua
 
 Modules/Consumables/ConsumablePreferences.lua
@@ -151,6 +150,7 @@ Modules/ConsumableUI/Presenters/Vantus.lua
 Modules/ConsumableUI/Presenters/WeaponEnchant.lua
 Modules/ConsumableUI/Presenters/RoguePoison.lua
 
+Modules/Consumables/ConsumableCatalog.lua
 Modules/Consumables/ConsumableDemand.lua
 Modules/Consumables/ConsumableRuntime.lua
 Modules/Consumables/ConsumableStateController.lua

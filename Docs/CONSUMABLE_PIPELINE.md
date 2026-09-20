@@ -94,7 +94,8 @@ one definition per button category. Flask's entry is:
 ```lua
 {
     key = "flask",
-    domain = "Flask",
+    logic = RCC.Consumables.Flask,
+    presenter = RCC.ConsumablePresenters.Flask,
     label = "Flask",
     settingKey = "icon_flask",
     defaultIcon = RCC.db.flaskIconID,
@@ -108,11 +109,17 @@ The important connections are:
 | Field | What uses it |
 | --- | --- |
 | `key = "flask"` | Identifies this button in requests, snapshots, and UI button tables |
-| `domain = "Flask"` | Looks up its logic at `RCC.Consumables.Flask` and its presenter at `RCC.ConsumablePresenters.Flask` |
+| `logic = RCC.Consumables.Flask` | References the module that declares inputs, selects items, and checks buff status |
+| `presenter = RCC.ConsumablePresenters.Flask` | References the module that turns those results into button and flyout display states |
 | `settingKey` | Enables this category on the temporary frame |
 | `defaultIcon` | Gives the renderer an icon when the result has no item or aura icon |
 | `temporaryClickable` | Controls whether the temporary frame creates a clickable control |
 | `tooltipAction` | Supplies the verb for the click hint |
+
+`logic` and `presenter` hold the module tables themselves, not names to look up
+later. The TOC loads those modules before the catalog so the references exist
+when these definitions are created. Their names do not need to match, and
+multiple categories can reference the same logic or presenter.
 
 The entry's position in the catalog determines button order on both personal
 displays. The fallback icon itself is defined in
@@ -774,16 +781,18 @@ Inky Black Potion is a smaller complete implementation you can follow:
 | Piece | Existing example |
 | --- | --- |
 | Gameplay IDs | [Data/InkyBlackPotion.lua](../Data/InkyBlackPotion.lua) defines the item and applied buff IDs |
-| Category identity | The `inkyBlackPotion` catalog entry names domain `InkyBlackPotion` and its temporary setting |
+| Category identity | The `inkyBlackPotion` catalog entry references its logic and presenter modules and names its temporary setting |
 | Settings defaults | `icon_inkyBlackPotion` and `consumablesActionBar_icon_inkyBlackPotion` in `Settings.lua` |
 | Item and buff decisions | [Consumables/InkyBlackPotion.lua](../Modules/Consumables/InkyBlackPotion.lua) declares inputs and implements `Select`, `Observe`, and `Evaluate` |
 | Button appearance | [Presenters/InkyBlackPotion.lua](../Modules/ConsumableUI/Presenters/InkyBlackPotion.lua) returns its optional-use icon/buff display without a readiness mark |
 
-A new category's domain table is assigned to `RCC.Consumables[domain]`, and its
-presenter to `RCC.ConsumablePresenters[domain]`, using the same `domain` name as
-the catalog. Its fallback icon goes in `Data/Settings.lua`. Add its files to
-the TOC alongside their equivalents: gameplay data before modules, domain and
-presenter files before the runtime/controller and UI consumers.
+Assign the new logic and presenter tables to the addon namespace, then reference
+them in the catalog's `logic` and `presenter` fields. For example, Inky Black
+Potion uses `RCC.Consumables.InkyBlackPotion` and
+`RCC.ConsumablePresenters.InkyBlackPotion`. Its fallback icon goes in
+`Data/Settings.lua`. Add its files to the TOC alongside their equivalents:
+gameplay data before modules, logic and presenter files before the catalog,
+then the runtime/controller and UI consumers.
 
 If the new button supports saved preferences, add a named entry to
 `ConsumablePreferenceKey` in `ConsumablePreferences.lua`. Use the same key in the selection dependency
@@ -846,8 +855,9 @@ poisons separately. For these spells, the cast ID is also the player's buff
 ID. Add a poison to its ordered list; the shared domain and presenter use that
 list for both detection and flyout choices.
 
-Both catalog entries use `domain = "RoguePoison"`, with `poisonType` choosing
-the list. `Select(inputs, definition)` and `Observe(inputs, definition)` receive
+Both catalog entries reference `RCC.Consumables.RoguePoison` as their `logic`
+and `RCC.ConsumablePresenters.RoguePoison` as their `presenter`, with `poisonType`
+choosing the list. `Select(inputs, definition)` and `Observe(inputs, definition)` receive
 the whole catalog definition, just as WeaponEnchant reads `definition.weaponSlot`.
 The poison entries also declare `classToken = "ROGUE"`, so other classes do not
 request their data or display their buttons. Their `supportedCapacities = { 1, 2 }`

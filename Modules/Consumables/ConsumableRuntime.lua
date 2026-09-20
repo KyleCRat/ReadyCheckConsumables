@@ -28,7 +28,7 @@ end
 -- Select and Observe cache independently. Evaluate combines their immutable
 -- results with their additional inputs and the current time. Presenters have
 -- no authority to query or save data.
--- Select/Observe receive the catalog definition so shared domains can select
+-- Select/Observe receive the catalog definition so shared logic can select
 -- their weapon slot, poison type, or other category-specific data explicitly.
 -- Records/snapshots are read-only to consumers. Revisions are per facet and
 -- monotonically increasing, so opening a surface cannot miss a previous delta.
@@ -57,9 +57,9 @@ function Runtime.Build(runtime, inputs, now, due, categories)
 
     for key in pairs(categories) do
         local definition = Catalog.GetDefinition(key)
-        local domain = RCC.Consumables[definition.domain]
-        local presenter = RCC.ConsumablePresenters[definition.domain]
-        local deps = domain.Dependencies
+        local logic = definition.logic
+        local presenter = definition.presenter
+        local deps = logic.Dependencies
         local previous = runtime.categories[key]
         local cache = previous or {}
 
@@ -77,7 +77,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         local observation = cache.observation
 
         if selectionDirty then
-            local selected = domain.Select and domain.Select(inputs, definition) or EMPTY
+            local selected = logic.Select and logic.Select(inputs, definition) or EMPTY
 
             if selected.capacity and not Catalog.SupportsCapacity(definition, selected.capacity) then
                 error("RCC: unsupported selection capacity " .. tostring(selected.capacity) .. " for " .. key)
@@ -89,7 +89,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         end
 
         if observationDirty then
-            local observed = domain.Observe and domain.Observe(inputs, definition) or EMPTY
+            local observed = logic.Observe and logic.Observe(inputs, definition) or EMPTY
 
             if not Inputs.Equal(observed, observation) then
                 observation = observed
@@ -102,7 +102,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
             or evaluationDirty
             or (due and due[key])
         then
-            local model = domain.Evaluate and domain.Evaluate(selection, observation, inputs, now)
+            local model = logic.Evaluate and logic.Evaluate(selection, observation, inputs, now)
                 or { selection = selection, action = selection.action }
             local choices = cache.choices
 

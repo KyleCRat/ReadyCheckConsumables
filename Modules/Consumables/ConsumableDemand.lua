@@ -41,7 +41,7 @@ function Demand.Build(categories)
 
     for key in pairs(categories) do
         local definition = Catalog.GetDefinition(key)
-        local dependencies = RCC.Consumables[definition.domain].Dependencies
+        local dependencies = definition.logic.Dependencies
 
         for _, phase in ipairs(PHASES) do
             for _, path in ipairs(dependencies[phase] or {}) do

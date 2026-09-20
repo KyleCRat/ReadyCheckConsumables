@@ -53,6 +53,9 @@
 - Consumable categories now declare supported selection counts explicitly.
   Summary layouts are registered by count, keeping future multi-effect layouts
   separate from talent selection and saved preference/history formats.
+- Consumable categories now reference their logic and presenter modules
+  explicitly, instead of relying on a shared registry name. Selection, display
+  behavior, and saved settings are unchanged.
 - Added character-owned application history shared by poison and weapon-enchant
   selection. Weapon enchants use the most recently applied carried oil before
   normal inventory priority, without changing explicit preferences or existing

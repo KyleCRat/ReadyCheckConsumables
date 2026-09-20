@@ -27,11 +27,13 @@ local STASIS_VISIBILITY = {
 
 -- This array is the canonical button order for both personal consumable
 -- surfaces. Definitions describe identity and product policy; widgets and
--- coordinates belong to the individual surfaces.
+-- coordinates belong to the individual surfaces. Logic and presenter modules
+-- load before this catalog so definitions hold references to those tables.
 local DEFINITIONS = {
     {
         key = "food",
-        domain = "Food",
+        logic = RCC.Consumables.Food,
+        presenter = RCC.ConsumablePresenters.Food,
         label = "Food",
         settingKey = "icon_food",
         defaultIcon = RCC.db.foodIconID,
@@ -41,7 +43,8 @@ local DEFINITIONS = {
     },
     {
         key = "flask",
-        domain = "Flask",
+        logic = RCC.Consumables.Flask,
+        presenter = RCC.ConsumablePresenters.Flask,
         label = "Flask",
         settingKey = "icon_flask",
         defaultIcon = RCC.db.flaskIconID,
@@ -50,7 +53,8 @@ local DEFINITIONS = {
     },
     {
         key = "consumableStasis",
-        domain = "ConsumableStasis",
+        logic = RCC.Consumables.ConsumableStasis,
+        presenter = RCC.ConsumablePresenters.ConsumableStasis,
         label = "Consumable Stasis",
         settingKey = "icon_consumableStasis",
         defaultIcon = 134062,
@@ -65,7 +69,8 @@ local DEFINITIONS = {
     },
     {
         key = "mainHandTempWeaponEnchant",
-        domain = "WeaponEnchant",
+        logic = RCC.Consumables.WeaponEnchant,
+        presenter = RCC.ConsumablePresenters.WeaponEnchant,
         label = "Main-hand Enchant",
         weaponSlot = MAIN_HAND_INVENTORY_SLOT,
         settingKey = "icon_mhTempWeaponEnchant",
@@ -75,7 +80,8 @@ local DEFINITIONS = {
     },
     {
         key = "offHandTempWeaponEnchant",
-        domain = "WeaponEnchant",
+        logic = RCC.Consumables.WeaponEnchant,
+        presenter = RCC.ConsumablePresenters.WeaponEnchant,
         label = "Off-hand Enchant",
         weaponSlot = OFF_HAND_INVENTORY_SLOT,
         settingKey = "icon_ohTempWeaponEnchant",
@@ -87,7 +93,8 @@ local DEFINITIONS = {
     },
     {
         key = "lethalPoison",
-        domain = "RoguePoison",
+        logic = RCC.Consumables.RoguePoison,
+        presenter = RCC.ConsumablePresenters.RoguePoison,
         classToken = "ROGUE",
         poisonType = "lethal",
         supportedCapacities = { 1, 2 },
@@ -101,7 +108,8 @@ local DEFINITIONS = {
     },
     {
         key = "nonLethalPoison",
-        domain = "RoguePoison",
+        logic = RCC.Consumables.RoguePoison,
+        presenter = RCC.ConsumablePresenters.RoguePoison,
         classToken = "ROGUE",
         poisonType = "nonLethal",
         supportedCapacities = { 1, 2 },
@@ -115,7 +123,8 @@ local DEFINITIONS = {
     },
     {
         key = "augment",
-        domain = "Augment",
+        logic = RCC.Consumables.Augment,
+        presenter = RCC.ConsumablePresenters.Augment,
         label = "Augment Rune",
         settingKey = "icon_augment",
         defaultIcon = RCC.db.augmentIconID,
@@ -125,7 +134,8 @@ local DEFINITIONS = {
     },
     {
         key = "raidBuff",
-        domain = "RaidBuff",
+        logic = RCC.Consumables.RaidBuff,
+        presenter = RCC.ConsumablePresenters.RaidBuff,
         label = "Raid Buff",
         settingKey = "icon_raidBuff",
         defaultIcon = RCC.db.raidBuffIconID,
@@ -134,7 +144,8 @@ local DEFINITIONS = {
     },
     {
         key = "hs",
-        domain = "Healthstone",
+        logic = RCC.Consumables.Healthstone,
+        presenter = RCC.ConsumablePresenters.Healthstone,
         label = "Healthstone",
         settingKey = "icon_healthstone",
         defaultIcon = RCC.db.healthstoneIconID,
@@ -143,7 +154,8 @@ local DEFINITIONS = {
     },
     {
         key = "combatpot",
-        domain = "CombatPotion",
+        logic = RCC.Consumables.CombatPotion,
+        presenter = RCC.ConsumablePresenters.CombatPotion,
         label = "Combat Potion",
         settingKey = "icon_combatPotion",
         defaultIcon = RCC.db.combatPotionIconID,
@@ -153,7 +165,8 @@ local DEFINITIONS = {
     },
     {
         key = "healpot",
-        domain = "HealingPotion",
+        logic = RCC.Consumables.HealingPotion,
+        presenter = RCC.ConsumablePresenters.HealingPotion,
         label = "Healing Potion",
         settingKey = "icon_healPotion",
         defaultIcon = RCC.db.healingPotionIconID,
@@ -163,7 +176,8 @@ local DEFINITIONS = {
     },
     {
         key = "recuperate",
-        domain = "Recuperate",
+        logic = RCC.Consumables.Recuperate,
+        presenter = RCC.ConsumablePresenters.Recuperate,
         label = "Recuperate",
         settingKey = "icon_recuperate",
         defaultIcon = RCC.db.recuperateIconID,
@@ -172,7 +186,8 @@ local DEFINITIONS = {
     },
     {
         key = "inkyBlackPotion",
-        domain = "InkyBlackPotion",
+        logic = RCC.Consumables.InkyBlackPotion,
+        presenter = RCC.ConsumablePresenters.InkyBlackPotion,
         label = "Inky Black Potion",
         settingKey = "icon_inkyBlackPotion",
         defaultIcon = RCC.db.inkyBlackPotionIconID,
@@ -181,7 +196,8 @@ local DEFINITIONS = {
     },
     {
         key = "repair",
-        domain = "Repair",
+        logic = RCC.Consumables.Repair,
+        presenter = RCC.ConsumablePresenters.Repair,
         label = "Repair",
         settingKey = "icon_repair",
         defaultIcon = RCC.db.repairIconID,
@@ -193,7 +209,8 @@ local DEFINITIONS = {
     },
     {
         key = "vantus",
-        domain = "Vantus",
+        logic = RCC.Consumables.Vantus,
+        presenter = RCC.ConsumablePresenters.Vantus,
         label = "Vantus Rune",
         settingKey = "icon_vantus",
         defaultIcon = RCC.db.vantusIconID,
@@ -223,7 +240,7 @@ function Catalog.GetDefinition(key)
     return BY_KEY[key]
 end
 
--- Definitions declare the allowed counts; the domain chooses the current one
+-- Definitions declare the allowed counts; the logic chooses the current one
 -- from its inputs. Neither the renderer nor the saved preference branches
 -- decide which count a category may select.
 function Catalog.SupportsCapacity(definition, capacity)

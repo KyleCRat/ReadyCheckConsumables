@@ -46,7 +46,7 @@ end
 
 function Inputs.GetItemIDs(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
-    local inventory = RCC.Consumables[definition.domain].Inventory
+    local inventory = definition.logic.Inventory
     local ids = {}
 
     if not inventory then return ids end
@@ -76,7 +76,7 @@ end
 
 function Inputs.GetCooldownItemIDs(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
-    local inventory = RCC.Consumables[definition.domain].Inventory
+    local inventory = definition.logic.Inventory
     local ids = {}
 
     if not inventory then return ids end
@@ -90,11 +90,11 @@ end
 
 function Inputs.GetSpellIDs(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
-    local domain = RCC.Consumables[definition.domain]
+    local logic = definition.logic
     local ids = {}
 
-    if domain.GetSpellIDs then
-        for _, spellID in ipairs(domain.GetSpellIDs(definition)) do
+    if logic.GetSpellIDs then
+        for _, spellID in ipairs(logic.GetSpellIDs(definition)) do
             ids[spellID] = true
         end
     end
@@ -104,11 +104,11 @@ end
 
 function Inputs.GetPlayerAuraSpellIDs(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
-    local domain = RCC.Consumables[definition.domain]
+    local logic = definition.logic
     local ids = {}
 
-    if domain.GetPlayerAuraSpellIDs then
-        for _, spellID in ipairs(domain.GetPlayerAuraSpellIDs(definition)) do
+    if logic.GetPlayerAuraSpellIDs then
+        for _, spellID in ipairs(logic.GetPlayerAuraSpellIDs(definition)) do
             ids[spellID] = true
         end
     end
@@ -400,16 +400,16 @@ end
 
 function Inputs.ReadSelection(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
-    local domain = RCC.Consumables[definition.domain]
-    local dependencies = domain.Dependencies.selection
+    local logic = definition.logic
+    local dependencies = logic.Dependencies.selection
     local needed = {}
 
     for _, path in ipairs(dependencies or {}) do
         needed[path:match("^[^.]+")] = true
     end
 
-    if domain.GetApplications then
-        for _, path in ipairs(domain.Dependencies.observation) do
+    if logic.GetApplications then
+        for _, path in ipairs(logic.Dependencies.observation) do
             needed[path:match("^[^.]+")] = true
         end
     end
