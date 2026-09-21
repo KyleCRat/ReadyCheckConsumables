@@ -28,6 +28,9 @@ RCC.Data.AddVantusBuffs({
     [1303177] = true, [1303185] = true, -- The Twin Fangs
     [1303178] = true, [1303186] = true, -- The Coiled Altar
     [1303179] = true, [1303187] = true, -- Ula'tek
+
+    -- 12.1.0 - The Tidebound Grotto
+    [1310439] = true, -- Nymrissa Wavecaller (shared by both ranks)
 })
 
 RCC.Data.AddVantusItemsByRaid({
@@ -35,5 +38,6 @@ RCC.Data.AddVantusItemsByRaid({
     [2912] = { 245880, 245879 }, -- The Voidspire
     [2913] = { 245880, 245879 }, -- March on Quel'Danas
     [2939] = { 245880, 245879 }, -- The Dreamrift
+    [2987] = { 272195, 272194 }, -- The Tidebound Grotto
     [3004] = { 272195, 272194 }, -- The Venomous Abyss
 })

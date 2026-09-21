@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Vantus Rune buttons and macros now support The Tidebound Grotto, and personal
+  and raid displays recognize Nymrissa Wavecaller's active rune.
+
 ## [12.1.0-26] - 2026-09-20
 
 ### Added
