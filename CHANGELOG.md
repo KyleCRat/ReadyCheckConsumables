@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [12.1.0-27] - 2026-09-21
 
 ### Fixed
 
@@ -73,11 +73,3 @@
   Status Frame closed or disabled, including when everyone responds quickly.
 - Inline macro updates preserve conditions and replace old backup lines.
   Macros that would exceed the size limit are left unchanged with a warning.
-
-## [12.1.0-25] - 2026-09-09
-
-### Fixed
-
-- Preserved readable consumable and raid-buff information when another aura
-  has a restricted spell ID, instead of discarding the entire scan. Confirmed
-  food and flask results are still shared; unresolved statuses remain Unknown.
