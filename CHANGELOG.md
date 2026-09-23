@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Raid Buff buttons now show a red X for confirmed missing buffs even when
+  another group member cannot be checked.
+
 ## [12.1.0-27] - 2026-09-21
 
 ### Fixed

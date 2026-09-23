@@ -2,13 +2,16 @@ local _, RCC = ...
 local RaidBuff = {}
 RCC.ConsumablePresenters.RaidBuff = RaidBuff
 local State = RCC.ConsumableState
+local STATUS_UNAVAILABLE =
+    "RCC can't check this buff for some group members because their buff "
+    .. "information is unavailable"
 
 function RaidBuff.Present(model)
     local info = model.info
 
     if not info then return { applicable = false } end
 
-    local missing = model.available and model.missing > 0
+    local missing = model.missing > 0
     local state = State.Create({
         icon = info.iconID,
         tooltipSpellID = info.spellID,
@@ -17,7 +20,7 @@ function RaidBuff.Present(model)
         detailTextIsBad = model.available and model.expiringSoon,
         countText = missing and tostring(model.missing) or "",
         countTextIsBad = missing,
-        glow = model.available and info.spellID ~= nil and (missing or model.expiringSoon),
+        glow = info.spellID ~= nil and (missing or (model.available and model.expiringSoon)),
     })
 
     if info.spellID then
@@ -26,13 +29,18 @@ function RaidBuff.Present(model)
         State.SetUnavailable(state, "Raid buff spell unavailable")
     end
 
-    if model.available and not missing then
+    -- A confirmed missing buff takes priority over an incomplete group check.
+    -- Unknown applies only when nobody is confirmed missing and some members
+    -- could not be checked; a checkmark requires every eligible member's buff.
+    if missing then
+        state.statusIcon = State.NOT_READY_ICON
+    elseif model.available then
         state.statusIcon = State.READY_ICON
         state.hasConsumableBuff = true
         state.desaturated = false
+    else
+        State.ApplyAuraScanAvailability(state, model.available, STATUS_UNAVAILABLE)
     end
-
-    State.ApplyAuraScanAvailability(state, model.available)
 
     return state
 end
