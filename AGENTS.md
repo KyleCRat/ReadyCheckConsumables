@@ -22,7 +22,7 @@ data.
 ## Runtime and Compatibility
 
 - Target the Interface version declared in `ReadyCheckConsumables.toc`; the
-  current target is Retail `120100`.
+  current target is Retail `120105`.
 - WoW uses Lua 5.1 semantics. Avoid newer Lua language features and account for
   sparse tables, multiple returns, local forward declarations, and colon versus
   dot calls.
