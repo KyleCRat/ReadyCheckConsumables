@@ -37,6 +37,38 @@ local function migrateChoices(payload)
     payload.consumableItemCache = nil
 end
 
+local function migrateInvisibilityPotionPreferences(payload)
+    local preferences = payload.consumablePreferences
+    local combatPotion = preferences and preferences.combatPotion
+    local choices = combatPotion and combatPotion[1]
+    local choice = choices and choices[1]
+
+    if not choice or choice.kind ~= "item"
+        or not RCC.db.invisibilityPotionItemData[choice.id]
+    then
+        return
+    end
+
+    local invisibilityPotion = preferences.invisibilityPotion
+
+    if not invisibilityPotion then
+        invisibilityPotion = {}
+        preferences.invisibilityPotion = invisibilityPotion
+    end
+
+    -- Preserve an existing new-category choice, including an explicitly empty
+    -- branch. Move the old combat-potion choice only within its owning store.
+    if invisibilityPotion[1] == nil then
+        invisibilityPotion[1] = CopyTable(choices)
+    end
+
+    combatPotion[1] = nil
+
+    if next(combatPotion) == nil then
+        preferences.combatPotion = nil
+    end
+end
+
 -- ---------------------------------------------------------------------------
 -- Initial profile migration: legacy account settings into Global
 -- ---------------------------------------------------------------------------
@@ -107,11 +139,12 @@ end
 -- LibSimpleDBProfiles tracks completed versions and stages every stored profile,
 -- including inactive profiles. Add(sourceVersion, callback) advances one version;
 -- keep earlier steps and raise this target when adding the next step.
-local TARGET_PROFILE_DATA_VERSION = 2
+local TARGET_PROFILE_DATA_VERSION = 3
 
 function RCC.ProfileMigration.CreateProfileMigration()
     local migration = LibStub("LibSimpleDBProfiles-1.0"):CreateMigration(TARGET_PROFILE_DATA_VERSION)
     migration:Add(1, migrateChoices) -- 1 -> 2: normalize saved preferences.
+    migration:Add(2, migrateInvisibilityPotionPreferences) -- 2 -> 3: separate invisibility choices.
 
     return migration
 end
@@ -121,7 +154,7 @@ end
 -- ---------------------------------------------------------------------------
 -- ReadyCheckConsumablesCharacterDB.preferenceMigrationVersion records completed
 -- steps for each character. This target advances separately from profile data.
-local TARGET_CHARACTER_DATA_VERSION = 2
+local TARGET_CHARACTER_DATA_VERSION = 3
 
 local function seedCharacterPreferences(storage, legacyPreferences)
     if storage.consumableItemCache == nil and storage.consumablePreferences == nil then
@@ -142,10 +175,12 @@ end
 
 -- Keys are source versions. Each step advances the same character marker:
 -- 0 -> 1 seeds ownership once; 1 -> 2 converts the saved choice format.
+-- 2 -> 3 moves invisibility choices out of combat-potion preferences.
 -- Keep completed steps so later-login characters can run the whole chain.
 local CHARACTER_MIGRATIONS = {
     [0] = seedCharacterPreferences,
     [1] = migrateCharacterChoices,
+    [2] = migrateInvisibilityPotionPreferences,
 }
 
 function RCC.ProfileMigration.PrepareCharacter(saved, legacyPreferences)

@@ -9,6 +9,7 @@ RCC.ConsumablePreferenceKey = {
     AUGMENT = "augment",
     COMBAT_POTION = "combatPotion",
     HEALING_POTION = "healingPotion",
+    INVISIBILITY_POTION = "invisibilityPotion",
     VANTUS = "vantus",
     MAIN_HAND_TEMP_WEAPON_ENCHANT = "mainHandTempWeaponEnchant",
     OFF_HAND_TEMP_WEAPON_ENCHANT = "offHandTempWeaponEnchant",

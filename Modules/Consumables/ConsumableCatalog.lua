@@ -176,6 +176,18 @@ local DEFINITIONS = {
         hasCooldown = true,
     },
     {
+        key = "invisibilityPotion",
+        logic = RCC.Consumables.InvisibilityPotion,
+        presenter = RCC.ConsumablePresenters.InvisibilityPotion,
+        label = "Invisibility Potion",
+        settingKey = "icon_invisibilityPotion",
+        defaultIcon = RCC.db.invisibilityPotionIcon,
+        temporaryClickable = true,
+        tooltipAction = "use",
+        hasCooldown = true,
+        settingsTooltip = "Use an invisibility potion or choose a preferred one from the flyout",
+    },
+    {
         key = "recuperate",
         logic = RCC.Consumables.Recuperate,
         presenter = RCC.ConsumablePresenters.Recuperate,

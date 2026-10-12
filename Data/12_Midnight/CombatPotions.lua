@@ -94,14 +94,6 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241295, q = 1 },
         },
     },
-    {-- Void-Shrouded Tincture (Invisibility)
-        type = UTILITY,
-        xpac = RCC.MIDNIGHT,
-        items = {
-            { itemID = 241302, q = 2 },
-            { itemID = 241303, q = 1 },
-        },
-    },
     {-- Enlightenment Tonic (Slow Fall)
         type = UTILITY,
         xpac = RCC.MIDNIGHT,

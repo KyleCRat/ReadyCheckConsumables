@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Added optional Invisibility Potion buttons to both personal displays, with
+  preferred items, counts, and cooldowns. Supports all ranks of Hushed Zephyr,
+  Silent Footfalls, and Void-Shrouded Tincture. Existing Tincture preferences
+  move from Combat Potion to the new button.
+
 ## [12.1.5-28] - 2026-10-06
 
 - Updated for WoW 12.1.5.

@@ -51,6 +51,7 @@ RCC.db.healthstoneIconID    = 538745
 RCC.db.raidBuffIconID       = 134400
 RCC.db.combatPotionIconID   = 650640   -- trade_alchemy_potiona4
 RCC.db.healingPotionIconID  = 5931169  -- inv_flask_red
+RCC.db.invisibilityPotionIcon = "Interface\\Icons\\inv_12_profession_alchemy_voidpotion_violet"
 RCC.db.inkyBlackPotionIconID = 136122
 RCC.db.repairIconID         = C_Item.GetItemIconByID(
     RCC.db.repairDefaultItemID
