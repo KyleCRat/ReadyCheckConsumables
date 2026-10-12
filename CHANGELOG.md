@@ -8,6 +8,8 @@
   preferred items, counts, and cooldowns. Supports all ranks of Hushed Zephyr,
   Silent Footfalls, and Void-Shrouded Tincture. Existing Tincture preferences
   move from Combat Potion to the new button.
+- Added optional Glide buttons to both personal displays for Goblin Glider Kits
+  and collected parasol toys, with preferred choices and cooldowns. Off by default.
 
 ## [12.1.5-28] - 2026-10-06
 

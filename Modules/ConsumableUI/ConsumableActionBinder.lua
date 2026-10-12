@@ -43,6 +43,7 @@ end
 local function clearLeftClickAction(click)
     click:SetAttribute("type1", nil)
     click:SetAttribute("item1", nil)
+    click:SetAttribute("toy1", nil)
     click:SetAttribute("spell1", nil)
     click:SetAttribute("macrotext1", nil)
 end
@@ -82,31 +83,34 @@ local function getItemMacro(itemID, targetSlot, allowCombat)
     return prefix .. format("/use item:%d", itemID)
 end
 
-local function setItemAction(button, action, capabilities)
-    local click = button.click
-    local preferenceKey = action.preferenceKey
-    local selectionOnly = action.selectionOnly == true
-    local allowUse = not selectionOnly
-        or capabilities.allowSelectionItemUse == true
-    local available = action.available ~= false
-
-    if not allowUse then
-        local signature = table.concat({
-            "preference",
-            tostring(action.itemID),
-            tostring(preferenceKey or ""),
-        }, "|")
-
-        if click.rccActionSignature ~= signature then
-            clearLeftClickAction(click)
-            click.rccActionSignature = signature
-        end
-
-        setClickShown(button, preferenceKey ~= nil)
-
-        return
+local function setSelectionOnlyAction(button, action, capabilities)
+    if not action.selectionOnly or capabilities.allowSelectionItemUse == true then
+        return false
     end
 
+    local click = button.click
+    local signature = table.concat({
+        "preference",
+        tostring(action.itemID),
+        tostring(action.preferenceKey or ""),
+    }, "|")
+
+    if click.rccActionSignature ~= signature then
+        clearLeftClickAction(click)
+        click.rccActionSignature = signature
+    end
+
+    setClickShown(button, action.preferenceKey ~= nil)
+
+    return true
+end
+
+local function setItemAction(button, action, capabilities)
+    if setSelectionOnlyAction(button, action, capabilities) then return end
+
+    local click = button.click
+    local preferenceKey = action.preferenceKey
+    local available = action.available ~= false
     local useMacro = action.targetSlot ~= nil
         or capabilities.allowCombat ~= true
     local signature = table.concat({
@@ -164,6 +168,24 @@ local function setSpellAction(button, action)
     setClickShown(button, action.available == true)
 end
 
+local function setToyAction(button, action, capabilities)
+    if setSelectionOnlyAction(button, action, capabilities) then return end
+
+    local click = button.click
+    local signature = "toy|" .. action.itemID
+
+    if click.rccActionSignature ~= signature then
+        clearLeftClickAction(click)
+        click:SetAttribute("type1", "toy")
+        click:SetAttribute("toy1", action.itemID)
+        click.rccActionSignature = signature
+    end
+
+    -- Temporary surfaces and flyouts already hide at combat entry. The Action
+    -- Bar keeps this native toy action prepared, subject to Blizzard's rules.
+    setClickShown(button, action.available ~= false)
+end
+
 local function setSpellSequenceAction(button, action, capabilities)
     local prefix = capabilities.allowCombat and "" or "/stopmacro [combat]\n"
     local macro = prefix .. "/castsequence reset=combat " .. table.concat(action.spellNames, ", ")
@@ -189,6 +211,8 @@ function Binder.Bind(button, action, capabilities, preference)
         disable(button)
     elseif action.kind == ActionKind.ITEM and action.itemID then
         setItemAction(button, action, capabilities)
+    elseif action.kind == ActionKind.TOY and action.itemID then
+        setToyAction(button, action, capabilities)
     elseif action.kind == ActionKind.SPELL then
         setSpellAction(button, action)
     elseif action.kind == ActionKind.SPELL_SEQUENCE then

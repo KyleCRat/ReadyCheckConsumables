@@ -55,10 +55,18 @@ local function updateEventSubscriptions()
     -- inventory: carried item counts and asynchronously loaded item metadata.
     setEventEnabled("BAG_UPDATE_DELAYED", sources.inventory)
     setEventEnabled("ITEM_COUNT_CHANGED", sources.inventory)
-    setEventEnabled("ITEM_DATA_LOAD_RESULT", sources.inventory)
+    setEventEnabled("ITEM_DATA_LOAD_RESULT", sources.inventory or sources.toys)
+
+    -- toys: collection ownership and whether this character can use a toy.
+    -- These observations never refresh bag counts or player auras.
+    setEventEnabled("TOYS_UPDATED", sources.toys)
+    setEventEnabled("SPELL_UPDATE_USABLE", sources.toys)
+    setEventEnabled("PLAYER_LEVEL_UP", sources.toys)
+    setEventEnabled("UPDATE_SHAPESHIFT_FORM", sources.toys)
 
     -- cooldowns: item reuse timers, separate from inventory counts and buffs.
     setEventEnabled("BAG_UPDATE_COOLDOWN", sources.cooldowns)
+    setEventEnabled("SPELL_UPDATE_COOLDOWN", sources.cooldowns and sources.toys)
 
     -- weapons: equipped weapons, slot applicability, and temporary enchants.
     setEventEnabled("WEAPON_ENCHANT_CHANGED", sources.weapons)
@@ -66,24 +74,24 @@ local function updateEventSubscriptions()
     setEventEnabled("PLAYER_EQUIPMENT_CHANGED", sources.weapons)
     setEventEnabled("UNIT_INVENTORY_CHANGED", sources.weapons)
 
-    -- location: local map/venue changes affect item selection only. They do
-    -- not refresh instance rules, inventory counts, or aura observations.
-    setEventEnabled("ZONE_CHANGED", sources.location)
-    setEventEnabled("ZONE_CHANGED_INDOORS", sources.location)
+    -- location / toys: local movement can change venue rules and toy usability.
+    -- It does not refresh instance rules, inventory counts, or aura observations.
+    setEventEnabled("ZONE_CHANGED", sources.location or sources.toys)
+    setEventEnabled("ZONE_CHANGED_INDOORS", sources.location or sources.toys)
 
     -- spells / class / weapons: shared notifications for known action spells,
-    -- class-provided raid-buff metadata, and equipped enchant state. Each input
-    -- is refreshed only if requested. Targeted player buffs refresh too, but
-    -- these events do not request a full player aura scan.
+    -- class-provided raid-buff metadata, and equipped enchant state. Learned
+    -- spells can also change toy eligibility. Targeted player buffs refresh
+    -- too, but these events do not request a full player aura scan.
     local spellChanges = sources.spells or sources.class or sources.weapons
-    setEventEnabled("SPELLS_CHANGED", spellChanges)
+    setEventEnabled("SPELLS_CHANGED", spellChanges or sources.toys)
     setEventEnabled("SPELL_DATA_LOAD_RESULT", spellChanges)
     setEventEnabled("PLAYER_SPECIALIZATION_CHANGED", spellChanges)
 
-    -- instance / location / roster / auras: major transitions deliberately
+    -- instance / location / roster / auras / toys: major transitions deliberately
     -- refresh all requested inputs in this group, even if the instance ID/type
     -- stays the same. This is separate from location-only movement above.
-    local majorTransitions = sources.instance or sources.location or sources.roster or auras
+    local majorTransitions = sources.instance or sources.location or sources.roster or auras or sources.toys
     setEventEnabled("ZONE_CHANGED_NEW_AREA", majorTransitions)
     setEventEnabled("PLAYER_DIFFICULTY_CHANGED", majorTransitions)
 
@@ -262,6 +270,19 @@ local function readInputs(dirty, now)
         dirty.cooldowns = demand.sources.cooldowns
     end
 
+    if dirty.toys then
+        local toys = Inputs.ReadToys(
+            demand.toyItemIDs,
+            inputs.toys,
+            type(dirty.toys) == "table" and dirty.toys or nil
+        )
+
+        if not Inputs.Equal(inputs.toys, toys) then
+            storeInput("toys", toys)
+            dirty.cooldowns = demand.sources.cooldowns
+        end
+    end
+
     if dirty.spells then
         storeInput("spells", Inputs.ReadSpells(demand.spellIDs))
     end
@@ -345,7 +366,7 @@ local function readInputs(dirty, now)
 
     if dirty.cooldowns then
         local cooldowns, nextExpiration = Inputs.ReadCooldowns(
-            inputs.inventory,
+            inputs,
             demand.cooldownItemIDs,
             now,
             getDisplayedItemIDs()
@@ -632,19 +653,38 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         -- effect of comparing instance or location values.
         Controller.Invalidate("instance")
         Controller.Invalidate("location")
+        Controller.Invalidate("toys")
         Controller.Invalidate("roster")
         Controller.Invalidate("playerAuras")
         Controller.Invalidate("playerSpellAuras")
         Controller.Invalidate("groupAuras")
     elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
         Controller.Invalidate("location")
+        Controller.Invalidate("toys")
+    elseif event == "TOYS_UPDATED" then
+        if F.IsSafeNumber(unit) then
+            if demand.toyItemIDs[unit] then
+                Controller.Invalidate("toys", { scope = { [unit] = true } })
+            end
+        else
+            Controller.Invalidate("toys")
+        end
+    elseif event == "SPELL_UPDATE_USABLE"
+        or event == "PLAYER_LEVEL_UP"
+        or event == "UPDATE_SHAPESHIFT_FORM"
+    then
+        Controller.Invalidate("toys")
     elseif event == "BAG_UPDATE_DELAYED" then
         Controller.Invalidate("inventory")
     elseif event == "ITEM_COUNT_CHANGED" or event == "ITEM_DATA_LOAD_RESULT" then
         if F.IsSafeNumber(unit) and demand.itemIDs[unit] then
             Controller.Invalidate("inventory", { scope = { [unit] = true } })
         end
-    elseif event == "BAG_UPDATE_COOLDOWN" then
+
+        if event == "ITEM_DATA_LOAD_RESULT" and F.IsSafeNumber(unit) and demand.toyItemIDs[unit] then
+            Controller.Invalidate("toys", { scope = { [unit] = true } })
+        end
+    elseif event == "BAG_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_COOLDOWN" then
         Controller.Invalidate("cooldowns")
     elseif event == "WEAPON_ENCHANT_CHANGED"
         or event == "WEAPON_SLOT_CHANGED"
@@ -664,6 +704,10 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
             Controller.Invalidate("playerSpellAuras")
             Controller.Invalidate("class")
             Controller.Invalidate("weapons")
+
+            if event == "SPELLS_CHANGED" then
+                Controller.Invalidate("toys")
+            end
         end
     end
 end)

@@ -77,11 +77,26 @@ end
 function Inputs.GetCooldownItemIDs(category)
     local definition = RCC.ConsumableCatalog.GetDefinition(category)
     local inventory = definition.logic.Inventory
+    local toys = definition.logic.Toys
     local ids = {}
 
-    if not inventory then return ids end
+    for _, itemID in ipairs(inventory and inventory.cooldownItemIDs or {}) do
+        ids[itemID] = true
+    end
 
-    for _, itemID in ipairs(inventory.cooldownItemIDs or {}) do
+    for _, itemID in ipairs(toys and toys.cooldownItemIDs or {}) do
+        ids[itemID] = true
+    end
+
+    return ids
+end
+
+function Inputs.GetToyItemIDs(category)
+    local definition = RCC.ConsumableCatalog.GetDefinition(category)
+    local toys = definition.logic.Toys
+    local ids = {}
+
+    for _, itemID in ipairs(toys and toys.list or {}) do
         ids[itemID] = true
     end
 
@@ -160,6 +175,32 @@ function Inputs.ReadPreferences(previous)
         RCC.GetSetting("consumables_preferUnlimitedAugment") == true
 
     return preferences
+end
+
+-- Toys share item identities, icons, and cooldown APIs with bag items, but
+-- ownership comes from the account's collection. Never invent a bag count.
+function Inputs.ReadToys(itemIDs, previous, changedIDs)
+    local toys = {}
+
+    for itemID in pairs(itemIDs) do
+        local old = previous and previous[itemID]
+
+        if old and changedIDs and not changedIDs[itemID] then
+            toys[itemID] = old
+        else
+            local owned = PlayerHasToy(itemID)
+            local usable = C_ToyBox.IsToyUsable(itemID)
+            local _, _, icon = C_ToyBox.GetToyInfo(itemID)
+
+            toys[itemID] = {
+                owned = not issecretvalue(owned) and owned == true,
+                usable = not issecretvalue(usable) and usable == true,
+                icon = publicNumber(icon),
+            }
+        end
+    end
+
+    return toys
 end
 
 function Inputs.ReadInstance()
@@ -295,17 +336,19 @@ function Inputs.ReadWeapons(now, requestedSlots)
     return weapons
 end
 
-function Inputs.ReadCooldowns(inventory, itemIDs, now, displayedItemIDs)
+function Inputs.ReadCooldowns(inputs, itemIDs, now, displayedItemIDs)
     local cooldowns = {}
     local nextExpiration
 
     for itemID in pairs(itemIDs) do
-        local carried = inventory[itemID] and inventory[itemID].count > 0
+        local item = inputs.inventory and inputs.inventory[itemID]
+        local toy = inputs.toys and inputs.toys[itemID]
+        local owned = (item and item.count > 0) or (toy and toy.owned)
         local displayed = displayedItemIDs and displayedItemIDs[itemID]
 
         -- A prepared combat button can still show an item after its last use.
         -- Query that exact item's timer without scanning every unowned variant.
-        if carried or displayed then
+        if owned or displayed then
             local start, duration = C_Item.GetItemCooldown(itemID)
             start, duration = publicNumber(start), publicNumber(duration)
             local expires = start and duration and start + duration
@@ -419,6 +462,7 @@ function Inputs.ReadSelection(category)
 
     local inputs = {
         inventory = inventory,
+        toys = needed.toys and Inputs.ReadToys(Inputs.GetToyItemIDs(category)) or nil,
         preferences = (needed.preferences or needed.slotPreference or needed.categoryPreference)
             and Inputs.ReadPreferences() or nil,
         instance = needed.instance and Inputs.ReadInstance() or nil,
@@ -430,9 +474,11 @@ function Inputs.ReadSelection(category)
         weapons = needed.slotWeapon and {
             [definition.weaponSlot] = Inputs.ReadWeaponSlot(definition.weaponSlot, now),
         } or nil,
-        cooldowns = needed.cooldowns
-            and Inputs.ReadCooldowns(inventory, Inputs.GetCooldownItemIDs(category), now) or nil,
     }
+
+    if needed.cooldowns then
+        inputs.cooldowns = Inputs.ReadCooldowns(inputs, Inputs.GetCooldownItemIDs(category), now)
+    end
 
     if needed.categoryHistory then
         if RCC.ConsumableHistory.Observe(inputs, definition) then

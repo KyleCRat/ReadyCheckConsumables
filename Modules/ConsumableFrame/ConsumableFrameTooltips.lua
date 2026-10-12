@@ -242,7 +242,12 @@ local function showButtonTooltip(button, shoppingTooltip)
         return true
     end
 
-    if state.tooltipItemID then
+    if state.tooltipToyItemID then
+        setGameTooltipOwner(button)
+        GameTooltip:SetToyByItemID(state.tooltipToyItemID)
+        GameTooltip:Show()
+        shownTooltip = true
+    elseif state.tooltipItemID then
         setGameTooltipOwner(button)
         GameTooltip:SetItemByID(state.tooltipItemID)
         GameTooltip:Show()

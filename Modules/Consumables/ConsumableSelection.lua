@@ -25,6 +25,35 @@ function Selection.Item(inventory, itemID, data, index, uses)
     }
 end
 
+function Selection.Toy(toys, itemID, data, index)
+    local toy = toys[itemID]
+
+    if not toy then return end
+
+    return {
+        choice = RCC.ConsumableChoice.Item(itemID),
+        itemID = itemID,
+        isToy = true,
+        owned = toy.owned,
+        usable = toy.usable,
+        icon = toy.icon,
+        data = data,
+        index = index,
+    }
+end
+
+-- Availability is ownership/eligibility, not cooldown readiness. Preferences
+-- can remain selected while unavailable; only automatic fallbacks may move on.
+function Selection.IsAvailable(candidate)
+    if not candidate then return false end
+
+    if candidate.isToy then
+        return candidate.owned and candidate.usable
+    end
+
+    return candidate.count > 0
+end
+
 function Selection.List(inventory, itemIDs, uses)
     local candidates = {}
 
@@ -167,10 +196,10 @@ function Selection.Resolve(selection, actionOptions)
     local candidate = selected[1]
 
     selection.candidate = candidate
-    selection.unavailable = candidate ~= nil and candidate.count <= 0
+    selection.unavailable = candidate ~= nil and not Selection.IsAvailable(candidate)
 
-    if candidate and candidate.count > 0 then
-        selection.action = RCC.ConsumableState.CreateItemAction(candidate.itemID, actionOptions)
+    if Selection.IsAvailable(candidate) then
+        selection.action = RCC.ConsumableState.CreateCandidateAction(candidate, actionOptions)
     end
 
     return selection
@@ -181,7 +210,7 @@ function Selection.GetAvailableCandidates(selection)
     local included = {}
 
     local function add(candidate)
-        if not candidate or candidate.count <= 0 or candidate.ready == false then return end
+        if not Selection.IsAvailable(candidate) or candidate.ready == false then return end
         if included[candidate.itemID] then return end
 
         included[candidate.itemID] = true

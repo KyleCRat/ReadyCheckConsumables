@@ -4,6 +4,8 @@ RCC.ConsumableChoice = Choice
 
 -- Saved choices are identities, not actions or observations. An item and a
 -- spell with the same numeric ID are different choices.
+-- Toys retain their item identity; collection ownership and secure action kind
+-- are runtime concerns, not a separate preference namespace.
 function Choice.IsValid(choice)
     return type(choice) == "table"
         and (choice.kind == "item" or choice.kind == "spell")

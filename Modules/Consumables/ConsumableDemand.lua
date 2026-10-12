@@ -11,7 +11,6 @@ local PHASES = { "selection", "observation", "evaluation" }
 -- list of rules for Food, Flask, Repair, etc.
 local SOURCE_REQUIREMENTS = {
     groupAuras = { "roster", "class" },
-    cooldowns = { "inventory" },
 }
 
 local function addSource(sources, source)
@@ -33,6 +32,7 @@ function Demand.Build(categories)
         categories = categories,
         sources = {},
         itemIDs = {},
+        toyItemIDs = {},
         cooldownItemIDs = {},
         weaponSlots = {},
         spellIDs = {},
@@ -68,6 +68,10 @@ function Demand.Build(categories)
             demand.itemIDs[itemID] = true
         end
 
+        for itemID in pairs(Inputs.GetToyItemIDs(key)) do
+            demand.toyItemIDs[itemID] = true
+        end
+
         for itemID in pairs(Inputs.GetCooldownItemIDs(key)) do
             demand.cooldownItemIDs[itemID] = true
         end
@@ -78,6 +82,18 @@ function Demand.Build(categories)
 
         for spellID in pairs(Inputs.GetPlayerAuraSpellIDs(key)) do
             demand.playerAuraSpellIDs[spellID] = true
+        end
+    end
+
+    -- Cooldowns need ownership from the requested collections. A toy-only
+    -- category must not subscribe to bag-count events just to read its timer.
+    if demand.sources.cooldowns then
+        if next(demand.itemIDs) then
+            addSource(demand.sources, "inventory")
+        end
+
+        if next(demand.toyItemIDs) then
+            addSource(demand.sources, "toys")
         end
     end
 

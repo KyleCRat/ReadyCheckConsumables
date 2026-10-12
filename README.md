@@ -78,12 +78,14 @@ makes that information available.
 - **Inky Black Potion** shows the item or active buff without ready/missing marks.
 - **Invisibility Potion** offers a separate preferred-item flyout, item counts,
   and cooldowns without ready/missing marks or group reporting.
+- **Glide** offers Goblin Glider Kits and collected parasol toys, with preferred
+  choices and cooldowns. Automatic selection favors a ready toy before a kit.
 - **Recuperate** adds a dedicated button for the recovery spell also used by
   the healing-potion macro.
 - **Consumable Stasis** offers items that pause consumable buff durations during
   breaks. Its temporary-frame button appears for break timers by default.
 
-Repair, Inky Black Potion, Invisibility Potion, and Recuperate are off by
+Repair, Inky Black Potion, Invisibility Potion, Glide, and Recuperate are off by
 default. Enable the ones you want on each display's settings page.
 
 ## Group Readiness

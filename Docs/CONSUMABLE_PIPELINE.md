@@ -345,7 +345,8 @@ selection = {
 the flyout, including items that may be ineligible for automatic fallback.
 `action` describes what clicking should do; it does not use the item or change
 a secure button yet. `Selection.Resolve` creates it through
-`ConsumableState.CreateItemAction`. If the selected item has zero count,
+`ConsumableState.CreateCandidateAction`, which uses `CreateItemAction` for bag
+items and `CreateToyAction` for toys. If the selected item has zero count,
 `unavailable` is true and there is no action.
 
 The same result supplies macros: `Selection.GetAvailableCandidates` returns
@@ -487,9 +488,9 @@ These are some of the fields the renderer understands:
 | `countText` | Item count or charges text |
 | `detailText`, `detailTextIsBad` | Duration/detail label and warning color |
 | `statusIcon`, `showStatusTexture` | Status artwork and whether this category uses an overlay |
-| `tooltipItemID`, `tooltipSpellID`, `tooltipAuraID` | Item, spell, or active-aura tooltip information |
+| `tooltipItemID`, `tooltipToyItemID`, `tooltipSpellID`, `tooltipAuraID` | Item, collected-toy, spell, or active-aura tooltip information |
 | `tooltipAppliedItemID`, `tooltipAppliedSpellID` | Optional "Currently applied" line, separate from the selected click action |
-| `action` | Prepared click behavior described by an item/spell action |
+| `action` | Prepared click behavior described by an item, toy, or spell action |
 | `glow`, `suppressGlow` | Reminder request and category-specific glow suppression |
 | `applicable` | Whether this category applies to the current situation |
 
@@ -847,6 +848,41 @@ new information, the connection points are
 `ConsumableStateController.lua` for reading it on the relevant events.
 
 ## Related paths that do not work exactly like Flask
+
+### Toys come from the collection, not bags
+
+[Glide](../Modules/Consumables/Glide.lua) combines Goblin Glider Kits with
+parasol toys. Its [data file](../Data/GlideItems.lua) lists each item once,
+marking collected toys with `isToy = true`. It derives separate bag and toy
+lists from those records. Adding another supported parasol only needs another
+record there, not a change to the controller or button code.
+
+A category requests toy observations with a `Toys` declaration and the `toys`
+dependency, alongside `cooldowns` when it displays reuse timers:
+
+```lua
+Glide.Toys = {
+    list = RCC.db.glideToyItemIDs,
+    cooldownItemIDs = RCC.db.glideToyItemIDs,
+}
+```
+
+`Inputs.ReadToys` returns `owned`, `usable`, and `icon` for each requested
+item ID. `Selection.Toy` makes a candidate from that record without inventing
+an item count. `Selection.IsAvailable` handles both bag and toy candidates;
+cooldown readiness remains a separate selection decision. Glide favors a ready
+toy before a ready kit when there is no preference. An explicit preference
+stays selected even while out of stock, restricted, or on cooldown.
+
+Toys retain `{ kind = "item", id = itemID }` as their saved preference identity.
+Their runtime action uses `kind = "toy"`, so the binder configures Blizzard's
+secure toy action. `CreateItemChoice` handles the corresponding toy tooltip,
+omits stack/quality labels, and uses the same preference and flyout controls.
+
+The controller watches collection and usability changes only while a requested
+category needs toys. Cooldowns use the shared reader and completion timer,
+including for a toy prepared before combat. Toy events do not request bag
+recounts or aura scans. The client still enforces each toy's use restrictions.
 
 ### Rogue poisons are spell choices, not weapon-slot enchants
 

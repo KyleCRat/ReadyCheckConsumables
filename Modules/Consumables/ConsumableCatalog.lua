@@ -188,6 +188,18 @@ local DEFINITIONS = {
         settingsTooltip = "Use an invisibility potion or choose a preferred one from the flyout",
     },
     {
+        key = "glide",
+        logic = RCC.Consumables.Glide,
+        presenter = RCC.ConsumablePresenters.Glide,
+        label = "Glide",
+        settingKey = "icon_glide",
+        defaultIcon = RCC.db.glideIcon,
+        temporaryClickable = true,
+        tooltipAction = "use",
+        hasCooldown = true,
+        settingsTooltip = "Use a glider kit or collected parasol toy, with a preferred choice from the flyout",
+    },
+    {
         key = "recuperate",
         logic = RCC.Consumables.Recuperate,
         presenter = RCC.ConsumablePresenters.Recuperate,

@@ -7,6 +7,7 @@ local F = RCC.F
 
 RCC.ConsumableActionKind = RCC.ConsumableActionKind or {
     ITEM = "item",
+    TOY = "toy",
     SPELL = "spell",
     SPELL_SEQUENCE = "spellSequence",
 }
@@ -29,6 +30,7 @@ local COMBAT_PREPARED_FIELDS = {
     "icon",
     "hoverState",
     "tooltipItemID",
+    "tooltipToyItemID",
     "tooltipSpellID",
     "qualityItemID",
     "qualityAtlas",
@@ -247,6 +249,26 @@ function State.CreateSpellAction(spellID, options)
     }
 end
 
+-- A toy's saved identity is still its item ID. Only its execution differs:
+-- secure toy actions use the collection, not an item slot in the player's bags.
+function State.CreateToyAction(itemID, options)
+    local action = State.CreateItemAction(itemID, options)
+
+    if action then
+        action.kind = ActionKind.TOY
+    end
+
+    return action
+end
+
+function State.CreateCandidateAction(candidate, options)
+    if candidate.isToy then
+        return State.CreateToyAction(candidate.itemID, options)
+    end
+
+    return State.CreateItemAction(candidate.itemID, options)
+end
+
 -- Prepared out of combat. Native castsequence advances per successful cast;
 -- observations never skip or advance its cursor.
 function State.CreateSpellSequenceAction(candidates, capacity)
@@ -306,14 +328,15 @@ function State.CreateItemChoice(candidate, options)
         icon = candidate.icon,
         cooldown = candidate.cooldown,
         desaturated = false,
-        countText = options.countText or tostring(candidate.count or 0),
+        countText = options.countText or (candidate.isToy and "" or tostring(candidate.count or 0)),
         tooltipItemID = candidate.itemID,
-        qualityItemID = candidate.itemID,
+        tooltipToyItemID = candidate.isToy and candidate.itemID or nil,
+        qualityItemID = not candidate.isToy and candidate.itemID or nil,
         qualityAtlas = candidate.qualityAtlas,
         qualityResolved = candidate.metadataLoaded,
         clickHintItemID = candidate.itemID,
         suppressGlow = options.suppressGlow == true,
-        action = State.CreateItemAction(candidate.itemID, options),
+        action = State.CreateCandidateAction(candidate, options),
     })
 end
 
