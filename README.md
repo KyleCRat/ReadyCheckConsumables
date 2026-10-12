@@ -121,17 +121,23 @@ automatic reports.
 On the **Chat Report** settings page:
 
 - **Enabled** turns your automatic reporting on or off.
+- **Report Types** lets you choose food, flasks, augment runes, raid buffs,
+  weapon enchants, repairs, and offline players. These choices also apply to
+  manual reports using `/rcc r` and `/rcc rc`, even with automatic reporting off.
 - **Who Can Report** selects raid leader, leader/assist, or any raid member.
   This role restriction applies only in raids.
 - **Raid Instances** and **Dungeon Instances** select the difficulties where
   automatic reports are allowed.
+- **Everyone Ready** controls the announcement when all active raid members
+  have answered Ready, without waiting for benched players.
 
 By default, automatic reporting is enabled for Heroic and Mythic raids and
 limited to raid leaders or assistants. Dungeon reporting is off by default.
+All report types and the ready announcement are enabled by default. Automatic
+reports use the chosen reporter's settings.
 
-When a raid has benched members, RCC can also announce when every active member
-has answered Ready, without waiting for the bench. This follows Chat Report
-settings and works even with the Raid Status Frame closed or disabled.
+The ready announcement follows Chat Report permissions and instance settings
+and works even with the Raid Status Frame closed or disabled.
 
 ## Managed Macros
 

@@ -394,17 +394,90 @@ local function reportWeaponEnchants(toChat)
     )
 end
 
-function Reports.SendAll(toChat)
-    local auraRoster = scanAuraRoster(GetTime())
+-- Settings and report dispatch share this ordered list so every report type
+-- has its own toggle. Consumers should treat the definitions as read-only.
+local REPORT_TYPES = {
+    {
+        settingKey = "chatReport_food",
+        label = "Food",
+        tooltip = "Report missing or expiring food buffs",
+        requiresAuras = true,
+        send = reportFood,
+    },
+    {
+        settingKey = "chatReport_flasks",
+        label = "Flasks",
+        tooltip = "Report missing or expiring flasks",
+        requiresAuras = true,
+        send = reportFlasks,
+    },
+    {
+        settingKey = "chatReport_augments",
+        label = "Augment Runes",
+        tooltip = "Report missing, outdated, or expiring augment runes",
+        requiresAuras = true,
+        send = reportAugments,
+    },
+    {
+        settingKey = "chatReport_raidBuffs",
+        label = "Raid Buffs",
+        tooltip = "Report missing raid buffs when someone in the group can provide them",
+        requiresAuras = true,
+        send = reportBuffs,
+    },
+    {
+        settingKey = "chatReport_weaponEnchants",
+        label = "Weapon Enchants",
+        tooltip = "Report missing or expiring temporary weapon enchants, "
+            .. "including missing weapons",
+        send = reportWeaponEnchants,
+    },
+    {
+        settingKey = "chatReport_repairs",
+        label = "Repairs",
+        tooltip = "Report players with low durability",
+        send = reportRepairs,
+    },
+    {
+        settingKey = "chatReport_offline",
+        label = "Offline Players",
+        tooltip = "Report offline members of the active group",
+        send = reportOffline,
+    },
+}
 
-    if auraRoster.available then
-        reportFood(toChat, auraRoster.members)
-        reportFlasks(toChat, auraRoster.members)
-        reportAugments(toChat, auraRoster.members)
-        reportBuffs(toChat, auraRoster.members)
+function Reports.GetDefinitions()
+    return REPORT_TYPES
+end
+
+function Reports.HasEnabledTypes()
+    for _, definition in ipairs(REPORT_TYPES) do
+        if RCC.GetSetting(definition.settingKey) then
+            return true
+        end
     end
 
-    reportWeaponEnchants(toChat)
-    reportRepairs(toChat)
-    reportOffline(toChat)
+    return false
+end
+
+function Reports.SendAll(toChat)
+    local auraRoster
+
+    for _, definition in ipairs(REPORT_TYPES) do
+        if RCC.GetSetting(definition.settingKey) then
+            if definition.requiresAuras then
+                if not auraRoster then
+                    auraRoster = scanAuraRoster(GetTime())
+                end
+
+                -- All selected aura reports share one safe roster scan. An
+                -- unavailable scan still omits them together, never as missing.
+                if auraRoster.available then
+                    definition.send(toChat, auraRoster.members)
+                end
+            else
+                definition.send(toChat)
+            end
+        end
+    end
 end

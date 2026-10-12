@@ -70,14 +70,16 @@ local function shouldReport()
         return false
     end
 
-    return true
+    -- Do not claim the reporter role if every report and announcement is off.
+    return RCC.GetSetting("chatReport_allReady") or Reports.HasEnabledTypes()
 end
 
 --------------------------------------------------------------------------------
 --- Ready-check completion contract
 --- The shared controller owns responses, roster membership, and their summary.
 --- Chat Report owns eligibility, reporter election, and send deduplication only.
---- Announce when the shared summary is all-ready and the raid has a bench.
+--- When enabled, announce when the shared summary is all-ready and the raid
+--- has a bench.
 --- Only the elected reporter sends, after the existing collection window. A
 --- skipped send does not consume the announcement. No retry queue is used.
 --------------------------------------------------------------------------------
@@ -86,6 +88,7 @@ local function tryAnnounceAllReady()
     if not reportSession
         or reportSession.announced
         or ReadyChecks.GetCurrent() ~= reportSession.readyCheck
+        or not RCC.GetSetting("chatReport_allReady")
         or not shouldReport()
         or not Election.IsCurrentPlayerCandidate()
         or not Election.IsReporter()

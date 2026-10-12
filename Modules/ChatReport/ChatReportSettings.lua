@@ -4,13 +4,14 @@ RCC.ChatReportSettings = RCC.ChatReportSettings or {}
 
 local Page = RCC.ChatReportSettings
 local Controls = LibStub("LibModernSettings-1.0")
+local Reports = RCC.ChatReportReports
 
 local FEATURE_DISABLED_TOOLTIP =
-    "Chat Report is disabled. Enable it to edit."
+    "Automatic reporting is disabled. Enable it to edit."
 
-local SETTING_KEYS = {
-    "chatReport_enabled",
+local AUTOMATIC_SETTING_KEYS = {
     "chatReport_permission",
+    "chatReport_allReady",
     "chatReport_mythicRaid",
     "chatReport_heroicRaid",
     "chatReport_normalRaid",
@@ -95,14 +96,38 @@ function Page.CreateFrame(measurementFrame)
 
     layout:AddHeader(
         "Chat Report",
-        "Configure automatic reports for players who are missing "
-            .. "required consumables after a ready check."
+        "Choose which readiness information to report and when to send "
+            .. "automatic reports."
     )
     addSettingCheckbox(frame, root, {
         key = "chatReport_enabled",
         label = "Enabled",
-        tooltip = "Enable automatic missing-consumable chat reports.",
+        tooltip = "Enable automatic chat reports during ready checks.",
     })
+
+    root:AddSection("Report Types")
+    root:AddText({
+        fontObject = GameFontHighlightSmall,
+        text = "Choose what to include in automatic reports and the "
+            .. "/rcc r and /rcc rc commands. Automatic reports use the "
+            .. "chosen reporter's settings.",
+    })
+
+    local reportColumns = root:BeginColumns()
+    local definitions = Reports.GetDefinitions()
+    local splitIndex = math.ceil(#definitions / 2)
+
+    for i, definition in ipairs(definitions) do
+        local flow = i <= splitIndex and reportColumns.left or reportColumns.right
+
+        addSettingCheckbox(frame, flow, {
+            key = definition.settingKey,
+            label = definition.label,
+            tooltip = definition.tooltip,
+        })
+    end
+
+    reportColumns:Finish()
 
     local permissionColumns = root:BeginColumns()
     local permissionFlow = permissionColumns.left
@@ -121,6 +146,15 @@ function Page.CreateFrame(measurementFrame)
         end,
     })
     frame.settingControls.chatReport_permission = permission
+
+    permissionColumns.right:AddSection("Ready Announcement")
+    addSettingCheckbox(frame, permissionColumns.right, {
+        key = "chatReport_allReady",
+        label = "Everyone Ready",
+        tooltip = "Announce when everyone in the active raid has answered "
+            .. "Ready, without waiting for benched players",
+    })
+
     permissionColumns:Finish()
 
     local instanceColumns = root:BeginColumns()
@@ -143,17 +177,15 @@ function Page.CreateFrame(measurementFrame)
     frame.layout = layout
 
     function frame:Sync()
-        for i = 1, #SETTING_KEYS do
-            local key = SETTING_KEYS[i]
-            local control = self.settingControls[key]
-
+        for key, control in pairs(self.settingControls) do
             control:SetValue(RCC.GetSetting(key))
         end
 
         local enabled = RCC.GetSetting("chatReport_enabled") == true
 
-        for i = 2, #SETTING_KEYS do
-            local control = self.settingControls[SETTING_KEYS[i]]
+        -- Manual reports still use the section choices when automation is off.
+        for _, key in ipairs(AUTOMATIC_SETTING_KEYS) do
+            local control = self.settingControls[key]
 
             control:SetControlEnabled(enabled, FEATURE_DISABLED_TOOLTIP)
         end

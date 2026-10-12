@@ -111,6 +111,16 @@ local DEFAULTS = {
     chatReport_mythicDungeon = false,
     chatReport_heroicDungeon = false,
     chatReport_normalDungeon = false,
+
+    -- Chat Report Types
+    chatReport_food = true,
+    chatReport_flasks = true,
+    chatReport_augments = true,
+    chatReport_raidBuffs = true,
+    chatReport_weaponEnchants = true,
+    chatReport_repairs = true,
+    chatReport_offline = true,
+    chatReport_allReady = true,
 }
 
 local CHARACTER_DEFAULTS = {

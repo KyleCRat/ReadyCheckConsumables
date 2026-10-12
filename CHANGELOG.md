@@ -10,6 +10,8 @@
   move from Combat Potion to the new button.
 - Added optional Glide buttons to both personal displays for Goblin Glider Kits
   and collected parasol toys, with preferred choices and cooldowns. Off by default.
+- Chat Report settings now let you choose individual report types for automatic
+  and manual reports, and toggle the bench-aware Everyone Ready announcement.
 
 ## [12.1.5-28] - 2026-10-06
 
