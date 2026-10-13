@@ -55,7 +55,7 @@ local function settingsButton(text, destination)
 end
 
 RCC.ChangelogHighlights = {
-    Unreleased = function()
+    ["12.1.5-29"] = function()
         return {
             {
                 title = "Choose what to include in chat reports",
@@ -68,7 +68,7 @@ RCC.ChangelogHighlights = {
             {
                 title = "Glider Kits and Slowfall Toy support",
                 body = "Add Goblin Glider Kits and collected parasol toys to Consumable Frame or"
-                    .. "Action Bar. The button is off by default; choose where you want it below.",
+                    .. " Action Bar. The button is off by default; choose where you want it below.",
                 controls = categoryControls("glide"),
             },
             {

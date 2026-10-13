@@ -53,11 +53,11 @@ notes; use prose or bullets that also read clearly in game.
 
 ## Library packaging
 
-`Libs/LibChangelog-1.0` is currently a self-contained development embed, not a
-published external. Before publishing RCC with it, create the independent
-LibChangelog repository, test and release it, then convert this directory to a
-submodule and add the matching released tag to `.pkgmeta`. Do not invent a tag
-before the library has been published. LibStub and LMS are supplied by RCC.
+LibChangelog is published independently and embedded at `Libs/LibChangelog-1.0`.
+Keep its submodule commit and `.pkgmeta` tag aligned to the same published
+release. RCC supplies LibStub and one shared LMS embed, both loaded before
+LibChangelog. The bundled LMS version must meet LibChangelog's documented
+minimum; do not rely on another installed addon to supply it.
 
 Notification data is in `ReadyCheckConsumablesDB.changelog`, outside all
 profiles, accessed through its own LibSimpleDB instance. Profile operations

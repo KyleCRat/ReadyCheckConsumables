@@ -337,8 +337,9 @@ data.
   ```
 
 - CurseForge watches tags and packages through `.pkgmeta`.
-- Before shipping update notices, publish LibChangelog independently and align
-  its submodule and external tag. Its initial local embed is not a released pin.
+- LibChangelog is independently released. Keep its submodule and `.pkgmeta`
+  pinned to the same published release, and bundle its required LMS version
+  in RCC rather than relying on another addon to supply it.
 - Do not bump a LibModernSettings minor merely because RCC consumed an
   unreleased local library change. Release and retag the library only when its
   own API/package is ready.

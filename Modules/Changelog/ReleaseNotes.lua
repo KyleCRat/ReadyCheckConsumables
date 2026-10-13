@@ -2,8 +2,8 @@
 local _, addon = ...
 
 addon.ReleaseNotes = {
-    version = "Unreleased",
-    unreleased = true,
+    version = "12.1.5-29",
+    date = "2026-10-13",
     notes = {
         { kind = "heading", text = "Added" },
         { kind = "bullet", text = "Update highlights with settings you can change directly, a full changelog in Settings, and an account-wide option to turn future update popups off. Use /changelog to browse the latest notes from all participating addons." },
