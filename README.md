@@ -12,6 +12,13 @@ controlled by the **Active Profile** selector on the main RCC settings page.
 Preferred consumables are character-specific by default; see
 [Settings Profiles](#settings-profiles) to change how your setup is shared.
 
+After an update, RCC highlights useful changes and lets you adjust related
+settings directly. Turn off **Show changelog for Ready Check Consumables on login**
+on the main settings page or in the update window to stop RCC's future notices.
+**Changelog** in Settings always lets you revisit the highlights and expand the full release notes.
+Use `/changelog` to open the latest notes from all addons using the shared update
+window, even with automatic popups turned off.
+
 ## Personal Consumables
 
 Choose a temporary preparation frame, a permanent Action Bar, or both. Their
@@ -31,9 +38,9 @@ profile. Turning it off forgets that saved position.
 
 On the **Consumables Frame** settings page:
 
-- **Choose buttons:** Use **Buttons by Open Event**. Each row's **Enabled**
-  checkbox controls that button overall; the event columns choose when it
-  appears.
+- **Choose buttons:** Use **Buttons by Open Event** to select Ready Check,
+  Instance Entry, Cauldron Pickup, and Break Timer for each button. Uncheck all
+  four to disable that button on the temporary frame.
 - **Choose when it opens:** Ready checks are supported by default. Under
   **Automatic Open Events**, enable instance entry, cauldron pickups, or
   BigWigs/DBM break timers. For instance entry, select the instance types you

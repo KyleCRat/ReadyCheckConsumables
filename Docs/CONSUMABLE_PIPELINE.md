@@ -97,7 +97,6 @@ one definition per button category. Flask's entry is:
     logic = RCC.Consumables.Flask,
     presenter = RCC.ConsumablePresenters.Flask,
     label = "Flask",
-    settingKey = "icon_flask",
     defaultIcon = RCC.db.flaskIconID,
     temporaryClickable = true,
     tooltipAction = "use",
@@ -111,7 +110,6 @@ The important connections are:
 | `key = "flask"` | Identifies this button in requests, snapshots, and UI button tables |
 | `logic = RCC.Consumables.Flask` | References the module that declares inputs, selects items, and checks buff status |
 | `presenter = RCC.ConsumablePresenters.Flask` | References the module that turns those results into button and flyout display states |
-| `settingKey` | Enables this category on the temporary frame |
 | `defaultIcon` | Gives the renderer an icon when the result has no item or aura icon |
 | `temporaryClickable` | Controls whether the temporary frame creates a clickable control |
 | `tooltipAction` | Supplies the verb for the click hint |
@@ -126,26 +124,32 @@ displays. The fallback icon itself is defined in
 [Data/Settings.lua](../Data/Settings.lua).
 
 The catalog generates the Action Bar setting name from the key:
-`consumablesActionBar_icon_flask`. Both settings have explicit defaults in
+`consumablesActionBar_icon_flask`. Give it an explicit default in
 [Settings.lua](../Settings.lua):
 
 ```lua
-icon_flask = true,
 consumablesActionBar_icon_flask = true,
 ```
 
-These defaults are not generated from the catalog. A new category needs both
-defaults, even though its settings controls are generated automatically:
+The temporary frame instead uses the catalog's `visibility.reasons` as its
+four event defaults. Flask inherits `STANDARD_VISIBILITY`; optional categories
+use `OPTIONAL_VISIBILITY` to start with all four events off, and Consumable
+Stasis uses `STASIS_VISIBILITY` to start with only Break Timer on. These policies
+share `Catalog.IsFrameCategoryEnabled`, which excludes a button when every
+event is off, including during a manual opening.
+
+Settings controls are generated automatically:
 [ConsumableFrameSettings.lua](../Modules/ConsumableFrame/ConsumableFrameSettings.lua)
 builds the matrix rows from the catalog, and
 [ConsumableActionBarSettings.lua](../Modules/ConsumableActionBar/ConsumableActionBarSettings.lua)
 builds the button checkboxes from it.
 
-For the temporary frame, the catalog's `visibility.reasons` supplies the default
-matrix choices. Flask uses the standard reasons because it does not override
-that field. Per-user matrix choices are handled by
-[ContextualVisibility.lua](../Modules/ContextualVisibility.lua), separately
-from whether the Flask button is enabled at all.
+`Catalog.GetFrameOpenEvents()` supplies the same four events to the matrix and
+changelog highlights. Both use `Catalog.GetFrameEventEnabled()` to read choices
+and `ConsumableSettingsShared.SetFrameEventEnabled()` to save and refresh them.
+The profile stores overrides under `contextualVisibility.consumableFrame`;
+there is no separate per-button Enabled flag. The whole frame still has its own
+Enabled setting, independent of the Action Bar.
 
 ## 3. Tell the controller what information Flask needs
 
@@ -782,8 +786,8 @@ Inky Black Potion is a smaller complete implementation you can follow:
 | Piece | Existing example |
 | --- | --- |
 | Gameplay IDs | [Data/InkyBlackPotion.lua](../Data/InkyBlackPotion.lua) defines the item and applied buff IDs |
-| Category identity | The `inkyBlackPotion` catalog entry references its logic and presenter modules and names its temporary setting |
-| Settings defaults | `icon_inkyBlackPotion` and `consumablesActionBar_icon_inkyBlackPotion` in `Settings.lua` |
+| Category identity | The `inkyBlackPotion` catalog entry references its logic and presenter modules |
+| Settings defaults | `OPTIONAL_VISIBILITY` in the catalog and `consumablesActionBar_icon_inkyBlackPotion` in `Settings.lua` keep both displays off by default |
 | Item and buff decisions | [Consumables/InkyBlackPotion.lua](../Modules/Consumables/InkyBlackPotion.lua) declares inputs and implements `Select`, `Observe`, and `Evaluate` |
 | Button appearance | [Presenters/InkyBlackPotion.lua](../Modules/ConsumableUI/Presenters/InkyBlackPotion.lua) returns its optional-use icon/buff display without a readiness mark |
 

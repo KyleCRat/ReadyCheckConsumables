@@ -176,9 +176,11 @@ function Context.MarkAutoOpened(context, reason, sourceKey)
     sources[getSourceKey(reason, sourceKey)] = true
 end
 
-local function isGloballyEnabled(definition)
-    return not definition.settingKey
-        or RCC.GetSetting(definition.settingKey) == true
+local function isEnabled(definition)
+    local policy = definition.visibility
+
+    return not policy or not policy.IsEnabled
+        or policy.IsEnabled(definition) == true
 end
 
 local function isApplicable(definition, context, state)
@@ -226,7 +228,7 @@ end
 function Visibility.IsRequested(definition, context)
     if not definition
         or not context
-        or not isGloballyEnabled(definition)
+        or not isEnabled(definition)
     then
         return false
     end

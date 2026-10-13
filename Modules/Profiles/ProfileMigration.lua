@@ -139,12 +139,99 @@ end
 -- LibSimpleDBProfiles tracks completed versions and stages every stored profile,
 -- including inactive profiles. Add(sourceVersion, callback) advances one version;
 -- keep earlier steps and raise this target when adding the next step.
-local TARGET_PROFILE_DATA_VERSION = 3
+local TARGET_PROFILE_DATA_VERSION = 4
+
+-- Keep the old keys/defaults here: later logins must convert the settings that
+-- existed before per-button Enabled switches were removed, not future defaults.
+local LEGACY_FRAME_SETTINGS = {
+    food = "icon_food",
+    flask = "icon_flask",
+    consumableStasis = "icon_consumableStasis",
+    mainHandTempWeaponEnchant = "icon_mhTempWeaponEnchant",
+    offHandTempWeaponEnchant = "icon_ohTempWeaponEnchant",
+    lethalPoison = "icon_lethalPoison",
+    nonLethalPoison = "icon_nonLethalPoison",
+    augment = "icon_augment",
+    raidBuff = "icon_raidBuff",
+    hs = "icon_healthstone",
+    combatpot = "icon_combatPotion",
+    healpot = "icon_healPotion",
+    invisibilityPotion = "icon_invisibilityPotion",
+    glide = "icon_glide",
+    recuperate = "icon_recuperate",
+    inkyBlackPotion = "icon_inkyBlackPotion",
+    repair = "icon_repair",
+    vantus = "icon_vantus",
+}
+
+local LEGACY_FRAME_DISABLED_DEFAULTS = {
+    invisibilityPotion = true,
+    glide = true,
+    recuperate = true,
+    inkyBlackPotion = true,
+    repair = true,
+}
+
+local LEGACY_FRAME_EVENTS = {
+    "readyCheck",
+    "instanceEntry",
+    "cauldronPickup",
+    "breakTimer",
+}
+
+local function getVisibilityMigrationTable(parent, key)
+    local value = parent[key]
+
+    if value == nil then
+        value = {}
+        parent[key] = value
+    elseif type(value) ~= "table" then
+        error("RCC: invalid contextual visibility; existing data was not replaced")
+    end
+
+    return value
+end
+
+local function migrateFrameButtonVisibility(payload)
+    local visibility = getVisibilityMigrationTable(payload, "contextualVisibility")
+    local frameVisibility = getVisibilityMigrationTable(visibility, "consumableFrame")
+
+    for category, settingKey in pairs(LEGACY_FRAME_SETTINGS) do
+        local enabled = payload[settingKey]
+
+        if enabled == nil then
+            enabled = not LEGACY_FRAME_DISABLED_DEFAULTS[category]
+        elseif type(enabled) ~= "boolean" then
+            error("RCC: invalid legacy button setting; existing data was not replaced")
+        end
+
+        local events = getVisibilityMigrationTable(frameVisibility, category)
+
+        for _, reason in ipairs(LEGACY_FRAME_EVENTS) do
+            local allowed = events[reason]
+
+            if allowed ~= nil and type(allowed) ~= "boolean" then
+                error("RCC: invalid open-event setting; existing data was not replaced")
+            end
+
+            if not enabled then
+                events[reason] = false
+            elseif allowed == nil and LEGACY_FRAME_DISABLED_DEFAULTS[category] then
+                -- These optional rows now default off per event. Preserve the
+                -- old all-events default only when their old switch was on.
+                events[reason] = true
+            end
+        end
+
+        payload[settingKey] = nil
+    end
+end
 
 function RCC.ProfileMigration.CreateProfileMigration()
     local migration = LibStub("LibSimpleDBProfiles-1.0"):CreateMigration(TARGET_PROFILE_DATA_VERSION)
     migration:Add(1, migrateChoices) -- 1 -> 2: normalize saved preferences.
     migration:Add(2, migrateInvisibilityPotionPreferences) -- 2 -> 3: separate invisibility choices.
+    migration:Add(3, migrateFrameButtonVisibility) -- 3 -> 4: use only open-event choices.
 
     return migration
 end

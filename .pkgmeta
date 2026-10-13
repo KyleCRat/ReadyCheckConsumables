@@ -22,5 +22,8 @@ ignore:
     - AGENTS.md
     - Docs
     - Tests
+    - Libs/LibChangelog-1.0/tests
+    - Libs/LibChangelog-1.0/tools
+    - Libs/LibChangelog-1.0/examples
     - "*.png"
     - "*.afdesign"

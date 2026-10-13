@@ -6,8 +6,6 @@ local Page = RCC.ConsumableFrameSettings
 local Catalog = RCC.ConsumableCatalog
 local Controls = LibStub("LibModernSettings-1.0")
 local Shared = RCC.ConsumableSettingsShared
-local Visibility = RCC.ContextualVisibility
-local Reason = RCC.DisplayReason
 local Surface = RCC.DisplaySurface.CONSUMABLE_FRAME
 local ICON_WIDTH_LIMITS = RCC.ConsumableFrameLimits.iconWidthPercent
 
@@ -21,28 +19,7 @@ local INSTANCE_OPEN_DISABLED_TOOLTIP =
 local INSTANCE_HIDE_DISABLED_TOOLTIP =
     "Auto-Hide After Instance Entry is disabled."
 
-local OPEN_EVENTS = {
-    {
-        reason = Reason.READY_CHECK,
-        label = "Ready\nCheck",
-        tooltip = "Show %s when a ready check opens the frame.",
-    },
-    {
-        reason = Reason.INSTANCE_ENTRY,
-        label = "Instance\nEntry",
-        tooltip = "Show %s when entering an enabled instance type.",
-    },
-    {
-        reason = Reason.CAULDRON_PICKUP,
-        label = "Cauldron\nPickup",
-        tooltip = "Show %s after collecting a consumable from a cauldron.",
-    },
-    {
-        reason = Reason.BREAK_TIMER,
-        label = "Break\nTimer",
-        tooltip = "Show %s when BigWigs or DBM starts a break timer.",
-    },
-}
+local OPEN_EVENTS = Catalog.GetFrameOpenEvents()
 
 local CONSUMABLE_SETTING_KEYS = {
     "consumables_enabled",
@@ -64,39 +41,6 @@ local CONSUMABLE_SETTING_KEYS = {
 }
 
 local definitions = Catalog.GetDefinitions()
-
-for i = 1, #definitions do
-    CONSUMABLE_SETTING_KEYS[#CONSUMABLE_SETTING_KEYS + 1] =
-        definitions[i].settingKey
-end
-
-function Page.GetOpenEvents()
-    return OPEN_EVENTS
-end
-
-function Page.GetMatrixValue(definition, reason)
-    local defaultValue = Visibility.GetReasonDefault(definition, reason)
-
-    return RCC.GetContextualVisibility(
-        Surface,
-        definition.key,
-        reason,
-        defaultValue
-    )
-end
-
-function Page.SetMatrixValue(definition, reason, value)
-    local defaultValue = Visibility.GetReasonDefault(definition, reason)
-    local enabled = value == true
-    local override = enabled == defaultValue and nil or enabled
-
-    return RCC.SetContextualVisibilityOverride(
-        Surface,
-        definition.key,
-        reason,
-        override
-    )
-end
 
 local function refreshConsumableFrame()
     if InCombatLockdown() or not RCC.consumables:IsShown() then
@@ -362,7 +306,7 @@ local function createVisibilityMatrix(frame, layout)
             .. "addon default.",
         onClick = function()
             RCC.ClearContextualVisibilityOverrides(Surface)
-            frame:Sync()
+            Shared.SyncPages()
         end,
     })
     resetButton:SetPoint("RIGHT", heading, "RIGHT", 0, 0)
@@ -370,16 +314,14 @@ local function createVisibilityMatrix(frame, layout)
 
     flow:AddText({
         fontObject = GameFontHighlightSmall,
-        text = "Enabled is the global switch for a button. Event columns "
-            .. "choose which enabled buttons each type of frame opening "
-            .. "displays.",
+        text = "Choose which buttons appear for each open event. Leave all "
+            .. "four events unchecked to disable a button on this frame.",
     }, {
         marginBottom = 8,
     })
 
     local columns = {
         { key = "button", width = 160, justifyH = "LEFT" },
-        { key = "enabled", width = 67 },
     }
 
     for eventIndex = 1, #OPEN_EVENTS do
@@ -398,12 +340,11 @@ local function createVisibilityMatrix(frame, layout)
     })
 
     matrix:AddHeaderText("button", "Button")
-    matrix:AddHeaderText("enabled", "Enabled")
 
     for eventIndex = 1, #OPEN_EVENTS do
         matrix:AddHeaderText(
             "event" .. eventIndex,
-            OPEN_EVENTS[eventIndex].label
+            OPEN_EVENTS[eventIndex].matrixLabel
         )
     end
 
@@ -421,24 +362,6 @@ local function createVisibilityMatrix(frame, layout)
             )
         end
 
-        local enabledTooltip = "Enable " .. definition.label
-            .. " for the Consumables Frame."
-
-        if definition.settingsTooltip then
-            enabledTooltip = definition.settingsTooltip .. "\n\n"
-                .. enabledTooltip
-        end
-
-        local enabledCheckbox = row:AddControl("enabled", "checkbox", {
-            tooltip = enabledTooltip,
-            onChanged = function(checked)
-                RCC.SetSettingValue(definition.settingKey, checked)
-                refreshConsumableFrame()
-                frame:Sync()
-            end,
-        })
-        frame.settingControls[definition.settingKey] = enabledCheckbox
-
         for eventIndex = 1, #OPEN_EVENTS do
             local event = OPEN_EVENTS[eventIndex]
             local enabledTooltip = string.format(
@@ -451,12 +374,11 @@ local function createVisibilityMatrix(frame, layout)
                 {
                     tooltip = enabledTooltip,
                     onChanged = function(checked)
-                        Page.SetMatrixValue(
+                        Shared.SetFrameEventEnabled(
                             definition,
                             event.reason,
                             checked
                         )
-                        frame:Sync()
                     end,
                 }
             )
@@ -464,7 +386,6 @@ local function createVisibilityMatrix(frame, layout)
                 control = checkbox,
                 definition = definition,
                 reason = event.reason,
-                disabledTooltip = definition.label .. " is disabled.",
             }
         end
     end
@@ -566,19 +487,13 @@ function Page.CreateFrame(measurementFrame)
 
         for i = 1, #self.matrixControls do
             local entry = self.matrixControls[i]
-            local globallyEnabled = RCC.GetSetting(
-                entry.definition.settingKey
-            ) == true
-
-            entry.control:SetValue(Page.GetMatrixValue(
+            entry.control:SetValue(Catalog.GetFrameEventEnabled(
                 entry.definition,
                 entry.reason
             ))
             entry.control:SetControlEnabled(
-                pageEnabled and globallyEnabled,
-                not pageEnabled
-                    and FEATURE_DISABLED_TOOLTIP
-                    or entry.disabledTooltip
+                pageEnabled,
+                FEATURE_DISABLED_TOOLTIP
             )
         end
     end

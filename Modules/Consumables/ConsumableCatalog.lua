@@ -4,12 +4,67 @@ RCC.ConsumableCatalog = RCC.ConsumableCatalog or {}
 
 local Catalog = RCC.ConsumableCatalog
 local Reason = RCC.DisplayReason
+local Surface = RCC.DisplaySurface.CONSUMABLE_FRAME
+local Visibility = RCC.ContextualVisibility
 
 local MAIN_HAND_INVENTORY_SLOT = INVSLOT_MAINHAND
 local OFF_HAND_INVENTORY_SLOT = INVSLOT_OFFHAND
 local SINGLE_CAPACITY = { 1 }
 
+local OPEN_EVENTS = {
+    {
+        reason = Reason.READY_CHECK,
+        label = "Ready Check",
+        matrixLabel = "Ready\nCheck",
+        tooltip = "Show %s when a ready check opens the frame.",
+    },
+    {
+        reason = Reason.INSTANCE_ENTRY,
+        label = "Instance Entry",
+        matrixLabel = "Instance\nEntry",
+        tooltip = "Show %s when entering an enabled instance type.",
+    },
+    {
+        reason = Reason.CAULDRON_PICKUP,
+        label = "Cauldron Pickup",
+        matrixLabel = "Cauldron\nPickup",
+        tooltip = "Show %s after collecting a consumable from a cauldron.",
+    },
+    {
+        reason = Reason.BREAK_TIMER,
+        label = "Break Timer",
+        matrixLabel = "Break\nTimer",
+        tooltip = "Show %s when BigWigs or DBM starts a break timer.",
+    },
+}
+
+function Catalog.GetFrameOpenEvents()
+    return OPEN_EVENTS
+end
+
+function Catalog.GetFrameEventEnabled(definition, reason)
+    return RCC.GetContextualVisibility(
+        Surface,
+        definition.key,
+        reason,
+        Visibility.GetReasonDefault(definition, reason)
+    )
+end
+
+-- The four event choices are the only per-button enablement settings for the
+-- temporary frame. Turning all of them off also excludes manual openings.
+function Catalog.IsFrameCategoryEnabled(definition)
+    for _, event in ipairs(OPEN_EVENTS) do
+        if Catalog.GetFrameEventEnabled(definition, event.reason) then
+            return true
+        end
+    end
+
+    return false
+end
+
 local STANDARD_VISIBILITY = {
+    IsEnabled = Catalog.IsFrameCategoryEnabled,
     reasons = {
         [Reason.READY_CHECK] = true,
         [Reason.INSTANCE_ENTRY] = true,
@@ -20,8 +75,16 @@ local STANDARD_VISIBILITY = {
 }
 
 local STASIS_VISIBILITY = {
+    IsEnabled = Catalog.IsFrameCategoryEnabled,
     reasons = {
         [Reason.BREAK_TIMER] = true,
+    },
+}
+
+local OPTIONAL_VISIBILITY = {
+    IsEnabled = Catalog.IsFrameCategoryEnabled,
+    reasons = {
+        [Reason.MANUAL_OPEN] = true,
     },
 }
 
@@ -35,7 +98,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Food,
         presenter = RCC.ConsumablePresenters.Food,
         label = "Food",
-        settingKey = "icon_food",
         defaultIcon = RCC.db.foodIconID,
         temporaryClickable = true,
         tooltipAction = "eat",
@@ -46,7 +108,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Flask,
         presenter = RCC.ConsumablePresenters.Flask,
         label = "Flask",
-        settingKey = "icon_flask",
         defaultIcon = RCC.db.flaskIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -56,7 +117,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.ConsumableStasis,
         presenter = RCC.ConsumablePresenters.ConsumableStasis,
         label = "Consumable Stasis",
-        settingKey = "icon_consumableStasis",
         defaultIcon = 134062,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -73,7 +133,6 @@ local DEFINITIONS = {
         presenter = RCC.ConsumablePresenters.WeaponEnchant,
         label = "Main-hand Enchant",
         weaponSlot = MAIN_HAND_INVENTORY_SLOT,
-        settingKey = "icon_mhTempWeaponEnchant",
         defaultIcon = RCC.db.weaponEnchantIconID,
         temporaryClickable = true,
         tooltipAction = "apply to main hand",
@@ -84,7 +143,6 @@ local DEFINITIONS = {
         presenter = RCC.ConsumablePresenters.WeaponEnchant,
         label = "Off-hand Enchant",
         weaponSlot = OFF_HAND_INVENTORY_SLOT,
-        settingKey = "icon_ohTempWeaponEnchant",
         defaultIcon = RCC.db.weaponEnchantIconID,
         temporaryClickable = true,
         tooltipAction = "apply to off hand",
@@ -99,7 +157,6 @@ local DEFINITIONS = {
         poisonType = "lethal",
         supportedCapacities = { 1, 2 },
         label = "Lethal Poison",
-        settingKey = "icon_lethalPoison",
         defaultIcon = RCC.db.roguePoisonFallbackIcons.lethal,
         temporaryClickable = true,
         tooltipAction = "apply",
@@ -114,7 +171,6 @@ local DEFINITIONS = {
         poisonType = "nonLethal",
         supportedCapacities = { 1, 2 },
         label = "Non-lethal Poison",
-        settingKey = "icon_nonLethalPoison",
         defaultIcon = RCC.db.roguePoisonFallbackIcons.nonLethal,
         temporaryClickable = true,
         tooltipAction = "apply",
@@ -126,7 +182,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Augment,
         presenter = RCC.ConsumablePresenters.Augment,
         label = "Augment Rune",
-        settingKey = "icon_augment",
         defaultIcon = RCC.db.augmentIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -137,7 +192,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.RaidBuff,
         presenter = RCC.ConsumablePresenters.RaidBuff,
         label = "Raid Buff",
-        settingKey = "icon_raidBuff",
         defaultIcon = RCC.db.raidBuffIconID,
         temporaryClickable = true,
         tooltipAction = "cast",
@@ -148,7 +202,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Healthstone,
         presenter = RCC.ConsumablePresenters.Healthstone,
         label = "Healthstone",
-        settingKey = "icon_healthstone",
         defaultIcon = RCC.db.healthstoneIconID,
         temporaryClickable = false,
         tooltipAction = "use",
@@ -158,7 +211,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.CombatPotion,
         presenter = RCC.ConsumablePresenters.CombatPotion,
         label = "Combat Potion",
-        settingKey = "icon_combatPotion",
         defaultIcon = RCC.db.combatPotionIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -169,7 +221,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.HealingPotion,
         presenter = RCC.ConsumablePresenters.HealingPotion,
         label = "Healing Potion",
-        settingKey = "icon_healPotion",
         defaultIcon = RCC.db.healingPotionIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -180,7 +231,7 @@ local DEFINITIONS = {
         logic = RCC.Consumables.InvisibilityPotion,
         presenter = RCC.ConsumablePresenters.InvisibilityPotion,
         label = "Invisibility Potion",
-        settingKey = "icon_invisibilityPotion",
+        visibility = OPTIONAL_VISIBILITY,
         defaultIcon = RCC.db.invisibilityPotionIcon,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -192,7 +243,7 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Glide,
         presenter = RCC.ConsumablePresenters.Glide,
         label = "Glide",
-        settingKey = "icon_glide",
+        visibility = OPTIONAL_VISIBILITY,
         defaultIcon = RCC.db.glideIcon,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -204,7 +255,7 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Recuperate,
         presenter = RCC.ConsumablePresenters.Recuperate,
         label = "Recuperate",
-        settingKey = "icon_recuperate",
+        visibility = OPTIONAL_VISIBILITY,
         defaultIcon = RCC.db.recuperateIconID,
         temporaryClickable = true,
         tooltipAction = "cast",
@@ -214,7 +265,7 @@ local DEFINITIONS = {
         logic = RCC.Consumables.InkyBlackPotion,
         presenter = RCC.ConsumablePresenters.InkyBlackPotion,
         label = "Inky Black Potion",
-        settingKey = "icon_inkyBlackPotion",
+        visibility = OPTIONAL_VISIBILITY,
         defaultIcon = RCC.db.inkyBlackPotionIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -224,7 +275,7 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Repair,
         presenter = RCC.ConsumablePresenters.Repair,
         label = "Repair",
-        settingKey = "icon_repair",
+        visibility = OPTIONAL_VISIBILITY,
         defaultIcon = RCC.db.repairIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -237,7 +288,6 @@ local DEFINITIONS = {
         logic = RCC.Consumables.Vantus,
         presenter = RCC.ConsumablePresenters.Vantus,
         label = "Vantus Rune",
-        settingKey = "icon_vantus",
         defaultIcon = RCC.db.vantusIconID,
         temporaryClickable = true,
         tooltipAction = "use",
@@ -285,14 +335,4 @@ end
 
 function Catalog.GetCount()
     return #DEFINITIONS
-end
-
-function Catalog.GetTemporarySettingKeys()
-    local keys = {}
-
-    for i = 1, #DEFINITIONS do
-        keys[i] = DEFINITIONS[i].settingKey
-    end
-
-    return keys
 end

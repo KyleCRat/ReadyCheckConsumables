@@ -125,7 +125,8 @@ data.
   means automatic item selection.
 - Each module owns its own Enabled setting. Do not add combined enable/disable
   modes or let one module's settings reset change another module's enablement.
-- `Settings.lua` owns defaults; LibSimpleDB supplies nil-only default lookup.
+- `Settings.lua` owns scalar defaults; temporary-button event defaults live in
+  `ConsumableCatalog.lua`. LibSimpleDB supplies nil-only default lookup.
   Preserve stored `false` values and validate or migrate malformed structured
   data explicitly. Read returned tables without mutating them; write structured
   settings through `RCC.settingsDB:Set`/`ResetPath`.
@@ -133,6 +134,10 @@ data.
   scalar settings.
 - `contextualVisibility` is intentionally sparse: `nil` means use the definition
   default, while explicit `true` or `false` is an override.
+- Consumables Frame buttons use the four open-event choices, not a separate
+  per-button Enabled setting. All four off means disabled, including manual
+  openings. The frame's module toggle and Action Bar choices remain independent;
+  settings and changelog controls share `ConsumableSettingsShared` setters.
 - Preferred consumable choices are shared by both personal displays and
   managed macros through `ConsumablePreferences`, which owns storage routing.
   Do not read/write preference storage directly from individual consumers.
@@ -272,6 +277,11 @@ data.
 - Keep detailed contracts next to the relevant implementation. Use this file
   for repository-wide intent and workflow only.
 - Update `README.md` from implemented player-facing behavior, not planned work.
+- Keep `CHANGELOG.md` as the full release-note source. Regenerate the bundled
+  `Modules/Changelog/ReleaseNotes.lua` after changing the active notes; curate
+  only useful highlights in `Modules/Changelog/Highlights.lua`. Follow
+  `Docs/CHANGELOG_AUTHORING.md` for generation and release checks. Notification
+  consent/acknowledgement is account-wide and outside settings profiles.
 - `Docs/TODO.md` is a backlog, not an implementation contract; confirm an item
   is still current before acting on it.
 - Do not add test harnesses or LibStub stubs as routine work. The primary
@@ -327,6 +337,8 @@ data.
   ```
 
 - CurseForge watches tags and packages through `.pkgmeta`.
+- Before shipping update notices, publish LibChangelog independently and align
+  its submodule and external tag. Its initial local embed is not a released pin.
 - Do not bump a LibModernSettings minor merely because RCC consumed an
   unreleased local library change. Release and retag the library only when its
   own API/package is ready.

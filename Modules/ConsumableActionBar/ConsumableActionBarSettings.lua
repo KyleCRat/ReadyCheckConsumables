@@ -370,9 +370,7 @@ local function addButtonCheckbox(frame, flow, definition)
         tooltip = "Show " .. definition.label
             .. " on the Consumables Action Bar.",
         onChanged = function(checked)
-            RCC.SetSettingValue(settingKey, checked)
-            refreshLayout()
-            frame:Sync()
+            Shared.SetActionBarCategoryEnabled(definition, checked)
         end,
     })
 

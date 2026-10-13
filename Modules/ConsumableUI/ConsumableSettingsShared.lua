@@ -12,6 +12,29 @@ function Shared.SyncPages()
     RCC.Profiles.SyncSettingsPages()
 end
 
+function Shared.SetFrameEventEnabled(definition, reason, enabled)
+    local defaultValue = RCC.ContextualVisibility.GetReasonDefault(definition, reason)
+    local override
+
+    if enabled ~= defaultValue then
+        override = enabled
+    end
+
+    RCC.SetContextualVisibilityOverride(
+        RCC.DisplaySurface.CONSUMABLE_FRAME,
+        definition.key,
+        reason,
+        override
+    )
+    Shared.SyncPages()
+end
+
+function Shared.SetActionBarCategoryEnabled(definition, enabled)
+    RCC.SetSettingValue(definition.actionBarSettingKey, enabled)
+    RCC.ConsumableActionBar.RequestLayout()
+    Shared.SyncPages()
+end
+
 function Shared.RefreshAugmentRuneSelection()
     RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
     RCC.ConsumableMacros.ScheduleUpdate()

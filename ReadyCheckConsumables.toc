@@ -100,6 +100,9 @@ Modules/Consumables/ConsumableChoice.lua
 Modules/Profiles/ProfileMigration.lua
 Modules/Profiles/Profiles.lua
 Modules/Profiles/ProfileSettings.lua
+Modules/Changelog/ReleaseNotes.lua
+Modules/Changelog/Highlights.lua
+Modules/Changelog/Changelog.lua
 Settings.lua
 
 # Shared contextual visibility

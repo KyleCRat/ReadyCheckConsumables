@@ -39,24 +39,6 @@ local DEFAULTS = {
     consumables_instanceHideTime = 15,
     consumables_preferUnlimitedAugment = true,
     -- consumables_instanceOnlyIfMissing = false,
-    icon_food                = true,
-    icon_flask               = true,
-    icon_mhTempWeaponEnchant = true,
-    icon_ohTempWeaponEnchant = true,
-    icon_lethalPoison        = true,
-    icon_nonLethalPoison     = true,
-    icon_healthstone         = true,
-    icon_combatPotion        = true,
-    icon_healPotion          = true,
-    icon_invisibilityPotion  = false,
-    icon_glide               = false,
-    icon_consumableStasis    = true,
-    icon_recuperate          = false,
-    icon_inkyBlackPotion     = false,
-    icon_repair              = false,
-    icon_augment             = true,
-    icon_raidBuff            = true,
-    icon_vantus              = true,
 
     -- Consumables Action Bar
     consumablesActionBar_enabled = false,
@@ -501,6 +483,8 @@ local function populateMainSettingsFrame(frame, destinations, measurementFrame)
         end,
     })
 
+    local syncChangelog = RCC.Changelog.AddMainSettings(root)
+
     local version = C_AddOns.GetAddOnMetadata(
         "ReadyCheckConsumables",
         "Version"
@@ -517,6 +501,7 @@ local function populateMainSettingsFrame(frame, destinations, measurementFrame)
 
     function frame:Sync()
         syncProfiles()
+        syncChangelog()
         readyCheckMover:SetValue(RCC.GetSetting("readyCheckMover_enabled"))
         readyCheckMover:SetControlEnabled(
             not InCombatLockdown(),
@@ -593,6 +578,19 @@ local function registerPanel()
     local macroCat = Settings.RegisterCanvasLayoutSubcategory(
         category, macroFrame, "Macros"
     )
+
+    local changelogFrame = RCC.Changelog.CreateSettingsPage(measurementFrame)
+    local changelogCat = Settings.RegisterCanvasLayoutSubcategory(
+        category, changelogFrame, "Changelog"
+    )
+    RCC.settingsCategories = {
+        consumables = cfCat,
+        actionBar = actionBarCat,
+        raidFrame = rfCat,
+        chatReport = crCat,
+        macros = macroCat,
+        changelog = changelogCat,
+    }
 
     ----------------------------------------------------------------------------
     --- Parent page
@@ -692,5 +690,6 @@ settingsFrame:SetScript("OnEvent", function(self, event, ...)
 
     self:UnregisterEvent("ADDON_LOADED")
     RCC.Profiles.Initialize(DEFAULTS, CHARACTER_DEFAULTS)
+    RCC.Changelog.Initialize()
     registerPanel()
 end)
