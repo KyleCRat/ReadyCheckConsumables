@@ -42,6 +42,7 @@ local DEFAULTS = {
 
     -- Consumables Action Bar
     consumablesActionBar_enabled = false,
+    consumablesActionBar_frameStrata = "MEDIUM",
     consumablesActionBar_iconsPerRow = 10,
     consumablesActionBar_buttonWidth = 48,
     consumablesActionBar_buttonHeight = 48,
@@ -109,6 +110,25 @@ local CHARACTER_DEFAULTS = {
     useProfileConsumablePreferences = false,
 }
 
+local VALID_FRAME_STRATA = {
+    BACKGROUND = true,
+    LOW = true,
+    MEDIUM = true,
+    HIGH = true,
+    DIALOG = true,
+    FULLSCREEN = true,
+    FULLSCREEN_DIALOG = true,
+    TOOLTIP = true,
+}
+
+local function normalizeActionBarFrameStrata(value)
+    if type(value) == "string" and VALID_FRAME_STRATA[value] then
+        return value
+    end
+
+    return DEFAULTS.consumablesActionBar_frameStrata
+end
+
 local function normalizeConsumablesIconWidthPercent(value)
     value = tonumber(value)
 
@@ -132,6 +152,7 @@ local function normalizeConsumablesIconWidthPercent(value)
 end
 
 local SETTING_NORMALIZERS = {
+    consumablesActionBar_frameStrata = normalizeActionBarFrameStrata,
     consumables_iconWidthPercent =
         normalizeConsumablesIconWidthPercent,
 }

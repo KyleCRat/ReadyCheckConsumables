@@ -41,7 +41,7 @@ frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 frame:SetSize(View.SIZE, View.SIZE)
 frame:SetMovable(true)
 frame:SetClampedToScreen(true)
-frame:SetFrameStrata("HIGH")
+frame:SetFrameStrata(RCC.GetSettingDefault("consumablesActionBar_frameStrata"))
 frame:SetToplevel(true)
 frame:SetDontSavePosition(true)
 frame:SetUserPlaced(false)
@@ -57,6 +57,7 @@ ActionBar.frame = frame
 ActionBar.ELEMENT_KEY = ELEMENT_KEY
 
 local pending = {
+    strata = false,
     layout = false,
     visual = false,
     visibility = false,
@@ -216,6 +217,24 @@ local function notifyMovementProviderOfResize()
     end
 end
 
+function ActionBar.ApplyFrameStrata()
+    if InCombatLockdown() then
+        pending.strata = true
+
+        return false
+    end
+
+    pending.strata = false
+
+    local strata = RCC.GetSetting("consumablesActionBar_frameStrata")
+
+    if frame:GetFrameStrata() ~= strata then
+        frame:SetFrameStrata(strata)
+    end
+
+    return true
+end
+
 function ActionBar.ApplyVisualOptions()
     if InCombatLockdown() then
         pending.visual = true
@@ -319,6 +338,7 @@ end
 
 function ActionBar.ApplyAll()
     if InCombatLockdown() then
+        pending.strata = true
         pending.layout = true
         pending.visual = true
         pending.visibility = true
@@ -326,6 +346,7 @@ function ActionBar.ApplyAll()
         return false
     end
 
+    ActionBar.ApplyFrameStrata()
     ActionBar.ApplyLayout()
     RCC.ConsumableActionBarPosition.ApplyCurrent()
     ActionBar.ApplyVisibility()
@@ -360,6 +381,10 @@ end
 
 function ActionBar.ApplyPending()
     if InCombatLockdown() then return false end
+
+    if pending.strata then
+        ActionBar.ApplyFrameStrata()
+    end
 
     if pending.layout then
         ActionBar.ApplyLayout()

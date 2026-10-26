@@ -15,6 +15,7 @@ local FEATURE_DISABLED_TOOLTIP =
 
 local ACTION_BAR_SETTING_KEYS = {
     "consumablesActionBar_enabled",
+    "consumablesActionBar_frameStrata",
     "consumables_preferUnlimitedAugment",
     "consumablesActionBar_iconsPerRow",
     "consumablesActionBar_buttonWidth",
@@ -41,6 +42,17 @@ local ANCHOR_CHOICES = {
     { value = "BOTTOMLEFT", label = "Bottom Left" },
     { value = "BOTTOM", label = "Bottom" },
     { value = "BOTTOMRIGHT", label = "Bottom Right" },
+}
+
+local FRAME_STRATA_CHOICES = {
+    { value = "BACKGROUND", label = "Background" },
+    { value = "LOW", label = "Low" },
+    { value = "MEDIUM", label = "Medium" },
+    { value = "HIGH", label = "High" },
+    { value = "DIALOG", label = "Dialog" },
+    { value = "FULLSCREEN", label = "Fullscreen" },
+    { value = "FULLSCREEN_DIALOG", label = "Fullscreen Dialog" },
+    { value = "TOOLTIP", label = "Tooltip" },
 }
 
 local FLYOUT_DIRECTION_CHOICES = {
@@ -356,6 +368,15 @@ local function createGeneralSettings(frame, layout)
         field = "y",
         label = "Y Position",
         tooltip = "Set the vertical offset from the selected anchors.",
+    })
+
+    addSettingDropdown(frame, columns.left, {
+        key = "consumablesActionBar_frameStrata",
+        label = "Frame Strata",
+        tooltip = "Choose how the action bar layers over other UI elements. "
+            .. "Medium matches Blizzard's action bars.",
+        choices = FRAME_STRATA_CHOICES,
+        onChanged = ActionBar.ApplyFrameStrata,
     })
 
     columns:Finish({

@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- The Consumables Action Bar now defaults to Medium frame strata, matching
+  Blizzard's action bars. A Frame Strata setting lets you adjust its layering.
+
 ## [12.1.5-29] - 2026-10-13
 
 ### Added

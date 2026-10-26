@@ -70,6 +70,7 @@ On the **Consumables Action Bar** settings page:
   status marks, and profession-quality marks.
 - **Move it:** Use EllesmereUI Unlock Mode when available, or Blizzard Edit
   Mode otherwise. The settings page also offers anchor and X/Y position controls.
+  **Frame Strata** controls overlap with other UI elements and defaults to Medium.
 
 The permanent bar uses hover highlights rather than persistent reminder glows.
 Buff information and item cooldowns continue updating during combat when WoW
