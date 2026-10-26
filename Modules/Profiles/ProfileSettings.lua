@@ -57,9 +57,7 @@ end
 local function getProfileLabel(profile)
     local ref = profile.profileRef
 
-    if ref.kind == "user" then
-        return "Custom: " .. profile.displayName
-    end
+    if ref.kind == "user" then return "Custom: " .. profile.displayName end
 
     if ref.profile == "global" then return PROFILE_LABELS.global end
 
@@ -68,9 +66,7 @@ end
 
 local function findProfile(choiceKey)
     for _, profile in ipairs(RCC.profileManager:GetProfiles()) do
-        if getChoiceKey(profile) == choiceKey then
-            return profile
-        end
+        if getChoiceKey(profile) == choiceKey then return profile end
     end
 end
 
@@ -129,7 +125,9 @@ end
 local function validateDialogProfiles(expectedProfiles, activeProfile)
     if not canEdit() then return false end
 
-    if not sameProfile(activeProfile, RCC.profileManager:GetActiveProfile()) then
+    if
+        not sameProfile(activeProfile, RCC.profileManager:GetActiveProfile())
+    then
         reportError("Your active profile changed; please try again")
 
         return false
@@ -158,6 +156,7 @@ local function showNameInput(text, acceptText, expectedProfiles, onAccept)
         text_arg1 = text,
         acceptText = acceptText,
         maxLetters = 0,
+
         callback = function(name)
             if validateDialogProfiles(expectedProfiles, activeProfile) then
                 onAccept(name)
@@ -177,6 +176,7 @@ local function confirmChange(text, acceptText, expectedProfiles, operation)
         acceptText = acceptText,
         cancelText = CANCEL,
         showAlert = true,
+
         callback = function()
             if validateDialogProfiles(expectedProfiles, activeProfile) then
                 finishOperation(operation())
@@ -186,13 +186,16 @@ local function confirmChange(text, acceptText, expectedProfiles, operation)
 end
 
 local function createProfile()
-    showNameInput("Enter a name for the new profile.", "Create", {}, function(name)
-        local ref = finishOperation(RCC.profileManager:CreateProfile(name))
+    showNameInput(
+        "Enter a name for the new profile.",
+        "Create",
+        {},
+        function(name)
+            local ref = finishOperation(RCC.profileManager:CreateProfile(name))
 
-        if ref then
-            finishOperation(RCC.profileManager:SetProfile(ref))
+            if ref then finishOperation(RCC.profileManager:SetProfile(ref)) end
         end
-    end)
+    )
 end
 
 local function copyIntoActiveProfile()
@@ -217,14 +220,21 @@ local function copyIntoActiveProfile()
     end
 
     StaticPopup_ShowGenericDropdown(
-        "Choose a profile to copy into " .. getProfileLabel(target)
+        "Choose a profile to copy into "
+            .. getProfileLabel(target)
             .. ". This replaces its settings and profile-stored consumable preferences. "
             .. "Character preferences will not change. This cannot be undone.",
         function(source)
             if validateDialogProfiles({ source, target }, target) then
-                finishOperation(RCC.profileManager:CopyProfile(source.profileRef, target.profileRef))
+                finishOperation(
+                    RCC.profileManager:CopyProfile(
+                        source.profileRef,
+                        target.profileRef
+                    )
+                )
             end
         end,
+
         options,
         true -- Require confirmation before replacing settings.
     )
@@ -236,7 +246,9 @@ local function resetActiveProfile()
     if not target.canReset then return end
 
     confirmChange(
-        "Reset " .. getProfileLabel(target) .. " to RCC's defaults? "
+        "Reset "
+            .. getProfileLabel(target)
+            .. " to RCC's defaults? "
             .. "All settings and profile-stored item preferences will be removed. "
             .. "Character preferences will not change. This cannot be undone.",
         "Reset",
@@ -267,7 +279,9 @@ local function selectRenameProfile(choiceKey)
         "Rename",
         { target },
         function(name)
-            finishOperation(RCC.profileManager:RenameProfile(target.profileRef, name))
+            finishOperation(
+                RCC.profileManager:RenameProfile(target.profileRef, name)
+            )
         end
     )
 end
@@ -285,19 +299,25 @@ local function selectDeleteProfile(choiceKey)
         return
     end
 
-    local usage, errorCode = RCC.profileManager:GetProfileUsage(target.profileRef)
+    local usage, errorCode =
+        RCC.profileManager:GetProfileUsage(target.profileRef)
 
     if not usage then
-        reportError(ERRORS[errorCode] or "The profile's usage could not be checked")
+        reportError(
+            ERRORS[errorCode] or "The profile's usage could not be checked"
+        )
 
         return
     end
 
-    local text = "Delete " .. getProfileLabel(target)
+    local text = "Delete "
+        .. getProfileLabel(target)
         .. "? Its settings and profile-stored item preferences will be removed."
 
     if usage.selectionCount > 0 then
-        text = text .. " " .. usage.selectionCount
+        text = text
+            .. " "
+            .. usage.selectionCount
             .. " character(s) using this profile will return to Global on their next login."
     end
 
@@ -344,7 +364,8 @@ function ProfileSettings.AddSection(flow)
             .. "character-specific unless you enable the option below.",
     })
 
-    local buttons = flow:BeginColumns({ count = 3, columnGap = 8, marginTop = 4 })
+    local buttons =
+        flow:BeginColumns({ count = 3, columnGap = 8, marginTop = 4 })
     local createButton = buttons[1]:AddControl("button", {
         text = "New Profile",
         tooltip = "Create and select a new profile with default settings",
@@ -415,7 +436,9 @@ function ProfileSettings.AddSection(flow)
             reason or "There is no inactive custom profile to delete"
         )
 
-        preferenceScope:SetValue(RCC.ConsumablePreferences.UsesProfilePreferences())
+        preferenceScope:SetValue(
+            RCC.ConsumablePreferences.UsesProfilePreferences()
+        )
         preferenceScope:SetControlEnabled(enabled, reason)
     end
 

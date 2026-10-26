@@ -7,24 +7,23 @@ local UI = RCC.UI
 
 local floor = floor
 
-local SCALE_MIN          = 50
-local SCALE_MAX          = 150
-local SCALE_STEP         = 5
+local SCALE_MIN = 50
+local SCALE_MAX = 150
+local SCALE_STEP = 5
 local SCALE_BUTTON_WIDTH = 86
 
 local function savePosition(self)
     self:StopMovingOrSizing()
 
-    if not RCC.settingsDB then
-        return
-    end
+    if not RCC.settingsDB then return end
 
     local point, _, relPoint, x, y = self:GetPoint(1)
+
     RCC.settingsDB:Set("raidFramePos", {
-        point    = point,
+        point = point,
         relPoint = relPoint,
-        x        = x,
-        y        = y,
+        x = x,
+        y = y,
     })
 end
 
@@ -41,7 +40,8 @@ function Controls.Create(frame)
 
     frame:SetScript("OnDragStop", savePosition)
 
-    frame.scaleButton = UI.CreateControlButton(frame, SCALE_BUTTON_WIDTH, 20, "")
+    frame.scaleButton =
+        UI.CreateControlButton(frame, SCALE_BUTTON_WIDTH, 20, "")
     frame.scaleButton:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 1, -3)
 
     controls.scalePopup = UI.CreatePopupSlider(frame.scaleButton, {
@@ -65,15 +65,22 @@ function Controls.Create(frame)
     })
 
     frame.close = UI.CreateControlButton(
-        frame, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
+        frame,
+        0,
+        20,
+        CLOSE or "x",
+        "SecureHandlerClickTemplate"
     )
     frame.close:SetPoint("TOPLEFT", frame.scaleButton, "TOPRIGHT", 3, 0)
     frame.close:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", -1, -3)
 
     frame.close:SetFrameRef("CLLRaidFrame", frame)
-    frame.close:SetAttribute("_onclick", [[
+    frame.close:SetAttribute(
+        "_onclick",
+        [[
     self:GetFrameRef("CLLRaidFrame"):Hide()
-]])
+]]
+    )
 
     function controls:SyncScale()
         local scale = RCC.GetSetting("raidFrame_scale")
@@ -85,15 +92,11 @@ function Controls.Create(frame)
     end
 
     function controls:RestorePosition(force)
-        if self.positionRestored and not force then
-            return
-        end
+        if self.positionRestored and not force then return end
 
         self.positionRestored = true
 
-        if not RCC.settingsDB then
-            return
-        end
+        if not RCC.settingsDB then return end
 
         local pos = RCC.settingsDB:Get("raidFramePos")
 

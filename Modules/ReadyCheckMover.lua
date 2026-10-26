@@ -35,7 +35,8 @@ end
 local function restorePosition()
     local position = RCC.settingsDB:Get("readyCheckPosition")
 
-    if type(position) ~= "table"
+    if
+        type(position) ~= "table"
         or not VALID_POINTS[position.point]
         or not VALID_POINTS[position.relPoint]
         or not isCoordinate(position.x)
@@ -47,7 +48,13 @@ local function restorePosition()
     end
 
     popup:ClearAllPoints()
-    popup:SetPoint(position.point, UIParent, position.relPoint, position.x, position.y)
+    popup:SetPoint(
+        position.point,
+        UIParent,
+        position.relPoint,
+        position.x,
+        position.y
+    )
 end
 
 local function stopMoving()
@@ -79,9 +86,7 @@ local function stopMoving()
 
     discardDrag = false
 
-    if not InCombatLockdown() then
-        popup:SetUserPlaced(false)
-    end
+    if not InCombatLockdown() then popup:SetUserPlaced(false) end
 end
 
 local function startMoving()
@@ -144,9 +149,7 @@ function Mover.ApplySettings()
     stopMoving()
 
     if allowDragging then
-        if not initialized then
-            initialize()
-        end
+        if not initialized then initialize() end
 
         if not enabled then
             originalState = {

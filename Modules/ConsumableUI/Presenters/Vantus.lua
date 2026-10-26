@@ -31,7 +31,7 @@ function Vantus.Present(model)
 
     local vantusAura = model.effect
     local bossName = getAuraBossName(vantusAura)
-    local candidate, candidates, outOfCachedItem =
+    local candidate, _candidates, outOfCachedItem =
         RCC.ConsumableSelection.Unpack(selection)
 
     local itemID = candidate and candidate.itemID
@@ -39,7 +39,8 @@ function Vantus.Present(model)
     local icon = candidate and candidate.icon
 
     if not itemID then
-        itemID, icon = selection.defaultCandidate.itemID, selection.defaultCandidate.icon
+        itemID, icon =
+            selection.defaultCandidate.itemID, selection.defaultCandidate.icon
     end
 
     local buttonState = ButtonState.Create()
@@ -47,9 +48,7 @@ function Vantus.Present(model)
     buttonState.tooltipItemID = itemID
 
     if vantusAura then
-        if bossName then
-            buttonState.detailText = bossName
-        end
+        if bossName then buttonState.detailText = bossName end
 
         buttonState.statusIcon = ButtonState.READY_ICON
         buttonState.hasConsumableBuff = true
@@ -61,10 +60,7 @@ function Vantus.Present(model)
         end
 
         if outOfCachedItem then
-            ButtonState.SetHoverUnavailable(
-                buttonState,
-                OUT_OF_SELECTED_ITEM
-            )
+            ButtonState.SetHoverUnavailable(buttonState, OUT_OF_SELECTED_ITEM)
         end
     elseif count > 0 then
         buttonState.countText = tostring(count)
@@ -80,10 +76,7 @@ function Vantus.Present(model)
         )
     end
 
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        model.available == true
-    )
+    ButtonState.ApplyAuraScanAvailability(buttonState, model.available == true)
 
     return buttonState
 end
@@ -91,8 +84,12 @@ end
 function Vantus.Choices(selection)
     local candidate = selection.candidate or selection.defaultCandidate
 
-    return ButtonState.CreateItemFlyoutChoices(selection.candidates, candidate and candidate.itemID, {
-        preferenceKey = PreferenceKey.VANTUS,
-        includeSingleChoice = selection.unavailable,
-    })
+    return ButtonState.CreateItemFlyoutChoices(
+        selection.candidates,
+        candidate and candidate.itemID,
+        {
+            preferenceKey = PreferenceKey.VANTUS,
+            includeSingleChoice = selection.unavailable,
+        }
+    )
 end

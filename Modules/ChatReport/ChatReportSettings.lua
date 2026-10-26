@@ -73,6 +73,7 @@ local function addSettingCheckbox(frame, flow, options)
     local checkbox = flow:AddControl("checkbox", {
         label = options.label,
         tooltip = options.tooltip,
+
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
             frame:Sync()
@@ -118,7 +119,8 @@ function Page.CreateFrame(measurementFrame)
     local splitIndex = math.ceil(#definitions / 2)
 
     for i, definition in ipairs(definitions) do
-        local flow = i <= splitIndex and reportColumns.left or reportColumns.right
+        local flow = i <= splitIndex and reportColumns.left
+            or reportColumns.right
 
         addSettingCheckbox(frame, flow, {
             key = definition.settingKey,
@@ -141,6 +143,7 @@ function Page.CreateFrame(measurementFrame)
             .. "raids.",
         value = RCC.GetSetting("chatReport_permission"),
         choices = PERMISSION_CHOICES,
+
         onChanged = function(value)
             RCC.SetSettingValue("chatReport_permission", value)
         end,
@@ -194,6 +197,7 @@ function Page.CreateFrame(measurementFrame)
     frame:SetScript("OnShow", function(self)
         self:Sync()
     end)
+
     frame:Sync()
 
     return frame

@@ -10,22 +10,24 @@ local ReadyCheck = RCC.RaidFrameReadyCheck
 local ReadyCheckState = RCC.ReadyCheckState
 local Status = ReadyCheckState.Status
 
-local ROW_HEIGHT           = 30
-local V_PAD                = 0
-local MAX_ROWS             = 40
+local ROW_HEIGHT = 30
+local V_PAD = 0
+local MAX_ROWS = 40
 local DEFAULT_VISIBLE_ROWS = 5
-local FONT_SIZE_NAME       = 16
+local FONT_SIZE_NAME = 16
 
-local COLOR_NAME_NORMAL  = { r = 1,   g = 1,   b = 1   }
+local COLOR_NAME_NORMAL = { r = 1, g = 1, b = 1 }
 local COLOR_NAME_OFFLINE = { r = 0.5, g = 0.5, b = 0.5 }
-local COLOR_NAME_DEAD    = { r = 0.8, g = 0.2, b = 0.2 }
+local COLOR_NAME_DEAD = { r = 0.8, g = 0.2, b = 0.2 }
 
-local RC_ICON_OFFLINE = { texture = "Interface\\CharacterFrame\\Disconnect-Icon" }
-local RC_ICON_DEAD    = { atlas = "Navigation-Tombstone-Icon" }
+local RC_ICON_OFFLINE =
+    { texture = "Interface\\CharacterFrame\\Disconnect-Icon" }
+local RC_ICON_DEAD = { atlas = "Navigation-Tombstone-Icon" }
 
 local function getFrameHeight(rows, layout, activeCount)
     return layout.framePad * 2
-        + rows.titleHeight + layout.framePad
+        + rows.titleHeight
+        + layout.framePad
         + activeCount * rows.rowHeight
         + (activeCount > 1 and (activeCount - 1) * rows.vPad or 0)
 end
@@ -63,8 +65,13 @@ local function createRow(parent, titleBar, rows, index, layout, options)
     end
 
     if index == 1 then
-        row:SetPoint("TOPLEFT", titleBar, "BOTTOMLEFT", 0,
-            -(layout.framePad + options.vPad))
+        row:SetPoint(
+            "TOPLEFT",
+            titleBar,
+            "BOTTOMLEFT",
+            0,
+            -(layout.framePad + options.vPad)
+        )
     else
         row:SetPoint("TOPLEFT", rows[index - 1], "BOTTOMLEFT", 0, -options.vPad)
     end
@@ -76,19 +83,19 @@ function Rows.Create(parent, titleBar, layout, options)
     options = options or {}
 
     local rows = {
-        maxRows     = options.maxRows or MAX_ROWS,
-        rowHeight   = options.rowHeight or ROW_HEIGHT,
+        maxRows = options.maxRows or MAX_ROWS,
+        rowHeight = options.rowHeight or ROW_HEIGHT,
         titleHeight = titleBar:GetHeight(),
-        vPad        = options.vPad or V_PAD,
+        vPad = options.vPad or V_PAD,
     }
 
     local rowOptions = {
-        rowHeight        = rows.rowHeight,
-        vPad             = rows.vPad,
-        font             = options.font or UI.FONT,
-        fontSizeName     = options.fontSizeName or FONT_SIZE_NAME,
-        fontSizeTime     = options.fontSizeTime,
-        missingBg        = options.missingBg,
+        rowHeight = rows.rowHeight,
+        vPad = rows.vPad,
+        font = options.font or UI.FONT,
+        fontSizeName = options.fontSizeName or FONT_SIZE_NAME,
+        fontSizeTime = options.fontSizeTime,
+        missingBg = options.missingBg,
     }
 
     rows.initialFrameHeight = getFrameHeight(rows, layout, DEFAULT_VISIBLE_ROWS)
@@ -109,15 +116,14 @@ local function applyRcIcon(row, member, layout, context)
 
     row.rcIcon:Show()
 
-    local status = ReadyCheckState.GetResponse(context.state.readyCheck, member.key)
+    local status =
+        ReadyCheckState.GetResponse(context.state.readyCheck, member.key)
 
     if status == Status.NOT_READY and not member.online then
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
         UI.SetStatusIcon(row.rcIcon, RC_ICON_OFFLINE)
     elseif status == Status.PENDING and member.isDead then
-        row.rcIcon:SetSize(
-            layout.rcIconWidth * 26 / 33, layout.rcIconWidth
-        )
+        row.rcIcon:SetSize(layout.rcIconWidth * 26 / 33, layout.rcIconWidth)
         UI.SetStatusIcon(row.rcIcon, RC_ICON_DEAD)
     else
         row.rcIcon:SetSize(layout.rcIconWidth, layout.rcIconWidth)
@@ -140,11 +146,23 @@ local function applyName(row, member, layout)
     row.nameText:SetPoint("LEFT", row, "LEFT", layout.x.name, 0)
 
     if not member.online then
-        row.nameText:SetTextColor(COLOR_NAME_OFFLINE.r, COLOR_NAME_OFFLINE.g, COLOR_NAME_OFFLINE.b)
+        row.nameText:SetTextColor(
+            COLOR_NAME_OFFLINE.r,
+            COLOR_NAME_OFFLINE.g,
+            COLOR_NAME_OFFLINE.b
+        )
     elseif member.isDead then
-        row.nameText:SetTextColor(COLOR_NAME_DEAD.r, COLOR_NAME_DEAD.g, COLOR_NAME_DEAD.b)
+        row.nameText:SetTextColor(
+            COLOR_NAME_DEAD.r,
+            COLOR_NAME_DEAD.g,
+            COLOR_NAME_DEAD.b
+        )
     else
-        row.nameText:SetTextColor(COLOR_NAME_NORMAL.r, COLOR_NAME_NORMAL.g, COLOR_NAME_NORMAL.b)
+        row.nameText:SetTextColor(
+            COLOR_NAME_NORMAL.r,
+            COLOR_NAME_NORMAL.g,
+            COLOR_NAME_NORMAL.b
+        )
     end
 
     row.nameText:SetText(F.shortName(member.name))
@@ -180,9 +198,7 @@ function Rows.ApplyData(row, member, layout, context)
 end
 
 function Rows.RefreshRow(row, member, layout, context)
-    if not row then
-        return
-    end
+    if not row then return end
 
     Columns.SyncExternalData(member, layout, context)
     Rows.ApplyData(row, member, layout, context)

@@ -28,9 +28,7 @@ local function notify(method, session, change)
     for i = 1, #listeners do
         local handler = listeners[i][method]
 
-        if handler then
-            handler(session, change)
-        end
+        if handler then handler(session, change) end
     end
 end
 
@@ -95,14 +93,12 @@ end
 local function onReadyCheck(initiatorUnit, duration)
     cancelSession()
 
-    if InCombatLockdown() then
-        return
-    end
+    if InCombatLockdown() then return end
 
     local roster = readRoster()
     roster.responses = readResponses(roster.members)
-    roster.duration = F.IsSafeNumber(duration) and duration > 0
-        and duration or DEFAULT_DURATION
+    roster.duration = F.IsSafeNumber(duration) and duration > 0 and duration
+        or DEFAULT_DURATION
 
     -- The initiator does not receive a confirmation event for their own ready
     -- response. Seed it here, alongside the native statuses, for both consumers.
@@ -125,9 +121,13 @@ local function onReadyCheck(initiatorUnit, duration)
 end
 
 local function onReadyCheckConfirm(unit, isReady)
-    if not currentSession or not currentSession.inProgress
-        or issecretvalue(unit) or type(unit) ~= "string"
-        or issecretvalue(isReady) or type(isReady) ~= "boolean"
+    if
+        not currentSession
+        or not currentSession.inProgress
+        or issecretvalue(unit)
+        or type(unit) ~= "string"
+        or issecretvalue(isReady)
+        or type(isReady) ~= "boolean"
     then
         return
     end
@@ -147,9 +147,7 @@ local function onReadyCheckFinished(preempted)
         return
     end
 
-    if not currentSession then
-        return
-    end
+    if not currentSession then return end
 
     State.Finish(currentSession)
     eventFrame:UnregisterEvent("READY_CHECK_CONFIRM")
@@ -158,7 +156,8 @@ local function onReadyCheckFinished(preempted)
 end
 
 local function sameActiveRoster(session, roster)
-    if session.isRaid ~= roster.isRaid
+    if
+        session.isRaid ~= roster.isRaid
         or session.groupSize ~= roster.groupSize
         or #session.members ~= #roster.members
     then
@@ -178,9 +177,7 @@ local function sameActiveRoster(session, roster)
 end
 
 local function onGroupRosterUpdate()
-    if not currentSession then
-        return
-    end
+    if not currentSession then return end
 
     if not IsInGroup() then
         cancelSession()
@@ -194,9 +191,7 @@ local function onGroupRosterUpdate()
         -- Generic roster updates also fire without membership changes. Preserve
         -- early completions, but never send an old result for a different group
         -- or leave the frozen display following reassigned raid unit tokens.
-        if not sameActiveRoster(currentSession, roster) then
-            cancelSession()
-        end
+        if not sameActiveRoster(currentSession, roster) then cancelSession() end
 
         return
     end

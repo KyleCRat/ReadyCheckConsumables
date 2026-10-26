@@ -20,15 +20,35 @@ local UnitClass = UnitClass
 --------------------------------------------------------------------------------
 
 local ALL_CLASSES = {
-    "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST",
-    "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "MONK",
-    "DRUID", "DEMONHUNTER", "EVOKER",
+    "WARRIOR",
+    "PALADIN",
+    "HUNTER",
+    "ROGUE",
+    "PRIEST",
+    "DEATHKNIGHT",
+    "SHAMAN",
+    "MAGE",
+    "WARLOCK",
+    "MONK",
+    "DRUID",
+    "DEMONHUNTER",
+    "EVOKER",
 }
 
 local TEST_NAMES = {
-    "Thunderclap", "Lightforge", "Windrunner", "Shadowstep", "Faithweaver",
-    "Frostmourne", "Tidecaller", "Frostbolt", "Felblood", "Mistwalker",
-    "Moonfire", "Havocblade", "Scalewing",
+    "Thunderclap",
+    "Lightforge",
+    "Windrunner",
+    "Shadowstep",
+    "Faithweaver",
+    "Frostmourne",
+    "Tidecaller",
+    "Frostbolt",
+    "Felblood",
+    "Mistwalker",
+    "Moonfire",
+    "Havocblade",
+    "Scalewing",
 }
 
 local SYNTHETIC_UNAVAILABLE_CHANCE = 0.05
@@ -52,18 +72,14 @@ local function invalidateRun(self)
 end
 
 local function clearCauldronTestData(self)
-    if Cauldron.EndSyntheticTestData(true) then
-        self.env.syncProvision()
-    end
+    if Cauldron.EndSyntheticTestData(true) then self.env.syncProvision() end
 
     self.includeCauldrons = false
 end
 
 local function addTimer(self, runID, delay, callback)
     local timer = C_Timer.NewTimer(delay, function()
-        if self.runID ~= runID or not self.active then
-            return
-        end
+        if self.runID ~= runID or not self.active then return end
 
         callback()
     end)
@@ -84,20 +100,16 @@ local function generateTempWeaponEnchantData()
 
     if roll < 0.5 then
         return {
-            time    = math.random(60, 3600),
-            itemID  = 0,
-            iconID  = RCC.db.weaponEnchantIconID,
+            time = math.random(60, 3600),
+            itemID = 0,
+            iconID = RCC.db.weaponEnchantIconID,
             spellID = 0,
         }
     end
 
-    if roll < 0.7 then
-        return { time = 0, itemID = 0 }
-    end
+    if roll < 0.7 then return { time = 0, itemID = 0 } end
 
-    if roll < 0.85 then
-        return { time = -1, itemID = 0 }
-    end
+    if roll < 0.85 then return { time = -1, itemID = 0 } end
 
     return nil
 end
@@ -108,42 +120,42 @@ local function generateSyntheticMembers(excludeClass)
     for i = 1, #ALL_CLASSES do
         if ALL_CLASSES[i] ~= excludeClass then
             members[#members + 1] = {
-                name              = TEST_NAMES[i],
-                class             = ALL_CLASSES[i],
-                online            = math.random() > 0.1,
-                isDead            = math.random() > 0.9,
-                durability        = math.random(10, 100),
+                name = TEST_NAMES[i],
+                class = ALL_CLASSES[i],
+                online = math.random() > 0.1,
+                isDead = math.random() > 0.9,
+                durability = math.random(10, 100),
                 tempWeaponEnchant = generateTempWeaponEnchantData(),
-                rccPresent         = true,
-                auraScanAvailable  = true,
+                rccPresent = true,
+                auraScanAvailable = true,
             }
         end
     end
 
     members[#members + 1] = {
-        name              = "Not Installed",
-        class             = "WARRIOR",
-        online            = true,
-        isDead            = false,
-        rccPresent        = false,
+        name = "Not Installed",
+        class = "WARRIOR",
+        online = true,
+        isDead = false,
+        rccPresent = false,
         auraScanAvailable = false,
     }
 
     -- A secret aura can leave consumables unresolved without hiding the
     -- current NeverSecret raid buffs. This is not an inaccessible-unit case.
     members[#members + 1] = {
-        name              = "Unknown",
-        class             = "MAGE",
-        online            = true,
-        isDead            = false,
-        durability        = 100,
+        name = "Unknown",
+        class = "MAGE",
+        online = true,
+        isDead = false,
+        durability = 100,
         tempWeaponEnchant = {
-            time    = 1800,
-            itemID  = 0,
-            iconID  = RCC.db.weaponEnchantIconID,
+            time = 1800,
+            itemID = 0,
+            iconID = RCC.db.weaponEnchantIconID,
             spellID = 0,
         },
-        rccPresent        = true,
+        rccPresent = true,
         auraScanAvailable = false,
         raidBuffsAvailable = true,
     }
@@ -190,9 +202,7 @@ local function copySyntheticColumnData(data)
 end
 
 local function playerColumnIsGood(playerMember, context, column)
-    if not playerMember or not column.IsBad then
-        return false
-    end
+    if not playerMember or not column.IsBad then return false end
 
     return not column.IsBad(playerMember, context, column)
 end
@@ -202,12 +212,7 @@ local function shouldMirrorPlayerColumn(column)
         or column.columnType == COLUMN_TYPE.RAID_BUFF
 end
 
-local function createSyntheticColumnData(
-    layout,
-    context,
-    playerMember,
-    member
-)
+local function createSyntheticColumnData(layout, context, playerMember, member)
     local columnData = Columns.CreateColumnData(layout)
 
     columnData.auraScanAvailable = member.auraScanAvailable == true
@@ -230,13 +235,15 @@ local function createSyntheticColumnData(
             -- Preserve the guaranteed-good mirrored columns so the test always
             -- exercises the green title-bar state before adding random neutral
             -- cells to the remaining columns.
-            if shouldMirrorPlayerColumn(column)
+            if
+                shouldMirrorPlayerColumn(column)
                 and playerData
                 and playerData.available == true
                 and playerColumnIsGood(playerMember, context, column)
             then
                 columnData[column.key] = copySyntheticColumnData(playerData)
-            elseif column.dataSource == DATA_SOURCE.AURA
+            elseif
+                column.dataSource == DATA_SOURCE.AURA
                 and math.random() < SYNTHETIC_UNAVAILABLE_CHANCE
             then
                 data.available = false
@@ -268,12 +275,12 @@ local function populateSyntheticState(self)
     local _, playerClass = UnitClass("player")
 
     state.members[1] = {
-        name       = playerName,
-        key        = F.fullName(playerName),
-        unit       = "player",
-        class      = playerClass,
-        online     = true,
-        isDead     = false,
+        name = playerName,
+        key = F.fullName(playerName),
+        unit = "player",
+        class = playerClass,
+        online = true,
+        isDead = false,
         columnData = Columns.ScanUnitData("player", GetTime(), layout, context),
     }
     state.unitToIndex["player"] = 1
@@ -293,12 +300,12 @@ local function populateSyntheticState(self)
         local playerKey = F.fullName(member.name)
 
         state.members[count] = {
-            name       = playerKey,
-            key        = playerKey,
-            unit       = fakeUnit,
-            class      = member.class,
-            online     = member.online,
-            isDead     = member.isDead,
+            name = playerKey,
+            key = playerKey,
+            unit = fakeUnit,
+            class = member.class,
+            online = member.online,
+            isDead = member.isDead,
             columnData = createSyntheticColumnData(
                 layout,
                 context,
@@ -352,8 +359,8 @@ local function createSyntheticReadyCheck(state, duration)
             class = member.class,
             online = member.online,
         }
-        responses[member.key] = member.unit == "player"
-            and Status.READY or Status.PENDING
+        responses[member.key] = member.unit == "player" and Status.READY
+            or Status.PENDING
     end
 
     -- Exercise the live model and presentation without publishing anything to
@@ -383,10 +390,19 @@ local function scheduleSyntheticResponses(self, runID, duration)
                 local playerKey = state.members[state.unitToIndex[unit]].key
 
                 addTimer(self, runID, delay, function()
-                    if frame:IsShown() and state.readyCheck == session
-                        and ReadyCheckState.SetResponse(session, playerKey, response)
+                    if
+                        frame:IsShown()
+                        and state.readyCheck == session
+                        and ReadyCheckState.SetResponse(
+                            session,
+                            playerKey,
+                            response
+                        )
                     then
-                        frame:OnReadyCheckUpdated(session, { playerKey = playerKey })
+                        frame:OnReadyCheckUpdated(
+                            session,
+                            { playerKey = playerKey }
+                        )
                     end
                 end)
             end
@@ -423,9 +439,7 @@ function Test:Stop()
 end
 
 function Test:Finish()
-    if not self.active then
-        return
-    end
+    if not self.active then return end
 
     self.active = false
     invalidateRun(self)
@@ -445,9 +459,7 @@ end
 function Test:Start(permanent, duration, options)
     local env = self.env
 
-    if not env or InCombatLockdown() then
-        return false
-    end
+    if not env or InCombatLockdown() then return false end
 
     duration = duration or 15
 
@@ -456,8 +468,8 @@ function Test:Start(permanent, duration, options)
     local runID = self.runID
     self.active = true
     self.includeCauldrons = options
-        and options.includeCauldrons == true
-        and Cauldron.BeginSyntheticTestData()
+            and options.includeCauldrons == true
+            and Cauldron.BeginSyntheticTestData()
         or false
 
     env.beginDisplay(permanent or false, {
@@ -477,9 +489,7 @@ end
 function Test:StartCauldronOnly()
     local env = self.env
 
-    if not env or InCombatLockdown() then
-        return false
-    end
+    if not env or InCombatLockdown() then return false end
 
     self:Cancel()
     self.active = true

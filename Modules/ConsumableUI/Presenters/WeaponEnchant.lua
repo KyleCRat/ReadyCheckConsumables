@@ -4,8 +4,7 @@ RCC.ConsumablePresenters.WeaponEnchant = WeaponEnchant
 local State = RCC.ConsumableState
 local OUT_OF_ITEMS = "No Weapon Enchant Items found in Bags"
 local OUT_OF_SELECTED_ITEM = "Selected Weapon Enchant Item not found in Bags"
-local STATUS_UNAVAILABLE =
-    "RCC can't confirm whether this weapon enchant is missing because its "
+local STATUS_UNAVAILABLE = "RCC can't confirm whether this weapon enchant is missing because its "
     .. "information is unavailable"
 
 function WeaponEnchant.Present(model)
@@ -22,12 +21,15 @@ function WeaponEnchant.Present(model)
         state.statusIcon = State.READY_ICON
         state.hasConsumableBuff = true
         state.desaturated = false
-        state.detailText = model.remaining and RCC.F.FormatDuration(model.remaining) or ""
+        state.detailText = model.remaining
+                and RCC.F.FormatDuration(model.remaining)
+            or ""
         state.detailTextIsBad = model.expiringSoon
 
         if active then
             state.tooltipAppliedItemID = active.item
-            state.tooltipAppliedSpellID = not active.item and active.spellID or nil
+            state.tooltipAppliedSpellID = not active.item and active.spellID
+                or nil
         end
     end
 
@@ -102,7 +104,8 @@ function WeaponEnchant.Choices(selected)
             targetSlot = selected.slotID,
             available = true,
             preferenceKey = selected.preferenceKey,
-            includeSingleChoice = selected.kind == "spell" or selected.unavailable,
+            includeSingleChoice = selected.kind == "spell"
+                or selected.unavailable,
         }
     )
 

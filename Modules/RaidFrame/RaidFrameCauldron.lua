@@ -63,12 +63,13 @@ end
 local function getOrCreateEntry(state, playerKey)
     if not state or not playerKey then return end
 
-    state.counts[playerKey] = state.counts[playerKey] or {
-        flask = 0,
-        flaskItemID = nil,
-        potion = 0,
-        potionItemID = nil,
-    }
+    state.counts[playerKey] = state.counts[playerKey]
+        or {
+            flask = 0,
+            flaskItemID = nil,
+            potion = 0,
+            potionItemID = nil,
+        }
 
     return state.counts[playerKey]
 end
@@ -119,9 +120,7 @@ local function getPickupQuantity(state, kind, cauldronData)
 end
 
 local function getCauldronDataForKind(kind)
-    return kind
-        and RCC.db.cauldronKindData
-        and RCC.db.cauldronKindData[kind]
+    return kind and RCC.db.cauldronKindData and RCC.db.cauldronKindData[kind]
 end
 
 local function parseItemID(message)
@@ -140,9 +139,7 @@ local function parseQuantity(message, kind, cauldronData, state)
 
     quantity = tonumber(quantity)
 
-    if quantity and quantity > 0 then
-        return quantity
-    end
+    if quantity and quantity > 0 then return quantity end
 
     return getPickupQuantity(state, kind, cauldronData)
 end
@@ -172,13 +169,9 @@ local function parseCreatorFromMessage(message)
 
     creator = trim(stripChatColor(creator))
 
-    if not creator or creator == "" then
-        return nil
-    end
+    if not creator or creator == "" then return nil end
 
-    if isSelfName(creator) then
-        return F.unitFullName("player")
-    end
+    if isSelfName(creator) then return F.unitFullName("player") end
 
     return F.fullName(creator)
 end
@@ -190,25 +183,20 @@ local function getPlayerKeyFromLootMessage(message, playerName, guid)
 
     local playerKey = parseCreatorFromMessage(message)
 
-    if playerKey then
-        return playerKey
-    end
+    if playerKey then return playerKey end
 
     if playerName and not issecretvalue(playerName) and playerName ~= "" then
-        if isSelfName(playerName) then
-            return F.unitFullName("player")
-        end
+        if isSelfName(playerName) then return F.unitFullName("player") end
 
         return F.fullName(playerName)
     end
 end
 
 local function sendCauldronMessage(kind)
-    if not isValidKind(kind) then
-        return
-    end
+    if not isValidKind(kind) then return end
 
-    if C_ChatInfo.InChatMessagingLockdown
+    if
+        C_ChatInfo.InChatMessagingLockdown
         and C_ChatInfo.InChatMessagingLockdown()
     then
         return
@@ -216,9 +204,7 @@ local function sendCauldronMessage(kind)
 
     local chatType = F.chatType()
 
-    if chatType == "SAY" then
-        return
-    end
+    if chatType == "SAY" then return end
 
     C_ChatInfo.SendAddonMessage(
         ADDON_PREFIX,
@@ -277,9 +263,7 @@ function Cauldron.HasActiveCauldron()
     local state = getDisplayState()
 
     for i = 1, #TRACKED_CAULDRON_TYPES do
-        if state.activeKinds[TRACKED_CAULDRON_TYPES[i]] then
-            return true
-        end
+        if state.activeKinds[TRACKED_CAULDRON_TYPES[i]] then return true end
     end
 
     return false
@@ -292,9 +276,7 @@ function Cauldron.GetActiveKinds()
     for i = 1, #TRACKED_CAULDRON_TYPES do
         local kind = TRACKED_CAULDRON_TYPES[i]
 
-        if state.activeKinds[kind] then
-            active[#active + 1] = kind
-        end
+        if state.activeKinds[kind] then active[#active + 1] = kind end
     end
 
     return active
@@ -305,24 +287,23 @@ function Cauldron.Refresh()
 end
 
 local function activateState(state, kind, cauldronData)
-    if not state or not isValidKind(kind) then
-        return false
-    end
+    if not state or not isValidKind(kind) then return false end
 
     if not cauldronData or not cauldronData.target then
         cauldronData = getCauldronDataForKind(kind) or cauldronData
     end
 
-    local target = cauldronData
-        and tonumber(cauldronData.target)
-        or nil
+    local target = cauldronData and tonumber(cauldronData.target) or nil
 
     local pickupQuantity = cauldronData
-        and tonumber(cauldronData.pickupQuantity)
+            and tonumber(cauldronData.pickupQuantity)
         or nil
 
-    if not target or target <= 0
-        or not pickupQuantity or pickupQuantity <= 0
+    if
+        not target
+        or target <= 0
+        or not pickupQuantity
+        or pickupQuantity <= 0
     then
         return false
     end
@@ -330,9 +311,7 @@ local function activateState(state, kind, cauldronData)
     state.activeTargets[kind] = target
     state.activePickupQuantities[kind] = pickupQuantity
 
-    if state.activeKinds[kind] then
-        return true
-    end
+    if state.activeKinds[kind] then return true end
 
     state.activeKinds[kind] = true
 
@@ -340,13 +319,9 @@ local function activateState(state, kind, cauldronData)
 end
 
 function Cauldron.Activate(kind, cauldronData)
-    if InCombatLockdown() or not isEnabled() then
-        return false
-    end
+    if InCombatLockdown() or not isEnabled() then return false end
 
-    if not activateState(liveState, kind, cauldronData) then
-        return false
-    end
+    if not activateState(liveState, kind, cauldronData) then return false end
 
     activateFrameReason(kind)
 
@@ -356,7 +331,8 @@ end
 function Cauldron.RecordPickup(playerKey, cauldronData, itemID, quantity)
     local kind = cauldronData and cauldronData.kind
 
-    if InCombatLockdown()
+    if
+        InCombatLockdown()
         or not isEnabled()
         or not isValidKind(kind)
         or not playerKey
@@ -367,16 +343,13 @@ function Cauldron.RecordPickup(playerKey, cauldronData, itemID, quantity)
     quantity = tonumber(quantity) or 0
 
     if quantity <= 0 then
-        quantity = tonumber(getPickupQuantity(liveState, kind, cauldronData)) or 0
+        quantity = tonumber(getPickupQuantity(liveState, kind, cauldronData))
+            or 0
     end
 
-    if quantity <= 0 then
-        return false
-    end
+    if quantity <= 0 then return false end
 
-    if not Cauldron.Activate(kind, cauldronData) then
-        return false
-    end
+    if not Cauldron.Activate(kind, cauldronData) then return false end
 
     local entry = getOrCreateEntry(liveState, playerKey)
 
@@ -401,28 +374,29 @@ function Cauldron.Hide()
 end
 
 function Cauldron.BeginSyntheticTestData()
-    if InCombatLockdown() then
-        return false
-    end
+    if InCombatLockdown() then return false end
 
     resetSyntheticState()
 
     local flaskCauldron = getCauldronDataForKind(KIND_FLASK)
     local potionCauldron = getCauldronDataForKind(KIND_POTION)
 
-    if not flaskCauldron or not potionCauldron then
-        return false
-    end
+    if not flaskCauldron or not potionCauldron then return false end
 
     local flaskTarget = tonumber(flaskCauldron.target)
     local potionTarget = tonumber(potionCauldron.target)
     local flaskPickupQuantity = tonumber(flaskCauldron.pickupQuantity)
     local potionPickupQuantity = tonumber(potionCauldron.pickupQuantity)
 
-    if not flaskTarget or flaskTarget <= 0
-        or not potionTarget or potionTarget <= 0
-        or not flaskPickupQuantity or flaskPickupQuantity <= 0
-        or not potionPickupQuantity or potionPickupQuantity <= 0
+    if
+        not flaskTarget
+        or flaskTarget <= 0
+        or not potionTarget
+        or potionTarget <= 0
+        or not flaskPickupQuantity
+        or flaskPickupQuantity <= 0
+        or not potionPickupQuantity
+        or potionPickupQuantity <= 0
     then
         return false
     end
@@ -441,37 +415,27 @@ function Cauldron.BeginSyntheticTestData()
 end
 
 function Cauldron.EndSyntheticTestData(suppressRefresh)
-    if not syntheticActive then
-        return false
-    end
+    if not syntheticActive then return false end
 
     resetSyntheticState()
 
-    if not suppressRefresh then
-        refreshFrame()
-    end
+    if not suppressRefresh then refreshFrame() end
 
     return true
 end
 
 local function pickSyntheticItemID(itemIDs)
-    if not itemIDs or #itemIDs == 0 then
-        return
-    end
+    if not itemIDs or #itemIDs == 0 then return end
 
     return itemIDs[math.random(#itemIDs)]
 end
 
 function Cauldron.SetSyntheticTestEntry(playerKey, index)
-    if not syntheticActive then
-        return false
-    end
+    if not syntheticActive then return false end
 
     local entry = getOrCreateEntry(syntheticState, playerKey)
 
-    if not entry then
-        return false
-    end
+    if not entry then return false end
 
     local bucket = index % 3
 
@@ -482,10 +446,10 @@ function Cauldron.SetSyntheticTestEntry(playerKey, index)
         entry.flask = Cauldron.GetTarget(KIND_FLASK)
         entry.potion = Cauldron.GetTarget(KIND_POTION)
     else
-        entry.flask = Cauldron.GetTarget(KIND_FLASK) +
-            getPickupQuantity(syntheticState, KIND_FLASK)
-        entry.potion = Cauldron.GetTarget(KIND_POTION) +
-            getPickupQuantity(syntheticState, KIND_POTION)
+        entry.flask = Cauldron.GetTarget(KIND_FLASK)
+            + getPickupQuantity(syntheticState, KIND_FLASK)
+        entry.potion = Cauldron.GetTarget(KIND_POTION)
+            + getPickupQuantity(syntheticState, KIND_POTION)
     end
 
     -- Choose once per player so refreshes do not change their pickup icons.
@@ -496,15 +460,11 @@ function Cauldron.SetSyntheticTestEntry(playerKey, index)
 end
 
 local function onUnitSpellcastSucceeded(_self, unit, _castGUID, spellID)
-    if unit ~= "player" or issecretvalue(spellID) then
-        return
-    end
+    if unit ~= "player" or issecretvalue(spellID) then return end
 
     local cauldronData = getCauldronDataForSpell(spellID)
 
-    if not cauldronData or not IsInGroup() then
-        return
-    end
+    if not cauldronData or not IsInGroup() then return end
 
     if Cauldron.Activate(cauldronData.kind, cauldronData) then
         sendCauldronMessage(cauldronData.kind)
@@ -525,11 +485,10 @@ local function getCauldronDataFromMessage(field1, field2)
 end
 
 local function onChatMsgAddon(_self, prefix, message, channel, sender)
-    if issecretvalue(prefix) or prefix ~= ADDON_PREFIX then
-        return
-    end
+    if issecretvalue(prefix) or prefix ~= ADDON_PREFIX then return end
 
-    if issecretvalue(message)
+    if
+        issecretvalue(message)
         or not F.GetTrustedGroupAddonSender(channel, sender)
     then
         return
@@ -546,26 +505,31 @@ local function onChatMsgAddon(_self, prefix, message, channel, sender)
     end
 end
 
-local function onChatMsgLoot(_self, text, playerName, _languageName,
-                             _channelName, _playerName2, _specialFlags,
-                             _zoneChannelID, _channelIndex, _channelBaseName,
-                             _languageID, _lineID, guid)
-    if issecretvalue(text) then
-        return
-    end
+local function onChatMsgLoot(
+    _self,
+    text,
+    playerName,
+    _languageName,
+    _channelName,
+    _playerName2,
+    _specialFlags,
+    _zoneChannelID,
+    _channelIndex,
+    _channelBaseName,
+    _languageID,
+    _lineID,
+    guid
+)
+    if issecretvalue(text) then return end
 
     local itemID = parseItemID(text)
     local cauldronData = getCauldronDataForPickupItem(itemID)
 
-    if not cauldronData or not cauldronData.kind then
-        return
-    end
+    if not cauldronData or not cauldronData.kind then return end
 
     local playerKey = getPlayerKeyFromLootMessage(text, playerName, guid)
 
-    if not playerKey then
-        return
-    end
+    if not playerKey then return end
 
     Cauldron.RecordPickup(
         playerKey,
@@ -580,16 +544,14 @@ local function onChatMsgLoot(_self, text, playerName, _languageName,
 end
 
 local function onGroupRosterUpdate()
-    if Cauldron.HasActiveCauldron() then
-        refreshFrame()
-    end
+    if Cauldron.HasActiveCauldron() then refreshFrame() end
 end
 
 local EVENT_HANDLERS = {
-    CHAT_MSG_ADDON           = onChatMsgAddon,
-    CHAT_MSG_LOOT            = onChatMsgLoot,
-    GROUP_ROSTER_UPDATE      = onGroupRosterUpdate,
-    PLAYER_REGEN_DISABLED    = Cauldron.Reset,
+    CHAT_MSG_ADDON = onChatMsgAddon,
+    CHAT_MSG_LOOT = onChatMsgLoot,
+    GROUP_ROSTER_UPDATE = onGroupRosterUpdate,
+    PLAYER_REGEN_DISABLED = Cauldron.Reset,
     UNIT_SPELLCAST_SUCCEEDED = onUnitSpellcastSucceeded,
 }
 
@@ -597,9 +559,7 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     local handler = EVENT_HANDLERS[event]
 
-    if handler then
-        handler(self, ...)
-    end
+    if handler then handler(self, ...) end
 end)
 
 eventFrame:RegisterEvent("CHAT_MSG_ADDON")

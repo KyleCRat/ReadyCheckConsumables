@@ -15,7 +15,8 @@ Vantus.Dependencies = {
 
 function Vantus.Select(inputs)
     local runeIDs = RCC.db.vantusItemsByRaid[inputs.instance.instanceID]
-    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, KEY)
+    local preferredID =
+        RCC.ConsumablePreferences.GetItemID(inputs.preferences, KEY)
     local candidates = S.List(inputs.inventory, runeIDs)
     local preferred = S.FindListItem(inputs.inventory, runeIDs, preferredID)
 
@@ -29,16 +30,22 @@ function Vantus.Select(inputs)
 end
 
 function Vantus.Observe(inputs)
-    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.vantusBuffIDs)
+    return RCC.ConsumableEffects.Observe(
+        inputs.playerAuras,
+        RCC.db.vantusBuffIDs
+    )
 end
 
 function Vantus.Evaluate(selection, observation, inputs, now)
-    local model = RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
+    local model = RCC.ConsumableEffects.Evaluate(
+        selection,
+        observation,
+        inputs.instance,
+        now
+    )
     model.allowFlyout = selection.applicable and model.effect == nil
 
-    if not model.allowFlyout then
-        model.action = nil
-    end
+    if not model.allowFlyout then model.action = nil end
 
     -- Its label is the boss name, not a countdown or a duration warning.
     model.nextUpdateAt = model.recheckAt

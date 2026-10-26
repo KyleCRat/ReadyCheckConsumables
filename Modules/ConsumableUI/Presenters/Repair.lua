@@ -9,9 +9,7 @@ local ButtonState = RCC.ConsumableState
 local OUT_OF_ITEMS = "No Repair Items found in Bags"
 
 local function getCountText(candidate)
-    if candidate and candidate.reusable then
-        return ""
-    end
+    if candidate and candidate.reusable then return "" end
 
     return tostring(candidate and candidate.count or 0)
 end
@@ -36,13 +34,12 @@ local function createFlyoutChoices(candidates, selectedItemID)
         end
     end
 
-    if #choices > 0 then
-        return choices
-    end
+    if #choices > 0 then return choices end
 end
 
 function Repair.Present(model)
-    local candidate, candidates = RCC.ConsumableSelection.Unpack(model.selection)
+    local candidate, candidates =
+        RCC.ConsumableSelection.Unpack(model.selection)
     local itemID = candidate and candidate.itemID
         or model.selection.defaultCandidate.itemID
     local buttonState = ButtonState.Create({
@@ -60,7 +57,8 @@ function Repair.Present(model)
     -- The desired primary can switch when a reusable device comes off cooldown.
     -- Keep per-item visuals available for whichever action is prepared in combat.
     buttonState.itemVisuals = {}
-    buttonState.missingItemVisual = { desaturated = true, unavailable = { text = OUT_OF_ITEMS } }
+    buttonState.missingItemVisual =
+        { desaturated = true, unavailable = { text = OUT_OF_ITEMS } }
 
     for _, item in ipairs(candidates) do
         buttonState.itemVisuals[item.itemID] = {
@@ -71,9 +69,7 @@ function Repair.Present(model)
     if candidate then
         buttonState.action = model.action
 
-        if candidate.ready then
-            buttonState.desaturated = false
-        end
+        if candidate.ready then buttonState.desaturated = false end
     else
         ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
     end

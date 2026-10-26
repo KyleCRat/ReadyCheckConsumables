@@ -62,10 +62,11 @@ View.SIZE = SIZE
 View.SPACING = SPACING
 
 local function getRenderCache(button)
-    button.rccConsumableRenderCache = button.rccConsumableRenderCache or {
-        count = {},
-        detail = {},
-    }
+    button.rccConsumableRenderCache = button.rccConsumableRenderCache
+        or {
+            count = {},
+            detail = {},
+        }
 
     return button.rccConsumableRenderCache
 end
@@ -93,7 +94,8 @@ local function applyStatusIcon(button, state)
     local cache = getRenderCache(button)
     local texture = button.statustexture
     local desaturated = state.statusTextureDesaturated == true
-    local shown = state.showStatusTexture == true and not button.hideStatusTexture
+    local shown = state.showStatusTexture == true
+        and not button.hideStatusTexture
         and (not button.isFlyout or state.flyoutStatus == true)
 
     if cache.statusIcon ~= state.statusIcon then
@@ -124,14 +126,16 @@ local function setQualityOverlay(button, itemID, atlas, resolved)
     if button.hideQualityIcon or not itemID then
         cache.qualityItemID = nil
 
-        if qualityIcon:IsShown() then
-            qualityIcon:Hide()
-        end
+        if qualityIcon:IsShown() then qualityIcon:Hide() end
 
         return
     end
 
-    if cache.qualityItemID == itemID and cache.qualityAtlas == atlas and qualityIcon:IsShown() then
+    if
+        cache.qualityItemID == itemID
+        and cache.qualityAtlas == atlas
+        and qualityIcon:IsShown()
+    then
         return
     end
 
@@ -144,9 +148,7 @@ local function setQualityOverlay(button, itemID, atlas, resolved)
     if not atlas then
         cache.qualityItemID = nil
 
-        if qualityIcon:IsShown() then
-            qualityIcon:Hide()
-        end
+        if qualityIcon:IsShown() then qualityIcon:Hide() end
 
         return
     end
@@ -158,9 +160,7 @@ local function setQualityOverlay(button, itemID, atlas, resolved)
         cache.qualityAtlas = atlas
     end
 
-    if not qualityIcon:IsShown() then
-        qualityIcon:Show()
-    end
+    if not qualityIcon:IsShown() then qualityIcon:Show() end
 end
 
 local function applyCooldown(button, cooldown)
@@ -169,7 +169,8 @@ local function applyCooldown(button, cooldown)
     local cache = getRenderCache(button)
 
     if cooldown and cooldown.start and cooldown.duration then
-        if cache.cooldownStart == cooldown.start
+        if
+            cache.cooldownStart == cooldown.start
             and cache.cooldownDuration == cooldown.duration
             and cache.cooldownShown
         then
@@ -185,9 +186,7 @@ local function applyCooldown(button, cooldown)
         return
     end
 
-    if not cache.cooldownShown and not button.cooldown:IsShown() then
-        return
-    end
+    if not cache.cooldownShown and not button.cooldown:IsShown() then return end
 
     cache.cooldownStart = nil
     cache.cooldownDuration = nil
@@ -215,7 +214,12 @@ local function applySummary(button, state)
     local summary = capacity and button.summaries and button.summaries[capacity]
 
     if capacity and not summary then
-        error("RCC: unprepared summary capacity " .. tostring(capacity) .. " for " .. button.definition.key)
+        error(
+            "RCC: unprepared summary capacity "
+                .. tostring(capacity)
+                .. " for "
+                .. button.definition.key
+        )
     end
 
     if not button.summaries then return end
@@ -292,16 +296,25 @@ function View.ApplyVisual(button, state)
     end
 
     applyText(
-        button.count, cache.count,
-        state.countText or "", state.countTextIsBad == true,
+        button.count,
+        cache.count,
+        state.countText or "",
+        state.countTextIsBad == true,
         not button.hideCountText
     )
     applyText(
-        button.detailText, cache.detail,
-        state.detailText or "", state.detailTextIsBad == true,
+        button.detailText,
+        cache.detail,
+        state.detailText or "",
+        state.detailTextIsBad == true,
         not button.hideDurationText
     )
-    setQualityOverlay(button, state.qualityItemID, state.qualityAtlas, state.qualityResolved)
+    setQualityOverlay(
+        button,
+        state.qualityItemID,
+        state.qualityAtlas,
+        state.qualityResolved
+    )
     applyCooldown(button, state.cooldown)
     Glow.Set(button, state.glow == true and not InCombatLockdown())
     Tooltips.UpdateUnavailableOverlay(button)
@@ -319,7 +332,8 @@ function View.ApplyVisualOptions(button, options, isFlyout)
 
     button.isFlyout = isFlyout == true
 
-    if button.hideCountText == hideCountText
+    if
+        button.hideCountText == hideCountText
         and button.hideDurationText == hideDurationText
         and button.hideStatusTexture == hideStatusTexture
         and button.hideQualityIcon == hideQualityIcon
@@ -341,9 +355,7 @@ function View.ApplyVisualOptions(button, options, isFlyout)
         button.detailText:SetShown(not button.hideDurationText)
         button.statustexture:Hide()
 
-        if button.hideQualityIcon then
-            button.qualityIcon:Hide()
-        end
+        if button.hideQualityIcon then button.qualityIcon:Hide() end
     end
 end
 
@@ -366,9 +378,7 @@ function View.Clear(button)
     button.texture:Show()
     button.qualityIcon:Hide()
 
-    if button.unavailableOverlay then
-        button.unavailableOverlay:Hide()
-    end
+    if button.unavailableOverlay then button.unavailableOverlay:Hide() end
 
     applyCooldown(button)
     Glow.Stop(button)
@@ -425,13 +435,10 @@ function View.ApplyGeometry(button, geometry)
 
     local width = math.max(1, tonumber(geometry.buttonWidth) or SIZE)
     local height = math.max(1, tonumber(geometry.buttonHeight) or SIZE)
-    local textSize = math.max(
-        1,
-        tonumber(geometry.textSize) or DETAIL_TEXT_SIZE
-    )
+    local textSize =
+        math.max(1, tonumber(geometry.textSize) or DETAIL_TEXT_SIZE)
     local overlaySize = math.min(width, height) / 2
-    local qualitySize = math.min(width, height)
-        * (QUALITY_ICON_SIZE / SIZE)
+    local qualitySize = math.min(width, height) * (QUALITY_ICON_SIZE / SIZE)
 
     button:SetSize(width, height)
     applyIconCrop(button.texture, width, height)
@@ -456,12 +463,8 @@ function View.ApplyGeometry(button, geometry)
 end
 
 local function createClickOverlay(button)
-    local click = CreateFrame(
-        "Button",
-        nil,
-        button,
-        "SecureActionButtonTemplate"
-    )
+    local click =
+        CreateFrame("Button", nil, button, "SecureActionButtonTemplate")
 
     click:SetAllPoints()
     click:RegisterForClicks("AnyDown")
@@ -490,7 +493,10 @@ local function createSummaries(button)
             local layout = SUMMARY_LAYOUTS[capacity]
 
             if not layout or #layout ~= capacity then
-                error("RCC: missing summary layout for capacity " .. tostring(capacity))
+                error(
+                    "RCC: missing summary layout for capacity "
+                        .. tostring(capacity)
+                )
             end
 
             local regions = {}
@@ -501,10 +507,19 @@ local function createSummaries(button)
                 icon:Hide()
 
                 local mask = button:CreateMaskTexture()
-                mask:SetTexture("Interface\\Masks\\SquareMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:SetTexture(
+                    "Interface\\Masks\\SquareMask",
+                    "CLAMPTOBLACKADDITIVE",
+                    "CLAMPTOBLACKADDITIVE"
+                )
                 mask:SetSnapToPixelGrid(false)
                 mask:SetTexelSnappingBias(0)
-                positionMask(mask, button, button:GetWidth(), button:GetHeight())
+                positionMask(
+                    mask,
+                    button,
+                    button:GetWidth(),
+                    button:GetHeight()
+                )
                 icon:AddMaskTexture(mask)
 
                 regions[index] = {
@@ -538,9 +553,7 @@ function View.Create(parent, definition, options)
     button.texture = button:CreateTexture()
     button.texture:SetAllPoints()
 
-    if not options.isFlyout then
-        createSummaries(button)
-    end
+    if not options.isFlyout then createSummaries(button) end
 
     button.statustexture = button:CreateTexture(nil, "OVERLAY", nil, 1)
     button.statustexture:SetPoint("CENTER")
@@ -559,9 +572,7 @@ function View.Create(parent, definition, options)
     button.qualityIcon:SetSize(QUALITY_ICON_SIZE, QUALITY_ICON_SIZE)
     button.qualityIcon:Hide()
 
-    if options.clickable then
-        createClickOverlay(button)
-    end
+    if options.clickable then createClickOverlay(button) end
 
     button:EnableMouse(true)
 
@@ -570,12 +581,8 @@ function View.Create(parent, definition, options)
     end
 
     if definition.hasCooldown then
-        button.cooldown = CreateFrame(
-            "Cooldown",
-            nil,
-            button,
-            "CooldownFrameTemplate"
-        )
+        button.cooldown =
+            CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
         button.cooldown:SetAllPoints()
         button.cooldown:SetDrawEdge(true)
         button.cooldown:SetDrawSwipe(true)
@@ -607,19 +614,16 @@ function View.CreateSet(parent, options)
     return buttons
 end
 
-
 function View.GetWidth(buttonCount, buttonWidth, spacing)
     buttonWidth = buttonWidth or SIZE
     spacing = spacing or SPACING
 
-    return buttonWidth * buttonCount
-        + spacing * math.max(buttonCount - 1, 0)
+    return buttonWidth * buttonCount + spacing * math.max(buttonCount - 1, 0)
 end
 
 function View.GetStackHeight(buttonCount, buttonHeight, spacing)
     buttonHeight = buttonHeight or SIZE
     spacing = spacing or SPACING
 
-    return buttonHeight * buttonCount
-        + spacing * math.max(buttonCount - 1, 0)
+    return buttonHeight * buttonCount + spacing * math.max(buttonCount - 1, 0)
 end

@@ -1,19 +1,21 @@
 local _, RCC = ...
 
-RCC.DisplayReason = RCC.DisplayReason or {
-    READY_CHECK     = "readyCheck",
-    INSTANCE_ENTRY  = "instanceEntry",
-    CAULDRON_PICKUP = "cauldronPickup",
-    BREAK_TIMER     = "breakTimer",
-    FEAST_DROP      = "feastDrop",
-    CAULDRON_DROP   = "cauldronDrop",
-    MANUAL_OPEN     = "manualOpen",
-}
+RCC.DisplayReason = RCC.DisplayReason
+    or {
+        READY_CHECK = "readyCheck",
+        INSTANCE_ENTRY = "instanceEntry",
+        CAULDRON_PICKUP = "cauldronPickup",
+        BREAK_TIMER = "breakTimer",
+        FEAST_DROP = "feastDrop",
+        CAULDRON_DROP = "cauldronDrop",
+        MANUAL_OPEN = "manualOpen",
+    }
 
-RCC.DisplaySurface = RCC.DisplaySurface or {
-    CONSUMABLE_FRAME = "consumableFrame",
-    RAID_FRAME       = "raidFrame",
-}
+RCC.DisplaySurface = RCC.DisplaySurface
+    or {
+        CONSUMABLE_FRAME = "consumableFrame",
+        RAID_FRAME = "raidFrame",
+    }
 
 RCC.DisplayContext = RCC.DisplayContext or {}
 RCC.ContextualVisibility = RCC.ContextualVisibility or {}
@@ -69,11 +71,11 @@ end
 
 function Context.Create(surface)
     return {
-        surface           = surface,
-        activeReasons     = {},
-        activeSources     = {},
+        surface = surface,
+        activeReasons = {},
+        activeSources = {},
         autoOpenedSources = {},
-        primaryReason     = nil,
+        primaryReason = nil,
     }
 end
 
@@ -83,9 +85,7 @@ function Context.Activate(context, reason, sourceKey)
     local sources = getOrCreateReasonSources(context, reason)
     local source = getSourceKey(reason, sourceKey)
 
-    if sources[source] then
-        return false
-    end
+    if sources[source] then return false end
 
     sources[source] = true
     context.activeReasons[reason] = true
@@ -109,9 +109,7 @@ function Context.Deactivate(context, reason, sourceKey)
 
     local sources = context.activeSources[reason]
 
-    if not sources or not sources[sourceKey] then
-        return false
-    end
+    if not sources or not sources[sourceKey] then return false end
 
     sources[sourceKey] = nil
 
@@ -141,9 +139,7 @@ function Context.Clear(context)
 end
 
 function Context.IsActive(context, reason)
-    return context
-        and context.activeReasons[reason] == true
-        or false
+    return context and context.activeReasons[reason] == true or false
 end
 
 function Context.HasAny(context)
@@ -179,14 +175,13 @@ end
 local function isEnabled(definition)
     local policy = definition.visibility
 
-    return not policy or not policy.IsEnabled
+    return not policy
+        or not policy.IsEnabled
         or policy.IsEnabled(definition) == true
 end
 
 local function isApplicable(definition, context, state)
-    if state and state.applicable == false then
-        return false
-    end
+    if state and state.applicable == false then return false end
 
     local policy = definition.visibility
 
@@ -198,9 +193,7 @@ local function isApplicable(definition, context, state)
 end
 
 function Visibility.GetReasonDefault(definition, reason)
-    if not definition or not reason then
-        return false
-    end
+    if not definition or not reason then return false end
 
     local policy = definition.visibility
     local reasons = policy and policy.reasons
@@ -209,9 +202,7 @@ function Visibility.GetReasonDefault(definition, reason)
 end
 
 function Visibility.IsReasonAllowed(definition, context, reason)
-    if not definition or not context or not reason then
-        return false
-    end
+    if not definition or not context or not reason then return false end
 
     local defaultAllowed = Visibility.GetReasonDefault(definition, reason)
 
@@ -226,10 +217,7 @@ end
 -- Demand is decided before state/applicability. Consumers still need to
 -- observe enabled controls that can become applicable after an input change.
 function Visibility.IsRequested(definition, context)
-    if not definition
-        or not context
-        or not isEnabled(definition)
-    then
+    if not definition or not context or not isEnabled(definition) then
         return false
     end
 

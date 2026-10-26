@@ -32,10 +32,7 @@ function InkyBlackPotion.Present(model)
         ButtonState.SetUnavailable(buttonState, OUT_OF_ITEMS)
     end
 
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        model.available == true
-    )
+    ButtonState.ApplyAuraScanAvailability(buttonState, model.available == true)
 
     -- This is an optional visual effect, not a readiness state. Keep both the
     -- item and active-buff icons at full color.

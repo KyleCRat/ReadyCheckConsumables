@@ -28,10 +28,15 @@ function Repair.Select(inputs)
         defaultCandidate = S.Item(inputs.inventory, RCC.db.repairDefaultItemID),
     }
 
-    S.ApplyItemCooldowns(selection, inputs.cooldowns, Repair.Inventory.cooldownItemIDs)
+    S.ApplyItemCooldowns(
+        selection,
+        inputs.cooldowns,
+        Repair.Inventory.cooldownItemIDs
+    )
 
     for _, candidate in ipairs(candidates) do
-        candidate.reusable = RCC.db.repairItemData[candidate.itemID].reusable == true
+        candidate.reusable = RCC.db.repairItemData[candidate.itemID].reusable
+            == true
         candidate.ready = candidate.cooldown == nil
     end
 

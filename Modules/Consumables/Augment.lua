@@ -39,9 +39,7 @@ local function isBetterAugmentCandidate(candidate, best, preferUnlimited)
     local unlimited = data.unlimited == true
     local bestUnlimited = bestData.unlimited == true
 
-    if preferUnlimited and unlimited ~= bestUnlimited then
-        return unlimited
-    end
+    if preferUnlimited and unlimited ~= bestUnlimited then return unlimited end
 
     local xpac = data.xpac or 0
     local priority = data.priority or 0
@@ -50,16 +48,17 @@ local function isBetterAugmentCandidate(candidate, best, preferUnlimited)
 
     return xpac > bestXpac
         or (xpac == bestXpac and priority > bestPriority)
-        or (xpac == bestXpac and priority == bestPriority
-            and candidate.itemID > (best.itemID or 0))
+        or (
+            xpac == bestXpac
+            and priority == bestPriority
+            and candidate.itemID > (best.itemID or 0)
+        )
 end
 
 function Augment.GetCountText(candidate)
     local data = candidate and candidate.data
 
-    if data and data.unlimited then
-        return ""
-    end
+    if data and data.unlimited then return "" end
 
     return tostring(candidate and candidate.count or 0)
 end
@@ -74,8 +73,12 @@ function Augment.Select(inputs)
         end,
     })
 
-    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PreferenceKey.AUGMENT)
-    local preferred = S.FindMapItem(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
+    local preferredID = RCC.ConsumablePreferences.GetItemID(
+        inputs.preferences,
+        PreferenceKey.AUGMENT
+    )
+    local preferred =
+        S.FindMapItem(inputs.inventory, RCC.db.augmentItemIDs, preferredID)
 
     local selection = {
         preferred = preferred,
@@ -83,7 +86,11 @@ function Augment.Select(inputs)
         candidates = candidates,
     }
 
-    S.ApplyItemCooldowns(selection, inputs.cooldowns, Augment.Inventory.cooldownItemIDs)
+    S.ApplyItemCooldowns(
+        selection,
+        inputs.cooldowns,
+        Augment.Inventory.cooldownItemIDs
+    )
 
     return S.Resolve(selection, {
         preferenceKey = PreferenceKey.AUGMENT,
@@ -91,9 +98,17 @@ function Augment.Select(inputs)
 end
 
 function Augment.Observe(inputs)
-    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.augmentBuffIDs)
+    return RCC.ConsumableEffects.Observe(
+        inputs.playerAuras,
+        RCC.db.augmentBuffIDs
+    )
 end
 
 function Augment.Evaluate(selection, observation, inputs, now)
-    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
+    return RCC.ConsumableEffects.Evaluate(
+        selection,
+        observation,
+        inputs.instance,
+        now
+    )
 end

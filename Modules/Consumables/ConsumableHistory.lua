@@ -27,7 +27,9 @@ function History.Observe(inputs, definition)
         local value = Inputs.GetDependency(inputs, path, definition)
         currentInputs[path] = value
 
-        if not previousInputs or not Inputs.Equal(previousInputs[path], value) then
+        if
+            not previousInputs or not Inputs.Equal(previousInputs[path], value)
+        then
             changedInputs = true
         end
     end
@@ -35,7 +37,8 @@ function History.Observe(inputs, definition)
     if not changedInputs then return false end
 
     seenInputs[definition.key] = currentInputs
-    local applications, available, capacity, evidence = logic.GetApplications(inputs, definition)
+    local applications, available, capacity, evidence =
+        logic.GetApplications(inputs, definition)
     local key = definition.key
     capacity = capacity or 1
     observed[key] = observed[key] or {}
@@ -43,7 +46,8 @@ function History.Observe(inputs, definition)
     local current = available and {} or CopyTable(previous or {})
     local saved = RCC.characterDB:Get("consumableHistory", key, capacity) or {}
     local restoringBranch = activeCapacity[key] ~= nil
-        and activeCapacity[key] ~= capacity and #saved > 0
+        and activeCapacity[key] ~= capacity
+        and #saved > 0
     activeCapacity[key] = capacity
     local history
     local changed = false
@@ -53,7 +57,10 @@ function History.Observe(inputs, definition)
         local application = evidence and evidence[identity] or true
         current[identity] = application
 
-        if not restoringBranch and (not previous or previous[identity] ~= application) then
+        if
+            not restoringBranch
+            and (not previous or previous[identity] ~= application)
+        then
             local index = Choice.Contains(history or saved, choice)
 
             -- Reloading must not reorder an established pair just because

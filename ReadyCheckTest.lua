@@ -13,9 +13,7 @@ local function cancelFinishTimer(self)
 end
 
 local function finish(self, runID)
-    if self.runID ~= runID or not self.active then
-        return
-    end
+    if self.runID ~= runID or not self.active then return end
 
     self.active = false
     cancelFinishTimer(self)
@@ -46,9 +44,7 @@ function Test:Stop()
 end
 
 function Test:Start(permanent, options)
-    if InCombatLockdown() then
-        return false
-    end
+    if InCombatLockdown() then return false end
 
     self:Cancel()
     self.active = true

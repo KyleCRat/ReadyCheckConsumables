@@ -9,17 +9,29 @@ local function categoryControls(category)
     for _, event in ipairs(RCC.ConsumableCatalog.GetFrameOpenEvents()) do
         controls[#controls + 1] = {
             type = "checkbox",
+
             getValue = function()
-                return RCC.ConsumableCatalog.GetFrameEventEnabled(definition, event.reason)
+                return RCC.ConsumableCatalog.GetFrameEventEnabled(
+                    definition,
+                    event.reason
+                )
             end,
+
             enabled = function()
-                return RCC.GetSetting("consumables_enabled"), "Enable the Consumables Frame in its settings first"
+                return RCC.GetSetting("consumables_enabled"),
+                    "Enable the Consumables Frame in its settings first"
             end,
+
             options = {
                 label = "Show " .. definition.label .. " on: " .. event.label,
                 tooltip = string.format(event.tooltip, definition.label),
+
                 onChanged = function(checked)
-                    RCC.ConsumableSettingsShared.SetFrameEventEnabled(definition, event.reason, checked)
+                    RCC.ConsumableSettingsShared.SetFrameEventEnabled(
+                        definition,
+                        event.reason,
+                        checked
+                    )
                 end,
             },
         }
@@ -27,14 +39,24 @@ local function categoryControls(category)
 
     controls[#controls + 1] = {
         type = "checkbox",
-        getValue = function() return RCC.GetSetting(definition.actionBarSettingKey) end,
-        enabled = function()
-            return RCC.GetSetting("consumablesActionBar_enabled"), "Enable the Action Bar in its settings first"
+
+        getValue = function()
+            return RCC.GetSetting(definition.actionBarSettingKey)
         end,
+
+        enabled = function()
+            return RCC.GetSetting("consumablesActionBar_enabled"),
+                "Enable the Action Bar in its settings first"
+        end,
+
         options = {
             label = "Show on the Action Bar",
+
             onChanged = function(checked)
-                RCC.ConsumableSettingsShared.SetActionBarCategoryEnabled(definition, checked)
+                RCC.ConsumableSettingsShared.SetActionBarCategoryEnabled(
+                    definition,
+                    checked
+                )
             end,
         },
     }
@@ -47,8 +69,11 @@ local function settingsButton(text, destination)
         type = "button",
         options = {
             text = text,
+
             onClick = function()
-                return RCC.OpenSettings(RCC.settingsCategories[destination]:GetID())
+                return RCC.OpenSettings(
+                    RCC.settingsCategories[destination]:GetID()
+                )
             end,
         },
     }
@@ -61,9 +86,11 @@ RCC.ChangelogHighlights = {
                 title = "Choose what to include in chat reports",
                 emphasis = "requested",
                 body = "Control what chat report announces. The selected announcer's settings are"
-                       .. " used. Ensure all members with assist use the same settings if you want"
-                       .. " consistent reports.",
-                controls = { settingsButton("Chat Report settings", "chatReport") },
+                    .. " used. Ensure all members with assist use the same settings if you want"
+                    .. " consistent reports.",
+                controls = {
+                    settingsButton("Chat Report settings", "chatReport"),
+                },
             },
             {
                 title = "Glider Kits and Slowfall Toy support",

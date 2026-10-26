@@ -5,12 +5,13 @@ RCC.ConsumableState = RCC.ConsumableState or {}
 local State = RCC.ConsumableState
 local F = RCC.F
 
-RCC.ConsumableActionKind = RCC.ConsumableActionKind or {
-    ITEM = "item",
-    TOY = "toy",
-    SPELL = "spell",
-    SPELL_SEQUENCE = "spellSequence",
-}
+RCC.ConsumableActionKind = RCC.ConsumableActionKind
+    or {
+        ITEM = "item",
+        TOY = "toy",
+        SPELL = "spell",
+        SPELL_SEQUENCE = "spellSequence",
+    }
 
 local ActionKind = RCC.ConsumableActionKind
 
@@ -18,8 +19,7 @@ State.READY_ICON = RCC.UI.StatusIcons.READY
 State.NOT_READY_ICON = RCC.UI.StatusIcons.NOT_READY
 State.UNKNOWN_ICON = RCC.UI.StatusIcons.UNKNOWN
 
-local AURA_SCAN_UNAVAILABLE_TEXT =
-    "RCC can't confirm whether this buff is missing because some aura "
+local AURA_SCAN_UNAVAILABLE_TEXT = "RCC can't confirm whether this buff is missing because some aura "
     .. "information is secret or unavailable"
 
 local COMBAT_PREPARED_FIELDS = {
@@ -73,7 +73,8 @@ end
 function State.SameInteractions(left, right)
     local equal = RCC.ConsumableInputs.Equal
 
-    if not equal(left.action, right.action)
+    if
+        not equal(left.action, right.action)
         or not equal(left.preference, right.preference)
         or left.summaryCapacity ~= right.summaryCapacity
     then
@@ -88,7 +89,10 @@ function State.SameInteractions(left, right)
     for index, choice in ipairs(leftChoices) do
         local other = rightChoices[index]
 
-        if not equal(choice.action, other.action) or not equal(choice.preference, other.preference) then
+        if
+            not equal(choice.action, other.action)
+            or not equal(choice.preference, other.preference)
+        then
             return false
         end
     end
@@ -101,7 +105,8 @@ end
 function State.Normalize(state)
     if not state.preference and state.action and state.action.preferenceKey then
         local action = state.action
-        local choice = action.itemID and RCC.ConsumableChoice.Item(action.itemID)
+        local choice = action.itemID
+                and RCC.ConsumableChoice.Item(action.itemID)
             or (action.spellID and RCC.ConsumableChoice.Spell(action.spellID))
 
         if choice then
@@ -114,24 +119,18 @@ function State.Normalize(state)
     end
 
     for key, value in pairs(State.DEFAULTS) do
-        if state[key] == nil then
-            state[key] = value
-        end
+        if state[key] == nil then state[key] = value end
     end
 
     return state
 end
 
 function State.SetUnavailable(state, text)
-    if state and text then
-        state.unavailable = { text = text }
-    end
+    if state and text then state.unavailable = { text = text } end
 end
 
 function State.SetHoverState(state, hoverState)
-    if state and hoverState then
-        state.hoverState = hoverState
-    end
+    if state and hoverState then state.hoverState = hoverState end
 end
 
 function State.SetHoverUnavailable(state, text, fields)
@@ -150,9 +149,7 @@ function State.GetUnavailableText(state, hoverActive)
         local unavailable = state.hoverState.unavailable
         local hoverText = unavailable and unavailable.text
 
-        if hoverText then
-            return hoverText
-        end
+        if hoverText then return hoverText end
     end
 
     return state.unavailable and state.unavailable.text
@@ -161,23 +158,19 @@ end
 function State.GetClickHintItemID(state)
     if not state then return end
 
-    return state.clickHintItemID
-        or (state.action and state.action.itemID)
+    return state.clickHintItemID or (state.action and state.action.itemID)
 end
 
 function State.GetClickHintSpellID(state)
     if not state then return end
 
-    return state.clickHintSpellID
-        or (state.action and state.action.spellID)
+    return state.clickHintSpellID or (state.action and state.action.spellID)
 end
 
 function State.IsApplicable(state)
     local applicable = state and state.applicable
 
-    if applicable == nil then
-        applicable = State.DEFAULTS.applicable
-    end
+    if applicable == nil then applicable = State.DEFAULTS.applicable end
 
     return applicable == true
 end
@@ -189,9 +182,7 @@ end
 function State.HasConsumableBuff(state)
     local value = state and state.hasConsumableBuff
 
-    if value == nil then
-        value = State.DEFAULTS.hasConsumableBuff
-    end
+    if value == nil then value = State.DEFAULTS.hasConsumableBuff end
 
     return value == true
 end
@@ -203,11 +194,7 @@ end
 function State.GetIcon(state, defaultIcon, hoverActive)
     local icon = state and state.icon
 
-    if hoverActive
-        and state
-        and state.hoverState
-        and state.hoverState.icon
-    then
+    if hoverActive and state and state.hoverState and state.hoverState.icon then
         icon = state.hoverState.icon
     end
 
@@ -220,7 +207,12 @@ function State.CreateItemAction(itemID, options)
     options = options or {}
     local preferenceKey
 
-    if options.preferenceKey and RCC.ConsumablePreferences.CanPrefer(RCC.ConsumableChoice.Item(itemID)) then
+    if
+        options.preferenceKey
+        and RCC.ConsumablePreferences.CanPrefer(
+            RCC.ConsumableChoice.Item(itemID)
+        )
+    then
         preferenceKey = options.preferenceKey
     end
 
@@ -254,9 +246,7 @@ end
 function State.CreateToyAction(itemID, options)
     local action = State.CreateItemAction(itemID, options)
 
-    if action then
-        action.kind = ActionKind.TOY
-    end
+    if action then action.kind = ActionKind.TOY end
 
     return action
 end
@@ -277,7 +267,10 @@ function State.CreateSpellSequenceAction(candidates, capacity)
     if #candidates == 1 then
         if capacity == 1 then return candidates[1].action end
 
-        return State.CreateSpellAction(candidates[1].spellID, { available = true })
+        return State.CreateSpellAction(
+            candidates[1].spellID,
+            { available = true }
+        )
     end
 
     local spells = {}
@@ -308,7 +301,8 @@ function State.ApplyEffectSummary(state, model)
     state.summaryLabel = model.selection.label
     state.hasConsumableBuff = model.complete
     state.desaturated = not model.complete
-    state.statusIcon = model.complete and State.READY_ICON or State.NOT_READY_ICON
+    state.statusIcon = model.complete and State.READY_ICON
+        or State.NOT_READY_ICON
     state.glow = not model.satisfied
 
     if model.remaining then
@@ -328,7 +322,8 @@ function State.CreateItemChoice(candidate, options)
         icon = candidate.icon,
         cooldown = candidate.cooldown,
         desaturated = false,
-        countText = options.countText or (candidate.isToy and "" or tostring(candidate.count or 0)),
+        countText = options.countText
+            or (candidate.isToy and "" or tostring(candidate.count or 0)),
         tooltipItemID = candidate.itemID,
         tooltipToyItemID = candidate.isToy and candidate.itemID or nil,
         qualityItemID = not candidate.isToy and candidate.itemID or nil,
@@ -357,9 +352,7 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, options)
 
     options = options or {}
 
-    if not options.includeSingleChoice and #candidates <= 1 then
-        return
-    end
+    if not options.includeSingleChoice and #candidates <= 1 then return end
 
     local choices = {}
 
@@ -383,15 +376,11 @@ function State.CreateItemFlyoutChoices(candidates, selectedItemID, options)
 
             local choice = State.CreateItemChoice(candidate, choiceOptions)
 
-            if choice then
-                choices[#choices + 1] = choice
-            end
+            if choice then choices[#choices + 1] = choice end
         end
     end
 
-    if #choices > 0 then
-        return choices
-    end
+    if #choices > 0 then return choices end
 end
 
 function State.ApplyActiveAura(state, auraState)
@@ -401,9 +390,7 @@ function State.ApplyActiveAura(state, auraState)
     state.hasConsumableBuff = true
     state.desaturated = false
 
-    if auraState.icon then
-        state.icon = auraState.icon
-    end
+    if auraState.icon then state.icon = auraState.icon end
 
     if auraState.remaining then
         state.detailText = F.FormatDuration(auraState.remaining)
@@ -421,7 +408,11 @@ end
 function State.ApplyAuraScanAvailability(state, scanAvailable, unavailableText)
     -- A readable buff is still confirmed even when another aura made the
     -- overall scan incomplete. Only unresolved statuses become unknown.
-    if not state or scanAvailable == true or state.hasConsumableBuff == true then
+    if
+        not state
+        or scanAvailable == true
+        or state.hasConsumableBuff == true
+    then
         return
     end
 
@@ -431,16 +422,15 @@ function State.ApplyAuraScanAvailability(state, scanAvailable, unavailableText)
     state.desaturated = true
     state.glow = false
     state.suppressGlow = true
-    state.auraScanUnavailableText = unavailableText or AURA_SCAN_UNAVAILABLE_TEXT
+    state.auraScanUnavailableText = unavailableText
+        or AURA_SCAN_UNAVAILABLE_TEXT
 end
 
 -- Secure actions and flyout contents cannot be rebound in combat. Keep their
 -- identifying visuals aligned with the prepared action while allowing public
 -- aura/status fields, including applied-effect tooltip details, to update.
 function State.MergeCombatVisual(prepared, live)
-    if not prepared then
-        return live
-    end
+    if not prepared then return live end
 
     -- Only replace top-level fields on this copy. Both source states and their
     -- nested records remain shared and read-only.
@@ -465,7 +455,8 @@ function State.MergeCombatVisual(prepared, live)
     -- Missing unavailable fields clear old item state. Desaturation is optional:
     -- without it, keep the category-wide buff status unchanged.
     if live.itemVisuals then
-        local itemVisual = (itemID and live.itemVisuals[itemID]) or live.missingItemVisual
+        local itemVisual = (itemID and live.itemVisuals[itemID])
+            or live.missingItemVisual
 
         if itemVisual then
             merged.unavailable = itemVisual.unavailable

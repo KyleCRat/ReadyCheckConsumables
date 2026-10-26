@@ -12,7 +12,13 @@ local MILLISECONDS_PER_SECOND = 1000
 WeaponEnchant.Inventory = { map = RCC.db.weaponEnchantItemIDs }
 
 WeaponEnchant.Dependencies = {
-    selection = { "inventory", "slotPreference", "slotWeapon", "spells", "categoryHistory" },
+    selection = {
+        "inventory",
+        "slotPreference",
+        "slotWeapon",
+        "spells",
+        "categoryHistory",
+    },
     observation = { "slotWeapon" },
     evaluation = { "instance.warningSeconds" },
     expiration = "weapons",
@@ -25,9 +31,7 @@ function WeaponEnchant.GetSpellIDs()
     local ids = {}
 
     for _, data in pairs(RCC.db.weaponEnchants) do
-        if data.spellID then
-            ids[#ids + 1] = data.spellID
-        end
+        if data.spellID then ids[#ids + 1] = data.spellID end
     end
 
     return ids
@@ -110,18 +114,32 @@ function WeaponEnchant.Select(inputs, definition)
 
     if not result.applicable then return result end
 
-    result.active = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID] or nil
+    result.active = slot.hasEnchant and RCC.db.weaponEnchants[slot.enchantID]
+        or nil
     result.candidates = S.Map(inputs.inventory, RCC.db.weaponEnchantItemIDs, {
         compare = betterItem,
     })
 
-    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, result.preferenceKey)
-    result.preferred = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, preferredID)
+    local preferredID = RCC.ConsumablePreferences.GetItemID(
+        inputs.preferences,
+        result.preferenceKey
+    )
+    result.preferred = S.FindMapItem(
+        inputs.inventory,
+        RCC.db.weaponEnchantItemIDs,
+        preferredID
+    )
     result.fallbacks = {}
 
-    for _, choice in ipairs(RCC.ConsumableHistory.GetChoices(inputs.history, definition.key)) do
+    for _, choice in
+        ipairs(RCC.ConsumableHistory.GetChoices(inputs.history, definition.key))
+    do
         if choice.kind == "item" then
-            local candidate = S.FindMapItem(inputs.inventory, RCC.db.weaponEnchantItemIDs, choice.id)
+            local candidate = S.FindMapItem(
+                inputs.inventory,
+                RCC.db.weaponEnchantItemIDs,
+                choice.id
+            )
 
             if candidate and candidate.count > 0 then
                 result.fallbacks[#result.fallbacks + 1] = candidate
@@ -176,9 +194,7 @@ function WeaponEnchant.Select(inputs, definition)
 
     local candidate = result.candidate
 
-    if candidate then
-        result.icon = candidate.icon
-    end
+    if candidate then result.icon = candidate.icon end
 
     return result
 end
@@ -186,7 +202,8 @@ end
 -- Compatibility adapter for the group broadcaster, not the personal cache.
 -- Keep its millisecond/hasExpirationTime contract while sharing the safe reader.
 function WeaponEnchant.GetCurrentSlotState(slotID)
-    if slotID ~= MAIN_HAND_INVENTORY_SLOT
+    if
+        slotID ~= MAIN_HAND_INVENTORY_SLOT
         and slotID ~= OFF_HAND_INVENTORY_SLOT
     then
         return
@@ -217,16 +234,24 @@ function WeaponEnchant.GetApplications(inputs, definition)
 end
 
 function WeaponEnchant.Evaluate(selection, observation, inputs, now)
-    local remaining = observation.expirationTime and observation.expirationTime - now
+    local remaining = observation.expirationTime
+        and observation.expirationTime - now
     local model = {
         selection = selection,
         available = observation.available,
-        hasEnchant = observation.hasEnchant and (not remaining or remaining > 0),
+        hasEnchant = observation.hasEnchant
+            and (not remaining or remaining > 0),
         remaining = remaining and math.max(0, remaining),
-        expiringSoon = remaining ~= nil and remaining <= inputs.instance.warningSeconds,
+        expiringSoon = remaining ~= nil
+            and remaining <= inputs.instance.warningSeconds,
     }
 
-    RCC.ConsumableEffects.AddDeadline(model, observation.expirationTime, inputs.instance, now)
+    RCC.ConsumableEffects.AddDeadline(
+        model,
+        observation.expirationTime,
+        inputs.instance,
+        now
+    )
 
     return model
 end

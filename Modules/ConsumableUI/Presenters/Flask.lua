@@ -14,7 +14,7 @@ local OUT_OF_SELECTED_ITEM = "Selected Flask not found in Bags"
 function Flask.Present(model)
     local flaskState = model.effect
     local isFlask = flaskState and flaskState.satisfied
-    local flaskCandidate, flaskCandidates, outOfCachedFlask =
+    local flaskCandidate, _flaskCandidates, outOfCachedFlask =
         RCC.ConsumableSelection.Unpack(model.selection)
     local flaskCount = flaskCandidate and flaskCandidate.count or 0
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
@@ -26,9 +26,7 @@ function Flask.Present(model)
         buttonState.tooltipItemID = flaskItemID
         ButtonState.SetItemQuality(buttonState, flaskCandidate)
 
-        if flaskCandidate.icon then
-            buttonState.icon = flaskCandidate.icon
-        end
+        if flaskCandidate.icon then buttonState.icon = flaskCandidate.icon end
     end
 
     if flaskCount > 0 then
@@ -46,27 +44,20 @@ function Flask.Present(model)
     end
 
     buttonState.countText = flaskItemID and tostring(flaskCount) or ""
-    buttonState.glow = not isFlask
-        and flaskCount > 0
+    buttonState.glow = not isFlask and flaskCount > 0
 
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        model.available == true
-    )
+    ButtonState.ApplyAuraScanAvailability(buttonState, model.available == true)
 
     return buttonState
 end
 
 function Flask.Choices(selection)
-    local flaskCandidate, flaskCandidates, outOfCachedFlask = RCC.ConsumableSelection.Unpack(selection)
+    local flaskCandidate, flaskCandidates, outOfCachedFlask =
+        RCC.ConsumableSelection.Unpack(selection)
     local flaskItemID = flaskCandidate and flaskCandidate.itemID
 
-    return ButtonState.CreateItemFlyoutChoices(
-        flaskCandidates,
-        flaskItemID,
-        {
-            preferenceKey = PreferenceKey.FLASK,
-            includeSingleChoice = outOfCachedFlask,
-        }
-    )
+    return ButtonState.CreateItemFlyoutChoices(flaskCandidates, flaskItemID, {
+        preferenceKey = PreferenceKey.FLASK,
+        includeSingleChoice = outOfCachedFlask,
+    })
 end

@@ -3,14 +3,14 @@ local _, RCC = ...
 RCC.RaidFrameBroadcast = RCC.RaidFrameBroadcast or {}
 local Broadcast = RCC.RaidFrameBroadcast
 
-local F  = RCC.F
+local F = RCC.F
 local db = RCC.db
 local WeaponEnchant = RCC.Consumables.WeaponEnchant
 
-local floor              = floor
-local strsplit           = strsplit
-local GetItemIconByID    = C_Item.GetItemIconByID
-local GetSpellInfo       = C_Spell.GetSpellInfo
+local floor = floor
+local strsplit = strsplit
+local GetItemIconByID = C_Item.GetItemIconByID
+local GetSpellInfo = C_Spell.GetSpellInfo
 
 local ADDON_PREFIX = "RCC"
 local PRESENCE_MESSAGE_TYPE = "PRESENCE"
@@ -30,19 +30,19 @@ local OFF_HAND_INVENTORY_SLOT = WeaponEnchant.OFF_HAND_INVENTORY_SLOT
 -- message is receiver-side NO_RESPONSE and is intentionally not another wire
 -- sentinel.
 Broadcast.TempWeaponEnchantStatus = {
-    MISSING   = 0,
+    MISSING = 0,
     NO_WEAPON = -1,
-    UNKNOWN   = -2,
+    UNKNOWN = -2,
 }
 Broadcast.ProtocolVersion = PROTOCOL_VERSION
 
 local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
 
 local sharedData = {
-    presenceData          = {},
-    foodData              = {},
-    flaskData             = {},
-    durabilityData        = {},
+    presenceData = {},
+    foodData = {},
+    flaskData = {},
+    durabilityData = {},
     tempWeaponEnchantData = {},
 }
 
@@ -61,9 +61,7 @@ local function getPlayerMinDurability()
         if cur and mx and mx > 0 then
             local pct = cur / mx * 100
 
-            if pct < minPct then
-                minPct = pct
-            end
+            if pct < minPct then minPct = pct end
         end
     end
 
@@ -71,18 +69,14 @@ local function getPlayerMinDurability()
 end
 
 local function getTempWeaponEnchantData(enchantID)
-    if not F.IsSafeNumber(enchantID) or enchantID <= 0 then
-        return 0, 0, 0
-    end
+    if not F.IsSafeNumber(enchantID) or enchantID <= 0 then return 0, 0, 0 end
 
     local enchantData = db.weaponEnchants[enchantID]
     local itemID = enchantData and enchantData.item or 0
     local spellID = enchantData and enchantData.spellID or 0
     local iconID = enchantData and enchantData.icon
 
-    if not iconID and itemID > 0 then
-        iconID = GetItemIconByID(itemID)
-    end
+    if not iconID and itemID > 0 then iconID = GetItemIconByID(itemID) end
 
     if not iconID and spellID > 0 then
         local spellInfo = GetSpellInfo(spellID)
@@ -96,7 +90,8 @@ end
 local function getTempWeaponEnchantRemaining(slotState)
     local remainingTimeMs = slotState and slotState.remainingTimeMs
 
-    if not slotState
+    if
+        not slotState
         or slotState.hasExpirationTime ~= true
         or not F.IsSafeNumber(remainingTimeMs)
         or remainingTimeMs <= 0
@@ -113,9 +108,7 @@ local function getTimedStatusFields(data)
     local iconID = 0
     local spellID = 0
 
-    if has and F.IsSafeNumber(data.time) then
-        time = floor(data.time)
-    end
+    if has and F.IsSafeNumber(data.time) then time = floor(data.time) end
 
     if data and F.IsSafeNumber(data.iconID) and data.iconID > 0 then
         iconID = data.iconID
@@ -135,33 +128,30 @@ local function createTimedStatus(hasValue, timeValue, iconValue, spellValue)
     local spellID = tonumber(spellValue) or 0
 
     return {
-        has     = has,
-        time    = time,
-        iconID  = iconID > 0 and iconID or nil,
+        has = has,
+        time = time,
+        iconID = iconID > 0 and iconID or nil,
         spellID = spellID > 0 and spellID or nil,
     }
 end
 
 local function createTempWeaponEnchantStatus(time, enchantID)
-    if not F.IsSafeNumber(enchantID) or enchantID <= 0 then
-        enchantID = 0
-    end
+    if not F.IsSafeNumber(enchantID) or enchantID <= 0 then enchantID = 0 end
 
     local itemID, iconID, spellID = getTempWeaponEnchantData(enchantID)
 
     return {
-        time      = floor(time),
-        itemID    = itemID,
+        time = floor(time),
+        itemID = itemID,
         enchantID = enchantID,
-        iconID    = iconID,
-        spellID   = spellID,
+        iconID = iconID,
+        spellID = spellID,
     }
 end
 
 local function getPlayerTempWeaponEnchantStatus()
-    local mainHandState = WeaponEnchant.GetCurrentSlotState(
-        MAIN_HAND_INVENTORY_SLOT
-    )
+    local mainHandState =
+        WeaponEnchant.GetCurrentSlotState(MAIN_HAND_INVENTORY_SLOT)
 
     if not mainHandState or not mainHandState.canBeEnchanted then
         return createTempWeaponEnchantStatus(
@@ -179,9 +169,8 @@ local function getPlayerTempWeaponEnchantStatus()
 
     local lowestTime = getTempWeaponEnchantRemaining(mainHandState)
     local enchantID = mainHandState.enchantID or 0
-    local offHandState = WeaponEnchant.GetCurrentSlotState(
-        OFF_HAND_INVENTORY_SLOT
-    )
+    local offHandState =
+        WeaponEnchant.GetCurrentSlotState(OFF_HAND_INVENTORY_SLOT)
 
     if offHandState and offHandState.canBeEnchanted then
         if not offHandState.hasEnchant then
@@ -204,10 +193,10 @@ end
 
 function Broadcast.Create()
     local broadcast = {
-        presenceData          = sharedData.presenceData,
-        foodData              = sharedData.foodData,
-        flaskData             = sharedData.flaskData,
-        durabilityData        = sharedData.durabilityData,
+        presenceData = sharedData.presenceData,
+        foodData = sharedData.foodData,
+        flaskData = sharedData.flaskData,
+        durabilityData = sharedData.durabilityData,
         tempWeaponEnchantData = sharedData.tempWeaponEnchantData,
     }
 
@@ -244,9 +233,7 @@ function Broadcast.Create()
         protocolVersion,
         auraScanAvailable
     )
-        if not playerKey then
-            return
-        end
+        if not playerKey then return end
 
         local presence = self.presenceData[playerKey]
 
@@ -301,8 +288,10 @@ function Broadcast.Create()
             C_ChatInfo.SendAddonMessage(
                 ADDON_PREFIX,
                 PRESENCE_MESSAGE_TYPE
-                    .. "\t" .. PROTOCOL_VERSION
-                    .. "\t" .. (auraScanAvailable and 1 or 0),
+                    .. "\t"
+                    .. PROTOCOL_VERSION
+                    .. "\t"
+                    .. (auraScanAvailable and 1 or 0),
                 chatType
             )
         end
@@ -335,7 +324,7 @@ function Broadcast.Create()
                 wellFedIconID,
                 wellFedSpellID
             ),
-            eating  = createTimedStatus(
+            eating = createTimedStatus(
                 eatingHas,
                 eatingTime,
                 eatingIconID,
@@ -351,14 +340,22 @@ function Broadcast.Create()
             C_ChatInfo.SendAddonMessage(
                 ADDON_PREFIX,
                 FOOD_MESSAGE_TYPE
-                    .. "\t" .. wellFedHas
-                    .. "\t" .. wellFedTime
-                    .. "\t" .. wellFedIconID
-                    .. "\t" .. eatingHas
-                    .. "\t" .. eatingTime
-                    .. "\t" .. eatingIconID
-                    .. "\t" .. wellFedSpellID
-                    .. "\t" .. eatingSpellID,
+                    .. "\t"
+                    .. wellFedHas
+                    .. "\t"
+                    .. wellFedTime
+                    .. "\t"
+                    .. wellFedIconID
+                    .. "\t"
+                    .. eatingHas
+                    .. "\t"
+                    .. eatingTime
+                    .. "\t"
+                    .. eatingIconID
+                    .. "\t"
+                    .. wellFedSpellID
+                    .. "\t"
+                    .. eatingSpellID,
                 chatType
             )
         end
@@ -377,19 +374,21 @@ function Broadcast.Create()
             C_ChatInfo.SendAddonMessage(
                 ADDON_PREFIX,
                 FLASK_MESSAGE_TYPE
-                    .. "\t" .. has
-                    .. "\t" .. time
-                    .. "\t" .. iconID
-                    .. "\t" .. spellID,
+                    .. "\t"
+                    .. has
+                    .. "\t"
+                    .. time
+                    .. "\t"
+                    .. iconID
+                    .. "\t"
+                    .. spellID,
                 chatType
             )
         end
     end
 
     function broadcast:SendTimedConsumableStatuses(columnData, chatType)
-        if not columnData then
-            return
-        end
+        if not columnData then return end
 
         chatType = chatType or F.chatType()
 
@@ -418,11 +417,16 @@ function Broadcast.Create()
             C_ChatInfo.SendAddonMessage(
                 ADDON_PREFIX,
                 TEMP_WEAPON_ENCHANT_MESSAGE_TYPE
-                    .. "\t" .. status.time
-                    .. "\t" .. (status.itemID or 0)
-                    .. "\t" .. (status.enchantID or 0)
-                    .. "\t" .. (status.iconID or 0)
-                    .. "\t" .. (status.spellID or 0),
+                    .. "\t"
+                    .. status.time
+                    .. "\t"
+                    .. (status.itemID or 0)
+                    .. "\t"
+                    .. (status.enchantID or 0)
+                    .. "\t"
+                    .. (status.iconID or 0)
+                    .. "\t"
+                    .. (status.spellID or 0),
                 chatType
             )
         end
@@ -440,22 +444,16 @@ function Broadcast.Create()
     end
 
     function broadcast:HandleAddonMessage(prefix, message, channel, sender)
-        if issecretvalue(prefix) or issecretvalue(message) then
-            return false
-        end
+        if issecretvalue(prefix) or issecretvalue(message) then return false end
 
         local isRccMessage = prefix == ADDON_PREFIX
         local isMrtMessage = F.IsMrtPrefix(prefix)
 
-        if not isRccMessage and not isMrtMessage then
-            return false
-        end
+        if not isRccMessage and not isMrtMessage then return false end
 
         local senderKey = F.GetTrustedGroupAddonSender(channel, sender)
 
-        if not senderKey then
-            return false
-        end
+        if not senderKey then return false end
 
         if isRccMessage then
             local msgType, val1, val2, val3, val4, val5, val6, val7, val8 =
@@ -466,7 +464,8 @@ function Broadcast.Create()
                 local auraScanValue = tonumber(val2)
                 local auraScanAvailable
 
-                if protocolVersion == PROTOCOL_VERSION
+                if
+                    protocolVersion == PROTOCOL_VERSION
                     and (auraScanValue == 0 or auraScanValue == 1)
                 then
                     auraScanAvailable = auraScanValue == 1
@@ -494,7 +493,7 @@ function Broadcast.Create()
                 if senderKey then
                     self.foodData[senderKey] = {
                         wellFed = createTimedStatus(val1, val2, val3, val7),
-                        eating  = createTimedStatus(val4, val5, val6, val8),
+                        eating = createTimedStatus(val4, val5, val6, val8),
                     }
                     self:SetPresence(senderKey)
 
@@ -519,17 +518,11 @@ function Broadcast.Create()
                         local enchItemID, enchIconID, enchSpellID =
                             getTempWeaponEnchantData(enchantID)
 
-                        if itemID == 0 then
-                            itemID = enchItemID
-                        end
+                        if itemID == 0 then itemID = enchItemID end
 
-                        if iconID == 0 then
-                            iconID = enchIconID
-                        end
+                        if iconID == 0 then iconID = enchIconID end
 
-                        if spellID == 0 then
-                            spellID = enchSpellID
-                        end
+                        if spellID == 0 then spellID = enchSpellID end
                     end
 
                     if iconID == 0 and itemID > 0 then
@@ -543,11 +536,11 @@ function Broadcast.Create()
                     end
 
                     self.tempWeaponEnchantData[senderKey] = {
-                        time      = remaining,
-                        itemID    = itemID,
+                        time = remaining,
+                        itemID = itemID,
                         enchantID = enchantID,
-                        iconID    = iconID,
-                        spellID   = spellID,
+                        iconID = iconID,
+                        spellID = spellID,
                     }
                     self:SetPresence(senderKey)
 

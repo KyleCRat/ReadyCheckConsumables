@@ -67,9 +67,7 @@ function Inputs.GetItemIDs(category)
         addList(list)
     end
 
-    if inventory.itemID then
-        ids[inventory.itemID] = true
-    end
+    if inventory.itemID then ids[inventory.itemID] = true end
 
     return ids
 end
@@ -140,7 +138,9 @@ function Inputs.ReadInventory(itemIDs, previous, changedIDs)
         if old and changedIDs and not changedIDs[itemID] then
             inventory[itemID] = old
         else
-            local count = publicNumber(C_Item.GetItemCount(itemID, false, false)) or 0
+            local count = publicNumber(
+                C_Item.GetItemCount(itemID, false, false)
+            ) or 0
             local metadata = old
 
             if not metadata or not metadata.metadataLoaded then
@@ -150,14 +150,18 @@ function Inputs.ReadInventory(itemIDs, previous, changedIDs)
                 metadata = {
                     icon = publicNumber(C_Item.GetItemIconByID(itemID)),
                     qualityAtlas = quality and publicString(quality.iconSmall),
-                    metadataLoaded = not issecretvalue(loaded) and loaded == true,
+                    metadataLoaded = not issecretvalue(loaded)
+                        and loaded == true,
                 }
             end
 
             inventory[itemID] = {
                 count = count,
                 uses = RCC.db.healthstoneItemIDs[itemID]
-                    and (publicNumber(C_Item.GetItemCount(itemID, false, true)) or 0) or count,
+                        and (publicNumber(
+                            C_Item.GetItemCount(itemID, false, true)
+                        ) or 0)
+                    or count,
                 icon = metadata.icon,
                 qualityAtlas = metadata.qualityAtlas,
                 metadataLoaded = metadata.metadataLoaded,
@@ -171,8 +175,9 @@ end
 function Inputs.ReadPreferences(previous)
     local preferences = Preferences.Read(previous)
 
-    preferences.preferUnlimitedAugment =
-        RCC.GetSetting("consumables_preferUnlimitedAugment") == true
+    preferences.preferUnlimitedAugment = RCC.GetSetting(
+        "consumables_preferUnlimitedAugment"
+    ) == true
 
     return preferences
 end
@@ -269,9 +274,7 @@ function Inputs.ReadPlayerSpellAuras(spellIDs, freshPlayerAuras)
 
     if freshPlayerAuras then
         for _, aura in ipairs(freshPlayerAuras.auras) do
-            if spellIDs[aura.spellID] then
-                scannedAuras[aura.spellID] = aura
-            end
+            if spellIDs[aura.spellID] then scannedAuras[aura.spellID] = aura end
         end
     end
 
@@ -280,7 +283,10 @@ function Inputs.ReadPlayerSpellAuras(spellIDs, freshPlayerAuras)
 
         if aura then
             observations[spellID] = { available = true, aura = aura }
-        elseif freshPlayerAuras and AuraScan.CanConfirmMissing(freshPlayerAuras, { spellID }) then
+        elseif
+            freshPlayerAuras
+            and AuraScan.CanConfirmMissing(freshPlayerAuras, { spellID })
+        then
             observations[spellID] = { available = true }
         else
             observations[spellID] = AuraScan.FindBySpellID("player", spellID)
@@ -292,7 +298,8 @@ end
 
 function Inputs.ReadWeaponSlot(slotID, now)
     local itemID = publicNumber(GetInventoryItemID("player", slotID))
-    local itemClass = itemID and publicNumber(select(6, C_Item.GetItemInfoInstant(itemID)))
+    local itemClass = itemID
+        and publicNumber(select(6, C_Item.GetItemInfoInstant(itemID)))
     local info = C_PaperDollInfo.GetTemporaryEnchantmentInfo(slotID)
     local readable = not issecretvalue(info)
     local hasEnchant = readable and type(info) == "table"
@@ -304,9 +311,7 @@ function Inputs.ReadWeaponSlot(slotID, now)
     local remaining = publicNumber(field("remainingTimeMs"))
     local enchantID = publicNumber(field("enchantID"))
 
-    if enchantID and enchantID <= 0 then
-        enchantID = nil
-    end
+    if enchantID and enchantID <= 0 then enchantID = nil end
 
     local expires = field("hasExpirationTime") == true
 
@@ -319,8 +324,10 @@ function Inputs.ReadWeaponSlot(slotID, now)
         hasExpirationTime = expires,
         enchantID = enchantID,
         chargesRemaining = publicNumber(field("chargesRemaining")),
-        expirationTime = expires and remaining
-            and now + remaining / MILLISECONDS_PER_SECOND or nil,
+        expirationTime = expires
+                and remaining
+                and now + remaining / MILLISECONDS_PER_SECOND
+            or nil,
     }
 end
 
@@ -379,14 +386,23 @@ function Inputs.ReadRoster()
         roster.units[unit] = {
             name = name,
             alive = alive,
-            eligible = not issecretvalue(online) and online == true and alive ~= false,
+            eligible = not issecretvalue(online)
+                and online == true
+                and alive ~= false,
         }
     end)
 
     return roster
 end
 
-function Inputs.ReadGroupAuras(roster, class, previous, units, now, freshPlayerAuras)
+function Inputs.ReadGroupAuras(
+    roster,
+    class,
+    previous,
+    units,
+    now,
+    freshPlayerAuras
+)
     local observations = {}
     local info = class.raidBuff
 
@@ -402,9 +418,15 @@ function Inputs.ReadGroupAuras(roster, class, previous, units, now, freshPlayerA
                 if freshPlayerAuras and F.UnitIsUnitSafe(unit, "player") then
                     -- The shared resolver reuses conclusive scan data and
                     -- queries accepted spell IDs only if still unresolved.
-                    status = RCC.RaidBuffStatus.GetStatusFromScan(unit, freshPlayerAuras, info.index, now)
+                    status = RCC.RaidBuffStatus.GetStatusFromScan(
+                        unit,
+                        freshPlayerAuras,
+                        info.index,
+                        now
+                    )
                 else
-                    status = RCC.RaidBuffStatus.GetUnitStatus(unit, info.index, now)
+                    status =
+                        RCC.RaidBuffStatus.GetUnitStatus(unit, info.index, now)
                 end
 
                 observations[unit] = {
@@ -421,7 +443,9 @@ end
 
 function Inputs.GetDependency(inputs, path, definition)
     if path == "slotPreference" then
-        local key = RCC.Consumables.WeaponEnchant.GetPreferenceKey(definition.weaponSlot)
+        local key = RCC.Consumables.WeaponEnchant.GetPreferenceKey(
+            definition.weaponSlot
+        )
 
         return inputs.preferences[key]
     elseif path == "slotWeapon" then
@@ -462,27 +486,48 @@ function Inputs.ReadSelection(category)
 
     local inputs = {
         inventory = inventory,
-        toys = needed.toys and Inputs.ReadToys(Inputs.GetToyItemIDs(category)) or nil,
-        preferences = (needed.preferences or needed.slotPreference or needed.categoryPreference)
-            and Inputs.ReadPreferences() or nil,
+        toys = needed.toys and Inputs.ReadToys(Inputs.GetToyItemIDs(category))
+            or nil,
+        preferences = (
+            needed.preferences
+            or needed.slotPreference
+            or needed.categoryPreference
+        )
+                and Inputs.ReadPreferences()
+            or nil,
         instance = needed.instance and Inputs.ReadInstance() or nil,
         location = needed.location and Inputs.ReadLocation() or nil,
         class = needed.class and Inputs.ReadClass() or nil,
-        spells = needed.spells and Inputs.ReadSpells(Inputs.GetSpellIDs(category)) or nil,
+        spells = needed.spells and Inputs.ReadSpells(
+            Inputs.GetSpellIDs(category)
+        ) or nil,
         playerSpellAuras = needed.playerSpellAuras
-            and Inputs.ReadPlayerSpellAuras(Inputs.GetPlayerAuraSpellIDs(category)) or nil,
+                and Inputs.ReadPlayerSpellAuras(
+                    Inputs.GetPlayerAuraSpellIDs(category)
+                )
+            or nil,
         weapons = needed.slotWeapon and {
-            [definition.weaponSlot] = Inputs.ReadWeaponSlot(definition.weaponSlot, now),
+            [definition.weaponSlot] = Inputs.ReadWeaponSlot(
+                definition.weaponSlot,
+                now
+            ),
         } or nil,
     }
 
     if needed.cooldowns then
-        inputs.cooldowns = Inputs.ReadCooldowns(inputs, Inputs.GetCooldownItemIDs(category), now)
+        inputs.cooldowns = Inputs.ReadCooldowns(
+            inputs,
+            Inputs.GetCooldownItemIDs(category),
+            now
+        )
     end
 
     if needed.categoryHistory then
         if RCC.ConsumableHistory.Observe(inputs, definition) then
-            RCC.ConsumableStateController.Invalidate("history", { nextFrame = true })
+            RCC.ConsumableStateController.Invalidate(
+                "history",
+                { nextFrame = true }
+            )
         end
 
         inputs.history = RCC.ConsumableHistory.Read()

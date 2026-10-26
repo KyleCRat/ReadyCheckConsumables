@@ -1,7 +1,6 @@
 local _, RCC = ...
 
-RCC.ConsumableActionBarSettings =
-    RCC.ConsumableActionBarSettings or {}
+RCC.ConsumableActionBarSettings = RCC.ConsumableActionBarSettings or {}
 
 local Page = RCC.ConsumableActionBarSettings
 local ActionBar = RCC.ConsumableActionBar
@@ -88,12 +87,11 @@ local function addSettingCheckbox(frame, flow, options, placement)
     local checkbox = flow:AddControl("checkbox", {
         label = options.label,
         tooltip = options.tooltip,
+
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
 
-            if options.onChanged then
-                options.onChanged(checked)
-            end
+            if options.onChanged then options.onChanged(checked) end
 
             frame:Sync()
         end,
@@ -104,7 +102,6 @@ local function addSettingCheckbox(frame, flow, options, placement)
     return checkbox
 end
 
-
 local function addSettingSlider(frame, flow, options, placement)
     local slider = flow:AddControl("slider", {
         label = options.label,
@@ -114,6 +111,7 @@ local function addSettingSlider(frame, flow, options, placement)
         maxValue = options.maxValue,
         step = options.step,
         inputFormatter = options.inputFormatter,
+
         onChanged = function(value)
             RCC.SetSettingValue(options.key, value)
             options.onChanged()
@@ -131,6 +129,7 @@ local function addSettingDropdown(frame, flow, options, placement)
         tooltip = options.tooltip,
         value = RCC.GetSetting(options.key),
         choices = options.choices,
+
         onChanged = function(value)
             RCC.SetSettingValue(options.key, value)
             options.onChanged()
@@ -151,9 +150,11 @@ local function addPositionSlider(frame, flow, options, placement)
         minValue = -POSITION_LIMIT,
         maxValue = POSITION_LIMIT,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = function(value)
             Position.SetCurrent({
                 [options.field] = value,
@@ -173,6 +174,7 @@ local function addPositionDropdown(frame, flow, options, placement)
         tooltip = options.tooltip,
         value = position[options.field],
         choices = ANCHOR_CHOICES,
+
         onChanged = function(value)
             Position.SetCurrent({
                 [options.field] = value,
@@ -206,9 +208,11 @@ local function createGeneralSettings(frame, layout)
         minValue = ActionBar.Limits.buttonWidth.min,
         maxValue = ActionBar.Limits.buttonWidth.max,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = refreshLayout,
     })
 
@@ -219,9 +223,11 @@ local function createGeneralSettings(frame, layout)
         minValue = ActionBar.Limits.buttonHeight.min,
         maxValue = ActionBar.Limits.buttonHeight.max,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = refreshLayout,
     })
 
@@ -232,9 +238,11 @@ local function createGeneralSettings(frame, layout)
         minValue = 1,
         maxValue = Catalog.GetCount(),
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = refreshLayout,
     })
 
@@ -245,9 +253,11 @@ local function createGeneralSettings(frame, layout)
         minValue = ActionBar.Limits.gapX.min,
         maxValue = ActionBar.Limits.gapX.max,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = refreshLayout,
     })
 
@@ -259,9 +269,11 @@ local function createGeneralSettings(frame, layout)
         minValue = ActionBar.Limits.gapY.min,
         maxValue = ActionBar.Limits.gapY.max,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = refreshLayout,
     })
 
@@ -272,9 +284,11 @@ local function createGeneralSettings(frame, layout)
         minValue = ActionBar.Limits.textSize.min,
         maxValue = ActionBar.Limits.textSize.max,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         onChanged = refreshLayout,
     })
 
@@ -296,7 +310,11 @@ local function createGeneralSettings(frame, layout)
 
     columns.left:AddSection("Augment Runes")
 
-    addSettingCheckbox(frame, columns.left, Shared.PreferUnlimitedAugmentSetting)
+    addSettingCheckbox(
+        frame,
+        columns.left,
+        Shared.PreferUnlimitedAugmentSetting
+    )
 
     columns:Finish({
         marginBottom = 12,
@@ -388,7 +406,8 @@ local function addButtonCheckbox(frame, flow, definition)
     local settingKey = definition.actionBarSettingKey
     local checkbox = flow:AddControl("checkbox", {
         label = definition.label,
-        tooltip = "Show " .. definition.label
+        tooltip = "Show "
+            .. definition.label
             .. " on the Consumables Action Bar.",
         onChanged = function(checked)
             Shared.SetActionBarCategoryEnabled(definition, checked)
@@ -456,18 +475,13 @@ function Page.CreateFrame(measurementFrame)
     frame.scrollBox = layout:GetScrollBox()
 
     function frame:Sync()
-        local enabled = RCC.GetSetting(
-            "consumablesActionBar_enabled"
-        ) == true
+        local enabled = RCC.GetSetting("consumablesActionBar_enabled") == true
 
         for key, control in pairs(self.settingControls) do
             control:SetValue(RCC.GetSetting(key))
 
             if key ~= "consumablesActionBar_enabled" then
-                control:SetControlEnabled(
-                    enabled,
-                    FEATURE_DISABLED_TOOLTIP
-                )
+                control:SetControlEnabled(enabled, FEATURE_DISABLED_TOOLTIP)
             end
         end
 
@@ -475,20 +489,14 @@ function Page.CreateFrame(measurementFrame)
 
         for field, control in pairs(self.positionControls) do
             control:SetValue(position[field])
-            control:SetControlEnabled(
-                enabled,
-                FEATURE_DISABLED_TOOLTIP
-            )
+            control:SetControlEnabled(enabled, FEATURE_DISABLED_TOOLTIP)
         end
 
         for i = 1, #self.buttonControls do
             local entry = self.buttonControls[i]
 
             entry.control:SetValue(RCC.GetSetting(entry.settingKey))
-            entry.control:SetControlEnabled(
-                enabled,
-                FEATURE_DISABLED_TOOLTIP
-            )
+            entry.control:SetControlEnabled(enabled, FEATURE_DISABLED_TOOLTIP)
         end
     end
 

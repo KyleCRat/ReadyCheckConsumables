@@ -47,7 +47,10 @@ function Demand.Build(categories)
             for _, path in ipairs(dependencies[phase] or {}) do
                 local source = path:match("^[^.]+")
 
-                if source == "slotPreference" or source == "categoryPreference" then
+                if
+                    source == "slotPreference"
+                    or source == "categoryPreference"
+                then
                     source = "preferences"
                 elseif source == "categoryHistory" then
                     source = "history"
@@ -88,13 +91,9 @@ function Demand.Build(categories)
     -- Cooldowns need ownership from the requested collections. A toy-only
     -- category must not subscribe to bag-count events just to read its timer.
     if demand.sources.cooldowns then
-        if next(demand.itemIDs) then
-            addSource(demand.sources, "inventory")
-        end
+        if next(demand.itemIDs) then addSource(demand.sources, "inventory") end
 
-        if next(demand.toyItemIDs) then
-            addSource(demand.sources, "toys")
-        end
+        if next(demand.toyItemIDs) then addSource(demand.sources, "toys") end
     end
 
     return demand

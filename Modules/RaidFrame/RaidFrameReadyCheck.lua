@@ -8,12 +8,12 @@ local StatusIcons = RCC.UI.StatusIcons
 local Status = RCC.ReadyCheckState.Status
 
 ReadyCheck.ICONS = {
-    [Status.PENDING]   = { texture = "Interface\\RaidFrame\\ReadyCheck-Waiting" },
-    [Status.READY]     = StatusIcons.READY,
+    [Status.PENDING] = { texture = "Interface\\RaidFrame\\ReadyCheck-Waiting" },
+    [Status.READY] = StatusIcons.READY,
     [Status.NOT_READY] = StatusIcons.NOT_READY,
 }
 
 ReadyCheck.TITLE_ICONS = {
-    ready    = StatusIcons.READY,
+    ready = StatusIcons.READY,
     notReady = StatusIcons.NOT_READY,
 }

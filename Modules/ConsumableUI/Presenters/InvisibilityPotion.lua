@@ -7,7 +7,8 @@ RCC.ConsumablePresenters.InvisibilityPotion = InvisibilityPotion
 local ButtonState = RCC.ConsumableState
 local PREFERENCE_KEY = RCC.ConsumablePreferenceKey.INVISIBILITY_POTION
 local OUT_OF_ITEMS = "No invisibility potions found in bags"
-local OUT_OF_PREFERRED_ITEM = "Your preferred invisibility potion is not in your bags"
+local OUT_OF_PREFERRED_ITEM =
+    "Your preferred invisibility potion is not in your bags"
 
 function InvisibilityPotion.Present(model)
     local selection = model.selection
@@ -27,7 +28,10 @@ function InvisibilityPotion.Present(model)
     ButtonState.ApplyItemCooldowns(state, selection)
 
     if candidate.count == 0 then
-        ButtonState.SetUnavailable(state, selection.preferred and OUT_OF_PREFERRED_ITEM or OUT_OF_ITEMS)
+        ButtonState.SetUnavailable(
+            state,
+            selection.preferred and OUT_OF_PREFERRED_ITEM or OUT_OF_ITEMS
+        )
     end
 
     return state
@@ -35,11 +39,15 @@ end
 
 function InvisibilityPotion.Choices(selection)
     local candidate = selection.candidate or selection.defaultCandidate
-    local choices = ButtonState.CreateItemFlyoutChoices(selection.candidates, candidate.itemID, {
-        preferenceKey = PREFERENCE_KEY,
-        includeSingleChoice = selection.unavailable,
-        suppressGlow = true,
-    })
+    local choices = ButtonState.CreateItemFlyoutChoices(
+        selection.candidates,
+        candidate.itemID,
+        {
+            preferenceKey = PREFERENCE_KEY,
+            includeSingleChoice = selection.unavailable,
+            suppressGlow = true,
+        }
+    )
 
     for _, choice in ipairs(choices or {}) do
         choice.showStatusTexture = false

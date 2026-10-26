@@ -35,7 +35,8 @@ local function higherPriority(left, right)
 end
 
 function Glide.Select(inputs)
-    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY)
+    local preferredID =
+        RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY)
     local candidates = {}
     local selection = {
         candidates = candidates,
@@ -49,7 +50,8 @@ function Glide.Select(inputs)
         if data.isToy then
             candidate = Selection.Toy(inputs.toys, data.itemID, data, index)
         else
-            candidate = Selection.Item(inputs.inventory, data.itemID, data, index)
+            candidate =
+                Selection.Item(inputs.inventory, data.itemID, data, index)
         end
 
         selection.allCandidates[data.itemID] = candidate
@@ -69,7 +71,11 @@ function Glide.Select(inputs)
         end
     end
 
-    Selection.ApplyItemCooldowns(selection, inputs.cooldowns, RCC.db.glideCooldownItemIDs)
+    Selection.ApplyItemCooldowns(
+        selection,
+        inputs.cooldowns,
+        RCC.db.glideCooldownItemIDs
+    )
     table.sort(candidates, higherPriority)
 
     -- Automatic selection favors a ready toy before consuming a kit. Explicit

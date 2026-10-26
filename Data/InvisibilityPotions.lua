@@ -10,7 +10,8 @@ RCC.db.invisibilityPotionItemData = {}
 
 function RCC.Data.AddInvisibilityPotionItems(items)
     for _, item in ipairs(items) do
-        RCC.db.invisibilityPotionItemIDs[#RCC.db.invisibilityPotionItemIDs + 1] = item.itemID
+        RCC.db.invisibilityPotionItemIDs[#RCC.db.invisibilityPotionItemIDs + 1] =
+            item.itemID
         RCC.db.invisibilityPotionItemData[item.itemID] = item
     end
 end

@@ -11,19 +11,19 @@ RCC.db = RCC.db or {}
 
 RCC.settings = {
     [RCC.SHADOWLANDS] = {
-        augment       = { iconID = 134078 },
+        augment = { iconID = 134078 },
     },
     [RCC.DRAGONFLIGHT] = {},
     [RCC.THE_WAR_WITHIN] = {
-        augment       = { iconID = 4549102 },
-        flask         = { iconID = 3566840 },
-        vantusRune    = { iconID = 4638737 },
+        augment = { iconID = 4549102 },
+        flask = { iconID = 3566840 },
+        vantusRune = { iconID = 4638737 },
     },
     [RCC.MIDNIGHT] = {
-        augment       = { iconID = 4549099 },
-        flask         = { iconID = 7548902 },
-        vantusRune    = { iconID = 5976918 },
-        combatPotion  = { iconID = 7548911 },
+        augment = { iconID = 4549099 },
+        flask = { iconID = 7548902 },
+        vantusRune = { iconID = 5976918 },
+        combatPotion = { iconID = 7548911 },
         healingPotion = { iconID = 7548909 },
         weaponEnchant = { iconID = 7548985 },
     },
@@ -34,6 +34,7 @@ local orderedXpacIDs = {}
 for xpacID in pairs(RCC.settings) do
     orderedXpacIDs[#orderedXpacIDs + 1] = xpacID
 end
+
 table.sort(orderedXpacIDs)
 
 --------------------------------------------------------------------------------
@@ -42,33 +43,34 @@ table.sort(orderedXpacIDs)
 --------------------------------------------------------------------------------
 
 -- Defaults
-RCC.db.augmentIconID        = 4549099
-RCC.db.weaponEnchantIconID  = 463543
-RCC.db.foodIconID           = 136000
-RCC.db.flaskIconID          = 3528447
-RCC.db.healthstoneItemID    = 5512
-RCC.db.healthstoneIconID    = 538745
-RCC.db.raidBuffIconID       = 134400
-RCC.db.combatPotionIconID   = 650640   -- trade_alchemy_potiona4
-RCC.db.healingPotionIconID  = 5931169  -- inv_flask_red
-RCC.db.invisibilityPotionIcon = "Interface\\Icons\\inv_12_profession_alchemy_voidpotion_violet"
+RCC.db.augmentIconID = 4549099
+RCC.db.weaponEnchantIconID = 463543
+RCC.db.foodIconID = 136000
+RCC.db.flaskIconID = 3528447
+RCC.db.healthstoneItemID = 5512
+RCC.db.healthstoneIconID = 538745
+RCC.db.raidBuffIconID = 134400
+RCC.db.combatPotionIconID = 650640 -- trade_alchemy_potiona4
+RCC.db.healingPotionIconID = 5931169 -- inv_flask_red
+RCC.db.invisibilityPotionIcon =
+    "Interface\\Icons\\inv_12_profession_alchemy_voidpotion_violet"
 RCC.db.glideIcon = "Interface\\Icons\\inv_misc_bag_07_red"
 RCC.db.inkyBlackPotionIconID = 136122
-RCC.db.repairIconID         = C_Item.GetItemIconByID(
-    RCC.db.repairDefaultItemID
-) or C_Item.GetItemIconByID(49040) or 134064
-RCC.db.vantusIconID         = 4638737  -- inv_10_inscription_glyphs_color5
+RCC.db.repairIconID = C_Item.GetItemIconByID(RCC.db.repairDefaultItemID)
+    or C_Item.GetItemIconByID(49040)
+    or 134064
+RCC.db.vantusIconID = 4638737 -- inv_10_inscription_glyphs_color5
 
 local iconKeys = {
-    { setting = "augment",       dbKey = "augmentIconID" },
-    { setting = "food",          dbKey = "foodIconID" },
-    { setting = "flask",         dbKey = "flaskIconID" },
+    { setting = "augment", dbKey = "augmentIconID" },
+    { setting = "food", dbKey = "foodIconID" },
+    { setting = "flask", dbKey = "flaskIconID" },
     { setting = "combatPotion", dbKey = "combatPotionIconID" },
     { setting = "healingPotion", dbKey = "healingPotionIconID" },
-    { setting = "recuperate",    dbKey = "recuperateIconID" },
+    { setting = "recuperate", dbKey = "recuperateIconID" },
     { setting = "weaponEnchant", dbKey = "weaponEnchantIconID" },
-    { setting = "healthstone",   dbKey = "healthstoneIconID" },
-    { setting = "vantusRune",    dbKey = "vantusIconID" },
+    { setting = "healthstone", dbKey = "healthstoneIconID" },
+    { setting = "vantusRune", dbKey = "vantusIconID" },
 }
 
 for _, xpacID in ipairs(orderedXpacIDs) do
@@ -78,9 +80,7 @@ for _, xpacID in ipairs(orderedXpacIDs) do
         for _, key in ipairs(iconKeys) do
             local entry = xpac[key.setting]
 
-            if entry and entry.iconID then
-                RCC.db[key.dbKey] = entry.iconID
-            end
+            if entry and entry.iconID then RCC.db[key.dbKey] = entry.iconID end
         end
     end
 end

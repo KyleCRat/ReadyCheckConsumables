@@ -49,11 +49,12 @@ function Glide.Present(model)
     local state = createChoice(candidate)
     state.action = model.action
 
-    if not selection.candidate then
-        state.preference = nil
-    end
+    if not selection.candidate then state.preference = nil end
 
-    State.SetUnavailable(state, getUnavailableText(candidate, selection.preferred ~= nil))
+    State.SetUnavailable(
+        state,
+        getUnavailableText(candidate, selection.preferred ~= nil)
+    )
     State.ApplyItemCooldowns(state, selection)
 
     -- A cooldown may change automatic selection during combat. Keep the
@@ -61,7 +62,10 @@ function Glide.Present(model)
     state.itemVisuals = {}
 
     for itemID, item in pairs(selection.allCandidates) do
-        local text = getUnavailableText(item, itemID == candidate.itemID and selection.preferred ~= nil)
+        local text = getUnavailableText(
+            item,
+            itemID == candidate.itemID and selection.preferred ~= nil
+        )
 
         state.itemVisuals[itemID] = {
             desaturated = not Selection.IsAvailable(item),

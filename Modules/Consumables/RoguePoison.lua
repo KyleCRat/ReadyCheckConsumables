@@ -10,7 +10,12 @@ local History = RCC.ConsumableHistory
 local Effects = RCC.ConsumableEffects
 
 RoguePoison.Dependencies = {
-    selection = { "class.classToken", "spells", "categoryPreference", "categoryHistory" },
+    selection = {
+        "class.classToken",
+        "spells",
+        "categoryPreference",
+        "categoryHistory",
+    },
     observation = { "spells", "playerSpellAuras" },
     evaluation = { "instance.warningSeconds" },
     expiration = "playerSpellAuras",
@@ -33,11 +38,15 @@ end
 function RoguePoison.GetCapacity(inputs)
     local rule = RCC.db.roguePoisonCapacity
 
-    return inputs.spells[rule.talentSpellID].known and rule.talented or rule.default
+    return inputs.spells[rule.talentSpellID].known and rule.talented
+        or rule.default
 end
 
 function RoguePoison.Observe(inputs, definition)
-    return Effects.ObserveSpells(inputs, RoguePoison.GetPlayerAuraSpellIDs(definition))
+    return Effects.ObserveSpells(
+        inputs,
+        RoguePoison.GetPlayerAuraSpellIDs(definition)
+    )
 end
 
 function RoguePoison.GetApplications(inputs, definition)
@@ -49,10 +58,15 @@ function RoguePoison.GetApplications(inputs, definition)
         local choice = Choice.Spell(aura.spellID)
 
         applications[#applications + 1] = choice
-        evidence[Choice.Key(choice)] = aura.expirationTime or aura.auraInstanceID or true
+        evidence[Choice.Key(choice)] = aura.expirationTime
+            or aura.auraInstanceID
+            or true
     end
 
-    return applications, observation.available, RoguePoison.GetCapacity(inputs), evidence
+    return applications,
+        observation.available,
+        RoguePoison.GetCapacity(inputs),
+        evidence
 end
 
 local function dataOrder(left, right)
@@ -103,12 +117,18 @@ function RoguePoison.Select(inputs, definition)
         end
     end
 
-    appendKnown(selection.preferences, Preferences.GetChoices(
-        inputs.preferences, definition.key, selection.capacity
-    ))
-    appendKnown(selection.fallbacks, History.GetChoices(
-        inputs.history, definition.key, selection.capacity
-    ))
+    appendKnown(
+        selection.preferences,
+        Preferences.GetChoices(
+            inputs.preferences,
+            definition.key,
+            selection.capacity
+        )
+    )
+    appendKnown(
+        selection.fallbacks,
+        History.GetChoices(inputs.history, definition.key, selection.capacity)
+    )
 
     -- Do not invent a second spell when there is no remembered pair. An
     -- explicit preference already supplies the first slot when one is set.
@@ -117,11 +137,16 @@ function RoguePoison.Select(inputs, definition)
     end
 
     selection.selected = Selection.ResolveChoices(
-        nil, selection.preferences, selection.fallbacks, selection.capacity, dataOrder
+        nil,
+        selection.preferences,
+        selection.fallbacks,
+        selection.capacity,
+        dataOrder
     )
     selection.candidate = selection.selected[1]
     selection.applicable = #selection.candidates > 0
-    selection.action = State.CreateSpellSequenceAction(selection.selected, selection.capacity)
+    selection.action =
+        State.CreateSpellSequenceAction(selection.selected, selection.capacity)
 
     return selection
 end

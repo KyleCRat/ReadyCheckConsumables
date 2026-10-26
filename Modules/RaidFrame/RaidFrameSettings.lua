@@ -7,8 +7,7 @@ local Controls = LibStub("LibModernSettings-1.0")
 
 local FEATURE_DISABLED_TOOLTIP =
     "The Raid Frame is disabled. Enable it to edit."
-local KEEP_OPEN_DISABLED_TOOLTIP =
-    "Keep Open After Finished is disabled."
+local KEEP_OPEN_DISABLED_TOOLTIP = "Keep Open After Finished is disabled."
 local PROVISION_TRACKING_DISABLED_TOOLTIP =
     "Feast and cauldron tracking is disabled."
 
@@ -29,12 +28,11 @@ local function addSettingCheckbox(frame, flow, options, placement)
     local checkbox = flow:AddControl("checkbox", {
         label = options.label,
         tooltip = options.tooltip,
+
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
 
-            if options.onChanged then
-                options.onChanged(checked)
-            end
+            if options.onChanged then options.onChanged(checked) end
 
             frame:Sync()
         end,
@@ -86,6 +84,7 @@ function Page.CreateFrame(measurementFrame)
         key = "raidFrame_enabled",
         label = "Enabled",
         tooltip = "Enable the group consumable status frame.",
+
         onChanged = function()
             RCC.raidFrame:RefreshContextualVisibility()
         end,
@@ -104,15 +103,19 @@ function Page.CreateFrame(measurementFrame)
         minValue = 0.5,
         maxValue = 1.5,
         step = 0.05,
+
         inputFormatter = function(value)
             return string.format("%d", math.floor(value * 100 + 0.5))
         end,
+
         inputParser = function(text)
             local numericText = text:match("^%s*([+-]?%d*%.?%d+)")
 
             return numericText and tonumber(numericText) / 100 or nil
         end,
+
         suffix = "%",
+
         afterChanged = function()
             RCC.raidFrame:SyncScaleControl()
         end,
@@ -135,9 +138,11 @@ function Page.CreateFrame(measurementFrame)
         minValue = 1,
         maxValue = 40,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         suffix = "s",
     }, {
         indent = 1,
@@ -181,8 +186,8 @@ function Page.CreateFrame(measurementFrame)
 
         local enabled = RCC.GetSetting("raidFrame_enabled") == true
         local keepOpen = RCC.GetSetting("raidFrame_minShow") == true
-        local trackProvisions =
-            RCC.GetSetting("raidFrameCauldron_enabled") == true
+        local trackProvisions = RCC.GetSetting("raidFrameCauldron_enabled")
+            == true
 
         setControlState(
             self.settingControls.raidFrame_scale,
@@ -197,8 +202,7 @@ function Page.CreateFrame(measurementFrame)
         setControlState(
             self.settingControls.raidFrame_minShowTime,
             enabled and keepOpen,
-            not enabled
-                and FEATURE_DISABLED_TOOLTIP
+            not enabled and FEATURE_DISABLED_TOOLTIP
                 or KEEP_OPEN_DISABLED_TOOLTIP
         )
         setControlState(
@@ -209,8 +213,7 @@ function Page.CreateFrame(measurementFrame)
         setControlState(
             self.settingControls.raidFrameCauldron_showOutsideReadyCheck,
             enabled and trackProvisions,
-            not enabled
-                and FEATURE_DISABLED_TOOLTIP
+            not enabled and FEATURE_DISABLED_TOOLTIP
                 or PROVISION_TRACKING_DISABLED_TOOLTIP
         )
     end
@@ -218,6 +221,7 @@ function Page.CreateFrame(measurementFrame)
     frame:SetScript("OnShow", function(self)
         self:Sync()
     end)
+
     frame:Sync()
 
     return frame

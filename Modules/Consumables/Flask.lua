@@ -18,16 +18,27 @@ function Flask.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.flaskItemIDs,
         itemData = RCC.db.flaskItemData,
-        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
+        preferredID = RCC.ConsumablePreferences.GetItemID(
+            inputs.preferences,
+            PREFERENCE_KEY
+        ),
     })
 
     return Selection.Resolve(choices, { preferenceKey = PREFERENCE_KEY })
 end
 
 function Flask.Observe(inputs)
-    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.flaskBuffIDs)
+    return RCC.ConsumableEffects.Observe(
+        inputs.playerAuras,
+        RCC.db.flaskBuffIDs
+    )
 end
 
 function Flask.Evaluate(selection, observation, inputs, now)
-    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
+    return RCC.ConsumableEffects.Evaluate(
+        selection,
+        observation,
+        inputs.instance,
+        now
+    )
 end

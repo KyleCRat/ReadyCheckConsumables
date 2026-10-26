@@ -24,9 +24,7 @@ local function getSpellDisplay(spellID)
 
     local spellLink = GetSpellLink and GetSpellLink(spellID)
 
-    if spellLink then
-        return spellLink
-    end
+    if spellLink then return spellLink end
 
     local spellInfo = GetSpellInfo(spellID)
 
@@ -41,9 +39,7 @@ local function getUnavailableText(button)
 end
 
 local function getAuraScanUnavailableText(button)
-    return State.GetAuraScanUnavailableText(
-        button and button.consumableState
-    )
+    return State.GetAuraScanUnavailableText(button and button.consumableState)
 end
 
 local function setGameTooltipOwner(button)
@@ -76,15 +72,11 @@ local function addClickHint(button)
 
     local action = state.action
 
-    if not action then
-        return
-    end
+    if not action then return end
 
     local capabilities = button.surfaceCapabilities or {}
 
-    if action.selectionOnly
-        and capabilities.allowSelectionItemUse ~= true
-    then
+    if action.selectionOnly and capabilities.allowSelectionItemUse ~= true then
         return
     end
 
@@ -94,8 +86,12 @@ local function addClickHint(button)
     if not targetText then return end
 
     GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("|cff00ff00Left click to "
-                        .. button.tooltipAction .. "|r " .. targetText)
+    GameTooltip:AddLine(
+        "|cff00ff00Left click to "
+            .. button.tooltipAction
+            .. "|r "
+            .. targetText
+    )
     GameTooltip:Show()
 
     return true
@@ -118,9 +114,7 @@ local function addRightClickPreferenceHint(button, hasHint)
 
     if not targetText then return end
 
-    if not hasHint then
-        GameTooltip:AddLine(" ")
-    end
+    if not hasHint then GameTooltip:AddLine(" ") end
 
     if Preferences.IsPreferred(preference.key, preference.capacity, choice) then
         GameTooltip:AddLine("|cff00ff00Preferred:|r " .. targetText)
@@ -170,9 +164,7 @@ local function showStatusMessageTooltip(button, auraText, unavailableText)
     end
 
     if unavailableText then
-        if auraText then
-            GameTooltip:AddLine(" ")
-        end
+        if auraText then GameTooltip:AddLine(" ") end
 
         GameTooltip:AddLine(unavailableText, 1, 0.2, 0.2, true)
     end
@@ -194,13 +186,15 @@ local function showButtonTooltip(button, shoppingTooltip)
         GameTooltip:AddLine(state.summaryLabel)
         local effects = state.summaryEffects or {}
 
-        if #effects > 0 then
-            GameTooltip:AddLine("Active", 1, 1, 1)
-        end
+        if #effects > 0 then GameTooltip:AddLine("Active", 1, 1, 1) end
 
         for _, effect in ipairs(effects) do
-            local name = getSpellDisplay(effect.spellID) or effect.name or "Name unavailable"
-            local duration = effect.remaining and F.FormatDuration(effect.remaining) or ""
+            local name = getSpellDisplay(effect.spellID)
+                or effect.name
+                or "Name unavailable"
+            local duration = effect.remaining
+                    and F.FormatDuration(effect.remaining)
+                or ""
             GameTooltip:AddDoubleLine(name, duration, 1, 1, 1, 1, 1, 1)
         end
 
@@ -212,7 +206,8 @@ local function showButtonTooltip(button, shoppingTooltip)
 
         GameTooltip:AddLine(" ")
         local action = state.action
-        local spellIDs = action and (action.spellIDs or { action.spellID }) or {}
+        local spellIDs = action and (action.spellIDs or { action.spellID })
+            or {}
 
         if #spellIDs == 0 then
             local hint = InCombatLockdown() and "Choose an option after combat"
@@ -220,20 +215,29 @@ local function showButtonTooltip(button, shoppingTooltip)
 
             GameTooltip:AddLine(hint, 0.7, 0.7, 0.7, true)
         else
-            GameTooltip:AddLine("Left click to " .. button.tooltipAction, 0.2, 1, 0.2)
+            GameTooltip:AddLine(
+                "Left click to " .. button.tooltipAction,
+                0.2,
+                1,
+                0.2
+            )
 
             for index, spellID in ipairs(spellIDs) do
                 local name = getSpellDisplay(spellID) or "Name unavailable"
 
-                if #spellIDs > 1 then
-                    name = index .. ". " .. name
-                end
+                if #spellIDs > 1 then name = index .. ". " .. name end
 
                 GameTooltip:AddLine(name, 1, 1, 1, true)
             end
 
             if #spellIDs > 1 then
-                GameTooltip:AddLine("Click once for each, in the order shown", 0.2, 1, 0.2, true)
+                GameTooltip:AddLine(
+                    "Click once for each, in the order shown",
+                    0.2,
+                    1,
+                    0.2,
+                    true
+                )
             end
         end
 
@@ -262,10 +266,8 @@ local function showButtonTooltip(button, shoppingTooltip)
     end
 
     if state.tooltipAuraID and shoppingTooltip and shownTooltip then
-        local auraInstanceID = F.GetCurrentPublicAuraInstanceID(
-            "player",
-            state.tooltipAuraID
-        )
+        local auraInstanceID =
+            F.GetCurrentPublicAuraInstanceID("player", state.tooltipAuraID)
 
         if auraInstanceID then
             ShoppingTooltip1:SetOwner(GameTooltip, "ANCHOR_NONE")
@@ -283,10 +285,8 @@ local function showButtonTooltip(button, shoppingTooltip)
             ShoppingTooltip1:Show()
         end
     elseif state.tooltipAuraID then
-        local auraInstanceID = F.GetCurrentPublicAuraInstanceID(
-            "player",
-            state.tooltipAuraID
-        )
+        local auraInstanceID =
+            F.GetCurrentPublicAuraInstanceID("player", state.tooltipAuraID)
 
         if auraInstanceID then
             setGameTooltipOwner(button)
@@ -309,10 +309,7 @@ local function showClickButtonTooltip(button)
         return true
     end
 
-    return showStatusMessageTooltip(
-        button,
-        getAuraScanUnavailableText(button)
-    )
+    return showStatusMessageTooltip(button, getAuraScanUnavailableText(button))
 end
 
 local function showInfoButtonTooltip(button)
@@ -322,9 +319,7 @@ local function showInfoButtonTooltip(button)
     if showButtonTooltip(button, true) then
         addAppliedEffectHint(button)
 
-        if button.clickEnabled then
-            addClickHints(button)
-        end
+        if button.clickEnabled then addClickHints(button) end
 
         addAuraScanUnavailableHint(button)
         addUnavailableHint(button)
@@ -370,7 +365,9 @@ end
 -- Preference clicks and item rebinding can change an open tooltip without
 -- another mouse-enter event. Rebuild only its contents, not hover behavior.
 function Tooltips.Refresh(button)
-    if not GameTooltip:IsShown() or not GameTooltip:IsOwned(button) then return end
+    if not GameTooltip:IsShown() or not GameTooltip:IsOwned(button) then
+        return
+    end
 
     ShoppingTooltip1:Hide()
 
@@ -390,9 +387,7 @@ function Tooltips.Refresh(button)
         shown = showInfoButtonTooltip(button)
     end
 
-    if not shown then
-        GameTooltip:Hide()
-    end
+    if not shown then GameTooltip:Hide() end
 end
 
 function Tooltips.UpdateUnavailableOverlay(button)

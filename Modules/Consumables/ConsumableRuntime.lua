@@ -16,9 +16,7 @@ local function dependenciesChanged(seen, dependencies, inputs, definition)
         local value = Inputs.GetDependency(inputs, path, definition)
         current[path] = value
 
-        if not seen or seen[path] ~= value then
-            changed = true
-        end
+        if not seen or seen[path] ~= value then changed = true end
     end
 
     return changed, current
@@ -38,9 +36,7 @@ end
 
 function Runtime.RetainCategories(runtime, categories)
     for key in pairs(runtime.categories) do
-        if not categories[key] then
-            runtime.categories[key] = nil
-        end
+        if not categories[key] then runtime.categories[key] = nil end
     end
 end
 
@@ -52,7 +48,7 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         generatedAt = now,
         states = {},
         revisions = {},
-        changed = {}
+        changed = {},
     }
 
     for key in pairs(categories) do
@@ -64,23 +60,41 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         local cache = previous or {}
 
         local selectionDirty, seenSelection = dependenciesChanged(
-            cache.seenSelection, deps.selection, inputs, definition
+            cache.seenSelection,
+            deps.selection,
+            inputs,
+            definition
         )
         local observationDirty, seenObservation = dependenciesChanged(
-            cache.seenObservation, deps.observation, inputs, definition
+            cache.seenObservation,
+            deps.observation,
+            inputs,
+            definition
         )
         local evaluationDirty, seenEvaluation = dependenciesChanged(
-            cache.seenEvaluation, deps.evaluation, inputs, definition
+            cache.seenEvaluation,
+            deps.evaluation,
+            inputs,
+            definition
         )
 
         local selection = cache.selection
         local observation = cache.observation
 
         if selectionDirty then
-            local selected = logic.Select and logic.Select(inputs, definition) or EMPTY
+            local selected = logic.Select and logic.Select(inputs, definition)
+                or EMPTY
 
-            if selected.capacity and not Catalog.SupportsCapacity(definition, selected.capacity) then
-                error("RCC: unsupported selection capacity " .. tostring(selected.capacity) .. " for " .. key)
+            if
+                selected.capacity
+                and not Catalog.SupportsCapacity(definition, selected.capacity)
+            then
+                error(
+                    "RCC: unsupported selection capacity "
+                        .. tostring(selected.capacity)
+                        .. " for "
+                        .. key
+                )
             end
 
             if not Inputs.Equal(selected, selection) then
@@ -89,26 +103,35 @@ function Runtime.Build(runtime, inputs, now, due, categories)
         end
 
         if observationDirty then
-            local observed = logic.Observe and logic.Observe(inputs, definition) or EMPTY
+            local observed = logic.Observe and logic.Observe(inputs, definition)
+                or EMPTY
 
             if not Inputs.Equal(observed, observation) then
                 observation = observed
             end
         end
 
-        if not previous
+        if
+            not previous
             or selection ~= cache.selection
             or observation ~= cache.observation
             or evaluationDirty
             or (due and due[key])
         then
-            local model = logic.Evaluate and logic.Evaluate(selection, observation, inputs, now)
+            local model = logic.Evaluate
+                    and logic.Evaluate(selection, observation, inputs, now)
                 or { selection = selection, action = selection.action }
             local choices = cache.choices
 
-            if not previous or selection ~= cache.selection or presenter.choicesUseModel then
-                local choiceInput = presenter.choicesUseModel and model or selection
-                choices = presenter.Choices and presenter.Choices(choiceInput) or nil
+            if
+                not previous
+                or selection ~= cache.selection
+                or presenter.choicesUseModel
+            then
+                local choiceInput = presenter.choicesUseModel and model
+                    or selection
+                choices = presenter.Choices and presenter.Choices(choiceInput)
+                    or nil
 
                 for _, choice in ipairs(choices or EMPTY) do
                     State.Normalize(choice)
@@ -118,7 +141,11 @@ function Runtime.Build(runtime, inputs, now, due, categories)
             local state = presenter.Present(model)
             local candidate = selection.candidate
 
-            if not state.action and not state.summaryCapacity and candidate and selection.preferenceKey
+            if
+                not state.action
+                and not state.summaryCapacity
+                and candidate
+                and selection.preferenceKey
                 and RCC.ConsumablePreferences.CanPrefer(candidate.choice)
             then
                 state.preference = {
@@ -130,23 +157,25 @@ function Runtime.Build(runtime, inputs, now, due, categories)
 
             State.Normalize(state)
 
-            if model.allowFlyout ~= false then
-                state.flyoutChoices = choices
-            end
+            if model.allowFlyout ~= false then state.flyoutChoices = choices end
 
             local oldState = cache.state
             local visualChanged = not Inputs.Equal(oldState, state)
             local interactionChanged = not oldState
                 or not State.SameInteractions(oldState, state)
-            local applicabilityChanged = not oldState or oldState.applicable ~= state.applicable
+            local applicabilityChanged = not oldState
+                or oldState.applicable ~= state.applicable
             local revisions = cache.revisions or {}
 
             if visualChanged or interactionChanged or applicabilityChanged then
                 runtime.revision = runtime.revision + 1
                 revisions = {
-                    visual = visualChanged and runtime.revision or revisions.visual,
-                    interaction = interactionChanged and runtime.revision or revisions.interaction,
-                    applicability = applicabilityChanged and runtime.revision or revisions.applicability,
+                    visual = visualChanged and runtime.revision
+                        or revisions.visual,
+                    interaction = interactionChanged and runtime.revision
+                        or revisions.interaction,
+                    applicability = applicabilityChanged and runtime.revision
+                        or revisions.applicability,
                 }
                 snapshot.changed[key] = {
                     visual = visualChanged,
@@ -182,7 +211,8 @@ function Runtime.GetDeadline(runtime)
 
     for _, cache in pairs(runtime.categories) do
         if cache.nextUpdateAt then
-            deadline = math.min(deadline or cache.nextUpdateAt, cache.nextUpdateAt)
+            deadline =
+                math.min(deadline or cache.nextUpdateAt, cache.nextUpdateAt)
         end
     end
 
@@ -197,7 +227,11 @@ function Runtime.GetDue(runtime, now)
             due[key] = true
         end
 
-        if cache.recheckAt and cache.recheckAt <= now + 0.01 and cache.recheckSource then
+        if
+            cache.recheckAt
+            and cache.recheckAt <= now + 0.01
+            and cache.recheckSource
+        then
             sources[cache.recheckSource] = true
         end
     end

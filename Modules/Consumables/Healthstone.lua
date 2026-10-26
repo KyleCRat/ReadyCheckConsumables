@@ -7,12 +7,13 @@ Healthstone.Inventory = { map = RCC.db.healthstoneItemIDs }
 
 Healthstone.Dependencies = {
     selection = { "inventory" },
-    evaluation = { "roster.hasWarlock" }
+    evaluation = { "roster.hasWarlock" },
 }
 
 function Healthstone.Select(inputs)
     local candidates = S.Map(inputs.inventory, RCC.db.healthstoneItemIDs, {
         countUses = true,
+
         compare = function(a, b)
             return a.data.priority > b.data.priority
         end,
@@ -26,6 +27,6 @@ function Healthstone.Evaluate(selection, _, inputs)
     return {
         selection = selection,
         action = selection.action,
-        applicable = inputs.roster.hasWarlock
+        applicable = inputs.roster.hasWarlock,
     }
 end

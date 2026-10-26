@@ -34,7 +34,9 @@ local function updateEventSubscriptions()
     -- playerAuras / playerSpellAuras / groupAuras share notifications, but not
     -- queries. Targeted player buffs do not require a full player aura scan.
     -- The handler routes each affected unit to its requested inputs.
-    local auras = sources.playerAuras or sources.playerSpellAuras or sources.groupAuras
+    local auras = sources.playerAuras
+        or sources.playerSpellAuras
+        or sources.groupAuras
     setEventEnabled("UNIT_AURA", auras)
     setEventEnabled("UNIT_AURA_BLOCKED", auras)
     setEventEnabled("UNIT_AURA_BLOCK_LIST_CLEARED", auras)
@@ -91,7 +93,11 @@ local function updateEventSubscriptions()
     -- instance / location / roster / auras / toys: major transitions deliberately
     -- refresh all requested inputs in this group, even if the instance ID/type
     -- stays the same. This is separate from location-only movement above.
-    local majorTransitions = sources.instance or sources.location or sources.roster or auras or sources.toys
+    local majorTransitions = sources.instance
+        or sources.location
+        or sources.roster
+        or auras
+        or sources.toys
     setEventEnabled("ZONE_CHANGED_NEW_AREA", majorTransitions)
     setEventEnabled("PLAYER_DIFFICULTY_CHANGED", majorTransitions)
 
@@ -154,20 +160,14 @@ local function reconcileDemand()
     Runtime.RetainCategories(runtime, categories)
 
     for source in pairs(inputs) do
-        if not demand.sources[source] then
-            inputs[source] = nil
-        end
+        if not demand.sources[source] then inputs[source] = nil end
     end
 
     for source in pairs(pending) do
-        if not demand.sources[source] then
-            pending[source] = nil
-        end
+        if not demand.sources[source] then pending[source] = nil end
     end
 
-    if not demand.sources.cooldowns then
-        cooldownDeadline = nil
-    end
+    if not demand.sources.cooldowns then cooldownDeadline = nil end
 
     updateEventSubscriptions()
 
@@ -198,10 +198,13 @@ local function schedule(delaySeconds)
         return
     end
 
-    refreshTimer = C_Timer.NewTimer(delaySeconds or DEFAULT_REFRESH_DELAY_SECONDS, function()
-        refreshTimer = nil
-        Controller.FlushPending()
-    end)
+    refreshTimer = C_Timer.NewTimer(
+        delaySeconds or DEFAULT_REFRESH_DELAY_SECONDS,
+        function()
+            refreshTimer = nil
+            Controller.FlushPending()
+        end
+    )
 end
 
 -- Omit options.scope to refresh the full source; otherwise supply an item-ID
@@ -226,9 +229,7 @@ local function getDisplayedItemIDs()
 
     for _, entry in pairs(consumers) do
         for key, itemID in pairs(entry.consumer:GetDisplayedItemIDs()) do
-            if entry.categories[key] then
-                itemIDs[itemID] = true
-            end
+            if entry.categories[key] then itemIDs[itemID] = true end
         end
     end
 
@@ -242,13 +243,9 @@ local function readInputs(dirty, now)
 
     -- These inputs affect selection/evaluation, not aura freshness. Major
     -- transitions request their aura reads explicitly in the event handler.
-    if dirty.instance then
-        storeInput("instance", Inputs.ReadInstance())
-    end
+    if dirty.instance then storeInput("instance", Inputs.ReadInstance()) end
 
-    if dirty.location then
-        storeInput("location", Inputs.ReadLocation())
-    end
+    if dirty.location then storeInput("location", Inputs.ReadLocation()) end
 
     if dirty.class then
         local class = Inputs.ReadClass()
@@ -262,11 +259,14 @@ local function readInputs(dirty, now)
     end
 
     if dirty.inventory then
-        storeInput("inventory", Inputs.ReadInventory(
-            demand.itemIDs,
-            inputs.inventory,
-            type(dirty.inventory) == "table" and dirty.inventory or nil
-        ))
+        storeInput(
+            "inventory",
+            Inputs.ReadInventory(
+                demand.itemIDs,
+                inputs.inventory,
+                type(dirty.inventory) == "table" and dirty.inventory or nil
+            )
+        )
         dirty.cooldowns = demand.sources.cooldowns
     end
 
@@ -295,7 +295,8 @@ local function readInputs(dirty, now)
         storeInput("preferences", Inputs.ReadPreferences(inputs.preferences))
     end
 
-    local groupUnits = type(dirty.groupAuras) == "table" and dirty.groupAuras or {}
+    local groupUnits = type(dirty.groupAuras) == "table" and dirty.groupAuras
+        or {}
 
     if dirty.roster then
         local roster = Inputs.ReadRoster()
@@ -304,7 +305,10 @@ local function readInputs(dirty, now)
             resetGroup = true
         else
             for unit, member in pairs(roster.units) do
-                if not inputs.roster or not Inputs.Equal(member, inputs.roster.units[unit]) then
+                if
+                    not inputs.roster
+                    or not Inputs.Equal(member, inputs.roster.units[unit])
+                then
                     groupUnits[unit] = true
                 end
             end
@@ -318,10 +322,13 @@ local function readInputs(dirty, now)
     end
 
     if dirty.playerSpellAuras then
-        storeInput("playerSpellAuras", Inputs.ReadPlayerSpellAuras(
-            demand.playerAuraSpellIDs,
-            dirty.playerAuras and inputs.playerAuras or nil
-        ))
+        storeInput(
+            "playerSpellAuras",
+            Inputs.ReadPlayerSpellAuras(
+                demand.playerAuraSpellIDs,
+                dirty.playerAuras and inputs.playerAuras or nil
+            )
+        )
     end
 
     -- Confirmed applications can update character history without changing
@@ -342,26 +349,30 @@ local function readInputs(dirty, now)
             storeInput("history", RCC.ConsumableHistory.Read(inputs.history))
         end
 
-        if historyChanged then
-            RCC.ConsumableMacros.ScheduleUpdate()
-        end
+        if historyChanged then RCC.ConsumableMacros.ScheduleUpdate() end
     end
 
-    if demand.sources.groupAuras and (resetGroup or next(groupUnits) or dirty.roster) then
+    if
+        demand.sources.groupAuras
+        and (resetGroup or next(groupUnits) or dirty.roster)
+    then
         local previous = inputs.groupAuras
 
         if resetGroup then
             previous, groupUnits = nil, nil
         end
 
-        storeInput("groupAuras", Inputs.ReadGroupAuras(
-            inputs.roster,
-            inputs.class,
-            previous,
-            groupUnits,
-            now,
-            dirty.playerAuras and inputs.playerAuras or nil
-        ))
+        storeInput(
+            "groupAuras",
+            Inputs.ReadGroupAuras(
+                inputs.roster,
+                inputs.class,
+                previous,
+                groupUnits,
+                now,
+                dirty.playerAuras and inputs.playerAuras or nil
+            )
+        )
     end
 
     if dirty.cooldowns then
@@ -391,9 +402,7 @@ local function publish(snapshot, includeInactive)
 
     publishing = false
 
-    if demandDirty then
-        schedule(NEXT_FRAME_DELAY_SECONDS)
-    end
+    if demandDirty then schedule(NEXT_FRAME_DELAY_SECONDS) end
 end
 
 local function scheduleDeadline()
@@ -410,10 +419,13 @@ local function scheduleDeadline()
     end
 
     if deadline then
-        deadlineTimer = C_Timer.NewTimer(math.max(MIN_DEADLINE_DELAY_SECONDS, deadline - GetTime()), function()
-            deadlineTimer = nil
-            Controller.FlushPending()
-        end)
+        deadlineTimer = C_Timer.NewTimer(
+            math.max(MIN_DEADLINE_DELAY_SECONDS, deadline - GetTime()),
+            function()
+                deadlineTimer = nil
+                Controller.FlushPending()
+            end
+        )
     end
 end
 
@@ -432,9 +444,7 @@ function Controller.FlushPending(forceRefresh)
         categoriesChanged, consumersChanged = reconcileDemand()
     end
 
-    if forceRefresh or refreshRequested then
-        invalidateAll()
-    end
+    if forceRefresh or refreshRequested then invalidateAll() end
 
     refreshRequested = false
 
@@ -445,20 +455,19 @@ function Controller.FlushPending(forceRefresh)
         merge(source)
     end
 
-    if cooldownDeadline and cooldownDeadline <= now then
-        merge("cooldowns")
-    end
+    if cooldownDeadline and cooldownDeadline <= now then merge("cooldowns") end
 
-    if not next(pending) and not next(due) and latestSnapshot and not categoriesChanged then
-        if consumersChanged then
-            publish(latestSnapshot)
-        end
+    if
+        not next(pending)
+        and not next(due)
+        and latestSnapshot
+        and not categoriesChanged
+    then
+        if consumersChanged then publish(latestSnapshot) end
 
         scheduleDeadline()
 
-        if demandDirty then
-            schedule(NEXT_FRAME_DELAY_SECONDS)
-        end
+        if demandDirty then schedule(NEXT_FRAME_DELAY_SECONDS) end
 
         return consumersChanged
     end
@@ -471,17 +480,18 @@ function Controller.FlushPending(forceRefresh)
     local previousRevision = sourceRevision
     readInputs(dirty, now)
 
-    if latestSnapshot and not categoriesChanged and previousRevision == sourceRevision and not next(due) then
-        if consumersChanged then
-            publish(latestSnapshot)
-        end
+    if
+        latestSnapshot
+        and not categoriesChanged
+        and previousRevision == sourceRevision
+        and not next(due)
+    then
+        if consumersChanged then publish(latestSnapshot) end
 
         refreshing = false
         scheduleDeadline()
 
-        if next(pending) or demandDirty then
-            schedule()
-        end
+        if next(pending) or demandDirty then schedule() end
 
         return consumersChanged
     end
@@ -491,9 +501,7 @@ function Controller.FlushPending(forceRefresh)
     refreshing = false
     scheduleDeadline()
 
-    if next(pending) or demandDirty then
-        schedule()
-    end
+    if next(pending) or demandDirty then schedule() end
 
     return true
 end
@@ -506,18 +514,14 @@ function Controller.RefreshNow(force)
     if refreshing or publishing then
         demandDirty = true
 
-        if force then
-            refreshRequested = true
-        end
+        if force then refreshRequested = true end
 
         return false
     end
 
     local changed = Controller.FlushPending(force)
 
-    if not changed and latestSnapshot then
-        publish(latestSnapshot)
-    end
+    if not changed and latestSnapshot then publish(latestSnapshot) end
 
     return changed
 end
@@ -555,9 +559,7 @@ function Controller.RegisterConsumer(key, consumer)
 
     -- Consumers register while the TOC is loading, before saved settings and
     -- later modules are ready. Surface initialization/login starts observation.
-    if latestSnapshot then
-        Controller.RequestRefresh({ nextFrame = true })
-    end
+    if latestSnapshot then Controller.RequestRefresh({ nextFrame = true }) end
 
     return true
 end
@@ -585,11 +587,9 @@ local function rosterUnit(unit)
 end
 
 eventFrame:SetScript("OnEvent", function(_, event, unit)
-    if event == "PLAYER_LOGIN" then
-        Controller.RequestRefresh({ nextFrame = true })
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        -- Loading screens are a full freshness boundary, including returns to
-        -- the same instance. RequestRefresh reads only currently needed inputs.
+    if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
+        -- Login and loading screens are full freshness boundaries, including
+        -- returns to the same instance. Read only currently needed inputs.
         Controller.RequestRefresh({ nextFrame = true })
     elseif event == "PLAYER_REGEN_DISABLED" then
         combatPending = true
@@ -599,10 +599,9 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         Controller.PrepareOutOfCombat()
         -- Hidden temporary surfaces may still need to release actions that
         -- could not be cleared when their demand ended during combat.
-        if latestSnapshot then
-            publish(latestSnapshot, true)
-        end
-    elseif event == "UNIT_AURA"
+        if latestSnapshot then publish(latestSnapshot, true) end
+    elseif
+        event == "UNIT_AURA"
         or event == "UNIT_AURA_BLOCKED"
         or event == "UNIT_AURA_BLOCK_LIST_CLEARED"
     then
@@ -616,7 +615,11 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         if token then
             Controller.Invalidate("groupAuras", { scope = { [token] = true } })
         end
-    elseif event == "UNIT_CONNECTION" or event == "UNIT_FLAGS" or event == "UNIT_PHASE" then
+    elseif
+        event == "UNIT_CONNECTION"
+        or event == "UNIT_FLAGS"
+        or event == "UNIT_PHASE"
+    then
         local token = rosterUnit(unit)
 
         if token then
@@ -647,7 +650,10 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         end
     elseif event == "GROUP_ROSTER_UPDATE" then
         Controller.Invalidate("roster")
-    elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_DIFFICULTY_CHANGED" then
+    elseif
+        event == "ZONE_CHANGED_NEW_AREA"
+        or event == "PLAYER_DIFFICULTY_CHANGED"
+    then
         -- Travel/difficulty changes can invalidate observations without changing
         -- the instance ID/type. Refresh those sources explicitly, not as a side
         -- effect of comparing instance or location values.
@@ -669,24 +675,34 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         else
             Controller.Invalidate("toys")
         end
-    elseif event == "SPELL_UPDATE_USABLE"
+    elseif
+        event == "SPELL_UPDATE_USABLE"
         or event == "PLAYER_LEVEL_UP"
         or event == "UPDATE_SHAPESHIFT_FORM"
     then
         Controller.Invalidate("toys")
     elseif event == "BAG_UPDATE_DELAYED" then
         Controller.Invalidate("inventory")
-    elseif event == "ITEM_COUNT_CHANGED" or event == "ITEM_DATA_LOAD_RESULT" then
+    elseif
+        event == "ITEM_COUNT_CHANGED" or event == "ITEM_DATA_LOAD_RESULT"
+    then
         if F.IsSafeNumber(unit) and demand.itemIDs[unit] then
             Controller.Invalidate("inventory", { scope = { [unit] = true } })
         end
 
-        if event == "ITEM_DATA_LOAD_RESULT" and F.IsSafeNumber(unit) and demand.toyItemIDs[unit] then
+        if
+            event == "ITEM_DATA_LOAD_RESULT"
+            and F.IsSafeNumber(unit)
+            and demand.toyItemIDs[unit]
+        then
             Controller.Invalidate("toys", { scope = { [unit] = true } })
         end
-    elseif event == "BAG_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_COOLDOWN" then
+    elseif
+        event == "BAG_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_COOLDOWN"
+    then
         Controller.Invalidate("cooldowns")
-    elseif event == "WEAPON_ENCHANT_CHANGED"
+    elseif
+        event == "WEAPON_ENCHANT_CHANGED"
         or event == "WEAPON_SLOT_CHANGED"
         or event == "PLAYER_EQUIPMENT_CHANGED"
     then
@@ -695,19 +711,21 @@ eventFrame:SetScript("OnEvent", function(_, event, unit)
         if F.UnitIsUnitSafe(unit, "player") then
             Controller.Invalidate("weapons")
         end
-    elseif event == "SPELLS_CHANGED"
+    elseif
+        event == "SPELLS_CHANGED"
         or event == "SPELL_DATA_LOAD_RESULT"
         or event == "PLAYER_SPECIALIZATION_CHANGED"
     then
-        if event ~= "PLAYER_SPECIALIZATION_CHANGED" or F.UnitIsUnitSafe(unit, "player") then
+        if
+            event ~= "PLAYER_SPECIALIZATION_CHANGED"
+            or F.UnitIsUnitSafe(unit, "player")
+        then
             Controller.Invalidate("spells")
             Controller.Invalidate("playerSpellAuras")
             Controller.Invalidate("class")
             Controller.Invalidate("weapons")
 
-            if event == "SPELLS_CHANGED" then
-                Controller.Invalidate("toys")
-            end
+            if event == "SPELLS_CHANGED" then Controller.Invalidate("toys") end
         end
     end
 end)

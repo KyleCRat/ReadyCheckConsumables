@@ -33,9 +33,7 @@ local function openForBreakTimer(duration)
 
     local now = GetTime()
 
-    if isDuplicateBreak(duration, now) then
-        return
-    end
+    if isDuplicateBreak(duration, now) then return end
 
     if Controller.OpenForBreakTimer() then
         lastBreakDuration = duration
@@ -52,7 +50,8 @@ end
 local function registerBigWigs()
     local loader = _G.BigWigsLoader
 
-    if bigWigsRegistered
+    if
+        bigWigsRegistered
         or type(loader) ~= "table"
         or type(loader.RegisterMessage) ~= "function"
     then
@@ -70,15 +69,14 @@ local function registerBigWigs()
 end
 
 local function onDBMTimerBegin(_, _, _, duration, _, timerType)
-    if timerType == "break" then
-        openForBreakTimer(duration)
-    end
+    if timerType == "break" then openForBreakTimer(duration) end
 end
 
 local function registerDBM()
     local dbm = _G.DBM
 
-    if dbmRegistered
+    if
+        dbmRegistered
         or type(dbm) ~= "table"
         or type(dbm.RegisterCallback) ~= "function"
     then
@@ -99,7 +97,8 @@ local function updateProviderRegistration(self)
     registerBigWigs()
     registerDBM()
 
-    if not providerCanStillLoad("BigWigs", bigWigsRegistered)
+    if
+        not providerCanStillLoad("BigWigs", bigWigsRegistered)
         and not providerCanStillLoad("DBM-Core", dbmRegistered)
     then
         self:UnregisterEvent("ADDON_LOADED")
@@ -112,5 +111,6 @@ providerFrame:SetScript("OnEvent", function(self, _, addonName)
         updateProviderRegistration(self)
     end
 end)
+
 providerFrame:RegisterEvent("ADDON_LOADED")
 updateProviderRegistration(providerFrame)

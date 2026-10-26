@@ -30,9 +30,7 @@ for index, def in ipairs(RCC.db.raidBuffDefs) do
     local equivalents = {}
 
     for spellID, enabled in pairs(def.equivalentSpellIDs or {}) do
-        if enabled then
-            equivalents[#equivalents + 1] = spellID
-        end
+        if enabled then equivalents[#equivalents + 1] = spellID end
     end
 
     table.sort(equivalents)
@@ -93,9 +91,7 @@ function Status.GetInfoByProviderClass(class)
     for index = 1, Status.GetCount() do
         local info = Status.GetInfo(index)
 
-        if info and info.providerClass == class then
-            return info
-        end
+        if info and info.providerClass == class then return info end
     end
 end
 
@@ -112,9 +108,7 @@ end
 function Status.AuraMatches(index, aura)
     local spellID = getAuraSpellID(aura)
 
-    if issecretvalue(spellID) or not spellID then
-        return false
-    end
+    if issecretvalue(spellID) or not spellID then return false end
 
     local query = auraQueries[index]
 
@@ -127,9 +121,7 @@ function Status.CollectAura(data, aura, index, remaining)
 
     data.available = true
     data.has = true
-    if F.IsSafeNumber(remaining) then
-        data.time = remaining
-    end
+    if F.IsSafeNumber(remaining) then data.time = remaining end
 
     if F.IsSafeNumber(aura.expirationTime) and aura.expirationTime > 0 then
         data.expirationTime = aura.expirationTime
@@ -143,12 +135,14 @@ function Status.IsMissing(data)
 end
 
 local function applyTargetedStatus(data, unit, index, now)
-    local result = AuraScan.FindFirstBySpellIDs(unit, auraQueries[index].spellIDs)
+    local result =
+        AuraScan.FindFirstBySpellIDs(unit, auraQueries[index].spellIDs)
 
     data.available = result.available
 
     if result.aura then
-        local remaining = now and F.GetAuraRemaining(result.aura.expirationTime, now)
+        local remaining = now
+            and F.GetAuraRemaining(result.aura.expirationTime, now)
 
         Status.CollectAura(data, result.aura, index, remaining)
     end
@@ -163,26 +157,20 @@ function Status.FinalizeScan(data, scan, index, unit, now)
     data.available = data.has == true
         or AuraScan.CanConfirmMissing(scan, auraQueries[index].spellIDs)
 
-    if not data.available then
-        applyTargetedStatus(data, unit, index, now)
-    end
+    if not data.available then applyTargetedStatus(data, unit, index, now) end
 end
 
 function Status.GetStatusFromScan(unit, scan, index, now)
     local data = Status.CreateData()
 
-    if not auraQueries[index] then
-        return data
-    end
+    if not auraQueries[index] then return data end
 
     for _, aura in ipairs(scan.auras) do
         local remaining = now and F.GetAuraRemaining(aura.expirationTime, now)
 
         Status.CollectAura(data, aura, index, remaining)
 
-        if data.has then
-            break
-        end
+        if data.has then break end
     end
 
     Status.FinalizeScan(data, scan, index, unit, now)
@@ -198,9 +186,7 @@ function Status.ScanUnit(unit, now)
         statuses[index] = Status.CreateData()
     end
 
-    if not unit then
-        return statuses
-    end
+    if not unit then return statuses end
 
     local scan = AuraScan.ForEachAura(unit, function(aura)
         local remaining = now and F.GetAuraRemaining(aura.expirationTime, now)
@@ -220,9 +206,7 @@ end
 function Status.GetUnitStatus(unit, index, now)
     local data = Status.CreateData()
 
-    if not auraQueries[index] then
-        return data
-    end
+    if not auraQueries[index] then return data end
 
     applyTargetedStatus(data, unit, index, now)
 

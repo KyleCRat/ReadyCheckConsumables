@@ -6,10 +6,11 @@ RCC.FoodAuras = RCC.FoodAuras or {}
 local FoodAuras = RCC.FoodAuras
 local F = RCC.F
 
-FoodAuras.Type = FoodAuras.Type or {
-    WELL_FED = "wellFed",
-    EATING   = "eating",
-}
+FoodAuras.Type = FoodAuras.Type
+    or {
+        WELL_FED = "wellFed",
+        EATING = "eating",
+    }
 
 local FOOD_AURA_TYPE = FoodAuras.Type
 
@@ -49,14 +50,12 @@ end
 
 RCC.db.foodAuraIconTypes = {
     [136000] = FOOD_AURA_TYPE.WELL_FED, -- Spell_misc_food,  Well Fed Food Buff
-    [132805] = FOOD_AURA_TYPE.EATING,   -- Inv_drink_18,     Drinking
-    [133950] = FOOD_AURA_TYPE.EATING,   -- Inv_misc_food_08, Eating
+    [132805] = FOOD_AURA_TYPE.EATING, -- Inv_drink_18,     Drinking
+    [133950] = FOOD_AURA_TYPE.EATING, -- Inv_misc_food_08, Eating
 }
 
 function FoodAuras.GetType(aura)
     local iconID = F.GetPublicAuraField(aura, "icon")
 
-    if iconID then
-        return RCC.db.foodAuraIconTypes[iconID]
-    end
+    if iconID then return RCC.db.foodAuraIconTypes[iconID] end
 end

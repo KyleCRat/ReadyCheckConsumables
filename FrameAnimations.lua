@@ -16,9 +16,7 @@ function FrameAnimations.CreateFadeOut(frame, options)
     local hideInCombat = options.hideInCombat
     local isCancelling = false
 
-    if hideInCombat == nil then
-        hideInCombat = true
-    end
+    if hideInCombat == nil then hideInCombat = true end
 
     controller.group = frame:CreateAnimationGroup()
 
@@ -28,9 +26,7 @@ function FrameAnimations.CreateFadeOut(frame, options)
     alpha:SetDuration(options.duration or 0.5)
 
     controller.group:SetScript("OnFinished", function()
-        if isCancelling then
-            return
-        end
+        if isCancelling then return end
 
         controller.isFadingOut = false
         frame:Hide()
@@ -40,9 +36,7 @@ function FrameAnimations.CreateFadeOut(frame, options)
     function controller:Cancel()
         isCancelling = true
 
-        if self.group:IsPlaying() then
-            self.group:Stop()
-        end
+        if self.group:IsPlaying() then self.group:Stop() end
 
         isCancelling = false
         self.isFadingOut = false
@@ -50,9 +44,7 @@ function FrameAnimations.CreateFadeOut(frame, options)
     end
 
     function controller:Hide()
-        if not frame:IsShown() then
-            return
-        end
+        if not frame:IsShown() then return end
 
         if hideInCombat and InCombatLockdown() then
             frame:Hide()
@@ -60,9 +52,7 @@ function FrameAnimations.CreateFadeOut(frame, options)
             return
         end
 
-        if self.isFadingOut then
-            return
-        end
+        if self.isFadingOut then return end
 
         self.isFadingOut = true
         frame:SetAlpha(fromAlpha)

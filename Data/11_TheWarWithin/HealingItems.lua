@@ -12,9 +12,24 @@ RCC.Data.AddHealingPotionItems({
     { itemID = 244839, family = "invigorating", q = 1 },
 
     -- 11.0.0 - Fleeting
-    { itemID = 212948, family = "cavedwellersDelight", q = 3, variant = FLEETING },
-    { itemID = 212949, family = "cavedwellersDelight", q = 2, variant = FLEETING },
-    { itemID = 212950, family = "cavedwellersDelight", q = 1, variant = FLEETING },
+    {
+        itemID = 212948,
+        family = "cavedwellersDelight",
+        q = 3,
+        variant = FLEETING,
+    },
+    {
+        itemID = 212949,
+        family = "cavedwellersDelight",
+        q = 2,
+        variant = FLEETING,
+    },
+    {
+        itemID = 212950,
+        family = "cavedwellersDelight",
+        q = 1,
+        variant = FLEETING,
+    },
     { itemID = 212942, family = "algariHealing", q = 3, variant = FLEETING },
     { itemID = 212943, family = "algariHealing", q = 2, variant = FLEETING },
     { itemID = 212944, family = "algariHealing", q = 1, variant = FLEETING },

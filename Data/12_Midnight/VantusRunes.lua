@@ -2,32 +2,50 @@ local _, RCC = ...
 
 RCC.Data.AddVantusBuffs({
     -- 12.0.0 - Voidspire
-    [1276687] = true, [1276688] = true, -- Imperator Averzian
-    [1276691] = true, [1276698] = true, -- Vorasius
-    [1276704] = true, [1276705] = true, -- Fallen-King Salhadaar
-    [1276708] = true, [1276709] = true, -- Vaelgor & Ezzorak
-    [1276711] = true, [1276712] = true, -- Lightblinded Vanguard
-    [1276714] = true, [1276715] = true, -- Crown of the Cosmos
+    [1276687] = true,
+    [1276688] = true, -- Imperator Averzian
+    [1276691] = true,
+    [1276698] = true, -- Vorasius
+    [1276704] = true,
+    [1276705] = true, -- Fallen-King Salhadaar
+    [1276708] = true,
+    [1276709] = true, -- Vaelgor & Ezzorak
+    [1276711] = true,
+    [1276712] = true, -- Lightblinded Vanguard
+    [1276714] = true,
+    [1276715] = true, -- Crown of the Cosmos
 
     -- 12.0.0 - Dreamrift
-    [1276685] = true, [1276686] = true, -- Chimaerus the Undreamt God
+    [1276685] = true,
+    [1276686] = true, -- Chimaerus the Undreamt God
 
     -- 12.0.0 - Sporefall
-    [1300174] = true, [1300173] = true, -- Rotmire
+    [1300174] = true,
+    [1300173] = true, -- Rotmire
 
     -- 12.0.0 - March on Quel'Danas
-    [1276666] = true, [1276669] = true, -- Belo'ren, Child of Al'ar
-    [1276682] = true, [1276683] = true, -- L'ura
+    [1276666] = true,
+    [1276669] = true, -- Belo'ren, Child of Al'ar
+    [1276682] = true,
+    [1276683] = true, -- L'ura
 
     -- 12.1.0 - The Venomous Abyss
-    [1303172] = true, [1303180] = true, -- Nek'zali the Soulcoiler
-    [1303173] = true, [1303181] = true, -- Entombed Sentinels
-    [1303174] = true, [1303182] = true, -- The Lost Explorers
-    [1303175] = true, [1303183] = true, -- Vashnik the Malignant
-    [1303176] = true, [1303184] = true, -- Sszorak
-    [1303177] = true, [1303185] = true, -- The Twin Fangs
-    [1303178] = true, [1303186] = true, -- The Coiled Altar
-    [1303179] = true, [1303187] = true, -- Ula'tek
+    [1303172] = true,
+    [1303180] = true, -- Nek'zali the Soulcoiler
+    [1303173] = true,
+    [1303181] = true, -- Entombed Sentinels
+    [1303174] = true,
+    [1303182] = true, -- The Lost Explorers
+    [1303175] = true,
+    [1303183] = true, -- Vashnik the Malignant
+    [1303176] = true,
+    [1303184] = true, -- Sszorak
+    [1303177] = true,
+    [1303185] = true, -- The Twin Fangs
+    [1303178] = true,
+    [1303186] = true, -- The Coiled Altar
+    [1303179] = true,
+    [1303187] = true, -- Ula'tek
 
     -- 12.1.0 - The Tidebound Grotto
     [1310439] = true, -- Nymrissa Wavecaller (shared by both ranks)

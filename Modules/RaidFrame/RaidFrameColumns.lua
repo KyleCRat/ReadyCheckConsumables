@@ -3,67 +3,67 @@ local _, RCC = ...
 RCC.RaidFrameColumns = RCC.RaidFrameColumns or {}
 local Columns = RCC.RaidFrameColumns
 
-local Broadcast      = RCC.RaidFrameBroadcast
+local Broadcast = RCC.RaidFrameBroadcast
 local DisplayContext = RCC.DisplayContext
-local db             = RCC.db
-local F              = RCC.F
-local FoodAuras      = RCC.FoodAuras
-local Cauldron       = RCC.RaidFrameCauldron
-local Renderers      = RCC.RaidFrameColumnRenderers
+local db = RCC.db
+local F = RCC.F
+local FoodAuras = RCC.FoodAuras
+local Cauldron = RCC.RaidFrameCauldron
+local Renderers = RCC.RaidFrameColumnRenderers
 local RaidBuffStatus = RCC.RaidBuffStatus
-local Timing         = RCC.ConsumableTiming
-local Visibility     = RCC.ContextualVisibility
+local Timing = RCC.ConsumableTiming
+local Visibility = RCC.ContextualVisibility
 
-local ICON_SIZE                  = 26
-local NAME_WIDTH                 = 150
-local RC_ICON_WIDTH              = 24
-local TIME_WIDTH                 = 30
-local H_PAD                      = 3
-local FRAME_PAD                  = 3
-local DURABILITY_WIDTH           = 42
-local PROVISION_NAME_X           = H_PAD
-local CAULDRON_WIDTH             = 58
-local CAULDRON_COUNT_WIDTH       = 28
-local NO_DURATION                = 0
+local ICON_SIZE = 26
+local NAME_WIDTH = 150
+local RC_ICON_WIDTH = 24
+local TIME_WIDTH = 30
+local H_PAD = 3
+local FRAME_PAD = 3
+local DURABILITY_WIDTH = 42
+local PROVISION_NAME_X = H_PAD
+local CAULDRON_WIDTH = 58
+local CAULDRON_COUNT_WIDTH = 28
+local NO_DURATION = 0
 local FOOD_AURA_TYPE = FoodAuras.Type
 local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
 local Reason = RCC.DisplayReason
 
 local COLUMN_TYPE = {
-    TIMED      = "timed",
-    ICON       = "icon",
-    RAID_BUFF  = "raidBuff",
+    TIMED = "timed",
+    ICON = "icon",
+    RAID_BUFF = "raidBuff",
     DURABILITY = "durability",
-    CAULDRON   = "cauldron",
+    CAULDRON = "cauldron",
 }
 
 local DATA_SOURCE = {
-    AURA                 = "aura",
-    TEMP_WEAPON_ENCHANT  = "tempWeaponEnchant",
-    RAID_BUFF            = "raidBuff",
-    DURABILITY           = "durability",
-    CAULDRON             = "cauldron",
+    AURA = "aura",
+    TEMP_WEAPON_ENCHANT = "tempWeaponEnchant",
+    RAID_BUFF = "raidBuff",
+    DURABILITY = "durability",
+    CAULDRON = "cauldron",
 }
 
 Columns.COLUMN_TYPE = COLUMN_TYPE
 Columns.DATA_SOURCE = DATA_SOURCE
 Columns.RULES = {
-    noDuration          = NO_DURATION,
+    noDuration = NO_DURATION,
     durabilityThreshold = 50,
 }
 
 local CREATE_CELL_BY_COLUMN_TYPE = {
-    [COLUMN_TYPE.TIMED]      = Renderers.TIMED.CreateCell,
-    [COLUMN_TYPE.ICON]       = Renderers.ICON.CreateCell,
-    [COLUMN_TYPE.RAID_BUFF]  = Renderers.RAID_BUFF.CreateCell,
+    [COLUMN_TYPE.TIMED] = Renderers.TIMED.CreateCell,
+    [COLUMN_TYPE.ICON] = Renderers.ICON.CreateCell,
+    [COLUMN_TYPE.RAID_BUFF] = Renderers.RAID_BUFF.CreateCell,
     [COLUMN_TYPE.DURABILITY] = Renderers.DURABILITY.CreateCell,
-    [COLUMN_TYPE.CAULDRON]   = Renderers.CAULDRON.CreateCell,
+    [COLUMN_TYPE.CAULDRON] = Renderers.CAULDRON.CreateCell,
 }
 
 local RENDER_CELL_BY_DATA_SOURCE = {
     [DATA_SOURCE.AURA] = {
         [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderAuraCell,
-        [COLUMN_TYPE.ICON]  = Renderers.ICON.RenderAuraCell,
+        [COLUMN_TYPE.ICON] = Renderers.ICON.RenderAuraCell,
     },
     [DATA_SOURCE.TEMP_WEAPON_ENCHANT] = {
         [COLUMN_TYPE.TIMED] = Renderers.TIMED.RenderTempWeaponEnchantCell,
@@ -99,6 +99,7 @@ local CAULDRON_VISIBILITY = {
         [Reason.READY_CHECK] = true,
         [Reason.CAULDRON_DROP] = true,
     },
+
     IsApplicable = function(_, _, definition)
         return Cauldron.IsActive(definition.cauldronKind)
     end,
@@ -116,44 +117,38 @@ local storeAuraID = F.StoreAuraID
 
 local function setTimedAuraData(data, aura, remaining)
     data.available = true
-    data.has     = true
-    data.time    = remaining
-    data.iconID  = F.GetPublicAuraField(aura, "icon")
+    data.has = true
+    data.time = remaining
+    data.iconID = F.GetPublicAuraField(aura, "icon")
     data.spellID = F.GetPublicAuraField(aura, "spellID")
-    data.source  = "aura"
+    data.source = "aura"
     storeAuraID(data, aura)
 end
 
 local function setTimedExternalData(data, source)
-    if data.has and data.source == "aura" then
-        return
-    end
+    if data.has and data.source == "aura" then return end
 
     data.available = true
-    data.has     = source ~= nil and source.has == true
-    data.time    = source and source.time or 0
-    data.iconID  = source and source.iconID or nil
+    data.has = source ~= nil and source.has == true
+    data.time = source and source.time or 0
+    data.iconID = source and source.iconID or nil
     data.spellID = source and source.spellID or nil
-    data.auraID  = nil
-    data.source  = "broadcast"
+    data.auraID = nil
+    data.source = "broadcast"
 end
 
 local function setIconAuraData(data, aura)
     data.available = true
-    data.has     = true
-    data.iconID  = F.GetPublicAuraField(aura, "icon")
+    data.has = true
+    data.iconID = F.GetPublicAuraField(aura, "icon")
     data.spellID = F.GetPublicAuraField(aura, "spellID")
     storeAuraID(data, aura)
 end
 
 local function isTimedDataBad(data, rules)
-    if not data or not data.has then
-        return true
-    end
+    if not data or not data.has then return true end
 
-    if not data.time or data.time == rules.noDuration then
-        return false
-    end
+    if not data.time or data.time == rules.noDuration then return false end
 
     return Timing.IsExpiringSoon(data.time)
 end
@@ -165,12 +160,12 @@ end
 local function createFoodData()
     return {
         available = false,
-        has     = false,
-        time    = 0,
-        auraID  = nil,
-        iconID  = nil,
+        has = false,
+        time = 0,
+        auraID = nil,
+        iconID = nil,
         spellID = nil,
-        source  = nil,
+        source = nil,
     }
 end
 
@@ -184,12 +179,12 @@ local function refreshFoodDisplayData(data, rules)
         isEating = true
     end
 
-    data.has      = displayData.has
-    data.time     = displayData.time
-    data.auraID   = displayData.auraID
-    data.iconID   = displayData.iconID
-    data.spellID  = displayData.spellID
-    data.source   = displayData.source
+    data.has = displayData.has
+    data.time = displayData.time
+    data.auraID = displayData.auraID
+    data.iconID = displayData.iconID
+    data.spellID = displayData.spellID
+    data.source = displayData.source
     data.isEating = isEating
     -- Eating alone cannot prove Well Fed is missing in an incomplete scan.
     -- Food readiness stays unknown until Well Fed is found or ruled out.
@@ -199,12 +194,10 @@ end
 local function collectFoodAura(data, aura, scanContext)
     local auraType = FoodAuras.GetType(aura)
 
-    if not auraType then
-        return
-    end
+    if not auraType then return end
 
     data.wellFed = data.wellFed or createFoodData()
-    data.eating  = data.eating or createFoodData()
+    data.eating = data.eating or createFoodData()
 
     if auraType == FOOD_AURA_TYPE.EATING then
         setTimedAuraData(data.eating, aura, scanContext.remaining)
@@ -218,9 +211,7 @@ end
 local function isFoodBad(member, context, column)
     local data = getColumnData(member, column)
 
-    if not data or data.available ~= true then
-        return false
-    end
+    if not data or data.available ~= true then return false end
 
     if data and data.wellFed then
         return isTimedDataBad(data.wellFed, context.rules)
@@ -233,12 +224,10 @@ local function syncFoodData(data, member, context)
     local playerKey = member.key
     local entry = playerKey and context.shared.foodData[playerKey]
 
-    if not entry then
-        return
-    end
+    if not entry then return end
 
     data.wellFed = data.wellFed or createFoodData()
-    data.eating  = data.eating or createFoodData()
+    data.eating = data.eating or createFoodData()
 
     setTimedExternalData(data.wellFed, entry.wellFed)
     setTimedExternalData(data.eating, entry.eating)
@@ -246,18 +235,17 @@ local function syncFoodData(data, member, context)
 end
 
 local foodColumn = {
-    columnType        = COLUMN_TYPE.TIMED,
-    dataSource        = DATA_SOURCE.AURA,
-    key               = "food",
-    visibility        = FOOD_VISIBILITY,
-    iconID            = db.foodIconID,
-    statusName        = "Food",
-    inProgressTooltip =
-        "This player is eating, but has not gained Well Fed yet.",
-    CreateData        = createFoodData,
-    CollectAura       = collectFoodAura,
-    SyncData          = syncFoodData,
-    IsBad             = isFoodBad,
+    columnType = COLUMN_TYPE.TIMED,
+    dataSource = DATA_SOURCE.AURA,
+    key = "food",
+    visibility = FOOD_VISIBILITY,
+    iconID = db.foodIconID,
+    statusName = "Food",
+    inProgressTooltip = "This player is eating, but has not gained Well Fed yet.",
+    CreateData = createFoodData,
+    CollectAura = collectFoodAura,
+    SyncData = syncFoodData,
+    IsBad = isFoodBad,
 }
 
 --------------------------------------------------------------------------------
@@ -267,21 +255,19 @@ local foodColumn = {
 local function createFlaskData()
     return {
         available = false,
-        has     = false,
-        time    = 0,
-        auraID  = nil,
-        iconID  = nil,
+        has = false,
+        time = 0,
+        auraID = nil,
+        iconID = nil,
         spellID = nil,
-        source  = nil,
+        source = nil,
     }
 end
 
 local function collectFlaskAura(data, aura, scanContext)
     local spellID = aura.spellID
 
-    if not spellID or data.has or not db.flaskBuffIDs[spellID] then
-        return
-    end
+    if not spellID or data.has or not db.flaskBuffIDs[spellID] then return end
 
     setTimedAuraData(data, aura, scanContext.remaining)
 end
@@ -289,7 +275,8 @@ end
 local function isFlaskBad(member, context, column)
     local data = getColumnData(member, column)
 
-    return data and data.available == true
+    return data
+        and data.available == true
         and isTimedDataBad(data, context.rules)
 end
 
@@ -297,24 +284,22 @@ local function syncFlaskData(data, member, context)
     local playerKey = member.key
     local entry = playerKey and context.shared.flaskData[playerKey]
 
-    if not entry then
-        return
-    end
+    if not entry then return end
 
     setTimedExternalData(data, entry)
 end
 
 local flaskColumn = {
-    columnType   = COLUMN_TYPE.TIMED,
-    dataSource   = DATA_SOURCE.AURA,
-    key          = "flask",
-    visibility   = READY_CHECK_VISIBILITY,
-    iconID       = db.flaskIconID,
-    statusName   = "Flask",
-    CreateData   = createFlaskData,
-    CollectAura  = collectFlaskAura,
-    SyncData     = syncFlaskData,
-    IsBad        = isFlaskBad,
+    columnType = COLUMN_TYPE.TIMED,
+    dataSource = DATA_SOURCE.AURA,
+    key = "flask",
+    visibility = READY_CHECK_VISIBILITY,
+    iconID = db.flaskIconID,
+    statusName = "Flask",
+    CreateData = createFlaskData,
+    CollectAura = collectFlaskAura,
+    SyncData = syncFlaskData,
+    IsBad = isFlaskBad,
 }
 
 --------------------------------------------------------------------------------
@@ -323,11 +308,11 @@ local flaskColumn = {
 
 local function createTempWeaponEnchantData()
     return {
-        has     = false,
-        time    = nil,
-        itemID  = nil,
+        has = false,
+        time = nil,
+        itemID = nil,
         spellID = nil,
-        iconID  = nil,
+        iconID = nil,
     }
 end
 
@@ -335,11 +320,11 @@ local function syncTempWeaponEnchantData(data, member, context)
     local playerKey = member.key
 
     if not playerKey then
-        data.has     = false
-        data.time    = nil
-        data.itemID  = nil
+        data.has = false
+        data.time = nil
+        data.itemID = nil
         data.spellID = nil
-        data.iconID  = nil
+        data.iconID = nil
 
         return
     end
@@ -350,22 +335,20 @@ local function syncTempWeaponEnchantData(data, member, context)
     local spellID = entry and entry.spellID
     local iconID = entry and entry.iconID
 
-    data.has     = time and time > 0 or false
-    data.time    = time
-    data.itemID  = itemID and itemID > 0 and itemID or nil
+    data.has = time and time > 0 or false
+    data.time = time
+    data.itemID = itemID and itemID > 0 and itemID or nil
     data.spellID = spellID and spellID > 0 and spellID or nil
-    data.iconID  = iconID and iconID > 0 and iconID or nil
+    data.iconID = iconID and iconID > 0 and iconID or nil
 end
 
-local function isTempWeaponEnchantBad(member, context, column)
+local function isTempWeaponEnchantBad(member, _context, column)
     local data = getColumnData(member, column)
     local time = data and data.time
 
     -- Header aggregation treats missing data and UNKNOWN as neutral because
     -- neither confirms a failure. MISSING and NO_WEAPON are confirmed bad.
-    if time == nil
-        or time == TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN
-    then
+    if time == nil or time == TEMP_WEAPON_ENCHANT_STATUS.UNKNOWN then
         return false
     end
 
@@ -375,15 +358,15 @@ local function isTempWeaponEnchantBad(member, context, column)
 end
 
 local tempWeaponEnchantColumn = {
-    columnType      = COLUMN_TYPE.TIMED,
-    dataSource      = DATA_SOURCE.TEMP_WEAPON_ENCHANT,
-    key             = "tempWeaponEnchant",
-    visibility      = READY_CHECK_VISIBILITY,
-    iconID          = db.weaponEnchantIconID,
-    statusName      = "Weapon Enchant",
-    CreateData      = createTempWeaponEnchantData,
-    SyncData        = syncTempWeaponEnchantData,
-    IsBad           = isTempWeaponEnchantBad,
+    columnType = COLUMN_TYPE.TIMED,
+    dataSource = DATA_SOURCE.TEMP_WEAPON_ENCHANT,
+    key = "tempWeaponEnchant",
+    visibility = READY_CHECK_VISIBILITY,
+    iconID = db.weaponEnchantIconID,
+    statusName = "Weapon Enchant",
+    CreateData = createTempWeaponEnchantData,
+    SyncData = syncTempWeaponEnchantData,
+    IsBad = isTempWeaponEnchantBad,
 }
 
 --------------------------------------------------------------------------------
@@ -393,9 +376,9 @@ local tempWeaponEnchantColumn = {
 local function createAugmentData()
     return {
         available = false,
-        has     = false,
-        auraID  = nil,
-        iconID  = nil,
+        has = false,
+        auraID = nil,
+        iconID = nil,
         spellID = nil,
     }
 end
@@ -403,29 +386,27 @@ end
 local function collectAugmentAura(data, aura)
     local spellID = aura.spellID
 
-    if not spellID or data.has or not db.augmentBuffIDs[spellID] then
-        return
-    end
+    if not spellID or data.has or not db.augmentBuffIDs[spellID] then return end
 
     setIconAuraData(data, aura)
 end
 
-local function isAugmentBad(member, context, column)
+local function isAugmentBad(member, _context, column)
     local data = getColumnData(member, column)
 
     return data and data.available == true and not data.has
 end
 
 local augmentColumn = {
-    columnType   = COLUMN_TYPE.ICON,
-    dataSource   = DATA_SOURCE.AURA,
-    key          = "augment",
-    visibility   = READY_CHECK_VISIBILITY,
-    iconID       = db.augmentIconID,
-    statusName   = "Augment Rune",
-    CreateData   = createAugmentData,
-    CollectAura  = collectAugmentAura,
-    IsBad        = isAugmentBad,
+    columnType = COLUMN_TYPE.ICON,
+    dataSource = DATA_SOURCE.AURA,
+    key = "augment",
+    visibility = READY_CHECK_VISIBILITY,
+    iconID = db.augmentIconID,
+    statusName = "Augment Rune",
+    CreateData = createAugmentData,
+    CollectAura = collectAugmentAura,
+    IsBad = isAugmentBad,
 }
 
 --------------------------------------------------------------------------------
@@ -435,9 +416,9 @@ local augmentColumn = {
 local function createVantusData()
     return {
         available = false,
-        has     = false,
-        auraID  = nil,
-        iconID  = nil,
+        has = false,
+        auraID = nil,
+        iconID = nil,
         spellID = nil,
     }
 end
@@ -445,29 +426,27 @@ end
 local function collectVantusAura(data, aura)
     local spellID = aura.spellID
 
-    if not spellID or data.has or not db.vantusBuffIDs[spellID] then
-        return
-    end
+    if not spellID or data.has or not db.vantusBuffIDs[spellID] then return end
 
     setIconAuraData(data, aura)
 end
 
-local function isVantusBad(member, context, column)
+local function isVantusBad(member, _context, column)
     local data = getColumnData(member, column)
 
     return data and data.available == true and not data.has
 end
 
 local vantusColumn = {
-    columnType   = COLUMN_TYPE.ICON,
-    dataSource   = DATA_SOURCE.AURA,
-    key          = "vantus",
-    visibility   = READY_CHECK_VISIBILITY,
-    iconID       = db.vantusIconID,
-    statusName   = "Vantus Rune",
-    CreateData   = createVantusData,
-    CollectAura  = collectVantusAura,
-    IsBad        = isVantusBad,
+    columnType = COLUMN_TYPE.ICON,
+    dataSource = DATA_SOURCE.AURA,
+    key = "vantus",
+    visibility = READY_CHECK_VISIBILITY,
+    iconID = db.vantusIconID,
+    statusName = "Vantus Rune",
+    CreateData = createVantusData,
+    CollectAura = collectVantusAura,
+    IsBad = isVantusBad,
 }
 
 --------------------------------------------------------------------------------
@@ -486,7 +465,7 @@ local function finalizeRaidBuffScan(data, scan, column, unit, now)
     RaidBuffStatus.FinalizeScan(data, scan, column.index, unit, now)
 end
 
-local function isRaidBuffBad(member, context, column)
+local function isRaidBuffBad(member, _context, column)
     local data = getColumnData(member, column)
 
     return RaidBuffStatus.IsMissing(data)
@@ -496,18 +475,18 @@ local function createRaidBuffColumn(raidBuffIndex)
     local buffInfo = RaidBuffStatus.GetInfo(raidBuffIndex)
 
     return {
-        columnType         = COLUMN_TYPE.RAID_BUFF,
-        dataSource         = DATA_SOURCE.RAID_BUFF,
-        key                = "raidBuff" .. raidBuffIndex,
-        index              = raidBuffIndex,
-        visibility         = READY_CHECK_VISIBILITY,
-        iconID             = buffInfo.iconID,
-        spellID            = buffInfo.spellID,
-        statusName         = buffInfo.label,
-        CreateData         = createRaidBuffData,
-        CollectAura        = collectRaidBuffAura,
-        FinalizeAuraScan    = finalizeRaidBuffScan,
-        IsBad              = isRaidBuffBad,
+        columnType = COLUMN_TYPE.RAID_BUFF,
+        dataSource = DATA_SOURCE.RAID_BUFF,
+        key = "raidBuff" .. raidBuffIndex,
+        index = raidBuffIndex,
+        visibility = READY_CHECK_VISIBILITY,
+        iconID = buffInfo.iconID,
+        spellID = buffInfo.spellID,
+        statusName = buffInfo.label,
+        CreateData = createRaidBuffData,
+        CollectAura = collectRaidBuffAura,
+        FinalizeAuraScan = finalizeRaidBuffScan,
+        IsBad = isRaidBuffBad,
     }
 end
 
@@ -525,7 +504,7 @@ end
 
 local function createDurabilityData()
     return {
-        has     = false,
+        has = false,
         percent = nil,
     }
 end
@@ -534,7 +513,7 @@ local function syncDurabilityData(data, member, context)
     local playerKey = member.key
 
     if not playerKey then
-        data.has     = false
+        data.has = false
         data.percent = nil
 
         return
@@ -542,7 +521,7 @@ local function syncDurabilityData(data, member, context)
 
     local percent = context.shared.durabilityData[playerKey]
 
-    data.has     = percent ~= nil
+    data.has = percent ~= nil
     data.percent = percent
 end
 
@@ -550,22 +529,20 @@ local function isDurabilityBad(member, context, column)
     local data = getColumnData(member, column)
     local pct = data and data.percent
 
-    if not pct then
-        return false
-    end
+    if not pct then return false end
 
     return pct <= context.rules.durabilityThreshold
 end
 
 local durabilityColumn = {
-    columnType  = COLUMN_TYPE.DURABILITY,
-    dataSource  = DATA_SOURCE.DURABILITY,
-    key         = "durability",
-    visibility  = READY_CHECK_VISIBILITY,
-    statusName  = "Durability",
-    CreateData  = createDurabilityData,
-    SyncData    = syncDurabilityData,
-    IsBad       = isDurabilityBad,
+    columnType = COLUMN_TYPE.DURABILITY,
+    dataSource = DATA_SOURCE.DURABILITY,
+    key = "durability",
+    visibility = READY_CHECK_VISIBILITY,
+    statusName = "Durability",
+    CreateData = createDurabilityData,
+    SyncData = syncDurabilityData,
+    IsBad = isDurabilityBad,
 }
 
 --------------------------------------------------------------------------------
@@ -573,36 +550,34 @@ local durabilityColumn = {
 --------------------------------------------------------------------------------
 
 local function isCauldronBad(member, _, column)
-    if not member or not member.key then
-        return true
-    end
+    if not member or not member.key then return true end
 
     return Cauldron.GetCount(member.key, column.cauldronKind)
         ~= Cauldron.GetTarget(column.cauldronKind)
 end
 
 local cauldronFlaskColumn = {
-    columnType            = COLUMN_TYPE.CAULDRON,
-    dataSource            = DATA_SOURCE.CAULDRON,
-    key                   = "cauldronFlask",
-    visibility            = CAULDRON_VISIBILITY,
-    cauldronKind          = Cauldron.KIND_FLASK,
-    iconID                = db.flaskIconID,
-    statusName            = "Flasks",
+    columnType = COLUMN_TYPE.CAULDRON,
+    dataSource = DATA_SOURCE.CAULDRON,
+    key = "cauldronFlask",
+    visibility = CAULDRON_VISIBILITY,
+    cauldronKind = Cauldron.KIND_FLASK,
+    iconID = db.flaskIconID,
+    statusName = "Flasks",
     includeOfflineInTitle = true,
-    IsBad                 = isCauldronBad,
+    IsBad = isCauldronBad,
 }
 
 local cauldronPotionColumn = {
-    columnType            = COLUMN_TYPE.CAULDRON,
-    dataSource            = DATA_SOURCE.CAULDRON,
-    key                   = "cauldronPotion",
-    visibility            = CAULDRON_VISIBILITY,
-    cauldronKind          = Cauldron.KIND_POTION,
-    iconID                = db.combatPotionIconID,
-    statusName            = "Potions",
+    columnType = COLUMN_TYPE.CAULDRON,
+    dataSource = DATA_SOURCE.CAULDRON,
+    key = "cauldronPotion",
+    visibility = CAULDRON_VISIBILITY,
+    cauldronKind = Cauldron.KIND_POTION,
+    iconID = db.combatPotionIconID,
+    statusName = "Potions",
     includeOfflineInTitle = true,
-    IsBad                 = isCauldronBad,
+    IsBad = isCauldronBad,
 }
 
 --------------------------------------------------------------------------------
@@ -612,7 +587,7 @@ local cauldronPotionColumn = {
 local function createColumnData(layout)
     local columnData = {
         auraScanAvailable = false,
-        rccPresent        = false,
+        rccPresent = false,
     }
 
     for columnIndex = 1, #layout.columns do
@@ -638,7 +613,10 @@ function Columns.CreateCell(row, column, layout, options)
     local createCell = CREATE_CELL_BY_COLUMN_TYPE[column.columnType]
 
     if not createCell then
-        error("Raid frame column has no cell creator: " .. tostring(column.key), 2)
+        error(
+            "Raid frame column has no cell creator: " .. tostring(column.key),
+            2
+        )
     end
 
     createCell(row, column, layout, options)
@@ -671,14 +649,12 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
     local columns = scanColumns or layout.activeColumns
     local scanContext = {
         remaining = rules.noDuration,
-        rules     = rules,
+        rules = rules,
     }
 
     local scan = RCC.HelpfulAuraScan.ForEachAura(unit, function(aura)
-        scanContext.remaining = F.GetAuraRemaining(
-            aura.expirationTime,
-            now
-        ) or rules.noDuration
+        scanContext.remaining = F.GetAuraRemaining(aura.expirationTime, now)
+            or rules.noDuration
 
         for columnIndex = 1, #columns do
             local column = columns[columnIndex]
@@ -706,13 +682,9 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
             if data then
                 data.available = true
 
-                if data.wellFed then
-                    data.wellFed.available = true
-                end
+                if data.wellFed then data.wellFed.available = true end
 
-                if data.eating then
-                    data.eating.available = true
-                end
+                if data.eating then data.eating.available = true end
             end
         end
     end
@@ -721,17 +693,17 @@ function Columns.ScanUnitData(unit, now, layout, context, scanColumns)
 end
 
 function Columns.SyncExternalData(member, layout, context)
-    if not member then
-        return
-    end
+    if not member then return end
 
     member.columnData = member.columnData or createColumnData(layout)
 
     -- Local presence never depends on receiving or sending an ACK. Previews
     -- also use this path without publishing the player's presence.
     member.columnData.rccPresent = F.UnitIsUnitSafe(member.unit, "player")
-        or (member.key ~= nil
-            and context.shared.presenceData[member.key] ~= nil)
+        or (
+            member.key ~= nil
+            and context.shared.presenceData[member.key] ~= nil
+        )
 
     for columnIndex = 1, #layout.activeColumns do
         local column = layout.activeColumns[columnIndex]
@@ -780,9 +752,7 @@ local function createColumns()
 
         if definition.isColumnGroup then
             for groupIndex = 1, #definition do
-                columns[#columns + 1] = copyColumn(
-                    definition[groupIndex]
-                )
+                columns[#columns + 1] = copyColumn(definition[groupIndex])
             end
         else
             columns[#columns + 1] = copyColumn(definition)
@@ -807,8 +777,7 @@ local function positionColumn(layout, column, startX)
         return startX + layout.cauldronWidth + H_PAD
     elseif column.columnType == COLUMN_TYPE.DURABILITY then
         column.textX = startX
-        column.titleX = startX
-            + (layout.durabilityWidth - layout.iconSize) / 2
+        column.titleX = startX + (layout.durabilityWidth - layout.iconSize) / 2
 
         return startX + layout.durabilityWidth + H_PAD
     end
@@ -820,12 +789,8 @@ local function positionColumn(layout, column, startX)
 end
 
 function Columns.ConfigureLayout(layout, context)
-    local showReadyIcon = DisplayContext.IsActive(
-        context,
-        Reason.READY_CHECK
-    )
-    local nameX = showReadyIcon
-        and layout.rcIconWidth + H_PAD
+    local showReadyIcon = DisplayContext.IsActive(context, Reason.READY_CHECK)
+    local nameX = showReadyIcon and layout.rcIconWidth + H_PAD
         or PROVISION_NAME_X
     local nextX = nameX + layout.nameWidth + H_PAD
 
@@ -855,38 +820,31 @@ function Columns.CreateLayout(context)
     end
 
     local layout = {
-        raidBuffCount       = RAID_BUFF_COUNT,
-        frameWidth          = 0,
-        framePad            = FRAME_PAD,
-        iconSize            = ICON_SIZE,
-        rcIconWidth         = RC_ICON_WIDTH,
-        nameWidth           = NAME_WIDTH,
-        timeWidth           = TIME_WIDTH,
-        durabilityWidth     = DURABILITY_WIDTH,
-        cauldronWidth       = CAULDRON_WIDTH,
-        cauldronCountWidth  = CAULDRON_COUNT_WIDTH,
-        showReadyIcon       = false,
-        x                   = {},
-        columns             = columns,
-        columnsByKey        = columnsByKey,
-        broadcastColumns    = {
+        raidBuffCount = RAID_BUFF_COUNT,
+        frameWidth = 0,
+        framePad = FRAME_PAD,
+        iconSize = ICON_SIZE,
+        rcIconWidth = RC_ICON_WIDTH,
+        nameWidth = NAME_WIDTH,
+        timeWidth = TIME_WIDTH,
+        durabilityWidth = DURABILITY_WIDTH,
+        cauldronWidth = CAULDRON_WIDTH,
+        cauldronCountWidth = CAULDRON_COUNT_WIDTH,
+        showReadyIcon = false,
+        x = {},
+        columns = columns,
+        columnsByKey = columnsByKey,
+        broadcastColumns = {
             columnsByKey.food,
             columnsByKey.flask,
         },
-        activeColumns       = {},
+        activeColumns = {},
     }
 
-    local constructionX = layout.rcIconWidth
-        + H_PAD
-        + layout.nameWidth
-        + H_PAD
+    local constructionX = layout.rcIconWidth + H_PAD + layout.nameWidth + H_PAD
 
     for i = 1, #layout.columns do
-        constructionX = positionColumn(
-            layout,
-            layout.columns[i],
-            constructionX
-        )
+        constructionX = positionColumn(layout, layout.columns[i], constructionX)
     end
 
     if not context then

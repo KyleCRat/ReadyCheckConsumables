@@ -7,7 +7,7 @@ RCC.db = RCC.db or {}
 --------------------------------------------------------------------------------
 
 RCC.db.healthstoneItemIDs = {
-    [5512]   = { priority = 1 }, -- Healthstone
+    [5512] = { priority = 1 }, -- Healthstone
     [224464] = { priority = 2 }, -- Demonic Healthstone
 }
 
@@ -42,7 +42,8 @@ function RCC.Data.AddHealingPotionItems(items)
     if not items then return end
 
     for _, item in ipairs(items) do
-        RCC.db.healingPotionItemIDs[#RCC.db.healingPotionItemIDs + 1] = item.itemID
+        RCC.db.healingPotionItemIDs[#RCC.db.healingPotionItemIDs + 1] =
+            item.itemID
         RCC.db.healingPotionItemData[item.itemID] = item
 
         if item.variant == RCC.ConsumableVariant.FLEETING then

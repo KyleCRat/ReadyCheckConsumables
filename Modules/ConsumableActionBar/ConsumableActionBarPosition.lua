@@ -1,7 +1,6 @@
 local _, RCC = ...
 
-RCC.ConsumableActionBarPosition =
-    RCC.ConsumableActionBarPosition or {}
+RCC.ConsumableActionBarPosition = RCC.ConsumableActionBarPosition or {}
 
 local Position = RCC.ConsumableActionBarPosition
 local ActionBar = RCC.ConsumableActionBar
@@ -41,7 +40,8 @@ end
 local function normalizeCoordinate(value, fallback)
     local number = tonumber(value)
 
-    if not number
+    if
+        not number
         or number ~= number
         or number == math.huge
         or number == -math.huge
@@ -55,10 +55,10 @@ end
 local function copyPosition(position)
     if type(position) ~= "table" then return end
 
-    local point = VALID_POINTS[position.point]
-        and position.point or DEFAULT_POSITION.point
-    local relPoint = VALID_POINTS[position.relPoint]
-        and position.relPoint or DEFAULT_POSITION.relPoint
+    local point = VALID_POINTS[position.point] and position.point
+        or DEFAULT_POSITION.point
+    local relPoint = VALID_POINTS[position.relPoint] and position.relPoint
+        or DEFAULT_POSITION.relPoint
 
     return {
         point = point,
@@ -101,7 +101,8 @@ local function registerEllesmereUI()
 
     local EUI = _G.EllesmereUI
 
-    if not EUI
+    if
+        not EUI
         or not EUI.MakeUnlockElement
         or not EUI.RegisterUnlockElements
     then
@@ -114,26 +115,33 @@ local function registerEllesmereUI()
         group = "Ready Check Consumables",
         order = 700,
         noResize = true,
+
         getFrame = function()
             return ActionBar.frame
         end,
+
         getSize = function()
             return ActionBar.frame:GetWidth(), ActionBar.frame:GetHeight()
         end,
+
         isHidden = function()
             return not ActionBar.ShouldShow()
         end,
+
         savePos = function(_, point, relativePoint, x, y)
             local db = getDatabase()
 
             if not db or movementProfileChanged then return end
 
-            db:Set("consumablesActionBarPosition", copyPosition({
-                point = point,
-                relPoint = relativePoint,
-                x = x,
-                y = y,
-            }))
+            db:Set(
+                "consumablesActionBarPosition",
+                copyPosition({
+                    point = point,
+                    relPoint = relativePoint,
+                    x = x,
+                    y = y,
+                })
+            )
 
             local unlockActive = EUI.IsUnlockModeActive
                 and EUI:IsUnlockModeActive()
@@ -144,13 +152,13 @@ local function registerEllesmereUI()
 
             syncSettingsPages()
         end,
+
         loadPos = function()
             local db = getDatabase()
 
-            return db and copyPosition(
-                db:Get("consumablesActionBarPosition")
-            )
+            return db and copyPosition(db:Get("consumablesActionBarPosition"))
         end,
+
         clearPos = function()
             local db = getDatabase()
 
@@ -160,6 +168,7 @@ local function registerEllesmereUI()
 
             syncSettingsPages()
         end,
+
         applyPos = function()
             local db = getDatabase()
 
@@ -203,7 +212,8 @@ local function getCurrentStoredPosition()
     if movementProvider == "editmode" then
         local layoutName = getActiveEditModeLayoutName()
 
-        return db and layoutName
+        return db
+            and layoutName
             and db:Get("consumablesActionBarEditModePositions", layoutName)
     end
 
@@ -214,7 +224,8 @@ local function applyEditModeLayout(layoutName)
     if movementProfileChanged then return end
 
     local db = getDatabase()
-    local position = db and db:Get("consumablesActionBarEditModePositions", layoutName)
+    local position = db
+        and db:Get("consumablesActionBarEditModePositions", layoutName)
 
     applyPosition(position)
     syncSettingsPages()
@@ -225,28 +236,27 @@ local function registerLibEditMode()
 
     if not lib then return false end
 
-    lib:AddFrame(
-        ActionBar.frame,
-        function(_, layoutName, point, x, y)
-            local db = getDatabase()
+    lib:AddFrame(ActionBar.frame, function(_, layoutName, point, x, y)
+        local db = getDatabase()
 
-            if not db or not layoutName or movementProfileChanged then return end
+        if not db or not layoutName or movementProfileChanged then return end
 
-            db:Set("consumablesActionBarEditModePositions", layoutName, copyPosition({
+        db:Set(
+            "consumablesActionBarEditModePositions",
+            layoutName,
+            copyPosition({
                 point = point,
                 relPoint = point,
                 x = x,
                 y = y,
-            }))
-            syncSettingsPages()
-        end,
-        {
-            point = DEFAULT_POSITION.point,
-            x = DEFAULT_POSITION.x,
-            y = DEFAULT_POSITION.y,
-        },
-        "Consumables Action Bar"
-    )
+            })
+        )
+        syncSettingsPages()
+    end, {
+        point = DEFAULT_POSITION.point,
+        x = DEFAULT_POSITION.x,
+        y = DEFAULT_POSITION.y,
+    }, "Consumables Action Bar")
 
     movementProvider = "editmode"
 
@@ -254,35 +264,52 @@ local function registerLibEditMode()
         editModeActive = true
         syncSettingsPages()
     end)
+
     lib:RegisterCallback("exit", function()
         editModeActive = false
         movementProfileChanged = false
         RCC.Profiles.ApplyPending()
         syncSettingsPages()
     end)
+
     lib:RegisterCallback("layout", function(layoutName)
         applyEditModeLayout(layoutName)
     end)
+
     lib:RegisterCallback("create", function(layoutName, _, sourceLayoutName)
         local db = getDatabase()
 
         if not db or not layoutName or movementProfileChanged then return end
 
         local source = sourceLayoutName
-            and db:Get("consumablesActionBarEditModePositions", sourceLayoutName)
+            and db:Get(
+                "consumablesActionBarEditModePositions",
+                sourceLayoutName
+            )
 
-        db:Set("consumablesActionBarEditModePositions", layoutName, copyPosition(source))
+        db:Set(
+            "consumablesActionBarEditModePositions",
+            layoutName,
+            copyPosition(source)
+        )
     end)
+
     lib:RegisterCallback("rename", function(oldLayoutName, newLayoutName)
         local db = getDatabase()
 
         if not db or not newLayoutName or movementProfileChanged then return end
 
-        local position = db:Get("consumablesActionBarEditModePositions", oldLayoutName)
+        local position =
+            db:Get("consumablesActionBarEditModePositions", oldLayoutName)
 
-        db:Set("consumablesActionBarEditModePositions", newLayoutName, copyPosition(position))
+        db:Set(
+            "consumablesActionBarEditModePositions",
+            newLayoutName,
+            copyPosition(position)
+        )
         db:ResetPath("consumablesActionBarEditModePositions", oldLayoutName)
     end)
+
     lib:RegisterCallback("delete", function(layoutName)
         local db = getDatabase()
 
@@ -307,9 +334,7 @@ function Position.Initialize()
 
     initialized = true
 
-    if registerEllesmereUI() then
-        return movementProvider
-    end
+    if registerEllesmereUI() then return movementProvider end
 
     registerLibEditMode()
 
@@ -369,21 +394,13 @@ function Position.SetCurrent(values)
 
     pendingValues = nil
 
-    if values.point ~= nil then
-        position.point = values.point
-    end
+    if values.point ~= nil then position.point = values.point end
 
-    if values.relPoint ~= nil then
-        position.relPoint = values.relPoint
-    end
+    if values.relPoint ~= nil then position.relPoint = values.relPoint end
 
-    if values.x ~= nil then
-        position.x = values.x
-    end
+    if values.x ~= nil then position.x = values.x end
 
-    if values.y ~= nil then
-        position.y = values.y
-    end
+    if values.y ~= nil then position.y = values.y end
 
     position = copyPosition(position)
 

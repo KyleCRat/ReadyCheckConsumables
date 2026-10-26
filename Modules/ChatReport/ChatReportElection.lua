@@ -24,9 +24,7 @@ end
 function Election.BroadcastIntent()
     local playerName = F.unitFullName("player")
 
-    if not playerName then
-        return
-    end
+    if not playerName then return end
 
     collecting = true
     reportCandidates[playerName] = true
@@ -50,7 +48,8 @@ function Election.Finalize(members)
     for i = 1, #members do
         local name = members[i].key
 
-        if reportCandidates[name]
+        if
+            reportCandidates[name]
             and (not electedReporter or name < electedReporter)
         then
             electedReporter = name
@@ -59,27 +58,19 @@ function Election.Finalize(members)
 end
 
 function Election.HandleAddonMessage(prefix, message, channel, sender)
-    if issecretvalue(prefix) or issecretvalue(message) then
-        return
-    end
+    if issecretvalue(prefix) or issecretvalue(message) then return end
 
     local isRccReport = prefix == ADDON_PREFIX and message == "REPORT"
     local isMrtMessage = F.IsMrtPrefix(prefix)
 
-    if not isRccReport and not isMrtMessage then
-        return
-    end
+    if not isRccReport and not isMrtMessage then return end
 
     local senderKey = F.GetTrustedGroupAddonSender(channel, sender)
 
-    if not senderKey then
-        return
-    end
+    if not senderKey then return end
 
     if isRccReport then
-        if collecting then
-            reportCandidates[senderKey] = true
-        end
+        if collecting then reportCandidates[senderKey] = true end
 
         return
     end

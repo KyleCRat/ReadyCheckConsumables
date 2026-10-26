@@ -26,11 +26,18 @@ function CombatPotion.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.combatPotionItemIDs,
         itemData = RCC.db.combatPotionItemData,
-        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
+        preferredID = RCC.ConsumablePreferences.GetItemID(
+            inputs.preferences,
+            PREFERENCE_KEY
+        ),
         canFallbackToFamily = canFallbackToFamily,
     })
 
-    Selection.ApplyItemCooldowns(choices, inputs.cooldowns, CombatPotion.Inventory.cooldownItemIDs)
+    Selection.ApplyItemCooldowns(
+        choices,
+        inputs.cooldowns,
+        CombatPotion.Inventory.cooldownItemIDs
+    )
 
     return Selection.Resolve(choices, {
         preferenceKey = PREFERENCE_KEY,

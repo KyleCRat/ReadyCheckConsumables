@@ -3,7 +3,7 @@ local _, RCC = ...
 local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddFlaskItems({
-    {-- Flask of Thalassian Resistance
+    { -- Flask of Thalassian Resistance
         xpac = RCC.MIDNIGHT,
         items = {
             { itemID = 245926, q = 2, variant = FLEETING },
@@ -12,7 +12,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 241321, q = 1 },
         },
     },
-    {-- Flask of the Magisters
+    { -- Flask of the Magisters
         xpac = RCC.MIDNIGHT,
         items = {
             { itemID = 245933, q = 2, variant = FLEETING },
@@ -21,7 +21,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 241323, q = 1 },
         },
     },
-    {-- Flask of the Blood Knights
+    { -- Flask of the Blood Knights
         xpac = RCC.MIDNIGHT,
         items = {
             { itemID = 245931, q = 2, variant = FLEETING },
@@ -30,7 +30,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 241325, q = 1 },
         },
     },
-    {-- Flask of the Shattered Sun
+    { -- Flask of the Shattered Sun
         xpac = RCC.MIDNIGHT,
         items = {
             { itemID = 245929, q = 2, variant = FLEETING },

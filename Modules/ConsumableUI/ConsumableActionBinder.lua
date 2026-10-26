@@ -73,18 +73,17 @@ local function getItemMacro(itemID, targetSlot, allowCombat)
     local prefix = allowCombat and "" or "/stopmacro [combat]\n"
 
     if targetSlot then
-        return prefix .. format(
-            "/use item:%d\n/use %d",
-            itemID,
-            targetSlot
-        )
+        return prefix .. format("/use item:%d\n/use %d", itemID, targetSlot)
     end
 
     return prefix .. format("/use item:%d", itemID)
 end
 
 local function setSelectionOnlyAction(button, action, capabilities)
-    if not action.selectionOnly or capabilities.allowSelectionItemUse == true then
+    if
+        not action.selectionOnly
+        or capabilities.allowSelectionItemUse == true
+    then
         return false
     end
 
@@ -188,7 +187,9 @@ end
 
 local function setSpellSequenceAction(button, action, capabilities)
     local prefix = capabilities.allowCombat and "" or "/stopmacro [combat]\n"
-    local macro = prefix .. "/castsequence reset=combat " .. table.concat(action.spellNames, ", ")
+    local macro = prefix
+        .. "/castsequence reset=combat "
+        .. table.concat(action.spellNames, ", ")
     local click = button.click
 
     if click.rccActionSignature ~= macro then
@@ -206,16 +207,15 @@ function Binder.Bind(button, action, capabilities, preference)
     if InCombatLockdown() then return false end
 
     capabilities = capabilities or Binder.Capabilities.TEMPORARY
+    local kind = action and action.kind
 
-    if not action or not action.kind then
-        disable(button)
-    elseif action.kind == ActionKind.ITEM and action.itemID then
+    if kind == ActionKind.ITEM and action.itemID then
         setItemAction(button, action, capabilities)
-    elseif action.kind == ActionKind.TOY and action.itemID then
+    elseif kind == ActionKind.TOY and action.itemID then
         setToyAction(button, action, capabilities)
-    elseif action.kind == ActionKind.SPELL then
+    elseif kind == ActionKind.SPELL then
         setSpellAction(button, action)
-    elseif action.kind == ActionKind.SPELL_SEQUENCE then
+    elseif kind == ActionKind.SPELL_SEQUENCE then
         setSpellSequenceAction(button, action, capabilities)
     else
         disable(button)

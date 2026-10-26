@@ -6,7 +6,10 @@ local State = RCC.ConsumableState
 
 function RoguePoison.Present(model)
     local selected = model.selection
-    local state = State.Create({ applicable = selected.applicable, action = model.action })
+    local state = State.Create({
+        applicable = selected.applicable,
+        action = model.action,
+    })
 
     if not selected.applicable then return state end
 
@@ -16,7 +19,8 @@ function RoguePoison.Present(model)
         State.ApplyActiveAura(state, model.effects[1])
         state.icon = selected.candidate and selected.candidate.icon
         state.tooltipSpellID = selected.candidate and selected.candidate.spellID
-        state.tooltipAppliedSpellID = model.effects[1] and model.effects[1].spellID
+        state.tooltipAppliedSpellID = model.effects[1]
+            and model.effects[1].spellID
         state.glow = not model.satisfied
         State.ApplyAuraScanAvailability(state, model.available)
     end

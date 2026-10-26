@@ -3,3 +3,5 @@
 !.gitattributes
 !.gitignore
 !.pkgmeta
+!.stylua.toml
+!.styluaignore

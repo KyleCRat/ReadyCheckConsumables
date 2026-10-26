@@ -15,18 +15,29 @@ HealingPotion.Inventory = {
 }
 
 HealingPotion.Dependencies = {
-    selection = { "inventory", "cooldowns", "preferences.healingPotion", "location.uiMapID" },
+    selection = {
+        "inventory",
+        "cooldowns",
+        "preferences.healingPotion",
+        "location.uiMapID",
+    },
 }
 
 function HealingPotion.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.healingPotionItemIDs,
         itemData = RCC.db.healingPotionItemData,
-        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
+        preferredID = RCC.ConsumablePreferences.GetItemID(
+            inputs.preferences,
+            PREFERENCE_KEY
+        ),
     })
 
     if RCC.db.brawlersGuildMapIDs[inputs.location.uiMapID] then
-        local guildPotion = Selection.Item(inputs.inventory, RCC.db.brawlersGuildHealingPotionItemID)
+        local guildPotion = Selection.Item(
+            inputs.inventory,
+            RCC.db.brawlersGuildHealingPotionItemID
+        )
 
         if guildPotion and guildPotion.count > 0 then
             -- The venue override precedes matching fleeting items. Its own
@@ -36,7 +47,11 @@ function HealingPotion.Select(inputs)
         end
     end
 
-    Selection.ApplyItemCooldowns(choices, inputs.cooldowns, HealingPotion.Inventory.cooldownItemIDs)
+    Selection.ApplyItemCooldowns(
+        choices,
+        inputs.cooldowns,
+        HealingPotion.Inventory.cooldownItemIDs
+    )
 
     return Selection.Resolve(choices, {
         preferenceKey = PREFERENCE_KEY,

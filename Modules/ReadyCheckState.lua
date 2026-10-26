@@ -4,8 +4,8 @@ RCC.ReadyCheckState = {}
 local State = RCC.ReadyCheckState
 
 State.Status = {
-    PENDING   = 0,
-    READY     = 1,
+    PENDING = 0,
+    READY = 1,
     NOT_READY = 2,
 }
 local Status = State.Status
@@ -53,9 +53,7 @@ local function updateSummary(session)
 end
 
 function State.UpdateRoster(session, roster)
-    if not session.inProgress then
-        return
-    end
+    if not session.inProgress then return end
 
     local responses = {}
 
@@ -89,7 +87,8 @@ function State.GetResponse(session, playerKey)
 end
 
 function State.SetResponse(session, playerKey, response)
-    if not session.inProgress
+    if
+        not session.inProgress
         or session.responses[playerKey] == nil
         or session.responses[playerKey] == response
     then

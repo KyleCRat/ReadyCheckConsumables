@@ -14,8 +14,7 @@ function RCC.Data.AddConsumableStasisItems(itemIDs)
     if not itemIDs then return end
 
     for i = 1, #itemIDs do
-        RCC.db.consumableStasisItemIDs[
-            #RCC.db.consumableStasisItemIDs + 1
-        ] = itemIDs[i]
+        RCC.db.consumableStasisItemIDs[#RCC.db.consumableStasisItemIDs + 1] =
+            itemIDs[i]
     end
 end

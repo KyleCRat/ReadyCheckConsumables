@@ -33,12 +33,12 @@ RCC.Data.AddWeaponEnchants({
     [6516] = { item = 194817, icon = 134418, q = 1, xpac = XPAC }, -- Howling Rune
 
     -- Engineering
-    [6534] = { item = 198165, icon = 135644, q = 3, xpac = XPAC },  -- Endless Stack of Needles
-    [6533] = { item = 198164, icon = 135644, q = 2, xpac = XPAC },  -- Endless Stack of Needles
-    [6532] = { item = 198163, icon = 135644, q = 1, xpac = XPAC },  -- Endless Stack of Needles
-    [6531] = { item = 198162, icon = 249174, q = 3, xpac = XPAC },  -- Completely Safe Rockets
-    [6530] = { item = 198161, icon = 249174, q = 2, xpac = XPAC },  -- Completely Safe Rockets
-    [6529] = { item = 198160, icon = 249174, q = 1, xpac = XPAC },  -- Completely Safe Rockets
+    [6534] = { item = 198165, icon = 135644, q = 3, xpac = XPAC }, -- Endless Stack of Needles
+    [6533] = { item = 198164, icon = 135644, q = 2, xpac = XPAC }, -- Endless Stack of Needles
+    [6532] = { item = 198163, icon = 135644, q = 1, xpac = XPAC }, -- Endless Stack of Needles
+    [6531] = { item = 198162, icon = 249174, q = 3, xpac = XPAC }, -- Completely Safe Rockets
+    [6530] = { item = 198161, icon = 249174, q = 2, xpac = XPAC }, -- Completely Safe Rockets
+    [6529] = { item = 198160, icon = 249174, q = 1, xpac = XPAC }, -- Completely Safe Rockets
     [6522] = { item = 198312, icon = 4548897, q = 3, xpac = XPAC }, -- Gyroscopic Kaleidoscope
     [6521] = { item = 198311, icon = 4548897, q = 2, xpac = XPAC }, -- Gyroscopic Kaleidoscope
     [6520] = { item = 198310, icon = 4548897, q = 1, xpac = XPAC }, -- Gyroscopic Kaleidoscope

@@ -1,0 +1,219 @@
+# Reviewed globals for RCC's Retail WoW environment, layered over Lua 5.1.
+# Names do not validate API member signatures or secret-value contracts.
+# API/UI names: local Blizzard export f54dee9, Retail 12.1.5.70448.
+# Localized fallback strings: resource index 36dd01d, Retail 12.1.0.69587;
+# that older index establishes names only, not current API availability.
+base: lua51
+globals:
+    # RCC SavedVariables and slash-command registration; LibStub is embedded.
+    ReadyCheckConsumablesDB:
+        any: true
+    ReadyCheckConsumablesCharacterDB:
+        any: true
+    SLASH_RCC1:
+        property: full-write
+    SlashCmdList:
+        any: true
+    LibStub:
+        any: true
+
+    # Blizzard API namespaces and shared enum/constant tables.
+    C_AddOns:
+        any: true
+    C_ChatInfo:
+        any: true
+    C_Item:
+        any: true
+    C_Map:
+        any: true
+    C_PaperDollInfo:
+        any: true
+    C_Secrets:
+        any: true
+    C_Spell:
+        any: true
+    C_SpellBook:
+        any: true
+    C_Timer:
+        any: true
+    C_ToyBox:
+        any: true
+    C_TradeSkillUI:
+        any: true
+    C_UnitAuras:
+        any: true
+    Constants:
+        any: true
+    Enum:
+        any: true
+
+    # Global APIs and FrameXML utilities used by the addon.
+    CopyTable:
+        any: true
+    CreateFrame:
+        any: true
+    CreateFromMixins:
+        any: true
+    CreateMacro:
+        any: true
+    EditMacro:
+        any: true
+    GameTooltip_AddNormalLine:
+        any: true
+    GameTooltip_SetTitle:
+        any: true
+    GetInstanceInfo:
+        any: true
+    GetInventoryItemDurability:
+        any: true
+    GetInventoryItemID:
+        any: true
+    GetMacroInfo:
+        any: true
+    GetNormalizedRealmName:
+        any: true
+    GetNumGroupMembers:
+        any: true
+    GetNumMacros:
+        any: true
+    GetRaidRosterInfo:
+        any: true
+    GetReadyCheckStatus:
+        any: true
+    GetRealmName:
+        any: true
+    GetTime:
+        any: true
+    GetUnitName:
+        any: true
+    InCombatLockdown:
+        any: true
+    IsInGroup:
+        any: true
+    IsInInstance:
+        any: true
+    IsInRaid:
+        any: true
+    issecretvalue:
+        any: true
+    PlayerHasToy:
+        any: true
+    RegisterStateDriver:
+        any: true
+    StaticPopup_ShowCustomGenericConfirmation:
+        any: true
+    StaticPopup_ShowCustomGenericInputBox:
+        any: true
+    StaticPopup_ShowGenericDropdown:
+        any: true
+    UnitClass:
+        any: true
+    UnitExists:
+        any: true
+    UnitGUID:
+        any: true
+    UnitIsConnected:
+        any: true
+    UnitIsDeadOrGhost:
+        any: true
+    UnitIsGroupAssistant:
+        any: true
+    UnitIsGroupLeader:
+        any: true
+    UnitIsUnit:
+        any: true
+    UnitIsVisible:
+        any: true
+    UnitName:
+        any: true
+    UnitPhaseReason:
+        any: true
+    # Existing chat adapter uses Blizzard_DeprecatedChatInfo's compatibility API.
+    SendChatMessage:
+        any: true
+
+    # WoW's global Lua aliases and extensions.
+    ceil:
+        any: true
+    floor:
+        any: true
+    format:
+        any: true
+    max:
+        any: true
+    strlower:
+        any: true
+    strsplit:
+        any: true
+    strtrim:
+        any: true
+    wipe:
+        any: true
+
+    # Blizzard frames, fonts, colors, and formatting helpers.
+    GameFontDisableSmall:
+        any: true
+    GameFontHighlight:
+        any: true
+    GameFontHighlightSmall:
+        any: true
+    GameFontNormal:
+        any: true
+    GameTooltip:
+        any: true
+    GRAY_FONT_COLOR:
+        any: true
+    HIGHLIGHT_FONT_COLOR:
+        any: true
+    RAID_CLASS_COLORS:
+        any: true
+    ReadyCheckFrame:
+        any: true
+    ReadyCheckFrameNoButton:
+        any: true
+    ReadyCheckFrameYesButton:
+        any: true
+    ReadyCheckListenerFrame:
+        any: true
+    SecondsFormatter:
+        any: true
+    SecondsFormatterConstants:
+        any: true
+    SecondsFormatterMixin:
+        any: true
+    Settings:
+        any: true
+    SettingsPanel:
+        any: true
+    ShoppingTooltip1:
+        any: true
+    UIParent:
+        any: true
+
+    # Inventory/group constants and localized labels with existing fallbacks.
+    ATTACK_POWER_TOOLTIP:
+        property: read-only
+    CANCEL:
+        property: read-only
+    CLOSE:
+        property: read-only
+    GARRISON_MISSION_PARTY_BUFFS:
+        property: read-only
+    INVSLOT_MAINHAND:
+        property: read-only
+    INVSLOT_OFFHAND:
+        property: read-only
+    LE_PARTY_CATEGORY_HOME:
+        property: read-only
+    LE_PARTY_CATEGORY_INSTANCE:
+        property: read-only
+    SPELL_STAT3_NAME:
+        property: read-only
+    SPELL_STAT4_NAME:
+        property: read-only
+    STAT_MASTERY:
+        property: read-only
+    STAT_VERSATILITY:
+        property: read-only
+    TUTORIAL_TITLE2:
+        property: read-only

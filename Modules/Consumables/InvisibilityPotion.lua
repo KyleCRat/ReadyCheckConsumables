@@ -20,11 +20,19 @@ function InvisibilityPotion.Select(inputs)
     local choices = Selection.FamilyCandidates(inputs.inventory, {
         itemIDs = RCC.db.invisibilityPotionItemIDs,
         itemData = RCC.db.invisibilityPotionItemData,
-        preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, PREFERENCE_KEY),
+        preferredID = RCC.ConsumablePreferences.GetItemID(
+            inputs.preferences,
+            PREFERENCE_KEY
+        ),
     })
 
-    choices.defaultCandidate = Selection.Item(inputs.inventory, RCC.db.invisibilityPotionItemIDs[1])
-    Selection.ApplyItemCooldowns(choices, inputs.cooldowns, InvisibilityPotion.Inventory.cooldownItemIDs)
+    choices.defaultCandidate =
+        Selection.Item(inputs.inventory, RCC.db.invisibilityPotionItemIDs[1])
+    Selection.ApplyItemCooldowns(
+        choices,
+        inputs.cooldowns,
+        InvisibilityPotion.Inventory.cooldownItemIDs
+    )
 
     return Selection.Resolve(choices, { preferenceKey = PREFERENCE_KEY })
 end

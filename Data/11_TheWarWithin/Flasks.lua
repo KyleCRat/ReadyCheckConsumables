@@ -3,7 +3,7 @@ local _, RCC = ...
 local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddFlaskItems({
-    {-- Flask of Alchemical Chaos
+    { -- Flask of Alchemical Chaos
         xpac = RCC.THE_WAR_WITHIN,
         items = {
             { itemID = 212741, q = 3, variant = FLEETING },
@@ -14,7 +14,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 212281, q = 1 },
         },
     },
-    {-- Flask of Saving Graces
+    { -- Flask of Saving Graces
         xpac = RCC.THE_WAR_WITHIN,
         items = {
             { itemID = 212747, q = 3, variant = FLEETING },
@@ -25,7 +25,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 212299, q = 1 },
         },
     },
-    {-- Flask of Tempered Aggression
+    { -- Flask of Tempered Aggression
         xpac = RCC.THE_WAR_WITHIN,
         items = {
             { itemID = 212728, q = 3, variant = FLEETING },
@@ -36,7 +36,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 212269, q = 1 },
         },
     },
-    {-- Flask of Tempered Swiftness
+    { -- Flask of Tempered Swiftness
         xpac = RCC.THE_WAR_WITHIN,
         items = {
             { itemID = 212731, q = 3, variant = FLEETING },
@@ -47,7 +47,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 212272, q = 1 },
         },
     },
-    {-- Flask of Tempered Mastery
+    { -- Flask of Tempered Mastery
         xpac = RCC.THE_WAR_WITHIN,
         items = {
             { itemID = 212738, q = 3, variant = FLEETING },
@@ -58,7 +58,7 @@ RCC.Data.AddFlaskItems({
             { itemID = 212278, q = 1 },
         },
     },
-    {-- Flask of Tempered Versatility
+    { -- Flask of Tempered Versatility
         xpac = RCC.THE_WAR_WITHIN,
         items = {
             { itemID = 212734, q = 3, variant = FLEETING },

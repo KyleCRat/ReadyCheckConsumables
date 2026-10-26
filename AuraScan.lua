@@ -25,13 +25,12 @@ local function isPublicTrue(value)
 end
 
 local function canQueryUnit(unit)
-    if issecretvalue(unit) or type(unit) ~= "string" then
-        return false
-    end
+    if issecretvalue(unit) or type(unit) ~= "string" then return false end
 
     -- Both APIs can return nil for an inaccessible unit, not just a missing
     -- aura. Do not turn offline, out-of-phase, or off-map members into failures.
-    if not isPublicTrue(UnitIsConnected(unit))
+    if
+        not isPublicTrue(UnitIsConnected(unit))
         or not isPublicTrue(UnitIsVisible(unit))
     then
         return false
@@ -43,15 +42,11 @@ local function canQueryUnit(unit)
 end
 
 local function createPublicAura(aura)
-    if issecretvalue(aura) or type(aura) ~= "table" then
-        return nil
-    end
+    if issecretvalue(aura) or type(aura) ~= "table" then return nil end
 
     local spellID = F.GetPublicAuraField(aura, "spellId")
 
-    if not F.IsSafeNumber(spellID) then
-        return nil
-    end
+    if not F.IsSafeNumber(spellID) then return nil end
 
     return {
         auraInstanceID = F.GetPublicAuraField(aura, "auraInstanceID"),
@@ -83,17 +78,14 @@ function AuraScan.ForEachAura(unit, callback)
     local allIdentified = true
 
     for index = 1, RCC.MAX_AURAS do
-        local succeeded, rawAura = pcall(
-            C_UnitAuras.GetAuraDataByIndex,
-            unit,
-            index,
-            "HELPFUL"
-        )
+        local succeeded, rawAura =
+            pcall(C_UnitAuras.GetAuraDataByIndex, unit, index, "HELPFUL")
 
-        if not succeeded then
-            return result
-        end
+        if not succeeded then return result end
 
+        -- Keep whole-aura and spell-ID secrecy checks on either side of the
+        -- nil/type guards: restricted values must not be compared or indexed.
+        -- selene: allow(if_same_then_else)
         if issecretvalue(rawAura) then
             allIdentified = false
         elseif rawAura == nil then
@@ -108,9 +100,7 @@ function AuraScan.ForEachAura(unit, callback)
         else
             local aura = createPublicAura(rawAura)
 
-            if not aura then
-                return result
-            end
+            if not aura then return result end
 
             callback(aura)
         end
@@ -121,18 +111,12 @@ function AuraScan.ForEachAura(unit, callback)
 end
 
 function AuraScan.CanConfirmMissing(scan, spellIDs)
-    if scan.available then
-        return true
-    end
+    if scan.available then return true end
 
-    if not scan.complete or #spellIDs == 0 then
-        return false
-    end
+    if not scan.complete or #spellIDs == 0 then return false end
 
     for _, spellID in ipairs(spellIDs) do
-        if neverSecretSpellIDs[spellID] ~= true then
-            return false
-        end
+        if neverSecretSpellIDs[spellID] ~= true then return false end
     end
 
     return true
@@ -142,10 +126,7 @@ function AuraScan.ScanUnit(unit, now)
     local auras = {}
     local result = AuraScan.ForEachAura(unit, function(aura)
         if now then
-            aura.remaining = F.GetAuraRemaining(
-                aura.expirationTime,
-                now
-            )
+            aura.remaining = F.GetAuraRemaining(aura.expirationTime, now)
         end
 
         auras[#auras + 1] = aura
@@ -166,13 +147,9 @@ end
 function AuraScan.FindBySpellID(unit, spellID)
     local result = { available = false }
 
-    if not F.IsSafeNumber(spellID) then
-        return result
-    end
+    if not F.IsSafeNumber(spellID) then return result end
 
-    if not canQueryUnit(unit) then
-        return result
-    end
+    if not canQueryUnit(unit) then return result end
 
     local canQuerySpell = neverSecretSpellIDs[spellID] == true
 
@@ -182,19 +159,12 @@ function AuraScan.FindBySpellID(unit, spellID)
         canQuerySpell = not issecretvalue(secret) and secret == false
     end
 
-    if not canQuerySpell then
-        return result
-    end
+    if not canQuerySpell then return result end
 
-    local succeeded, rawAura = pcall(
-        C_UnitAuras.GetUnitAuraBySpellID,
-        unit,
-        spellID
-    )
+    local succeeded, rawAura =
+        pcall(C_UnitAuras.GetUnitAuraBySpellID, unit, spellID)
 
-    if not succeeded or issecretvalue(rawAura) then
-        return result
-    end
+    if not succeeded or issecretvalue(rawAura) then return result end
 
     if rawAura == nil then
         result.available = true
@@ -204,9 +174,7 @@ function AuraScan.FindBySpellID(unit, spellID)
 
     local aura = createPublicAura(rawAura)
 
-    if not aura or aura.spellID ~= spellID then
-        return result
-    end
+    if not aura or aura.spellID ~= spellID then return result end
 
     result.available = true
     result.aura = aura
@@ -221,22 +189,16 @@ end
 function AuraScan.FindFirstBySpellIDs(unit, spellIDs)
     local result = { available = false }
 
-    if #spellIDs == 0 then
-        return result
-    end
+    if #spellIDs == 0 then return result end
 
     local allQueryable = true
 
     for _, spellID in ipairs(spellIDs) do
         local queryResult = AuraScan.FindBySpellID(unit, spellID)
 
-        if queryResult.aura then
-            return queryResult
-        end
+        if queryResult.aura then return queryResult end
 
-        if not queryResult.available then
-            allQueryable = false
-        end
+        if not queryResult.available then allQueryable = false end
     end
 
     result.available = allQueryable

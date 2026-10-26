@@ -19,9 +19,17 @@ function InkyBlackPotion.Select(inputs)
 end
 
 function InkyBlackPotion.Observe(inputs)
-    return RCC.ConsumableEffects.Observe(inputs.playerAuras, RCC.db.inkyBlackPotionBuffIDs)
+    return RCC.ConsumableEffects.Observe(
+        inputs.playerAuras,
+        RCC.db.inkyBlackPotionBuffIDs
+    )
 end
 
 function InkyBlackPotion.Evaluate(selection, observation, inputs, now)
-    return RCC.ConsumableEffects.Evaluate(selection, observation, inputs.instance, now)
+    return RCC.ConsumableEffects.Evaluate(
+        selection,
+        observation,
+        inputs.instance,
+        now
+    )
 end

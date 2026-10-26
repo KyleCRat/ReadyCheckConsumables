@@ -6,37 +6,51 @@ local UI = RCC.UI
 local ReadyCheck = RCC.RaidFrameReadyCheck
 local Status = RCC.ReadyCheckState.Status
 
-local ceil    = ceil
+local ceil = ceil
 local GetTime = GetTime
 
-local HEIGHT               = 28
-local FONT_SIZE_NAME       = 16
-local COLOR_TITLE_BG     = { r = 0, g = 0,      b = 0,       a = 0.2 }
-local COLOR_PROGRESS_BAR = { r = 0, g = 209/255, b = 255/255, a = 0.6 }
-local COLOR_NOT_READY    = { r = 1,   g = 0.2,  b = 0.2 }
-local COLOR_AFK          = { r = 1,   g = 0.82, b = 0   }
-local COLOR_READY        = { r = 0.2, g = 1,    b = 0.2 }
+local HEIGHT = 28
+local FONT_SIZE_NAME = 16
+local COLOR_TITLE_BG = { r = 0, g = 0, b = 0, a = 0.2 }
+local COLOR_PROGRESS_BAR = { r = 0, g = 209 / 255, b = 255 / 255, a = 0.6 }
+local COLOR_NOT_READY = { r = 1, g = 0.2, b = 0.2 }
+local COLOR_AFK = { r = 1, g = 0.82, b = 0 }
+local COLOR_READY = { r = 0.2, g = 1, b = 0.2 }
 
-function TitleBar.Create(parent, layout, options)
+function TitleBar.Create(parent, initialLayout, options)
     options = options or {}
 
     local titleBar = CreateFrame("Frame", nil, parent)
     local font = options.font or UI.FONT
     local fontSizeName = options.fontSizeName or FONT_SIZE_NAME
 
-    titleBar.progressWidth = layout.frameWidth - layout.framePad * 2
+    titleBar.progressWidth = initialLayout.frameWidth
+        - initialLayout.framePad * 2
 
-    titleBar:SetPoint("TOPLEFT",  parent, "TOPLEFT",
-        layout.framePad, -layout.framePad)
-    titleBar:SetPoint("TOPRIGHT", parent, "TOPRIGHT",
-        -layout.framePad, -layout.framePad)
+    titleBar:SetPoint(
+        "TOPLEFT",
+        parent,
+        "TOPLEFT",
+        initialLayout.framePad,
+        -initialLayout.framePad
+    )
+    titleBar:SetPoint(
+        "TOPRIGHT",
+        parent,
+        "TOPRIGHT",
+        -initialLayout.framePad,
+        -initialLayout.framePad
+    )
     titleBar:SetHeight(options.titleHeight or HEIGHT)
 
     titleBar.bg = titleBar:CreateTexture(nil, "BACKGROUND")
     titleBar.bg:SetAllPoints(titleBar)
     titleBar.bg:SetTexture("Interface\\Buttons\\WHITE8x8")
     titleBar.bg:SetVertexColor(
-        COLOR_TITLE_BG.r, COLOR_TITLE_BG.g, COLOR_TITLE_BG.b, COLOR_TITLE_BG.a
+        COLOR_TITLE_BG.r,
+        COLOR_TITLE_BG.g,
+        COLOR_TITLE_BG.b,
+        COLOR_TITLE_BG.a
     )
 
     titleBar.progress = titleBar:CreateTexture(nil, "BORDER")
@@ -44,8 +58,10 @@ function TitleBar.Create(parent, layout, options)
     titleBar.progress:SetPoint("BOTTOMLEFT", titleBar, "BOTTOMLEFT")
     titleBar.progress:SetTexture("Interface\\Buttons\\WHITE8x8")
     titleBar.progress:SetVertexColor(
-        COLOR_PROGRESS_BAR.r, COLOR_PROGRESS_BAR.g,
-        COLOR_PROGRESS_BAR.b, COLOR_PROGRESS_BAR.a
+        COLOR_PROGRESS_BAR.r,
+        COLOR_PROGRESS_BAR.g,
+        COLOR_PROGRESS_BAR.b,
+        COLOR_PROGRESS_BAR.a
     )
     titleBar.progress:SetWidth(1)
     titleBar.progress:Hide()
@@ -65,11 +81,11 @@ function TitleBar.Create(parent, layout, options)
     titleBar.colIcons = {}
     titleBar.colIconsByKey = {}
 
-    for columnIndex = 1, #layout.columns do
-        local column = layout.columns[columnIndex]
+    for columnIndex = 1, #initialLayout.columns do
+        local column = initialLayout.columns[columnIndex]
         local icon = titleBar:CreateTexture(nil, "ARTWORK")
 
-        icon:SetSize(layout.iconSize, layout.iconSize)
+        icon:SetSize(initialLayout.iconSize, initialLayout.iconSize)
         icon:SetPoint("LEFT", titleBar, "LEFT", column.titleX, 0)
         UI.SetStatusIcon(icon, ReadyCheck.ICONS[Status.PENDING])
         icon:Hide()
@@ -84,9 +100,7 @@ function TitleBar.Create(parent, layout, options)
             local column = layout.columns[columnIndex]
             local icon = self.colIconsByKey[column.key]
 
-            if icon then
-                icon:Hide()
-            end
+            if icon then icon:Hide() end
         end
 
         for columnIndex = 1, #layout.activeColumns do
@@ -111,9 +125,8 @@ function TitleBar.Create(parent, layout, options)
             if icon then
                 UI.SetStatusIcon(
                     icon,
-                    columnStates[column.key]
-                    and ReadyCheck.TITLE_ICONS.notReady
-                    or ReadyCheck.TITLE_ICONS.ready
+                    columnStates[column.key] and ReadyCheck.TITLE_ICONS.notReady
+                        or ReadyCheck.TITLE_ICONS.ready
                 )
             end
         end
@@ -138,7 +151,8 @@ function TitleBar.Create(parent, layout, options)
             for memberIndex = 1, activeCount do
                 local member = members[memberIndex]
 
-                if member
+                if
+                    member
                     and (member.online or column.includeOfflineInTitle)
                     and column.IsBad(member, context, column)
                 then
@@ -220,10 +234,9 @@ function TitleBar.Create(parent, layout, options)
                 return
             end
 
-            self.progress:SetWidth(math.max(
-                1,
-                self.progressWidth * remaining / duration
-            ))
+            self.progress:SetWidth(
+                math.max(1, self.progressWidth * remaining / duration)
+            )
         end)
 
         self.progressTextTimer = C_Timer.NewTicker(1, function(ticker)

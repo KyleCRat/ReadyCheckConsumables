@@ -6,12 +6,12 @@ RCC.db = RCC.db or {}
 --- Class-provided Raid Buff Spell IDs
 --------------------------------------------------------------------------------
 
-local battle_shout                = 6673
-local power_word_fortitude        = 21562
-local arcane_intellect            = 1459
-local mark_of_the_wild            = 1126
-local skyfury                     = 462854
-local blessing_of_the_bronze      = 381748
+local battle_shout = 6673
+local power_word_fortitude = 21562
+local arcane_intellect = 1459
+local mark_of_the_wild = 1126
+local skyfury = 462854
+local blessing_of_the_bronze = 381748
 
 --------------------------------------------------------------------------------
 --- Class-provided Raid Buff Definitions

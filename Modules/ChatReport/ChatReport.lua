@@ -12,28 +12,24 @@ local reportTimer
 local reportSession
 
 local DIFFICULTY_TO_SETTING = {
-    [16]  = "chatReport_mythicRaid",
+    [16] = "chatReport_mythicRaid",
     [233] = "chatReport_mythicRaid",
-    [15]  = "chatReport_heroicRaid",
-    [14]  = "chatReport_normalRaid",
-    [5]   = "chatReport_normalRaid",  -- Story mode (legacy)
-    [220] = "chatReport_normalRaid",  -- Story mode
-    [17]  = "chatReport_lfr",
-    [8]   = "chatReport_mythicDungeon",
-    [2]   = "chatReport_heroicDungeon",
-    [1]   = "chatReport_normalDungeon",
+    [15] = "chatReport_heroicRaid",
+    [14] = "chatReport_normalRaid",
+    [5] = "chatReport_normalRaid", -- Story mode (legacy)
+    [220] = "chatReport_normalRaid", -- Story mode
+    [17] = "chatReport_lfr",
+    [8] = "chatReport_mythicDungeon",
+    [2] = "chatReport_heroicDungeon",
+    [1] = "chatReport_normalDungeon",
 }
 
 local function hasPermission()
-    if not IsInRaid() then
-        return true
-    end
+    if not IsInRaid() then return true end
 
     local perm = RCC.GetSetting("chatReport_permission")
 
-    if perm == "any" then
-        return true
-    end
+    if perm == "any" then return true end
 
     if perm == "assist" then
         return UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")
@@ -46,29 +42,19 @@ local function isInstanceAllowed()
     local _, _, difficultyID = GetInstanceInfo()
     local key = DIFFICULTY_TO_SETTING[difficultyID]
 
-    if not key then
-        return false
-    end
+    if not key then return false end
 
     return RCC.GetSetting(key)
 end
 
 local function shouldReport()
-    if InCombatLockdown() or not IsInGroup() then
-        return false
-    end
+    if InCombatLockdown() or not IsInGroup() then return false end
 
-    if not RCC.GetSetting("chatReport_enabled") then
-        return false
-    end
+    if not RCC.GetSetting("chatReport_enabled") then return false end
 
-    if not hasPermission() then
-        return false
-    end
+    if not hasPermission() then return false end
 
-    if not isInstanceAllowed() then
-        return false
-    end
+    if not isInstanceAllowed() then return false end
 
     -- Do not claim the reporter role if every report and announcement is off.
     return RCC.GetSetting("chatReport_allReady") or Reports.HasEnabledTypes()
@@ -85,7 +71,8 @@ end
 --------------------------------------------------------------------------------
 
 local function tryAnnounceAllReady()
-    if not reportSession
+    if
+        not reportSession
         or reportSession.announced
         or ReadyChecks.GetCurrent() ~= reportSession.readyCheck
         or not RCC.GetSetting("chatReport_allReady")
@@ -98,7 +85,9 @@ local function tryAnnounceAllReady()
 
     local summary = reportSession.readyCheck.summary
 
-    if summary.allReady and summary.hasBench
+    if
+        summary.allReady
+        and summary.hasBench
         and Output.Send("RCC: Everyone in raid is ready!", true)
     then
         reportSession.announced = true
@@ -118,7 +107,8 @@ end
 local function finishReportElection()
     reportTimer = nil
 
-    if not reportSession
+    if
+        not reportSession
         or ReadyChecks.GetCurrent() ~= reportSession.readyCheck
     then
         return
@@ -129,7 +119,8 @@ local function finishReportElection()
 
     -- MRT suppresses missing-consumable reports, not the separate announcement
     -- that the active roster has confirmed ready while the bench is pending.
-    if shouldReport()
+    if
+        shouldReport()
         and Election.IsCurrentPlayerCandidate()
         and Election.IsReporter()
         and not Election.HasMrtReporter()
@@ -141,9 +132,7 @@ end
 local function onReadyCheckStarted(session)
     cancelReportSession()
 
-    if not shouldReport() then
-        return
-    end
+    if not shouldReport() then return end
 
     reportSession = {
         readyCheck = session,

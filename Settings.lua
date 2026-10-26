@@ -22,13 +22,13 @@ local DEFAULTS = {
     readyCheckMover_enabled = true,
 
     -- Consumables Frame
-    consumables_enabled      = true,
-    consumables_scale        = 1.0,
+    consumables_enabled = true,
+    consumables_scale = 1.0,
     consumables_iconWidthPercent = ICON_WIDTH_LIMITS.default,
-    consumables_minShow      = false,
-    consumables_minShowTime  = 15,
+    consumables_minShow = false,
+    consumables_minShowTime = 15,
     consumables_cauldronOpen = false,
-    consumables_breakOpen    = false,
+    consumables_breakOpen = false,
     consumables_instanceOpen = false,
     consumables_instanceOpenParty = true,
     consumables_instanceOpenRaid = true,
@@ -75,22 +75,22 @@ local DEFAULTS = {
     consumablesActionBar_icon_vantus = false,
 
     -- Raid Frame
-    raidFrame_enabled        = true,
-    raidFrame_scale          = 1.0,
-    raidFrame_minShow        = true,
-    raidFrame_minShowTime    = 15,
+    raidFrame_enabled = true,
+    raidFrame_scale = 1.0,
+    raidFrame_minShow = true,
+    raidFrame_minShowTime = 15,
 
     -- Raid Frame Feast and Cauldron Columns
-    raidFrameCauldron_enabled               = true,
+    raidFrameCauldron_enabled = true,
     raidFrameCauldron_showOutsideReadyCheck = true,
 
     -- Chat Report
-    chatReport_enabled       = true,
-    chatReport_permission    = "assist",
-    chatReport_mythicRaid    = true,
-    chatReport_heroicRaid    = true,
-    chatReport_normalRaid    = false,
-    chatReport_lfr           = false,
+    chatReport_enabled = true,
+    chatReport_permission = "assist",
+    chatReport_mythicRaid = true,
+    chatReport_heroicRaid = true,
+    chatReport_normalRaid = false,
+    chatReport_lfr = false,
     chatReport_mythicDungeon = false,
     chatReport_heroicDungeon = false,
     chatReport_normalDungeon = false,
@@ -132,17 +132,11 @@ end
 local function normalizeConsumablesIconWidthPercent(value)
     value = tonumber(value)
 
-    if not value or value ~= value then
-        return ICON_WIDTH_LIMITS.default
-    end
+    if not value or value ~= value then return ICON_WIDTH_LIMITS.default end
 
-    if value <= ICON_WIDTH_LIMITS.min then
-        return ICON_WIDTH_LIMITS.min
-    end
+    if value <= ICON_WIDTH_LIMITS.min then return ICON_WIDTH_LIMITS.min end
 
-    if value >= ICON_WIDTH_LIMITS.max then
-        return ICON_WIDTH_LIMITS.max
-    end
+    if value >= ICON_WIDTH_LIMITS.max then return ICON_WIDTH_LIMITS.max end
 
     local stepIndex = math.floor(
         ((value - ICON_WIDTH_LIMITS.min) / ICON_WIDTH_LIMITS.step) + 0.5
@@ -153,8 +147,7 @@ end
 
 local SETTING_NORMALIZERS = {
     consumablesActionBar_frameStrata = normalizeActionBarFrameStrata,
-    consumables_iconWidthPercent =
-        normalizeConsumablesIconWidthPercent,
+    consumables_iconWidthPercent = normalizeConsumablesIconWidthPercent,
 }
 
 local function normalizeSettingValue(key, value)
@@ -170,15 +163,11 @@ end
 function RCC.GetSetting(key)
     local db = RCC.settingsDB
 
-    if not db then
-        return normalizeSettingValue(key, DEFAULTS[key])
-    end
+    if not db then return normalizeSettingValue(key, DEFAULTS[key]) end
 
     local val = db:Get(key)
 
-    if val == nil then
-        return normalizeSettingValue(key, DEFAULTS[key])
-    end
+    if val == nil then return normalizeSettingValue(key, DEFAULTS[key]) end
 
     return normalizeSettingValue(key, val)
 end
@@ -188,9 +177,7 @@ function RCC.GetSettingDefault(key)
 end
 
 function RCC.SetSettingValue(key, value)
-    if not RCC.settingsDB or DEFAULTS[key] == nil then
-        return false
-    end
+    if not RCC.settingsDB or DEFAULTS[key] == nil then return false end
 
     RCC.settingsDB:Set(key, normalizeSettingValue(key, value))
 
@@ -201,24 +188,20 @@ function RCC.GetContextualVisibilityOverride(surface, elementKey, reason)
     if not RCC.settingsDB then return end
 
     local value = RCC.settingsDB:GetRaw(
-        "contextualVisibility", surface, elementKey, reason
-    )
-
-    if type(value) == "boolean" then
-        return value
-    end
-end
-
-function RCC.GetContextualVisibility(surface, elementKey, reason, defaultValue)
-    local override = RCC.GetContextualVisibilityOverride(
+        "contextualVisibility",
         surface,
         elementKey,
         reason
     )
 
-    if override ~= nil then
-        return override
-    end
+    if type(value) == "boolean" then return value end
+end
+
+function RCC.GetContextualVisibility(surface, elementKey, reason, defaultValue)
+    local override =
+        RCC.GetContextualVisibilityOverride(surface, elementKey, reason)
+
+    if override ~= nil then return override end
 
     return defaultValue == true
 end
@@ -226,27 +209,19 @@ end
 local function refreshContextualVisibility()
     if InCombatLockdown() then return end
 
-    if RCC.consumables:IsShown() then
-        RCC.consumables:Update()
-    end
+    if RCC.consumables:IsShown() then RCC.consumables:Update() end
 
     RCC.raidFrame:RefreshContextualVisibility()
 end
 
 function RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)
-    if not surface or not elementKey or not reason then
-        return false
-    end
+    if not surface or not elementKey or not reason then return false end
 
-    if value ~= nil and type(value) ~= "boolean" then
-        return false
-    end
+    if value ~= nil and type(value) ~= "boolean" then return false end
 
     local db = RCC.settingsDB
 
-    if not db then
-        return false
-    end
+    if not db then return false end
 
     if value == nil then
         db:ResetPath("contextualVisibility", surface, elementKey, reason)
@@ -260,9 +235,7 @@ function RCC.SetContextualVisibilityOverride(surface, elementKey, reason, value)
 end
 
 function RCC.ClearContextualVisibilityOverrides(surface)
-    if not RCC.settingsDB or not surface then
-        return false
-    end
+    if not RCC.settingsDB or not surface then return false end
 
     RCC.settingsDB:ResetPath("contextualVisibility", surface)
 
@@ -276,8 +249,7 @@ end
 --------------------------------------------------------------------------------
 
 local function createMacroButton(parent, text, key, label, characterSpecific)
-    local macroTab = characterSpecific
-        and "Character Specific Macro tab"
+    local macroTab = characterSpecific and "Character Specific Macro tab"
         or "Shared Macro tab"
 
     return CanvasControls:CreateButton(parent, {
@@ -286,6 +258,7 @@ local function createMacroButton(parent, text, key, label, characterSpecific)
         height = 22,
         variant = "small",
         tooltip = "Create " .. label .. " macro in the " .. macroTab .. ".",
+
         onClick = function()
             RCC.ConsumableMacros.CreateManagedMacro(key, characterSpecific)
         end,
@@ -310,9 +283,7 @@ local function getMacroShorthand(definition)
     for aliasIndex = 2, #aliases do
         local alias = aliases[aliasIndex]
 
-        if #alias < #shorthand then
-            shorthand = alias
-        end
+        if #alias < #shorthand then shorthand = alias end
     end
 
     return shorthand
@@ -494,6 +465,7 @@ local function populateMainSettingsFrame(frame, destinations, measurementFrame)
         label = "Allow Dragging",
         value = RCC.GetSetting("readyCheckMover_enabled"),
         tooltip = "Drag to move the ready-check window and save its position",
+
         onChanged = function(checked)
             if not InCombatLockdown() then
                 RCC.SetSettingValue("readyCheckMover_enabled", checked)
@@ -555,16 +527,17 @@ local function registerPanel()
 
     local cfFrame = RCC.ConsumableFrameSettings.CreateFrame(measurementFrame)
     local cfCat = Settings.RegisterCanvasLayoutSubcategory(
-        category, cfFrame, "Consumables Frame"
+        category,
+        cfFrame,
+        "Consumables Frame"
     )
 
     ----------------------------------------------------------------------------
     --- Consumables Action Bar (subcategory)
     ----------------------------------------------------------------------------
 
-    local actionBarFrame = RCC.ConsumableActionBarSettings.CreateFrame(
-        measurementFrame
-    )
+    local actionBarFrame =
+        RCC.ConsumableActionBarSettings.CreateFrame(measurementFrame)
     local actionBarCat = Settings.RegisterCanvasLayoutSubcategory(
         category,
         actionBarFrame,
@@ -578,7 +551,9 @@ local function registerPanel()
     local rfFrame = RCC.RaidFrameSettings.CreateFrame(measurementFrame)
     RCC.Profiles.RegisterSettingsPage(rfFrame)
     local rfCat = Settings.RegisterCanvasLayoutSubcategory(
-        category, rfFrame, "Raid Frame"
+        category,
+        rfFrame,
+        "Raid Frame"
     )
 
     ----------------------------------------------------------------------------
@@ -588,7 +563,9 @@ local function registerPanel()
     local crFrame = RCC.ChatReportSettings.CreateFrame(measurementFrame)
     RCC.Profiles.RegisterSettingsPage(crFrame)
     local crCat = Settings.RegisterCanvasLayoutSubcategory(
-        category, crFrame, "Chat Report"
+        category,
+        crFrame,
+        "Chat Report"
     )
 
     ----------------------------------------------------------------------------
@@ -596,13 +573,14 @@ local function registerPanel()
     ----------------------------------------------------------------------------
 
     local macroFrame = createMacrosSettingsFrame(measurementFrame)
-    local macroCat = Settings.RegisterCanvasLayoutSubcategory(
-        category, macroFrame, "Macros"
-    )
+    local macroCat =
+        Settings.RegisterCanvasLayoutSubcategory(category, macroFrame, "Macros")
 
     local changelogFrame = RCC.Changelog.CreateSettingsPage(measurementFrame)
     local changelogCat = Settings.RegisterCanvasLayoutSubcategory(
-        category, changelogFrame, "Changelog"
+        category,
+        changelogFrame,
+        "Changelog"
     )
     RCC.settingsCategories = {
         consumables = cfCat,
@@ -674,7 +652,9 @@ function RCC.OpenSettings(categoryID)
         pendingSettingsCategoryID = categoryID
         settingsFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
         print(
-            "|" .. RCC.color .. "ffReadyCheckConsumables|r: "
+            "|"
+                .. RCC.color
+                .. "ffReadyCheckConsumables|r: "
                 .. "Can't open settings in combat. They will open when "
                 .. "combat ends."
         )
@@ -690,9 +670,7 @@ end
 settingsFrame:RegisterEvent("ADDON_LOADED")
 settingsFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_REGEN_ENABLED" then
-        if InCombatLockdown() then
-            return
-        end
+        if InCombatLockdown() then return end
 
         local categoryID = pendingSettingsCategoryID
 

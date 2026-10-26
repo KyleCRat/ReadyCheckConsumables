@@ -20,7 +20,10 @@ RCC.ConsumablePreferenceKey = {
 
 local function refreshPreferences()
     RCC.ConsumableMacros.ScheduleUpdate()
-    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
+    RCC.ConsumableStateController.Invalidate(
+        "preferences",
+        { nextFrame = true }
+    )
 end
 
 function Preferences.UsesProfilePreferences()
@@ -36,12 +39,16 @@ function Preferences.SetUseProfilePreferences(enabled)
 end
 
 local function getPreferenceDB()
-    return Preferences.UsesProfilePreferences() and RCC.settingsDB or RCC.characterDB
+    return Preferences.UsesProfilePreferences() and RCC.settingsDB
+        or RCC.characterDB
 end
 
 function Preferences.CanPrefer(choice)
     return Choice.IsValid(choice)
-        and (choice.kind ~= "item" or not RCC.db.preferenceBlockedItemIDs[choice.id])
+        and (
+            choice.kind ~= "item"
+            or not RCC.db.preferenceBlockedItemIDs[choice.id]
+        )
 end
 
 function Preferences.GetChoices(preferences, key, capacity)
@@ -57,7 +64,8 @@ function Preferences.GetItemID(preferences, key)
 end
 
 function Preferences.Read(previous)
-    local preferences = CopyTable(getPreferenceDB():Get("consumablePreferences") or {})
+    local preferences =
+        CopyTable(getPreferenceDB():Get("consumablePreferences") or {})
 
     -- Old fleeting choices are not promoted to another rank or family.
     for key, branches in pairs(preferences) do
@@ -78,7 +86,8 @@ function Preferences.Read(previous)
 end
 
 function Preferences.IsPreferred(key, capacity, choice)
-    local choices = getPreferenceDB():Get("consumablePreferences", key, capacity or 1)
+    local choices =
+        getPreferenceDB():Get("consumablePreferences", key, capacity or 1)
 
     return Choice.Contains(choices, choice) ~= nil
 end
@@ -90,7 +99,8 @@ function Preferences.Toggle(key, capacity, choice)
 
     capacity = capacity or 1
     local db = getPreferenceDB()
-    local choices = CopyTable(db:Get("consumablePreferences", key, capacity) or {})
+    local choices =
+        CopyTable(db:Get("consumablePreferences", key, capacity) or {})
     local index = Choice.Contains(choices, choice)
 
     if index then

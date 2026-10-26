@@ -18,13 +18,9 @@ function Timing.GetWarningSeconds(instanceType)
 end
 
 function Timing.IsExpiringSoon(remaining)
-    if not F.IsSafeNumber(remaining) then
-        return false
-    end
+    if not F.IsSafeNumber(remaining) then return false end
 
-    if remaining <= 0 then
-        return false
-    end
+    if remaining <= 0 then return false end
 
     local _, instanceType = GetInstanceInfo()
     return remaining <= Timing.GetWarningSeconds(instanceType)

@@ -4,5 +4,4 @@ local _, RCC = ...
 -- Add primary class buff spell ID -> { applied item aura spell IDs } entries
 -- here when supported items are added. Class-provided buffs live in
 -- Data/RaidBuffs.lua.
-RCC.Data.AddRaidBuffItemAuras({
-})
+RCC.Data.AddRaidBuffItemAuras({})

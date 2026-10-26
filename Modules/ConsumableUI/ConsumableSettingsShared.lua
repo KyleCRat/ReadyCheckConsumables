@@ -13,12 +13,11 @@ function Shared.SyncPages()
 end
 
 function Shared.SetFrameEventEnabled(definition, reason, enabled)
-    local defaultValue = RCC.ContextualVisibility.GetReasonDefault(definition, reason)
+    local defaultValue =
+        RCC.ContextualVisibility.GetReasonDefault(definition, reason)
     local override
 
-    if enabled ~= defaultValue then
-        override = enabled
-    end
+    if enabled ~= defaultValue then override = enabled end
 
     RCC.SetContextualVisibilityOverride(
         RCC.DisplaySurface.CONSUMABLE_FRAME,
@@ -36,7 +35,10 @@ function Shared.SetActionBarCategoryEnabled(definition, enabled)
 end
 
 function Shared.RefreshAugmentRuneSelection()
-    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
+    RCC.ConsumableStateController.Invalidate(
+        "preferences",
+        { nextFrame = true }
+    )
     RCC.ConsumableMacros.ScheduleUpdate()
 end
 
@@ -66,6 +68,7 @@ function Shared.CreateConsumablesFrameEnabledCheckbox(frame, flow, placement)
     local checkbox = flow:AddControl("checkbox", {
         label = "Enabled",
         tooltip = "Enable the temporary Consumables Frame.",
+
         onChanged = function(checked)
             setConsumablesFrameEnabled(checked)
         end,

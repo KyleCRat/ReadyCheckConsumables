@@ -8,15 +8,23 @@ RCC.ProfileMigration = {}
 -- Both profile and character migrations use the same preference conversion.
 
 local function migrateChoices(payload)
-    if payload.consumableItemCache ~= nil and type(payload.consumableItemCache) ~= "table" then
+    if
+        payload.consumableItemCache ~= nil
+        and type(payload.consumableItemCache) ~= "table"
+    then
         error("RCC: invalid legacy preferences; existing data was not replaced")
     end
 
     if payload.consumablePreferences ~= nil then
-        if not RCC.ConsumableChoice.ValidateBranches(
-            payload.consumablePreferences, { limitToCapacity = true }
-        ) then
-            error("RCC: invalid consumable preferences; existing data was not replaced")
+        if
+            not RCC.ConsumableChoice.ValidateBranches(
+                payload.consumablePreferences,
+                { limitToCapacity = true }
+            )
+        then
+            error(
+                "RCC: invalid consumable preferences; existing data was not replaced"
+            )
         end
     else
         local preferences = {}
@@ -24,8 +32,13 @@ local function migrateChoices(payload)
         for key, itemID in pairs(payload.consumableItemCache or {}) do
             local choice = RCC.ConsumableChoice.Item(itemID)
 
-            if type(key) ~= "string" or not RCC.ConsumableChoice.IsValid(choice) then
-                error("RCC: invalid legacy choice; existing data was not replaced")
+            if
+                type(key) ~= "string"
+                or not RCC.ConsumableChoice.IsValid(choice)
+            then
+                error(
+                    "RCC: invalid legacy choice; existing data was not replaced"
+                )
             end
 
             preferences[key] = { [1] = { choice } }
@@ -43,7 +56,9 @@ local function migrateInvisibilityPotionPreferences(payload)
     local choices = combatPotion and combatPotion[1]
     local choice = choices and choices[1]
 
-    if not choice or choice.kind ~= "item"
+    if
+        not choice
+        or choice.kind ~= "item"
         or not RCC.db.invisibilityPotionItemData[choice.id]
     then
         return
@@ -64,9 +79,7 @@ local function migrateInvisibilityPotionPreferences(payload)
 
     combatPotion[1] = nil
 
-    if next(combatPotion) == nil then
-        preferences.combatPotion = nil
-    end
+    if next(combatPotion) == nil then preferences.combatPotion = nil end
 end
 
 -- ---------------------------------------------------------------------------
@@ -79,7 +92,9 @@ local INITIAL_PROFILE_MIGRATION_VERSION = 1
 local function prepareLegacyPreferences(storage)
     if storage.legacyConsumablePreferences ~= nil then
         if type(storage.legacyConsumablePreferences) ~= "table" then
-            error("RCC: invalid legacy preferences; existing data was not replaced")
+            error(
+                "RCC: invalid legacy preferences; existing data was not replaced"
+            )
         end
 
         return
@@ -104,16 +119,21 @@ end
 
 function RCC.ProfileMigration.Prepare(saved)
     if saved ~= nil and type(saved) ~= "table" then
-        error("RCC: SavedVariables must be a table; existing data was not replaced")
+        error(
+            "RCC: SavedVariables must be a table; existing data was not replaced"
+        )
     end
 
     local storage
 
     if saved and saved.profileStorageVersion ~= nil then
-        if saved.profileStorageVersion ~= INITIAL_PROFILE_MIGRATION_VERSION
+        if
+            saved.profileStorageVersion ~= INITIAL_PROFILE_MIGRATION_VERSION
             or type(saved.profiles) ~= "table"
         then
-            error("RCC: unsupported profile storage; existing data was not replaced")
+            error(
+                "RCC: unsupported profile storage; existing data was not replaced"
+            )
         end
 
         storage = saved
@@ -186,15 +206,19 @@ local function getVisibilityMigrationTable(parent, key)
         value = {}
         parent[key] = value
     elseif type(value) ~= "table" then
-        error("RCC: invalid contextual visibility; existing data was not replaced")
+        error(
+            "RCC: invalid contextual visibility; existing data was not replaced"
+        )
     end
 
     return value
 end
 
 local function migrateFrameButtonVisibility(payload)
-    local visibility = getVisibilityMigrationTable(payload, "contextualVisibility")
-    local frameVisibility = getVisibilityMigrationTable(visibility, "consumableFrame")
+    local visibility =
+        getVisibilityMigrationTable(payload, "contextualVisibility")
+    local frameVisibility =
+        getVisibilityMigrationTable(visibility, "consumableFrame")
 
     for category, settingKey in pairs(LEGACY_FRAME_SETTINGS) do
         local enabled = payload[settingKey]
@@ -202,7 +226,9 @@ local function migrateFrameButtonVisibility(payload)
         if enabled == nil then
             enabled = not LEGACY_FRAME_DISABLED_DEFAULTS[category]
         elseif type(enabled) ~= "boolean" then
-            error("RCC: invalid legacy button setting; existing data was not replaced")
+            error(
+                "RCC: invalid legacy button setting; existing data was not replaced"
+            )
         end
 
         local events = getVisibilityMigrationTable(frameVisibility, category)
@@ -211,12 +237,16 @@ local function migrateFrameButtonVisibility(payload)
             local allowed = events[reason]
 
             if allowed ~= nil and type(allowed) ~= "boolean" then
-                error("RCC: invalid open-event setting; existing data was not replaced")
+                error(
+                    "RCC: invalid open-event setting; existing data was not replaced"
+                )
             end
 
             if not enabled then
                 events[reason] = false
-            elseif allowed == nil and LEGACY_FRAME_DISABLED_DEFAULTS[category] then
+            elseif
+                allowed == nil and LEGACY_FRAME_DISABLED_DEFAULTS[category]
+            then
                 -- These optional rows now default off per event. Preserve the
                 -- old all-events default only when their old switch was on.
                 events[reason] = true
@@ -228,7 +258,9 @@ local function migrateFrameButtonVisibility(payload)
 end
 
 function RCC.ProfileMigration.CreateProfileMigration()
-    local migration = LibStub("LibSimpleDBProfiles-1.0"):CreateMigration(TARGET_PROFILE_DATA_VERSION)
+    local migration = LibStub("LibSimpleDBProfiles-1.0"):CreateMigration(
+        TARGET_PROFILE_DATA_VERSION
+    )
     migration:Add(1, migrateChoices) -- 1 -> 2: normalize saved preferences.
     migration:Add(2, migrateInvisibilityPotionPreferences) -- 2 -> 3: separate invisibility choices.
     migration:Add(3, migrateFrameButtonVisibility) -- 3 -> 4: use only open-event choices.
@@ -244,7 +276,10 @@ end
 local TARGET_CHARACTER_DATA_VERSION = 3
 
 local function seedCharacterPreferences(storage, legacyPreferences)
-    if storage.consumableItemCache == nil and storage.consumablePreferences == nil then
+    if
+        storage.consumableItemCache == nil
+        and storage.consumablePreferences == nil
+    then
         storage.consumableItemCache = CopyTable(legacyPreferences)
     end
 end
@@ -252,7 +287,10 @@ end
 local function migrateCharacterChoices(storage)
     -- Retire the separate marker used by the earlier development build. Its
     -- already-converted choices stay intact within this sequential step.
-    if storage.consumableChoiceFormatVersion ~= nil and storage.consumableChoiceFormatVersion ~= 1 then
+    if
+        storage.consumableChoiceFormatVersion ~= nil
+        and storage.consumableChoiceFormatVersion ~= 1
+    then
         error("RCC: unsupported choice format; existing data was not replaced")
     end
 
@@ -272,30 +310,45 @@ local CHARACTER_MIGRATIONS = {
 
 function RCC.ProfileMigration.PrepareCharacter(saved, legacyPreferences)
     if saved ~= nil and type(saved) ~= "table" then
-        error("RCC: character SavedVariables must be a table; existing data was not replaced")
+        error(
+            "RCC: character SavedVariables must be a table; existing data was not replaced"
+        )
     end
 
     local storage = saved or {}
 
-    if storage.consumableItemCache ~= nil and type(storage.consumableItemCache) ~= "table" then
-        error("RCC: invalid character preferences; existing data was not replaced")
+    if
+        storage.consumableItemCache ~= nil
+        and type(storage.consumableItemCache) ~= "table"
+    then
+        error(
+            "RCC: invalid character preferences; existing data was not replaced"
+        )
     end
 
-    if storage.useProfileConsumablePreferences ~= nil
+    if
+        storage.useProfileConsumablePreferences ~= nil
         and type(storage.useProfileConsumablePreferences) ~= "boolean"
     then
-        error("RCC: invalid character preference storage choice; existing data was not replaced")
+        error(
+            "RCC: invalid character preference storage choice; existing data was not replaced"
+        )
     end
 
-    if storage.consumablePreferences ~= nil
+    if
+        storage.consumablePreferences ~= nil
         and not RCC.ConsumableChoice.ValidateBranches(
-            storage.consumablePreferences, { limitToCapacity = true }
+            storage.consumablePreferences,
+            { limitToCapacity = true }
         )
     then
-        error("RCC: invalid character preferences; existing data was not replaced")
+        error(
+            "RCC: invalid character preferences; existing data was not replaced"
+        )
     end
 
-    if storage.consumableHistory ~= nil
+    if
+        storage.consumableHistory ~= nil
         and not RCC.ConsumableChoice.ValidateBranches(storage.consumableHistory)
     then
         error("RCC: invalid consumable history; existing data was not replaced")
@@ -305,10 +358,15 @@ function RCC.ProfileMigration.PrepareCharacter(saved, legacyPreferences)
 
     if version == nil then
         version = 0
-    elseif type(version) ~= "number" or version % 1 ~= 0
-        or version < 1 or version > TARGET_CHARACTER_DATA_VERSION
+    elseif
+        type(version) ~= "number"
+        or version % 1 ~= 0
+        or version < 1
+        or version > TARGET_CHARACTER_DATA_VERSION
     then
-        error("RCC: unsupported character preference storage; existing data was not replaced")
+        error(
+            "RCC: unsupported character preference storage; existing data was not replaced"
+        )
     end
 
     if version == TARGET_CHARACTER_DATA_VERSION then return storage end

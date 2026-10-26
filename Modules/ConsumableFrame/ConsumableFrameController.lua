@@ -22,9 +22,8 @@ local wasInScenario
 local instanceOpenPending
 local instanceStateInitialized = false
 local readyCheckButtonsHooked
-local displayContext = DisplayContext.Create(
-    RCC.DisplaySurface.CONSUMABLE_FRAME
-)
+local displayContext =
+    DisplayContext.Create(RCC.DisplaySurface.CONSUMABLE_FRAME)
 
 local Reason = RCC.DisplayReason
 local INSTANCE_OPEN_DELAY = 0.5
@@ -54,9 +53,7 @@ local function updateOrHideAfterReasonChange(self)
         return
     end
 
-    if InCombatLockdown() then
-        return
-    end
+    if InCombatLockdown() then return end
 
     self:Update()
 
@@ -82,9 +79,7 @@ end
 local function startInstanceHideDelay(self)
     cancelInstanceHideDelay(self)
 
-    if not RCC.GetSetting("consumables_instanceHide") then
-        return
-    end
+    if not RCC.GetSetting("consumables_instanceHide") then return end
 
     local delay = RCC.GetSetting("consumables_instanceHideTime")
 
@@ -130,11 +125,13 @@ end
 --- Frame visibility
 --------------------------------------------------------------------------------
 
-local function showConsumableFrame(self, isInitiator, registerConfirm,
-                                   forceRepos)
-    if InCombatLockdown() then
-        return false
-    end
+local function showConsumableFrame(
+    self,
+    isInitiator,
+    registerConfirm,
+    forceRepos
+)
+    if InCombatLockdown() then return false end
 
     if not RCC.GetSetting("consumables_enabled") then
         self:Hide()
@@ -149,27 +146,23 @@ local function showConsumableFrame(self, isInitiator, registerConfirm,
     self:Show()
     self:Update()
 
-    if registerConfirm then
-        self:RegisterEvent("READY_CHECK_CONFIRM")
-    end
+    if registerConfirm then self:RegisterEvent("READY_CHECK_CONFIRM") end
 
-    if forceRepos or not wasShown then
-        self:Repos(isInitiator)
-    end
+    if forceRepos or not wasShown then self:Repos(isInitiator) end
 
     return true
 end
 
-local function activateAndShow(self, reason, isInitiator, registerConfirm,
-                               forceRepos)
+local function activateAndShow(
+    self,
+    reason,
+    isInitiator,
+    registerConfirm,
+    forceRepos
+)
     DisplayContext.Activate(displayContext, reason)
 
-    if showConsumableFrame(
-        self,
-        isInitiator,
-        registerConfirm,
-        forceRepos
-    ) then
+    if showConsumableFrame(self, isInitiator, registerConfirm, forceRepos) then
         return true
     end
 
@@ -212,26 +205,20 @@ local function handleLocalReadyCheckResponse(self)
 
     self:UnregisterEvent("READY_CHECK_CONFIRM")
 
-    if self.readyCheckHideDelay then
-        return
-    end
+    if self.readyCheckHideDelay then return end
 
     startReadyCheckHideDelay(self)
 end
 
 local function hookBlizzardReadyCheckButtons()
-    if readyCheckButtonsHooked then
-        return
-    end
+    if readyCheckButtonsHooked then return end
 
     if not ReadyCheckFrameYesButton or not ReadyCheckFrameNoButton then
         return
     end
 
     local function onReadyCheckButtonClick()
-        if frame then
-            handleLocalReadyCheckResponse(frame)
-        end
+        if frame then handleLocalReadyCheckResponse(frame) end
     end
 
     ReadyCheckFrameYesButton:HookScript("OnClick", onReadyCheckButtonClick)
@@ -263,13 +250,7 @@ local function onReadyCheck(self, initiatorUnit)
 
     local isInitiator = RCC.F.UnitIsUnitSafe(initiatorUnit, "player")
 
-    return activateAndShow(
-        self,
-        Reason.READY_CHECK,
-        isInitiator,
-        true,
-        true
-    )
+    return activateAndShow(self, Reason.READY_CHECK, isInitiator, true, true)
 end
 
 local function onReadyCheckFinished(self)
@@ -290,17 +271,13 @@ local function onReadyCheckFinished(self)
         return
     end
 
-    if self.readyCheckHideDelay then
-        return
-    end
+    if self.readyCheckHideDelay then return end
 
     startReadyCheckHideDelay(self)
 end
 
 local function onReadyCheckConfirm(self, unit)
-    if not RCC.F.UnitIsUnitSafe(unit, "player") then
-        return
-    end
+    if not RCC.F.UnitIsUnitSafe(unit, "player") then return end
 
     handleLocalReadyCheckResponse(self)
 end
@@ -330,7 +307,8 @@ local function shouldOpenForInstanceType(instanceType)
 end
 
 local function scheduleInstanceOpen(self)
-    if instanceOpenPending
+    if
+        instanceOpenPending
         or not RCC.GetSetting("consumables_instanceOpen")
     then
         return
@@ -339,27 +317,21 @@ local function scheduleInstanceOpen(self)
     instanceOpenPending = true
 
     C_Timer.After(INSTANCE_OPEN_DELAY, function()
-        if not instanceOpenPending then
-            return
-        end
+        if not instanceOpenPending then return end
 
         instanceOpenPending = false
 
         local stillInInstance, currentInstanceType = IsInInstance()
 
-        if InCombatLockdown() or not stillInInstance
+        if
+            InCombatLockdown()
+            or not stillInInstance
             or not shouldOpenForInstanceType(currentInstanceType)
         then
             return
         end
 
-        if activateAndShow(
-            self,
-            Reason.INSTANCE_ENTRY,
-            true,
-            false,
-            false
-        ) then
+        if activateAndShow(self, Reason.INSTANCE_ENTRY, true, false, false) then
             startInstanceHideDelay(self)
         end
     end)
@@ -370,51 +342,47 @@ local function onPlayerEnteringWorld(self, isInitialLogin, isReloadingUi)
     local inScenario = inInstance and instanceType == "scenario"
     local initialWorldEntry = isInitialLogin or isReloadingUi
     local enteredInstance = instanceStateInitialized
-        and inInstance and not wasInInstance
+        and inInstance
+        and not wasInInstance
         and not initialWorldEntry
     local enteredScenario = instanceStateInitialized
-        and inScenario and not wasInScenario
+        and inScenario
+        and not wasInScenario
         and not initialWorldEntry
 
     wasInInstance = inInstance
     wasInScenario = inScenario
     instanceStateInitialized = true
 
-    if enteredInstance or enteredScenario then
-        scheduleInstanceOpen(self)
-    end
+    if enteredInstance or enteredScenario then scheduleInstanceOpen(self) end
 end
 
 local function onScenarioDataUpdate(self)
     local inInstance, instanceType = IsInInstance()
     local inScenario = inInstance and instanceType == "scenario"
     local enteredScenario = instanceStateInitialized
-        and inScenario and not wasInScenario
+        and inScenario
+        and not wasInScenario
 
     wasInScenario = inScenario
 
-    if enteredScenario then
-        scheduleInstanceOpen(self)
-    end
+    if enteredScenario then scheduleInstanceOpen(self) end
 end
 
-
 local eventHandlers = {
-    READY_CHECK               = onReadyCheck,
-    READY_CHECK_FINISHED      = onReadyCheckFinished,
-    READY_CHECK_CONFIRM       = onReadyCheckConfirm,
-    PLAYER_REGEN_DISABLED     = onCombat,
-    PLAYER_ENTERING_WORLD     = onPlayerEnteringWorld,
-    SCENARIO_UPDATE           = onScenarioDataUpdate,
-    ACTIVE_DELVE_DATA_UPDATE  = onScenarioDataUpdate,
+    READY_CHECK = onReadyCheck,
+    READY_CHECK_FINISHED = onReadyCheckFinished,
+    READY_CHECK_CONFIRM = onReadyCheckConfirm,
+    PLAYER_REGEN_DISABLED = onCombat,
+    PLAYER_ENTERING_WORLD = onPlayerEnteringWorld,
+    SCENARIO_UPDATE = onScenarioDataUpdate,
+    ACTIVE_DELVE_DATA_UPDATE = onScenarioDataUpdate,
 }
 
 local function onEvent(self, event, ...)
     local handler = eventHandlers[event]
 
-    if handler then
-        handler(self, ...)
-    end
+    if handler then handler(self, ...) end
 end
 
 local function onHide(self)
@@ -456,9 +424,7 @@ function Controller.ApplyProfile()
 
     frame:Update()
 
-    if wasWaitingToHide then
-        startReadyCheckHideDelay(frame)
-    end
+    if wasWaitingToHide then startReadyCheckHideDelay(frame) end
 
     if DisplayContext.IsActive(displayContext, Reason.INSTANCE_ENTRY) then
         startInstanceHideDelay(frame)
@@ -484,7 +450,8 @@ function Controller.Attach(consumablesFrame)
         GetCategories = function()
             local categories = {}
 
-            if InCombatLockdown()
+            if
+                InCombatLockdown()
                 or not frame:IsShown()
                 or not RCC.GetSetting("consumables_enabled")
             then
@@ -492,7 +459,8 @@ function Controller.Attach(consumablesFrame)
             end
 
             for _, definition in ipairs(Catalog.GetDefinitions()) do
-                if Catalog.IsAvailableToPlayer(definition)
+                if
+                    Catalog.IsAvailableToPlayer(definition)
                     and Visibility.IsRequested(definition, displayContext)
                 then
                     categories[definition.key] = true
@@ -501,9 +469,11 @@ function Controller.Attach(consumablesFrame)
 
             return categories
         end,
+
         GetDisplayedItemIDs = function()
             return Surface.GetDisplayedItemIDs(frame.surface)
         end,
+
         ApplySnapshot = function(_, snapshot, categories)
             Surface.ApplySnapshot(frame.surface, snapshot, categories)
 
@@ -528,7 +498,8 @@ function Controller.FinishReadyCheck()
 end
 
 function Controller.OpenForCauldronPickup()
-    if not frame
+    if
+        not frame
         or not RCC.GetSetting("consumables_enabled")
         or not RCC.GetSetting("consumables_cauldronOpen")
         or InCombatLockdown()
@@ -536,17 +507,12 @@ function Controller.OpenForCauldronPickup()
         return false
     end
 
-    return activateAndShow(
-        frame,
-        Reason.CAULDRON_PICKUP,
-        true,
-        false,
-        false
-    )
+    return activateAndShow(frame, Reason.CAULDRON_PICKUP, true, false, false)
 end
 
 function Controller.OpenForBreakTimer()
-    if not frame
+    if
+        not frame
         or not RCC.GetSetting("consumables_enabled")
         or not RCC.GetSetting("consumables_breakOpen")
         or InCombatLockdown()
@@ -554,25 +520,13 @@ function Controller.OpenForBreakTimer()
         return false
     end
 
-    return activateAndShow(
-        frame,
-        Reason.BREAK_TIMER,
-        true,
-        false,
-        false
-    )
+    return activateAndShow(frame, Reason.BREAK_TIMER, true, false, false)
 end
 
 function Controller.OpenManually()
     if not frame then return false end
 
-    return activateAndShow(
-        frame,
-        Reason.MANUAL_OPEN,
-        true,
-        false,
-        true
-    )
+    return activateAndShow(frame, Reason.MANUAL_OPEN, true, false, true)
 end
 
 function Controller.GetDisplayContext()

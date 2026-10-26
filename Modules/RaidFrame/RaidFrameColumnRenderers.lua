@@ -2,13 +2,13 @@ local _, RCC = ...
 
 RCC.RaidFrameColumnRenderers = RCC.RaidFrameColumnRenderers or {}
 
-local Renderers      = RCC.RaidFrameColumnRenderers
-local Broadcast      = RCC.RaidFrameBroadcast
-local F              = RCC.F
-local UI             = RCC.UI
-local Timing         = RCC.ConsumableTiming
+local Renderers = RCC.RaidFrameColumnRenderers
+local Broadcast = RCC.RaidFrameBroadcast
+local F = RCC.F
+local UI = RCC.UI
+local Timing = RCC.ConsumableTiming
 local formatDuration = F.FormatDuration
-local GetItemIcon    = C_Item.GetItemIconByID
+local GetItemIcon = C_Item.GetItemIconByID
 
 -- Row visual-state contract:
 --   PRESENT     - confirmed and acceptable; full-color detected icon.
@@ -30,30 +30,30 @@ local GetItemIcon    = C_Item.GetItemIconByID
 -- Unavailable tooltips use a short status title and a wrapped description.
 -- A missing presence ACK does not prove that the addon is not installed.
 local ROW_STATE = {
-    PRESENT     = "present",
-    EXPIRING    = "expiring",
-    MISSING     = "missing",
+    PRESENT = "present",
+    EXPIRING = "expiring",
+    MISSING = "missing",
     IN_PROGRESS = "inProgress",
-    NO_WEAPON   = "noWeapon",
-    UNKNOWN     = "unknown",
+    NO_WEAPON = "noWeapon",
+    UNKNOWN = "unknown",
     NO_RESPONSE = "noResponse",
 }
 
-local MISSING_ALPHA            = 0.3
-local UNAVAILABLE_ICON_ALPHA   = 0.25
+local MISSING_ALPHA = 0.3
+local UNAVAILABLE_ICON_ALPHA = 0.25
 local NO_RESPONSE_MARKER_ALPHA = 0.8
-local NOT_READY_ICON           = UI.StatusIcons.NOT_READY
-local COLOR_DUR_GREEN          = { r = 0.2, g = 1,    b = 0.2 }
-local COLOR_DUR_YELLOW         = { r = 1,   g = 0.82, b = 0   }
-local COLOR_DUR_RED            = { r = 1,   g = 0.2,  b = 0.2 }
-local COLOR_TIME_NORMAL = { r = 1,   g = 1,    b = 1   }
-local COLOR_TIME_WARN   = { r = 1,   g = 0.2,  b = 0.2 }
-local COLOR_NEUTRAL     = { r = 0.6, g = 0.6,  b = 0.6 }
-local COLOR_UNDER       = { r = 1,   g = 0.82, b = 0   }
-local COLOR_EXACT       = { r = 0.2, g = 1,    b = 0.2 }
-local COLOR_OVER        = { r = 1,   g = 0.2,  b = 0.2 }
-local FONT_SIZE_TIME    = 14
-local MISSING_BG        = { r = 0,   g = 0,    b = 0   }
+local NOT_READY_ICON = UI.StatusIcons.NOT_READY
+local COLOR_DUR_GREEN = { r = 0.2, g = 1, b = 0.2 }
+local COLOR_DUR_YELLOW = { r = 1, g = 0.82, b = 0 }
+local COLOR_DUR_RED = { r = 1, g = 0.2, b = 0.2 }
+local COLOR_TIME_NORMAL = { r = 1, g = 1, b = 1 }
+local COLOR_TIME_WARN = { r = 1, g = 0.2, b = 0.2 }
+local COLOR_NEUTRAL = { r = 0.6, g = 0.6, b = 0.6 }
+local COLOR_UNDER = { r = 1, g = 0.82, b = 0 }
+local COLOR_EXACT = { r = 0.2, g = 1, b = 0.2 }
+local COLOR_OVER = { r = 1, g = 0.2, b = 0.2 }
+local FONT_SIZE_TIME = 14
+local MISSING_BG = { r = 0, g = 0, b = 0 }
 local TEMP_WEAPON_ENCHANT_STATUS = Broadcast.TempWeaponEnchantStatus
 
 local STATE_OVERLAYS = {
@@ -75,9 +75,7 @@ local STATE_OVERLAYS = {
 }
 
 local function hasUsableAuraID(auraID)
-    return auraID
-        and type(auraID) == "number"
-        and not issecretvalue(auraID)
+    return auraID and type(auraID) == "number" and not issecretvalue(auraID)
 end
 
 local function hasUsableNumericID(id)
@@ -102,7 +100,8 @@ local function getUnknownDescription(column)
     end
 
     return "This player has Ready Check Consumables, but their "
-        .. column.statusName .. " information is currently unavailable"
+        .. column.statusName
+        .. " information is currently unavailable"
 end
 
 local function setUnavailableTooltip(overlay, column, state)
@@ -119,11 +118,11 @@ local function setUnavailableTooltip(overlay, column, state)
 end
 
 local function onOverlayEnter(self)
-    local unit    = self.unit
-    local auraID  = self.auraID
+    local unit = self.unit
+    local auraID = self.auraID
     local spellID = self.spellID
-    local itemID  = self.itemID
-    local label   = self.label
+    local itemID = self.itemID
+    local label = self.label
     local currentAuraID = F.GetCurrentPublicAuraInstanceID(unit, auraID)
 
     if currentAuraID then
@@ -176,11 +175,11 @@ local function createOverlay(row, icon)
     overlay:EnableMouse(false)
     overlay:SetScript("OnEnter", onOverlayEnter)
     overlay:SetScript("OnLeave", onOverlayLeave)
-    overlay.unit    = nil
-    overlay.auraID  = nil
+    overlay.unit = nil
+    overlay.auraID = nil
     overlay.spellID = nil
-    overlay.itemID  = nil
-    overlay.label   = nil
+    overlay.itemID = nil
+    overlay.label = nil
 
     return overlay
 end
@@ -189,7 +188,7 @@ local function createIconBg(row, icon, color)
     local bg = row:CreateTexture(nil, "BACKGROUND")
     color = color or MISSING_BG
 
-    bg:SetPoint("TOPLEFT",     icon, "TOPLEFT")
+    bg:SetPoint("TOPLEFT", icon, "TOPLEFT")
     bg:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT")
     bg:SetTexture("Interface\\Buttons\\WHITE8x8")
     bg:SetVertexColor(color.r, color.g, color.b, 1)
@@ -215,7 +214,10 @@ local function getCell(row, column)
     local cell = row.cells and row.cells[column.key]
 
     if not cell then
-        error("Raid frame row has no cell for column: " .. tostring(column.key), 2)
+        error(
+            "Raid frame row has no cell for column: " .. tostring(column.key),
+            2
+        )
     end
 
     return cell
@@ -230,8 +232,8 @@ local function createIconRegions(row, column, layout, options, hasStateOverlay)
     icon:SetTexture(column.iconID)
 
     local cell = {
-        icon    = icon,
-        bg      = createIconBg(row, icon, options.missingBg),
+        icon = icon,
+        bg = createIconBg(row, icon, options.missingBg),
         overlay = createOverlay(row, icon),
     }
 
@@ -263,11 +265,7 @@ local function createTimedCell(row, column, layout, options)
 end
 
 local function createIconCell(row, column, layout, options)
-    setCell(
-        row,
-        column,
-        createIconRegions(row, column, layout, options, true)
-    )
+    setCell(row, column, createIconRegions(row, column, layout, options, true))
 end
 
 local function createCauldronCell(row, column, layout, options)
@@ -298,11 +296,11 @@ local function createTextOverlay(row, text, width, height)
     overlay:EnableMouse(false)
     overlay:SetScript("OnEnter", onOverlayEnter)
     overlay:SetScript("OnLeave", onOverlayLeave)
-    overlay.unit    = nil
-    overlay.auraID  = nil
+    overlay.unit = nil
+    overlay.auraID = nil
     overlay.spellID = nil
-    overlay.itemID  = nil
-    overlay.label   = nil
+    overlay.itemID = nil
+    overlay.label = nil
 
     return overlay
 end
@@ -336,7 +334,11 @@ end
 
 local function setTimeColor(timeText, time)
     if Timing.IsExpiringSoon(time) then
-        timeText:SetTextColor(COLOR_TIME_WARN.r, COLOR_TIME_WARN.g, COLOR_TIME_WARN.b)
+        timeText:SetTextColor(
+            COLOR_TIME_WARN.r,
+            COLOR_TIME_WARN.g,
+            COLOR_TIME_WARN.b
+        )
     else
         timeText:SetTextColor(
             COLOR_TIME_NORMAL.r,
@@ -368,11 +370,11 @@ end
 -- visibility change cannot leak into the next render.
 local function resetOverlay(overlay)
     overlay.description = nil
-    overlay.unit    = nil
-    overlay.auraID  = nil
+    overlay.unit = nil
+    overlay.auraID = nil
     overlay.spellID = nil
-    overlay.itemID  = nil
-    overlay.label   = nil
+    overlay.itemID = nil
+    overlay.label = nil
     overlay:EnableMouse(false)
 end
 
@@ -380,9 +382,7 @@ local function resetIconCell(cell)
     resetOverlay(cell.overlay)
     cell.bg:SetAlpha(1)
 
-    if cell.timeText then
-        cell.timeText:SetText("")
-    end
+    if cell.timeText then cell.timeText:SetText("") end
 
     if cell.stateOverlay then
         cell.stateOverlayActive = false
@@ -399,9 +399,7 @@ local function setIconAppearance(cell, texture, desaturated, alpha)
 end
 
 local function showStateOverlay(cell, appearance)
-    if not cell.stateOverlay then
-        return
-    end
+    if not cell.stateOverlay then return end
 
     cell.stateOverlayActive = true
 
@@ -469,9 +467,7 @@ local function getUnavailableState(member)
     local rccPresent = member.columnData
         and member.columnData.rccPresent == true
 
-    if rccPresent then
-        return ROW_STATE.UNKNOWN
-    end
+    if rccPresent then return ROW_STATE.UNKNOWN end
 
     return ROW_STATE.NO_RESPONSE
 end
@@ -481,15 +477,12 @@ local function getAuraRowState(member, data, context)
         return getUnavailableState(member)
     end
 
-    if not data.has then
-        return ROW_STATE.MISSING
-    end
+    if not data.has then return ROW_STATE.MISSING end
 
-    if data.isEating then
-        return ROW_STATE.IN_PROGRESS
-    end
+    if data.isEating then return ROW_STATE.IN_PROGRESS end
 
-    if context
+    if
+        context
         and data.time
         and data.time ~= context.rules.noDuration
         and Timing.IsExpiringSoon(data.time)
@@ -504,10 +497,11 @@ local function setPresentAuraTooltip(cell, member, column, data)
     local overlay = cell.overlay
 
     overlay.unit = member.unit
-    overlay.auraID  = data.auraID
+    overlay.auraID = data.auraID
     overlay.spellID = data.spellID or column.spellID
 
-    if not hasUsableAuraID(overlay.auraID)
+    if
+        not hasUsableAuraID(overlay.auraID)
         and not hasUsableNumericID(overlay.spellID)
     then
         overlay.label = column.statusName
@@ -532,9 +526,12 @@ local function renderTimedAuraCell(row, member, column, context)
 
     local state = renderAuraIconState(cell, member, column, data, context)
 
-    if (state == ROW_STATE.PRESENT
+    if
+        (
+            state == ROW_STATE.PRESENT
             or state == ROW_STATE.EXPIRING
-            or state == ROW_STATE.IN_PROGRESS)
+            or state == ROW_STATE.IN_PROGRESS
+        )
         and data.time
         and data.time ~= context.rules.noDuration
     then
@@ -547,9 +544,7 @@ local function getTempWeaponEnchantRowState(member, remaining)
     if remaining == nil then
         return getUnavailableState(member)
     elseif remaining > 0 then
-        if Timing.IsExpiringSoon(remaining) then
-            return ROW_STATE.EXPIRING
-        end
+        if Timing.IsExpiringSoon(remaining) then return ROW_STATE.EXPIRING end
 
         return ROW_STATE.PRESENT
     elseif remaining == TEMP_WEAPON_ENCHANT_STATUS.MISSING then
@@ -561,7 +556,7 @@ local function getTempWeaponEnchantRowState(member, remaining)
     return ROW_STATE.UNKNOWN
 end
 
-local function renderTempWeaponEnchantCell(row, member, column, context)
+local function renderTempWeaponEnchantCell(row, member, column, _context)
     local data = getColumnData(member, column)
     local remaining = data and data.time
     local itemID = data and data.itemID or 0
@@ -606,6 +601,7 @@ local function renderDurabilityCell(row, member, column)
         text:SetText(durPct .. "%")
 
         local color
+
         if durPct <= 20 then
             color = COLOR_DUR_RED
         elseif durPct <= 50 then
@@ -613,6 +609,7 @@ local function renderDurabilityCell(row, member, column)
         else
             color = COLOR_DUR_GREEN
         end
+
         setTextColor(text, color)
     else
         local state = getUnavailableState(member)
@@ -642,18 +639,16 @@ local function renderCauldronCell(row, member, column)
     cell.icon:SetDesaturated(count == 0)
     cell.icon:SetVertexColor(1, 1, 1, count > 0 and 1 or MISSING_ALPHA)
 
-    cell.overlay.unit    = nil
-    cell.overlay.auraID  = nil
+    cell.overlay.unit = nil
+    cell.overlay.auraID = nil
     cell.overlay.spellID = nil
-    cell.overlay.itemID  = itemID
-    cell.overlay.label   = column.statusName
+    cell.overlay.itemID = itemID
+    cell.overlay.label = column.statusName
     cell.overlay:EnableMouse(true)
 end
 
 local function setRegionShown(region, shown)
-    if not region or not region.Show then
-        return
-    end
+    if not region or not region.Show then return end
 
     if shown then
         region:Show()
@@ -663,9 +658,7 @@ local function setRegionShown(region, shown)
 end
 
 function Renderers.SetCellShown(cell, shown)
-    if not cell then
-        return
-    end
+    if not cell then return end
 
     setRegionShown(cell.icon, shown)
     setRegionShown(cell.bg, shown)
@@ -700,9 +693,7 @@ function Renderers.PositionCell(row, column)
         cell.countText:SetPoint("LEFT", row, "LEFT", column.countX, 0)
     end
 
-    if cell.icon then
-        positionIconCell(row, cell, column)
-    end
+    if cell.icon then positionIconCell(row, cell, column) end
 
     if cell.text then
         cell.text:ClearAllPoints()
@@ -711,13 +702,13 @@ function Renderers.PositionCell(row, column)
 end
 
 Renderers.TIMED = {
-    CreateCell                  = createTimedCell,
-    RenderAuraCell              = renderTimedAuraCell,
+    CreateCell = createTimedCell,
+    RenderAuraCell = renderTimedAuraCell,
     RenderTempWeaponEnchantCell = renderTempWeaponEnchantCell,
 }
 
 Renderers.ICON = {
-    CreateCell     = createIconCell,
+    CreateCell = createIconCell,
     RenderAuraCell = renderIconAuraCell,
 }
 

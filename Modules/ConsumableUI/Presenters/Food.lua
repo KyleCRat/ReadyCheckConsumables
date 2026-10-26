@@ -16,7 +16,7 @@ function Food.Present(model)
     local hasFoodCoverage = model.hasCoverage
     local foodSatisfied = model.satisfied
 
-    local foodCandidate, foodCandidates, outOfCachedFood =
+    local foodCandidate, _foodCandidates, outOfCachedFood =
         RCC.ConsumableSelection.Unpack(model.selection)
     local foodCount = foodCandidate and foodCandidate.count or 0
     local foodItemID = foodCandidate and foodCandidate.itemID
@@ -61,27 +61,20 @@ function Food.Present(model)
     end
 
     buttonState.countText = foodItemID and tostring(foodCount) or ""
-    buttonState.glow = not foodSatisfied
-        and foodCount > 0
+    buttonState.glow = not foodSatisfied and foodCount > 0
 
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        model.available == true
-    )
+    ButtonState.ApplyAuraScanAvailability(buttonState, model.available == true)
 
     return buttonState
 end
 
 function Food.Choices(selection)
-    local foodCandidate, foodCandidates, outOfCachedFood = RCC.ConsumableSelection.Unpack(selection)
+    local foodCandidate, foodCandidates, outOfCachedFood =
+        RCC.ConsumableSelection.Unpack(selection)
     local foodItemID = foodCandidate and foodCandidate.itemID
 
-    return ButtonState.CreateItemFlyoutChoices(
-        foodCandidates,
-        foodItemID,
-        {
-            preferenceKey = PreferenceKey.FOOD,
-            includeSingleChoice = outOfCachedFood,
-        }
-    )
+    return ButtonState.CreateItemFlyoutChoices(foodCandidates, foodItemID, {
+        preferenceKey = PreferenceKey.FOOD,
+        includeSingleChoice = outOfCachedFood,
+    })
 end

@@ -47,9 +47,7 @@ end
 function Selection.IsAvailable(candidate)
     if not candidate then return false end
 
-    if candidate.isToy then
-        return candidate.owned and candidate.usable
-    end
+    if candidate.isToy then return candidate.owned and candidate.usable end
 
     return candidate.count > 0
 end
@@ -78,7 +76,8 @@ function Selection.Map(inventory, itemData, options)
     local candidates = {}
 
     for itemID, data in pairs(itemData) do
-        local candidate = Selection.Item(inventory, itemID, data, nil, options.countUses)
+        local candidate =
+            Selection.Item(inventory, itemID, data, nil, options.countUses)
 
         if candidate and candidate.count > 0 then
             candidates[#candidates + 1] = candidate
@@ -128,7 +127,8 @@ function Selection.ApplyItemCooldowns(selection, cooldowns, itemIDs)
     end
 
     if selection.defaultCandidate then
-        selection.defaultCandidate.cooldown = itemCooldowns[selection.defaultCandidate.itemID]
+        selection.defaultCandidate.cooldown =
+            itemCooldowns[selection.defaultCandidate.itemID]
     end
 end
 
@@ -142,7 +142,13 @@ end
 -- Macros skip unavailable choices and use the same ordering for their primary
 -- and any permitted backup. A spell override replaces item use, not the saved
 -- item preference.
-function Selection.ResolveChoices(overrides, preferences, fallbacks, capacity, compareFallbacks)
+function Selection.ResolveChoices(
+    overrides,
+    preferences,
+    fallbacks,
+    capacity,
+    compareFallbacks
+)
     local selected = {}
     local included = {}
 
@@ -183,7 +189,8 @@ function Selection.ResolveChoices(overrides, preferences, fallbacks, capacity, c
 end
 
 function Selection.Resolve(selection, actionOptions)
-    selection.preferenceKey = selection.preferenceKey or (actionOptions and actionOptions.preferenceKey)
+    selection.preferenceKey = selection.preferenceKey
+        or (actionOptions and actionOptions.preferenceKey)
 
     if selection.overrideAction then
         selection.action = selection.overrideAction
@@ -192,14 +199,21 @@ function Selection.Resolve(selection, actionOptions)
     end
 
     local preferred = selection.preferred and { selection.preferred }
-    local selected = Selection.ResolveChoices(selection.overrides, preferred, selection.fallbacks, 1)
+    local selected = Selection.ResolveChoices(
+        selection.overrides,
+        preferred,
+        selection.fallbacks,
+        1
+    )
     local candidate = selected[1]
 
     selection.candidate = candidate
-    selection.unavailable = candidate ~= nil and not Selection.IsAvailable(candidate)
+    selection.unavailable = candidate ~= nil
+        and not Selection.IsAvailable(candidate)
 
     if Selection.IsAvailable(candidate) then
-        selection.action = RCC.ConsumableState.CreateCandidateAction(candidate, actionOptions)
+        selection.action =
+            RCC.ConsumableState.CreateCandidateAction(candidate, actionOptions)
     end
 
     return selection
@@ -210,7 +224,10 @@ function Selection.GetAvailableCandidates(selection)
     local included = {}
 
     local function add(candidate)
-        if not Selection.IsAvailable(candidate) or candidate.ready == false then return end
+        if not Selection.IsAvailable(candidate) or candidate.ready == false then
+            return
+        end
+
         if included[candidate.itemID] then return end
 
         included[candidate.itemID] = true
@@ -235,7 +252,8 @@ end
 -- macro fallbacks, subject to the category's own compatibility rules.
 function Selection.FamilyCandidates(inventory, options)
     local candidates = Selection.List(inventory, options.itemIDs)
-    local preferred = Selection.FindMapItem(inventory, options.itemData, options.preferredID)
+    local preferred =
+        Selection.FindMapItem(inventory, options.itemData, options.preferredID)
     local selection = {
         candidates = candidates,
         preferred = preferred,
@@ -255,7 +273,8 @@ function Selection.FamilyCandidates(inventory, options)
             end
 
             selection.fallbacks[#selection.fallbacks + 1] = candidate
-        elseif not options.canFallbackToFamily
+        elseif
+            not options.canFallbackToFamily
             or options.canFallbackToFamily(preferred.data, candidate.data)
         then
             otherFamilies[#otherFamilies + 1] = candidate

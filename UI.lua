@@ -3,9 +3,8 @@ local _, RCC = ...
 RCC.UI = RCC.UI or {}
 local UI = RCC.UI
 
-local floor = floor
-
-UI.FONT = "Interface\\AddOns\\ReadyCheckConsumables\\Media\\Fonts\\PTSansNarrow-Bold.ttf"
+UI.FONT =
+    "Interface\\AddOns\\ReadyCheckConsumables\\Media\\Fonts\\PTSansNarrow-Bold.ttf"
 UI.UNKNOWN_STATUS_ALPHA = 0.5
 
 UI.StatusIcons = {
@@ -27,15 +26,19 @@ function UI.SetStatusIcon(region, icon)
     end
 end
 
-local CONTROL_BG        = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
+local CONTROL_BG = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
 local CONTROL_HIGHLIGHT = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 }
-local POPUP_TRACK       = { r = 0.5, g = 0.5, b = 0.5, a = 1 }
+local POPUP_TRACK = { r = 0.5, g = 0.5, b = 0.5, a = 1 }
 
 function UI.ApplyControlStyle(control, text, fontSize)
     control.bg = control:CreateTexture(nil, "BACKGROUND")
     control.bg:SetAllPoints()
-    control.bg:SetColorTexture(CONTROL_BG.r, CONTROL_BG.g,
-        CONTROL_BG.b, CONTROL_BG.a)
+    control.bg:SetColorTexture(
+        CONTROL_BG.r,
+        CONTROL_BG.g,
+        CONTROL_BG.b,
+        CONTROL_BG.a
+    )
 
     control.border = control:CreateTexture(nil, "BORDER")
     control.border:SetPoint("TOPLEFT", -1, 1)
@@ -44,8 +47,12 @@ function UI.ApplyControlStyle(control, text, fontSize)
 
     control.highlight = control:CreateTexture(nil, "ARTWORK")
     control.highlight:SetAllPoints(control.bg)
-    control.highlight:SetColorTexture(CONTROL_HIGHLIGHT.r,
-        CONTROL_HIGHLIGHT.g, CONTROL_HIGHLIGHT.b, CONTROL_HIGHLIGHT.a)
+    control.highlight:SetColorTexture(
+        CONTROL_HIGHLIGHT.r,
+        CONTROL_HIGHLIGHT.g,
+        CONTROL_HIGHLIGHT.b,
+        CONTROL_HIGHLIGHT.a
+    )
     control.highlight:SetBlendMode("ADD")
     control.highlight:Hide()
 
@@ -86,10 +93,15 @@ end
 
 function UI.CreatePopupSlider(button, options)
     options.font = options.font or UI.FONT
-    options.bgColor = options.bgColor or
-        { r = CONTROL_BG.r, g = CONTROL_BG.g, b = CONTROL_BG.b, a = 0.95 }
-    options.trackColor = options.trackColor or
-        { r = POPUP_TRACK.r, g = POPUP_TRACK.g, b = POPUP_TRACK.b, a = POPUP_TRACK.a }
+    options.bgColor = options.bgColor
+        or { r = CONTROL_BG.r, g = CONTROL_BG.g, b = CONTROL_BG.b, a = 0.95 }
+    options.trackColor = options.trackColor
+        or {
+            r = POPUP_TRACK.r,
+            g = POPUP_TRACK.g,
+            b = POPUP_TRACK.b,
+            a = POPUP_TRACK.a,
+        }
 
     return LibStub("LibPopupSlider-1.0"):Create(button, options)
 end

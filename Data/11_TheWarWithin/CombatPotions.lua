@@ -1,11 +1,11 @@
 local _, RCC = ...
 
-local DAMAGE   = RCC.CombatPotionType.DAMAGE
-local UTILITY  = RCC.CombatPotionType.UTILITY
+local DAMAGE = RCC.CombatPotionType.DAMAGE
+local UTILITY = RCC.CombatPotionType.UTILITY
 local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddCombatPotionItems({
-    {-- Tempered Potion
+    { -- Tempered Potion
         type = DAMAGE,
         xpac = RCC.THE_WAR_WITHIN,
         items = {
@@ -17,7 +17,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 212265, q = 1 },
         },
     },
-    {-- Potion of Unwavering Focus
+    { -- Potion of Unwavering Focus
         type = DAMAGE,
         xpac = RCC.THE_WAR_WITHIN,
         items = {
@@ -29,7 +29,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 212259, q = 1 },
         },
     },
-    {-- Frontline Potion
+    { -- Frontline Potion
         type = UTILITY,
         xpac = RCC.THE_WAR_WITHIN,
         items = {

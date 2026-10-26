@@ -15,8 +15,7 @@ local GLOW_FREQUENCY = 0.15
 local GLOW_SCALE = 1.4
 
 local function getRenderCache(button)
-    button.consumableFrameRenderCache =
-        button.consumableFrameRenderCache or {}
+    button.consumableFrameRenderCache = button.consumableFrameRenderCache or {}
 
     return button.consumableFrameRenderCache
 end
@@ -47,9 +46,7 @@ local function applyButtonGlowPhase(button, glowWasActive)
 
     local onUpdate = glow:GetScript("OnUpdate")
 
-    if onUpdate then
-        onUpdate(glow, 0)
-    end
+    if onUpdate then onUpdate(glow, 0) end
 end
 
 local function startButtonGlow(button, color)
@@ -64,8 +61,16 @@ local function startButtonGlow(button, color)
     local glowWasActive = button["_AutoCastGlow" .. GLOW_KEY] ~= nil
 
     cache.glowActiveColor = color
-    LCG.AutoCastGlow_Start(button, color, GLOW_PARTICLES,
-                           GLOW_FREQUENCY, GLOW_SCALE, 0, 0, GLOW_KEY)
+    LCG.AutoCastGlow_Start(
+        button,
+        color,
+        GLOW_PARTICLES,
+        GLOW_FREQUENCY,
+        GLOW_SCALE,
+        0,
+        0,
+        GLOW_KEY
+    )
 
     applyButtonGlowPhase(button, glowWasActive)
 end
@@ -103,18 +108,18 @@ local function shouldUseHoverGlow(button)
     local cache = getRenderCache(button)
 
     return button.click
-           and (cache.glowEnabled
-                or button.clickEnabled
-                or hasUnavailableState(button)
-                or not hasConsumableBuff(button))
+        and (
+            cache.glowEnabled
+            or button.clickEnabled
+            or hasUnavailableState(button)
+            or not hasConsumableBuff(button)
+        )
 end
 
 local function resolveGlow(button)
     local cache = getRenderCache(button)
 
-    if InCombatLockdown()
-        or State.IsGlowSuppressed(button.consumableState)
-    then
+    if InCombatLockdown() or State.IsGlowSuppressed(button.consumableState) then
         stopButtonGlow(button)
 
         return

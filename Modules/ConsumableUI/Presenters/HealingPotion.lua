@@ -9,12 +9,13 @@ local ButtonState = RCC.ConsumableState
 local PreferenceKey = RCC.ConsumablePreferenceKey
 
 function HealingPotion.Present(model)
-    local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
+    local inventoryItemCandidate =
         RCC.ConsumableSelection.Unpack(model.selection)
     local inventoryItem = inventoryItemCandidate
         and inventoryItemCandidate.itemID
     local inventoryItemCount = inventoryItemCandidate
-        and inventoryItemCandidate.count or 0
+            and inventoryItemCandidate.count
+        or 0
     local buttonState = ButtonState.Create({
         countText = inventoryItem and tostring(inventoryItemCount) or "0",
         suppressGlow = true,
@@ -41,8 +42,10 @@ function HealingPotion.Present(model)
 end
 
 function HealingPotion.Choices(selection)
-    local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion = RCC.ConsumableSelection.Unpack(selection)
-    local inventoryItem = inventoryItemCandidate and inventoryItemCandidate.itemID
+    local inventoryItemCandidate, inventoryItemCandidates, outOfCachedPotion =
+        RCC.ConsumableSelection.Unpack(selection)
+    local inventoryItem = inventoryItemCandidate
+        and inventoryItemCandidate.itemID
 
     return ButtonState.CreateItemFlyoutChoices(
         inventoryItemCandidates,

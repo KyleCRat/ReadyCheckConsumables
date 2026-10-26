@@ -301,7 +301,8 @@ for i = 1, #DEFINITIONS do
     local definition = DEFINITIONS[i]
 
     definition.visibility = definition.visibility or STANDARD_VISIBILITY
-    definition.supportedCapacities = definition.supportedCapacities or SINGLE_CAPACITY
+    definition.supportedCapacities = definition.supportedCapacities
+        or SINGLE_CAPACITY
     definition.actionBarSettingKey = "consumablesActionBar_icon_"
         .. definition.key
     BY_KEY[definition.key] = definition

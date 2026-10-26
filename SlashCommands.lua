@@ -60,6 +60,7 @@ local COMMANDS = {
     {
         triggers = { "t", "test" },
         description = "Show a timed combined test",
+
         run = function()
             RCC.ReadyCheckTest:Start(TIMED_TEST, COMBINED_TEST)
         end,
@@ -67,6 +68,7 @@ local COMMANDS = {
     {
         triggers = { "tp", "test permanent" },
         description = "Show a permanent combined test",
+
         run = function()
             RCC.ReadyCheckTest:Start(PERMANENT_TEST, COMBINED_TEST)
         end,
@@ -74,6 +76,7 @@ local COMMANDS = {
     {
         triggers = { "rt", "ready check test", "readycheck test" },
         description = "Show a timed ready-check-only test",
+
         run = function()
             RCC.ReadyCheckTest:Start(TIMED_TEST, READY_CHECK_ONLY_TEST)
         end,
@@ -85,6 +88,7 @@ local COMMANDS = {
             "readycheck test permanent",
         },
         description = "Show a permanent ready-check-only test",
+
         run = function()
             RCC.ReadyCheckTest:Start(PERMANENT_TEST, READY_CHECK_ONLY_TEST)
         end,
@@ -92,6 +96,7 @@ local COMMANDS = {
     {
         triggers = { "ct", "cauldron test" },
         description = "Show the cauldron-only test",
+
         run = function()
             RCC.RaidFrameTest:StartCauldronOnly()
         end,
@@ -109,6 +114,7 @@ local COMMANDS = {
     {
         triggers = { "r", "report" },
         description = "Print the consumable report locally",
+
         run = function()
             RCC.chatReport.Test(false)
         end,
@@ -116,6 +122,7 @@ local COMMANDS = {
     {
         triggers = { "rc", "report chat", "reportchat" },
         description = "Send the consumable report to group chat",
+
         run = function()
             RCC.chatReport.Test(true)
         end,
@@ -148,9 +155,14 @@ local function printHelp()
     for i = 1, #COMMANDS do
         local command = COMMANDS[i]
 
-        print("  /rcc " .. command.triggers[1]
-            .. " (" .. command.triggers[2] .. ") - "
-            .. command.description)
+        print(
+            "  /rcc "
+                .. command.triggers[1]
+                .. " ("
+                .. command.triggers[2]
+                .. ") - "
+                .. command.description
+        )
     end
 end
 

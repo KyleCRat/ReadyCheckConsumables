@@ -266,6 +266,32 @@ data.
 ## Working Style
 
 - Preserve unrelated user changes and the existing four-space Lua style.
+- Use the shared Lua style baseline: StyLua 2.5.2 and Selene 0.31.0.
+  Keep owned source UTF-8. `.stylua.toml` selects Lua 5.1, LF, four spaces,
+  and an 80-column wrapping guide. Long strings and comments may exceed it.
+- Separate multiline functions and control blocks from same-scope neighbors
+  with blank lines. Keep nonempty functions, callbacks, loops, and multi-branch
+  conditionals multiline; short single-branch guards may stay on one line.
+  Review names, logical grouping, table structure, and complexity manually.
+- Run `stylua --verify .` to format owned Lua, then require `stylua --check .`,
+  `selene .`, Lua 5.1 syntax checks, TOC/XML include resolution, and
+  `git diff --check` before handoff. Both style tools must report zero findings,
+  including warnings. Add `--respect-ignores` when giving StyLua explicit files.
+- The addon checks cover all owned Lua, including retained data and existing
+  tests. Both tools explicitly exclude `Libs/**`: libraries are maintained and
+  checked in their own repositories and consumed here through released pins.
+  Do not format, lint-clean, or update an embed as part of addon-only work.
+  Check library changes separately in the owning repository before release.
+- Generated `Modules/Changelog/ReleaseNotes.lua` is excluded from both style
+  tools; validate it with the generator's `--check` command instead. Keep it in
+  Lua syntax checks. Do not regenerate release artifacts just for formatting.
+- `wow.yml` contains only reviewed globals used by RCC and its existing tests.
+  Verify additions against the local Blizzard export or their explicit external
+  contract. Keep default undefined-global, unused-variable, and shadowing
+  checks enabled; prefix intentionally unused bindings with `_` and document
+  any narrow suppression beside the code.
+- Use existing tool executables; do not install tools, add package managers,
+  change global PATH, or add a custom style checker without explicit permission.
 - Prefer small, explicit modules and one state owner over cross-module fallback
   chains.
 - Keep gameplay spell/item/icon IDs in `Data/`, including single-ability

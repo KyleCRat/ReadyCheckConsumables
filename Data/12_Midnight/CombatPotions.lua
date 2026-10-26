@@ -1,12 +1,12 @@
 local _, RCC = ...
 
-local MANA     = RCC.CombatPotionType.MANA
-local DAMAGE   = RCC.CombatPotionType.DAMAGE
-local UTILITY  = RCC.CombatPotionType.UTILITY
+local MANA = RCC.CombatPotionType.MANA
+local DAMAGE = RCC.CombatPotionType.DAMAGE
+local UTILITY = RCC.CombatPotionType.UTILITY
 local FLEETING = RCC.ConsumableVariant.FLEETING
 
 RCC.Data.AddCombatPotionItems({
-    {-- Liquid Luster (use spell 1295132)
+    { -- Liquid Luster (use spell 1295132)
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -16,7 +16,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 271886, q = 1 },
         },
     },
-    {-- Alluring Nostrum (use spell 1295015)
+    { -- Alluring Nostrum (use spell 1295015)
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -26,7 +26,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 271889, q = 1 },
         },
     },
-    {-- Lightfused Mana Potion
+    { -- Lightfused Mana Potion
         type = MANA,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -36,7 +36,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241301, q = 1 },
         },
     },
-    {-- Light's Potential
+    { -- Light's Potential
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -46,7 +46,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241309, q = 1 },
         },
     },
-    {-- Draught of Rampant Abandon
+    { -- Draught of Rampant Abandon
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -56,7 +56,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241293, q = 1 },
         },
     },
-    {-- Potion of Recklessness
+    { -- Potion of Recklessness
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -66,7 +66,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241289, q = 1 },
         },
     },
-    {-- Potion of Zealotry
+    { -- Potion of Zealotry
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -76,7 +76,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241297, q = 1 },
         },
     },
-    {-- Light's Preservation
+    { -- Light's Preservation
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -84,7 +84,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241287, q = 1 },
         },
     },
-    {-- Potion of Devoured Dreams
+    { -- Potion of Devoured Dreams
         type = DAMAGE,
         xpac = RCC.MIDNIGHT,
         items = {
@@ -94,7 +94,7 @@ RCC.Data.AddCombatPotionItems({
             { itemID = 241295, q = 1 },
         },
     },
-    {-- Enlightenment Tonic (Slow Fall)
+    { -- Enlightenment Tonic (Slow Fall)
         type = UTILITY,
         xpac = RCC.MIDNIGHT,
         items = {

@@ -33,18 +33,18 @@ end
 
 local function isInteractionActive(owner)
     return owner
-        and (owner.primaryHovered
+        and (
+            owner.primaryHovered
             or owner.flyoutHovered
             or isMouseOverFrame(owner)
-            or isMouseOverFrame(owner.flyout))
+            or isMouseOverFrame(owner.flyout)
+        )
 end
 
 local function isClaimedByAnother(owner)
     local manager = owner and owner.consumableFlyoutManager
 
-    return manager
-        and manager.activeOwner
-        and manager.activeOwner ~= owner
+    return manager and manager.activeOwner and manager.activeOwner ~= owner
 end
 
 local function releaseOwner(owner)
@@ -62,12 +62,8 @@ end
 function Flyout.CreateManager(parent, combatUsable)
     if not combatUsable then return end
 
-    local manager = CreateFrame(
-        "Frame",
-        nil,
-        parent,
-        "SecureHandlerStateTemplate"
-    )
+    local manager =
+        CreateFrame("Frame", nil, parent, "SecureHandlerStateTemplate")
 
     manager:SetAttribute("_onstate-combat", SECURE_FLYOUT_COMBAT)
     RegisterStateDriver(manager, "combat", "[combat] combat; nocombat")
@@ -78,9 +74,7 @@ end
 function Flyout.Hide(button)
     local owner = getOwner(button)
 
-    if not owner or InCombatLockdown() or not owner.flyout then
-        return false
-    end
+    if not owner or InCombatLockdown() or not owner.flyout then return false end
 
     owner.flyout:Hide()
     releaseOwner(owner)
@@ -95,6 +89,7 @@ function Flyout.Show(button)
     if not owner.flyout or (owner.flyoutChoiceCount or 0) == 0 then
         return false
     end
+
     if isClaimedByAnother(owner) then return false end
 
     local manager = owner.consumableFlyoutManager
@@ -257,12 +252,7 @@ end
 local function ensureFlyout(owner)
     if owner.flyout then return owner.flyout end
 
-    local flyout = CreateFrame(
-        "Frame",
-        nil,
-        owner,
-        "SecureFrameTemplate"
-    )
+    local flyout = CreateFrame("Frame", nil, owner, "SecureFrameTemplate")
 
     flyout.owner = owner
     flyout.buttons = {}
@@ -270,17 +260,21 @@ local function ensureFlyout(owner)
     flyout:SetSize(View.SIZE, View.SIZE + FLYOUT_SPACING)
     flyout:SetFrameLevel(owner:GetFrameLevel() + 20)
     flyout:EnableMouse(true)
+
     flyout:SetScript("OnEnter", function(self)
         Flyout.SetFlyoutHovered(self.owner, true)
     end)
+
     flyout:SetScript("OnLeave", function(self)
         Flyout.SetFlyoutHovered(self.owner, false)
     end)
+
     flyout:SetScript("OnHide", function(self)
         -- A secure combat close or a hidden parent also releases hover
         -- ownership, without mutating protected attributes from this hook.
         releaseOwner(self.owner)
     end)
+
     flyout:Hide()
 
     owner.flyout = flyout
@@ -442,13 +436,16 @@ function Flyout.SetChoices(owner, choices)
         local choice = choices[i]
 
         View.ApplyVisual(button, choice)
-        Binder.Bind(button, choice.action, owner.surfaceCapabilities, choice.preference)
+        Binder.Bind(
+            button,
+            choice.action,
+            owner.surfaceCapabilities,
+            choice.preference
+        )
         button:Show()
     end
 
-    if count ~= previousCount then
-        layoutFlyout(owner)
-    end
+    if count ~= previousCount then layoutFlyout(owner) end
 
     if isInteractionActive(owner) then
         Flyout.Show(owner)

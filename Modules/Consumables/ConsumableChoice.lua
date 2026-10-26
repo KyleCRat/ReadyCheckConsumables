@@ -27,8 +27,10 @@ function Choice.Key(choice)
 end
 
 function Choice.Equal(left, right)
-    return left ~= nil and right ~= nil
-        and left.kind == right.kind and left.id == right.id
+    return left ~= nil
+        and right ~= nil
+        and left.kind == right.kind
+        and left.id == right.id
 end
 
 function Choice.Copy(choice)
@@ -45,10 +47,15 @@ function Choice.ValidateBranches(branches, options)
     if type(branches) ~= "table" then return false end
 
     for category, capacities in pairs(branches) do
-        if type(category) ~= "string" or type(capacities) ~= "table" then return false end
+        if type(category) ~= "string" or type(capacities) ~= "table" then
+            return false
+        end
 
         for capacity, choices in pairs(capacities) do
-            if type(capacity) ~= "number" or capacity < 1 or capacity % 1 ~= 0
+            if
+                type(capacity) ~= "number"
+                or capacity < 1
+                or capacity % 1 ~= 0
                 or type(choices) ~= "table"
             then
                 return false
@@ -58,8 +65,12 @@ function Choice.ValidateBranches(branches, options)
             local seen = {}
 
             for index, choice in pairs(choices) do
-                if type(index) ~= "number" or index < 1 or index % 1 ~= 0
-                    or not Choice.IsValid(choice) or seen[Choice.Key(choice)]
+                if
+                    type(index) ~= "number"
+                    or index < 1
+                    or index % 1 ~= 0
+                    or not Choice.IsValid(choice)
+                    or seen[Choice.Key(choice)]
                 then
                     return false
                 end

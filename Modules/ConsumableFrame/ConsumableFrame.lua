@@ -11,9 +11,7 @@ local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 local CONTROL_BORDER_OVERHANG = 1
 
 local function getGeometry()
-    local widthPercent = RCC.GetSetting(
-        "consumables_iconWidthPercent"
-    )
+    local widthPercent = RCC.GetSetting("consumables_iconWidthPercent")
 
     return {
         buttonWidth = View.SIZE * (widthPercent / 100),
@@ -47,9 +45,13 @@ RCC.consumables:SetFrameStrata("HIGH")
 RCC.consumables:SetToplevel(true)
 
 RCC.consumables.drag = UI.CreateControlFrame(RCC.consumables, 20, 20)
-RCC.consumables.drag:SetPoint("TOPLEFT", RCC.consumables, "BOTTOMLEFT",
-                              CONTROL_BORDER_OVERHANG,
-                              -(View.SPACING + CONTROL_BORDER_OVERHANG))
+RCC.consumables.drag:SetPoint(
+    "TOPLEFT",
+    RCC.consumables,
+    "BOTTOMLEFT",
+    CONTROL_BORDER_OVERHANG,
+    -(View.SPACING + CONTROL_BORDER_OVERHANG)
+)
 RCC.consumables.drag:EnableMouse(true)
 RCC.consumables.drag:RegisterForDrag("LeftButton")
 RCC.consumables.drag:Hide()
@@ -59,35 +61,51 @@ RCC.consumables.drag.icon:SetSize(12, 12)
 RCC.consumables.drag.icon:SetPoint("CENTER")
 RCC.consumables.drag.icon:SetTexture("Interface\\CURSOR\\UI-Cursor-Move")
 
-RCC.consumables.drag:SetScript("OnDragStart", function(self)
+RCC.consumables.drag:SetScript("OnDragStart", function()
     RCC.consumables:StartMoving()
 end)
 
-RCC.consumables.drag:SetScript("OnDragStop", function(self)
+RCC.consumables.drag:SetScript("OnDragStop", function()
     RCC.consumables:StopMovingOrSizing()
 end)
 
 RCC.consumables.close = UI.CreateControlButton(
-    RCC.consumables, 0, 20, CLOSE or "x", "SecureHandlerClickTemplate"
+    RCC.consumables,
+    0,
+    20,
+    CLOSE or "x",
+    "SecureHandlerClickTemplate"
 )
-RCC.consumables.close:SetPoint("TOPLEFT", RCC.consumables.drag, "TOPRIGHT",
-                               View.SPACING + CONTROL_BORDER_OVERHANG * 2,
-                               0)
-RCC.consumables.close:SetPoint("TOPRIGHT", RCC.consumables, "BOTTOMRIGHT",
-                               -CONTROL_BORDER_OVERHANG,
-                               -(View.SPACING + CONTROL_BORDER_OVERHANG))
+RCC.consumables.close:SetPoint(
+    "TOPLEFT",
+    RCC.consumables.drag,
+    "TOPRIGHT",
+    View.SPACING + CONTROL_BORDER_OVERHANG * 2,
+    0
+)
+RCC.consumables.close:SetPoint(
+    "TOPRIGHT",
+    RCC.consumables,
+    "BOTTOMRIGHT",
+    -CONTROL_BORDER_OVERHANG,
+    -(View.SPACING + CONTROL_BORDER_OVERHANG)
+)
 RCC.consumables.close:Hide()
 
 RCC.consumables.close:SetFrameRef("consumables", RCC.consumables)
 RCC.consumables.close:SetFrameRef("anchor", RCC.consumables.anchor)
-RCC.consumables.close:SetAttribute("_onclick", [[
+RCC.consumables.close:SetAttribute(
+    "_onclick",
+    [[
     self:GetFrameRef("consumables"):Hide()
     self:GetFrameRef("anchor"):Hide()
-]])
+]]
+)
 
 RCC.consumables.surface = Surface.Create(RCC.consumables, {
     capabilities = Binder.Capabilities.TEMPORARY,
     geometry = initialGeometry,
+
     isClickable = function(definition)
         return definition.temporaryClickable == true
     end,
@@ -120,8 +138,7 @@ end
 function RCC.consumables:UpdateReadyCheckAnchor()
     if self.readyCheckAnchorFixed then return end
 
-    local needsFix = IsAddOnLoaded("ElvUI") or
-                     IsAddOnLoaded("ShestakUI")
+    local needsFix = IsAddOnLoaded("ElvUI") or IsAddOnLoaded("ShestakUI")
 
     if not needsFix then return end
 
@@ -142,8 +159,7 @@ function RCC.consumables:Repos(isInitiator)
         self.drag:Show()
         self.close:Show()
     else
-        local anchor = self.readyCheckAnchorFixed
-            and ReadyCheckFrame
+        local anchor = self.readyCheckAnchorFixed and ReadyCheckFrame
             or ReadyCheckListenerFrame
 
         self.anchor:Hide()

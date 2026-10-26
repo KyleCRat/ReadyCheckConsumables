@@ -2,8 +2,7 @@ local _, RCC = ...
 local RaidBuff = {}
 RCC.ConsumablePresenters.RaidBuff = RaidBuff
 local State = RCC.ConsumableState
-local STATUS_UNAVAILABLE =
-    "RCC can't check this buff for some group members because their buff "
+local STATUS_UNAVAILABLE = "RCC can't check this buff for some group members because their buff "
     .. "information is unavailable"
 
 function RaidBuff.Present(model)
@@ -16,11 +15,15 @@ function RaidBuff.Present(model)
         icon = info.iconID,
         tooltipSpellID = info.spellID,
         clickHintSpellID = info.spellID,
-        detailText = model.available and model.remaining and RCC.F.FormatDuration(model.remaining) or "",
+        detailText = model.available
+                and model.remaining
+                and RCC.F.FormatDuration(model.remaining)
+            or "",
         detailTextIsBad = model.available and model.expiringSoon,
         countText = missing and tostring(model.missing) or "",
         countTextIsBad = missing,
-        glow = info.spellID ~= nil and (missing or (model.available and model.expiringSoon)),
+        glow = info.spellID ~= nil
+            and (missing or (model.available and model.expiringSoon)),
     })
 
     if info.spellID then
@@ -39,7 +42,11 @@ function RaidBuff.Present(model)
         state.hasConsumableBuff = true
         state.desaturated = false
     else
-        State.ApplyAuraScanAvailability(state, model.available, STATUS_UNAVAILABLE)
+        State.ApplyAuraScanAvailability(
+            state,
+            model.available,
+            STATUS_UNAVAILABLE
+        )
     end
 
     return state

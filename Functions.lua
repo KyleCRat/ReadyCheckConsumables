@@ -29,30 +29,38 @@ durationFormatter:SetStripIntervalWhitespace(true)
 -- beyond this number are considered bench/overflow and skipped.
 -- Value = number of groups (each group holds 5 players).
 local GROUP_COUNT_BY_CONTENT_TYPE = {
-    [1]   = 1, -- Party Normal
-    [2]   = 1, -- Party Heroic
-    [8]   = 1, -- Party Mythic
-    [16]  = 4, -- Raid Mythic (20-player)
+    [1] = 1, -- Party Normal
+    [2] = 1, -- Party Heroic
+    [8] = 1, -- Party Mythic
+    [16] = 4, -- Raid Mythic (20-player)
     [233] = 5, -- Raid Mythic Flexible (15-25-player)
-    [14]  = 6, -- Raid Normal (up to 30-player)
-    [15]  = 6, -- Raid Heroic (up to 30-player)
-    [17]  = 6, -- LFR
+    [14] = 6, -- Raid Normal (up to 30-player)
+    [15] = 6, -- Raid Heroic (up to 30-player)
+    [17] = 6, -- LFR
     [151] = 6, -- LFR
-    [33]  = 6, -- Timewalking Raid
+    [33] = 6, -- Timewalking Raid
 }
 
 local MRT_PREFIXES = {
-    "EXRTADD", "MRTADDA", "MRTADDB", "MRTADDC", "MRTADDD",
-    "MRTADDE", "MRTADDF", "MRTADDG", "MRTADDH", "MRTADDI",
+    "EXRTADD",
+    "MRTADDA",
+    "MRTADDB",
+    "MRTADDC",
+    "MRTADDD",
+    "MRTADDE",
+    "MRTADDF",
+    "MRTADDG",
+    "MRTADDH",
+    "MRTADDI",
 }
 
 local isMrtPrefix = {}
 
 local MRT_RAIDCHECK_REPORT_TYPES = {
-    FOOD        = true,
-    FLASK       = true,
-    RUNES       = true,
-    BUFFS       = true,
+    FOOD = true,
+    FLASK = true,
+    RUNES = true,
+    BUFFS = true,
     REPORT_KITS = true,
     REPORT_OILS = true,
 }
@@ -67,9 +75,7 @@ function F.IsMrtPrefix(prefix)
 end
 
 function F.ParseMrtMessage(message)
-    if not message then
-        return nil
-    end
+    if not message then return nil end
 
     return strsplit("\t", message)
 end
@@ -80,9 +86,7 @@ function F.IsMrtRaidCheckReportMessage(moduleName, msgType)
 end
 
 function F.FormatDuration(seconds)
-    if not seconds then
-        return ""
-    end
+    if not seconds then return "" end
 
     if seconds < 0 then
         seconds = 0
@@ -94,32 +98,23 @@ function F.FormatDuration(seconds)
 end
 
 function F.IsSafeNumber(value)
-    return not issecretvalue(value)
-        and type(value) == "number"
+    return not issecretvalue(value) and type(value) == "number"
 end
 
 function F.GetPublicAuraField(aura, field)
-    if issecretvalue(aura) or not aura then
-        return nil
-    end
+    if issecretvalue(aura) or not aura then return nil end
 
     local value = aura[field]
 
-    if issecretvalue(value) then
-        return nil
-    end
+    if issecretvalue(value) then return nil end
 
     return value
 end
 
 function F.GetAuraRemaining(expiry, now)
-    if not F.IsSafeNumber(expiry) then
-        return nil
-    end
+    if not F.IsSafeNumber(expiry) then return nil end
 
-    if expiry <= 0 then
-        return nil
-    end
+    if expiry <= 0 then return nil end
 
     return expiry - now
 end
@@ -135,7 +130,9 @@ function F.StoreAuraID(data, aura)
 end
 
 function F.GetCurrentPublicAuraInstanceID(unit, auraInstanceID)
-    if issecretvalue(unit) or not unit
+    if
+        issecretvalue(unit)
+        or not unit
         or not F.IsSafeNumber(auraInstanceID)
         or auraInstanceID <= 0
         or C_Secrets.ShouldAurasBeSecret()
@@ -143,22 +140,15 @@ function F.GetCurrentPublicAuraInstanceID(unit, auraInstanceID)
         return nil
     end
 
-    local succeeded, aura = pcall(
-        C_UnitAuras.GetAuraDataByAuraInstanceID,
-        unit,
-        auraInstanceID
-    )
+    local succeeded, aura =
+        pcall(C_UnitAuras.GetAuraDataByAuraInstanceID, unit, auraInstanceID)
 
-    if not succeeded then
-        return nil
-    end
+    if not succeeded then return nil end
 
-    local currentAuraInstanceID = F.GetPublicAuraField(
-        aura,
-        "auraInstanceID"
-    )
+    local currentAuraInstanceID = F.GetPublicAuraField(aura, "auraInstanceID")
 
-    if not F.IsSafeNumber(currentAuraInstanceID)
+    if
+        not F.IsSafeNumber(currentAuraInstanceID)
         or currentAuraInstanceID ~= auraInstanceID
     then
         return nil
@@ -168,19 +158,13 @@ function F.GetCurrentPublicAuraInstanceID(unit, auraInstanceID)
 end
 
 function F.UnitIsUnitSafe(unit, otherUnit)
-    if issecretvalue(unit) or issecretvalue(otherUnit) then
-        return false
-    end
+    if issecretvalue(unit) or issecretvalue(otherUnit) then return false end
 
-    if not unit or not otherUnit then
-        return false
-    end
+    if not unit or not otherUnit then return false end
 
     local matches = UnitIsUnit(unit, otherUnit)
 
-    if issecretvalue(matches) then
-        return false
-    end
+    if issecretvalue(matches) then return false end
 
     return matches == true
 end
@@ -188,14 +172,14 @@ end
 function F.GetRaidDiffMaxGroup()
     local _, instance_type, difficulty = GetInstanceInfo()
 
-    if not IsInRaid() and (instance_type == "party" or
-                           instance_type == "scenario") then
+    if
+        not IsInRaid()
+        and (instance_type == "party" or instance_type == "scenario")
+    then
         return 1
     end
 
-    if instance_type ~= "raid" then
-        return 8
-    end
+    if instance_type ~= "raid" then return 8 end
 
     if difficulty and GROUP_COUNT_BY_CONTENT_TYPE[difficulty] then
         return GROUP_COUNT_BY_CONTENT_TYPE[difficulty]
@@ -205,17 +189,11 @@ function F.GetRaidDiffMaxGroup()
 end
 
 function F.chatType()
-    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        return "INSTANCE_CHAT"
-    end
+    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then return "INSTANCE_CHAT" end
 
-    if IsInRaid(LE_PARTY_CATEGORY_HOME) then
-        return "RAID"
-    end
+    if IsInRaid(LE_PARTY_CATEGORY_HOME) then return "RAID" end
 
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) then
-        return "PARTY"
-    end
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) then return "PARTY" end
 
     return "SAY"
 end
@@ -225,29 +203,22 @@ function F.shortName(fullName)
 end
 
 local function getNormalizedRealm()
-    local realm = GetNormalizedRealmName and GetNormalizedRealmName() or GetRealmName()
+    local realm = GetNormalizedRealmName and GetNormalizedRealmName()
+        or GetRealmName()
 
-    if not realm then
-        return nil
-    end
+    if not realm then return nil end
 
     return realm:gsub("%s+", "")
 end
 
 function F.fullName(name)
-    if not name or name == "" then
-        return nil
-    end
+    if not name or name == "" then return nil end
 
-    if name:find("-", 1, true) then
-        return name
-    end
+    if name:find("-", 1, true) then return name end
 
     local realm = getNormalizedRealm()
 
-    if realm and realm ~= "" then
-        return name .. "-" .. realm
-    end
+    if realm and realm ~= "" then return name .. "-" .. realm end
 
     return name
 end
@@ -255,7 +226,6 @@ end
 function F.unitFullName(unit)
     return F.fullName(GetUnitName(unit, true) or UnitName(unit))
 end
-
 
 --------------------------------------------------------------------------------
 --- GetRosterInfo(index)
@@ -268,30 +238,22 @@ function F.GetRosterInfo(index)
     if IsInRaid() then
         local name, _, subgroup, _, _, class = GetRaidRosterInfo(index)
 
-        if not name then
-            return nil
-        end
+        if not name then return nil end
 
         local unit = "raid" .. index
 
         return F.fullName(name), unit, subgroup, class, UnitIsConnected(unit)
     end
 
-    if index > 5 then
-        return nil
-    end
+    if index > 5 then return nil end
 
     local unit = index == 1 and "player" or "party" .. (index - 1)
 
-    if not UnitExists(unit) then
-        return nil
-    end
+    if not UnitExists(unit) then return nil end
 
     local name = GetUnitName(unit, true)
 
-    if not name then
-        return nil
-    end
+    if not name then return nil end
 
     local _, fileName = UnitClass(unit)
 
@@ -309,22 +271,15 @@ function F.ForEachActiveRosterMember(callback)
     local maxGroup = F.GetRaidDiffMaxGroup()
 
     for rosterIndex = 1, 40 do
-        local name, unit, subgroup, class, online =
-            F.GetRosterInfo(rosterIndex)
+        local name, unit, subgroup, class, online = F.GetRosterInfo(rosterIndex)
 
         if not name then
-            if not IsInRaid() then
-                break
-            end
+            if not IsInRaid() then break end
         elseif subgroup <= maxGroup then
-            if callback(
-                name,
-                unit,
-                subgroup,
-                class,
-                online,
-                rosterIndex
-            ) == false then
+            if
+                callback(name, unit, subgroup, class, online, rosterIndex)
+                == false
+            then
                 break
             end
         end
@@ -333,8 +288,8 @@ end
 
 local TRUSTED_GROUP_ADDON_CHANNELS = {
     INSTANCE_CHAT = true,
-    PARTY         = true,
-    RAID          = true,
+    PARTY = true,
+    RAID = true,
 }
 
 --------------------------------------------------------------------------------
@@ -344,7 +299,9 @@ local TRUSTED_GROUP_ADDON_CHANNELS = {
 --------------------------------------------------------------------------------
 
 function F.GetTrustedGroupAddonSender(channel, sender)
-    if issecretvalue(channel) or issecretvalue(sender)
+    if
+        issecretvalue(channel)
+        or issecretvalue(sender)
         or type(channel) ~= "string"
         or type(sender) ~= "string"
         or not TRUSTED_GROUP_ADDON_CHANNELS[channel]
@@ -354,9 +311,7 @@ function F.GetTrustedGroupAddonSender(channel, sender)
 
     local senderKey = F.fullName(sender)
 
-    if not senderKey then
-        return nil
-    end
+    if not senderKey then return nil end
 
     local senderIsActive = false
 
@@ -379,7 +334,7 @@ end
 function F.hasClassInRoster(className)
     local found = false
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class)
+    F.ForEachActiveRosterMember(function(_name, _unit, _subgroup, class)
         if class == className then
             found = true
 

@@ -16,10 +16,17 @@ function ConsumableStasis.Select(inputs)
     local selection = {
         candidates = candidates,
         fallbacks = candidates,
-        defaultCandidate = S.Item(inputs.inventory, RCC.db.consumableStasisItemIDs[1]),
+        defaultCandidate = S.Item(
+            inputs.inventory,
+            RCC.db.consumableStasisItemIDs[1]
+        ),
     }
 
-    S.ApplyItemCooldowns(selection, inputs.cooldowns, ConsumableStasis.Inventory.cooldownItemIDs)
+    S.ApplyItemCooldowns(
+        selection,
+        inputs.cooldowns,
+        ConsumableStasis.Inventory.cooldownItemIDs
+    )
 
     return S.Resolve(selection)
 end

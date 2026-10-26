@@ -12,8 +12,7 @@ local ICON_WIDTH_LIMITS = RCC.ConsumableFrameLimits.iconWidthPercent
 local MATRIX_ROW_HEIGHT = 36
 local FEATURE_DISABLED_TOOLTIP =
     "The Consumables Frame is disabled. Enable it to edit."
-local KEEP_OPEN_DISABLED_TOOLTIP =
-    "Keep Open After Ready Response is disabled."
+local KEEP_OPEN_DISABLED_TOOLTIP = "Keep Open After Ready Response is disabled."
 local INSTANCE_OPEN_DISABLED_TOOLTIP =
     "Open When Entering an Instance is disabled."
 local INSTANCE_HIDE_DISABLED_TOOLTIP =
@@ -43,9 +42,7 @@ local CONSUMABLE_SETTING_KEYS = {
 local definitions = Catalog.GetDefinitions()
 
 local function refreshConsumableFrame()
-    if InCombatLockdown() or not RCC.consumables:IsShown() then
-        return
-    end
+    if InCombatLockdown() or not RCC.consumables:IsShown() then return end
 
     RCC.ConsumableStateController.RefreshNow(true)
 end
@@ -53,12 +50,11 @@ end
 local function parseIconWidthPercent(text)
     if type(text) ~= "string" then return end
 
-    local numericText = text:match(
-        "^%s*([+-]?%d*%.?%d+)%s*%%?%s*$"
-    )
+    local numericText = text:match("^%s*([+-]?%d*%.?%d+)%s*%%?%s*$")
     local value = numericText and tonumber(numericText) or nil
 
-    if not value
+    if
+        not value
         or value < ICON_WIDTH_LIMITS.min
         or value > ICON_WIDTH_LIMITS.max
     then
@@ -72,12 +68,11 @@ local function addSettingCheckbox(frame, flow, options, placement)
     local checkbox = flow:AddControl("checkbox", {
         label = options.label,
         tooltip = options.tooltip,
+
         onChanged = function(checked)
             RCC.SetSettingValue(options.key, checked)
 
-            if options.onChanged then
-                options.onChanged(checked)
-            end
+            if options.onChanged then options.onChanged(checked) end
 
             frame:Sync()
         end,
@@ -129,9 +124,11 @@ local function createGeneralSettings(frame, layout)
         minValue = 0.5,
         maxValue = 2.0,
         step = 0.1,
+
         inputFormatter = function(value)
             return string.format("%.1f", value)
         end,
+
         afterChanged = function(value)
             RCC.consumables:SetScale(value)
         end,
@@ -145,11 +142,14 @@ local function createGeneralSettings(frame, layout)
         minValue = ICON_WIDTH_LIMITS.min,
         maxValue = ICON_WIDTH_LIMITS.max,
         step = ICON_WIDTH_LIMITS.step,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         inputParser = parseIconWidthPercent,
         suffix = "%",
+
         afterChanged = function()
             RCC.consumables:ApplyLayout()
         end,
@@ -168,9 +168,11 @@ local function createGeneralSettings(frame, layout)
         minValue = 1,
         maxValue = 40,
         step = 1,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         suffix = "s",
     })
 
@@ -235,22 +237,14 @@ local function createGeneralSettings(frame, layout)
 
     for i = 1, #instanceTypes.left do
         local option = instanceTypes.left[i]
-        local control = addSettingCheckbox(
-            frame,
-            instanceColumns.left,
-            option
-        )
+        local control = addSettingCheckbox(frame, instanceColumns.left, option)
 
         frame.instanceTypeControls[#frame.instanceTypeControls + 1] = control
     end
 
     for i = 1, #instanceTypes.right do
         local option = instanceTypes.right[i]
-        local control = addSettingCheckbox(
-            frame,
-            instanceColumns.right,
-            option
-        )
+        local control = addSettingCheckbox(frame, instanceColumns.right, option)
 
         frame.instanceTypeControls[#frame.instanceTypeControls + 1] = control
     end
@@ -270,9 +264,11 @@ local function createGeneralSettings(frame, layout)
         minValue = 5,
         maxValue = 120,
         step = 5,
+
         inputFormatter = function(value)
             return string.format("%d", value)
         end,
+
         suffix = "s",
     }, {
         indent = 1,
@@ -364,24 +360,19 @@ local function createVisibilityMatrix(frame, layout)
 
         for eventIndex = 1, #OPEN_EVENTS do
             local event = OPEN_EVENTS[eventIndex]
-            local enabledTooltip = string.format(
-                event.tooltip,
-                definition.label
-            )
-            local checkbox = row:AddControl(
-                "event" .. eventIndex,
-                "checkbox",
-                {
-                    tooltip = enabledTooltip,
-                    onChanged = function(checked)
-                        Shared.SetFrameEventEnabled(
-                            definition,
-                            event.reason,
-                            checked
-                        )
-                    end,
-                }
-            )
+            local enabledTooltip =
+                string.format(event.tooltip, definition.label)
+            local checkbox = row:AddControl("event" .. eventIndex, "checkbox", {
+                tooltip = enabledTooltip,
+
+                onChanged = function(checked)
+                    Shared.SetFrameEventEnabled(
+                        definition,
+                        event.reason,
+                        checked
+                    )
+                end,
+            })
             frame.matrixControls[#frame.matrixControls + 1] = {
                 control = checkbox,
                 definition = definition,
@@ -430,10 +421,7 @@ function Page.CreateFrame(measurementFrame)
         for key, control in pairs(self.settingControls) do
             control:SetValue(RCC.GetSetting(key))
 
-            control:SetControlEnabled(
-                pageEnabled,
-                FEATURE_DISABLED_TOOLTIP
-            )
+            control:SetControlEnabled(pageEnabled, FEATURE_DISABLED_TOOLTIP)
         end
 
         local minShowEnabled = RCC.GetSetting("consumables_minShow") == true
@@ -442,33 +430,28 @@ function Page.CreateFrame(measurementFrame)
 
         self.settingControls.consumables_minShowTime:SetControlEnabled(
             pageEnabled and minShowEnabled,
-            not pageEnabled
-                and FEATURE_DISABLED_TOOLTIP
+            not pageEnabled and FEATURE_DISABLED_TOOLTIP
                 or KEEP_OPEN_DISABLED_TOOLTIP
         )
 
         for i = 1, #self.instanceTypeControls do
             self.instanceTypeControls[i]:SetControlEnabled(
                 pageEnabled and instanceOpen,
-                not pageEnabled
-                    and FEATURE_DISABLED_TOOLTIP
+                not pageEnabled and FEATURE_DISABLED_TOOLTIP
                     or INSTANCE_OPEN_DISABLED_TOOLTIP
             )
         end
 
         self.settingControls.consumables_instanceHide:SetControlEnabled(
             pageEnabled and instanceOpen,
-            not pageEnabled
-                and FEATURE_DISABLED_TOOLTIP
+            not pageEnabled and FEATURE_DISABLED_TOOLTIP
                 or INSTANCE_OPEN_DISABLED_TOOLTIP
         )
         self.settingControls.consumables_instanceHideTime:SetControlEnabled(
             pageEnabled and instanceOpen and instanceHide,
-            not pageEnabled
-                and FEATURE_DISABLED_TOOLTIP
-                or not instanceOpen
-                    and INSTANCE_OPEN_DISABLED_TOOLTIP
-                    or INSTANCE_HIDE_DISABLED_TOOLTIP
+            not pageEnabled and FEATURE_DISABLED_TOOLTIP
+                or not instanceOpen and INSTANCE_OPEN_DISABLED_TOOLTIP
+                or INSTANCE_HIDE_DISABLED_TOOLTIP
         )
 
         self.resetMatrixButton:SetControlEnabled(
@@ -478,8 +461,7 @@ function Page.CreateFrame(measurementFrame)
 
         for i = 1, #self.matrixRowLabels do
             local rowLabel = self.matrixRowLabels[i]
-            local color = pageEnabled
-                and HIGHLIGHT_FONT_COLOR
+            local color = pageEnabled and HIGHLIGHT_FONT_COLOR
                 or GRAY_FONT_COLOR
 
             rowLabel:SetTextColor(color.r, color.g, color.b)
@@ -487,10 +469,9 @@ function Page.CreateFrame(measurementFrame)
 
         for i = 1, #self.matrixControls do
             local entry = self.matrixControls[i]
-            entry.control:SetValue(Catalog.GetFrameEventEnabled(
-                entry.definition,
-                entry.reason
-            ))
+            entry.control:SetValue(
+                Catalog.GetFrameEventEnabled(entry.definition, entry.reason)
+            )
             entry.control:SetControlEnabled(
                 pageEnabled,
                 FEATURE_DISABLED_TOOLTIP

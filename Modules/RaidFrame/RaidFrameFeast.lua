@@ -32,7 +32,8 @@ local function activateFrameReason()
 end
 
 local function sendFeastMessage()
-    if C_ChatInfo.InChatMessagingLockdown
+    if
+        C_ChatInfo.InChatMessagingLockdown
         and C_ChatInfo.InChatMessagingLockdown()
     then
         return
@@ -40,9 +41,7 @@ local function sendFeastMessage()
 
     local chatType = F.chatType()
 
-    if chatType == "SAY" then
-        return
-    end
+    if chatType == "SAY" then return end
 
     C_ChatInfo.SendAddonMessage(ADDON_PREFIX, MESSAGE_TYPE, chatType)
 end
@@ -62,9 +61,7 @@ function Feast.IsActive()
 end
 
 function Feast.Activate()
-    if InCombatLockdown() or not isEnabled() then
-        return false
-    end
+    if InCombatLockdown() or not isEnabled() then return false end
 
     active = true
     activateFrameReason()
@@ -82,7 +79,9 @@ function Feast.Reset()
 end
 
 local function onUnitSpellcastSucceeded(_self, unit, _castGUID, spellID)
-    if issecretvalue(unit) or unit ~= "player"
+    if
+        issecretvalue(unit)
+        or unit ~= "player"
         or issecretvalue(spellID)
         or not RCC.db.feastPlacementSpellIDs[spellID]
         or not IsInGroup()
@@ -90,13 +89,12 @@ local function onUnitSpellcastSucceeded(_self, unit, _castGUID, spellID)
         return
     end
 
-    if Feast.Activate() then
-        sendFeastMessage()
-    end
+    if Feast.Activate() then sendFeastMessage() end
 end
 
 local function onChatMsgAddon(_self, prefix, message, channel, sender)
-    if issecretvalue(prefix)
+    if
+        issecretvalue(prefix)
         or prefix ~= ADDON_PREFIX
         or issecretvalue(message)
         or message ~= MESSAGE_TYPE
@@ -109,15 +107,13 @@ local function onChatMsgAddon(_self, prefix, message, channel, sender)
 end
 
 local function onGroupRosterUpdate()
-    if active then
-        refreshFrame()
-    end
+    if active then refreshFrame() end
 end
 
 local EVENT_HANDLERS = {
-    CHAT_MSG_ADDON           = onChatMsgAddon,
-    GROUP_ROSTER_UPDATE      = onGroupRosterUpdate,
-    PLAYER_REGEN_DISABLED    = Feast.Reset,
+    CHAT_MSG_ADDON = onChatMsgAddon,
+    GROUP_ROSTER_UPDATE = onGroupRosterUpdate,
+    PLAYER_REGEN_DISABLED = Feast.Reset,
     UNIT_SPELLCAST_SUCCEEDED = onUnitSpellcastSucceeded,
 }
 
@@ -125,9 +121,7 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     local handler = EVENT_HANDLERS[event]
 
-    if handler then
-        handler(self, ...)
-    end
+    if handler then handler(self, ...) end
 end)
 
 eventFrame:RegisterEvent("CHAT_MSG_ADDON")

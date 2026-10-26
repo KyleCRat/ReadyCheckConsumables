@@ -48,8 +48,7 @@ function Surface.Create(parent, options)
 
     local surface = {
         frame = parent,
-        capabilities = options.capabilities
-            or Binder.Capabilities.TEMPORARY,
+        capabilities = options.capabilities or Binder.Capabilities.TEMPORARY,
         preparedStates = {},
         appliedRevisions = {},
         categories = {},
@@ -61,10 +60,8 @@ function Surface.Create(parent, options)
         ),
     }
 
-    surface.flyoutManager = Flyout.CreateManager(
-        parent,
-        surface.capabilities.allowCombat
-    )
+    surface.flyoutManager =
+        Flyout.CreateManager(parent, surface.capabilities.allowCombat)
     surface.buttons = View.CreateSet(parent, {
         capabilities = surface.capabilities,
         isClickable = options.isClickable,
@@ -81,13 +78,7 @@ function Surface.Create(parent, options)
         button:ClearAllPoints()
 
         if previous then
-            button:SetPoint(
-                "LEFT",
-                previous,
-                "RIGHT",
-                surface.geometry.gapX,
-                0
-            )
+            button:SetPoint("LEFT", previous, "RIGHT", surface.geometry.gapX, 0)
         else
             button:SetPoint("LEFT", parent, "LEFT", 0, 0)
         end
@@ -153,18 +144,14 @@ function Surface.GetDisplayedItemIDs(surface)
     for key, state in pairs(surface.preparedStates) do
         local itemID = State.GetClickHintItemID(state) or state.tooltipItemID
 
-        if itemID then
-            itemIDs[key] = itemID
-        end
+        if itemID then itemIDs[key] = itemID end
     end
 
     return itemIDs
 end
 
 function Surface.ApplySnapshot(surface, snapshot, categories)
-    if not surface or not snapshot or not snapshot.states then
-        return false
-    end
+    if not surface or not snapshot or not snapshot.states then return false end
 
     surface.latestSnapshot = snapshot
     surface.categories = categories or surface.categories
@@ -199,10 +186,8 @@ function Surface.ApplySnapshot(surface, snapshot, categories)
             local visualState = state
 
             if inCombat and surface.capabilities.allowCombat then
-                visualState = State.MergeCombatVisual(
-                    surface.preparedStates[key],
-                    state
-                )
+                visualState =
+                    State.MergeCombatVisual(surface.preparedStates[key], state)
             end
 
             View.ApplyVisual(button, visualState)
@@ -211,7 +196,12 @@ function Surface.ApplySnapshot(surface, snapshot, categories)
 
         if not inCombat then
             if applied.interaction ~= revisions.interaction then
-                Binder.Bind(button, state.action, surface.capabilities, state.preference)
+                Binder.Bind(
+                    button,
+                    state.action,
+                    surface.capabilities,
+                    state.preference
+                )
                 Flyout.SetChoices(button, state.flyoutChoices)
             elseif policyChanged or applied.visual ~= revisions.visual then
                 Flyout.ApplyChoiceVisuals(button, state.flyoutChoices)
@@ -249,31 +239,25 @@ function Surface.ApplyTemporaryLayout(surface, context)
 
     local definitions = Catalog.GetDefinitions()
     local geometry = surface.geometry or DEFAULT_GEOMETRY
-    local buttonWidth = math.max(
-        1,
-        tonumber(geometry.buttonWidth) or View.SIZE
-    )
-    local buttonHeight = math.max(
-        1,
-        tonumber(geometry.buttonHeight) or View.SIZE
-    )
-    local gapX = math.max(
-        0,
-        tonumber(geometry.gapX) or View.SPACING
-    )
+    local buttonWidth = math.max(1, tonumber(geometry.buttonWidth) or View.SIZE)
+    local buttonHeight =
+        math.max(1, tonumber(geometry.buttonHeight) or View.SIZE)
+    local gapX = math.max(0, tonumber(geometry.gapX) or View.SPACING)
     local previous
     local visibleCount = 0
     local shown = {}
-    local signature = { tostring(buttonWidth), tostring(buttonHeight), tostring(gapX) }
+    local signature =
+        { tostring(buttonWidth), tostring(buttonHeight), tostring(gapX) }
 
     for i = 1, #definitions do
         local definition = definitions[i]
 
-        shown[definition.key] = surface.categories[definition.key] == true and Visibility.IsVisible(
-            definition,
-            context,
-            surface.buttons[definition.key].consumableState
-        )
+        shown[definition.key] = surface.categories[definition.key] == true
+            and Visibility.IsVisible(
+                definition,
+                context,
+                surface.buttons[definition.key].consumableState
+            )
 
         if shown[definition.key] then
             signature[#signature + 1] = definition.key
@@ -295,13 +279,7 @@ function Surface.ApplyTemporaryLayout(surface, context)
 
         if shouldShow then
             if previous then
-                button:SetPoint(
-                    "LEFT",
-                    previous,
-                    "RIGHT",
-                    gapX,
-                    0
-                )
+                button:SetPoint("LEFT", previous, "RIGHT", gapX, 0)
             else
                 button:SetPoint("LEFT", surface.frame, "LEFT", 0, 0)
             end

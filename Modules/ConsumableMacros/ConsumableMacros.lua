@@ -15,7 +15,8 @@ local DEFAULT_MACRO_ICON = 134400
 local MAX_MACRO_LENGTH = 255 -- Blizzard_MacroUI's macro editor limit
 local MARKER_PATTERN = "^%s*#RCC%s*:%s*([%w_%-]+)%s*$"
 local INLINE_MARKER_LINE_PATTERN = "^%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
-local INLINE_USE_LINE_PATTERN = "^%s*/use%s+(.-)%s*item:%d+%s*;?%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
+local INLINE_USE_LINE_PATTERN =
+    "^%s*/use%s+(.-)%s*item:%d+%s*;?%s*#RCCI%s*:%s*([%w_%-]+)%s*(.-)%s*$"
 local INLINE_CONTINUATION_PATTERN = "^%s*/use%s+.-item:%d+%s+#RCCI%+%s*$"
 local AUTOMATED_COMMENT = "#Automated by RCC: use '/rcc s' for settings"
 local HEALING_POTION_RECUPERATE_MACRO = "healingPotionRecuperateMacro"
@@ -41,9 +42,7 @@ local function findMarker(body)
 
         local token = line:match(MARKER_PATTERN)
 
-        if token then
-            return token, line
-        end
+        if token then return token, line end
     end
 end
 
@@ -141,7 +140,8 @@ local function healingPotionAction()
         itemIDs = action and action.itemIDs,
         spellID = RCC.db.recuperateSpellID,
         spellName = spellName,
-    }, DEFAULT_MACRO_ICON
+    },
+        DEFAULT_MACRO_ICON
 end
 
 local function healthstoneAction()
@@ -157,7 +157,8 @@ local function raidBuffAction()
         kind = ActionKind.SPELL,
         spellID = info.spellID,
         spellName = getSpellName(info.spellID),
-    }, info.iconID or getSpellIcon(info.spellID)
+    },
+        info.iconID or getSpellIcon(info.spellID)
 end
 
 local function mainHandEnchantAction()
@@ -175,7 +176,10 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Food",
         description = "Uses the preferred food item when available, otherwise the best available food.",
         getAction = foodAction,
-        defaultIcon = function() return RCC.db.foodIconID end,
+
+        defaultIcon = function()
+            return RCC.db.foodIconID
+        end,
     },
     {
         key = "flask",
@@ -183,7 +187,10 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Flask",
         description = "Uses the preferred flask family when available, otherwise the best available flask.",
         getAction = flaskAction,
-        defaultIcon = function() return RCC.db.flaskIconID end,
+
+        defaultIcon = function()
+            return RCC.db.flaskIconID
+        end,
     },
     {
         key = "augment",
@@ -192,7 +199,10 @@ local MACRO_DEFINITIONS = {
         description = "Uses the preferred augment rune when available, otherwise selects one automatically. Includes no backup and never switches runes because of a cooldown.",
         getAction = augmentAction,
         aliases = { "aug" },
-        defaultIcon = function() return RCC.db.augmentIconID end,
+
+        defaultIcon = function()
+            return RCC.db.augmentIconID
+        end,
     },
     {
         key = "vantus",
@@ -200,7 +210,10 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Vantus",
         description = "Uses the preferred Vantus rune for the current raid when available, otherwise the best available current-raid rune.",
         getAction = vantusAction,
-        defaultIcon = function() return RCC.db.vantusIconID end,
+
+        defaultIcon = function()
+            return RCC.db.vantusIconID
+        end,
     },
     {
         key = "combatpot",
@@ -210,7 +223,10 @@ local MACRO_DEFINITIONS = {
         getAction = combatPotionAction,
         inlineGetAction = combatPotionAction,
         aliases = { "combatpotion", "cp" },
-        defaultIcon = function() return RCC.db.combatPotionIconID end,
+
+        defaultIcon = function()
+            return RCC.db.combatPotionIconID
+        end,
     },
     {
         key = "healpot",
@@ -220,7 +236,10 @@ local MACRO_DEFINITIONS = {
         getAction = healingPotionAction,
         inlineGetAction = healingPotionItemAction,
         aliases = { "healingpotion", "hp" },
-        defaultIcon = function() return RCC.db.healingPotionIconID end,
+
+        defaultIcon = function()
+            return RCC.db.healingPotionIconID
+        end,
     },
     {
         key = "healthstone",
@@ -230,7 +249,10 @@ local MACRO_DEFINITIONS = {
         getAction = healthstoneAction,
         inlineGetAction = healthstoneAction,
         aliases = { "hs" },
-        defaultIcon = function() return RCC.db.healthstoneIconID end,
+
+        defaultIcon = function()
+            return RCC.db.healthstoneIconID
+        end,
     },
     {
         key = "raidbuff",
@@ -238,7 +260,10 @@ local MACRO_DEFINITIONS = {
         macroName = "RCC Raid Buff",
         description = "Casts the raid buff provided by your current class.",
         getAction = raidBuffAction,
-        defaultIcon = function() return RCC.db.raidBuffIconID end,
+
+        defaultIcon = function()
+            return RCC.db.raidBuffIconID
+        end,
     },
     {
         key = "mhenchant",
@@ -247,7 +272,10 @@ local MACRO_DEFINITIONS = {
         description = "Uses your selected main-hand weapon enchant item or spell.",
         getAction = mainHandEnchantAction,
         aliases = { "mhen" },
-        defaultIcon = function() return RCC.db.weaponEnchantIconID end,
+
+        defaultIcon = function()
+            return RCC.db.weaponEnchantIconID
+        end,
     },
     {
         key = "ohenchant",
@@ -256,7 +284,10 @@ local MACRO_DEFINITIONS = {
         description = "Uses your selected off-hand weapon enchant item or spell.",
         getAction = offHandEnchantAction,
         aliases = { "ohen" },
-        defaultIcon = function() return RCC.db.weaponEnchantIconID end,
+
+        defaultIcon = function()
+            return RCC.db.weaponEnchantIconID
+        end,
     },
 }
 
@@ -266,9 +297,7 @@ local INLINE_MACRO_TYPES = {}
 local function registerMacroType(map, key, definition)
     local normalizedKey = normalizeToken(key)
 
-    if normalizedKey then
-        map[normalizedKey] = definition
-    end
+    if normalizedKey then map[normalizedKey] = definition end
 end
 
 for i = 1, #MACRO_DEFINITIONS do
@@ -318,9 +347,14 @@ local function canSaveMacro(name, body)
     end
 
     if not macroLengthWarnings[name] then
-        printMessage("Could not update " .. name .. ": the generated macro exceeds "
-            .. MAX_MACRO_LENGTH .. " characters. Shorten the macro to make room "
-            .. "for its item choices; it has been left unchanged.")
+        printMessage(
+            "Could not update "
+                .. name
+                .. ": the generated macro exceeds "
+                .. MAX_MACRO_LENGTH
+                .. " characters. Shorten the macro to make room "
+                .. "for its item choices; it has been left unchanged."
+        )
         macroLengthWarnings[name] = true
     end
 
@@ -329,7 +363,7 @@ end
 
 local function getMacroLimits()
     return Constants.MacroConsts.MAX_ACCOUNT_MACROS,
-           Constants.MacroConsts.MAX_CHARACTER_MACROS
+        Constants.MacroConsts.MAX_CHARACTER_MACROS
 end
 
 local function getMacroRange(characterSpecific)
@@ -360,9 +394,7 @@ local function findManagedMacroIndex(key, characterSpecific)
         local _, _, body = GetMacroInfo(index)
         local token = findMarker(body)
 
-        if getMacroType(token) == macroType then
-            return index
-        end
+        if getMacroType(token) == macroType then return index end
     end
 end
 
@@ -372,9 +404,7 @@ function Macros.CanCreateManagedMacro(characterSpecific)
     local numAccountMacros, numCharacterMacros = GetNumMacros()
     local maxAccountMacros, maxCharacterMacros = getMacroLimits()
 
-    if characterSpecific then
-        return numCharacterMacros < maxCharacterMacros
-    end
+    if characterSpecific then return numCharacterMacros < maxCharacterMacros end
 
     return numAccountMacros < maxAccountMacros
 end
@@ -419,7 +449,9 @@ local function appendHealingPotionMacroLines(lines, action)
 
     if itemID then
         lines[#lines + 1] = "#showtooltip [nocombat] "
-            .. spellName .. "; [combat] item:" .. itemID
+            .. spellName
+            .. "; [combat] item:"
+            .. itemID
     else
         lines[#lines + 1] = "#showtooltip [nocombat] " .. spellName
     end
@@ -449,9 +481,7 @@ local function buildMacroBody(markerLine, action)
         appendHealingPotionMacroLines(lines, action)
     end
 
-    if #lines == 2 then
-        lines[#lines + 1] = "#showtooltip"
-    end
+    if #lines == 2 then lines[#lines + 1] = "#showtooltip" end
 
     local body = table.concat(lines, "\n")
 
@@ -492,9 +522,7 @@ local function normalizeInlineSelectors(selectors)
     local remaining = trim(selectors)
     local groups = {}
 
-    if remaining == "" then
-        return ""
-    end
+    if remaining == "" then return "" end
 
     while remaining ~= "" do
         remaining = remaining:gsub("^%s+", "")
@@ -520,9 +548,7 @@ local function parseInlineMacroLine(line)
 
         if useSelectors == nil or markerSelectors == nil then return end
 
-        if useSelectors ~= "" then
-            return useToken, useSelectors
-        end
+        if useSelectors ~= "" then return useToken, useSelectors end
 
         return useToken, markerSelectors
     end
@@ -546,15 +572,15 @@ local function buildInlineMacroLines(markerKey, selectors, action)
 
         for index, itemID in ipairs(action.itemIDs) do
             local lineMarker = index == 1 and marker or "#RCCI+"
-            lines[#lines + 1] = itemUseLine(itemID, selectors) .. " " .. lineMarker
+            lines[#lines + 1] = itemUseLine(itemID, selectors)
+                .. " "
+                .. lineMarker
         end
 
         return table.concat(lines, "\n")
     end
 
-    if selectors and selectors ~= "" then
-        return marker .. " " .. selectors
-    end
+    if selectors and selectors ~= "" then return marker .. " " .. selectors end
 
     return marker
 end
@@ -579,17 +605,17 @@ local function rewriteInlineMacroBody(body)
 
             if recognized then
                 foundMarker = true
-                lines[#lines + 1] = buildInlineMacroLines(
-                    markerKey,
-                    selectors,
-                    action
-                )
+                lines[#lines + 1] =
+                    buildInlineMacroLines(markerKey, selectors, action)
 
                 -- Only adjacent #RCCI+ lines belong to this marker. Replace
                 -- them together so repeated updates cannot accumulate backups
                 -- or keep an old choice after the marker's conditions change.
-                while sourceLines[index + 1]
-                    and sourceLines[index + 1]:match(INLINE_CONTINUATION_PATTERN)
+                while
+                    sourceLines[index + 1]
+                    and sourceLines[index + 1]:match(
+                        INLINE_CONTINUATION_PATTERN
+                    )
                 do
                     index = index + 1
                 end
@@ -605,9 +631,7 @@ local function rewriteInlineMacroBody(body)
 
     local nextBody = table.concat(lines, "\n")
 
-    if foundMarker and nextBody ~= body then
-        return nextBody
-    end
+    if foundMarker and nextBody ~= body then return nextBody end
 end
 
 function Macros.CreateManagedMacro(key, characterSpecific)
@@ -621,7 +645,10 @@ function Macros.CreateManagedMacro(key, characterSpecific)
         return false
     end
 
-    if not CreateMacro or not EditMacro or not GetNumMacros
+    if
+        not CreateMacro
+        or not EditMacro
+        or not GetNumMacros
         or not GetMacroInfo
     then
         printMessage("Macro APIs are not available.")
@@ -640,10 +667,8 @@ function Macros.CreateManagedMacro(key, characterSpecific)
     if not canSaveMacro(macroType.macroName, body) then return false end
 
     local macroIcon = icon or DEFAULT_MACRO_ICON
-    local existingIndex = findManagedMacroIndex(
-        macroType.key,
-        characterSpecific
-    )
+    local existingIndex =
+        findManagedMacroIndex(macroType.key, characterSpecific)
 
     if existingIndex then
         local editedIndex = EditMacro(existingIndex, nil, macroIcon, body)
@@ -736,9 +761,7 @@ function Macros.UpdateAll()
         updateMacro(index)
     end
 
-    for index = maxAccountMacros + 1,
-                maxAccountMacros + numCharacterMacros
-    do
+    for index = maxAccountMacros + 1, maxAccountMacros + numCharacterMacros do
         updateMacro(index)
     end
 

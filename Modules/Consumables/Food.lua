@@ -15,8 +15,10 @@ Food.Dependencies = {
 
 function Food.Select(inputs)
     local candidates = S.List(inputs.inventory, RCC.db.foodItemIDs)
-    local preferredID = RCC.ConsumablePreferences.GetItemID(inputs.preferences, KEY)
-    local preferred = S.FindListItem(inputs.inventory, RCC.db.foodItemIDs, preferredID)
+    local preferredID =
+        RCC.ConsumablePreferences.GetItemID(inputs.preferences, KEY)
+    local preferred =
+        S.FindListItem(inputs.inventory, RCC.db.foodItemIDs, preferredID)
 
     return S.Resolve({
         preferred = preferred,
@@ -33,13 +35,9 @@ function Food.Observe(inputs)
     for _, aura in ipairs(inputs.playerAuras.auras) do
         local kind = RCC.FoodAuras.GetType(aura)
 
-        if kind == RCC.FoodAuras.Type.EATING then
-            observation.eating = aura
-        end
+        if kind == RCC.FoodAuras.Type.EATING then observation.eating = aura end
 
-        if kind == RCC.FoodAuras.Type.WELL_FED then
-            observation.food = aura
-        end
+        if kind == RCC.FoodAuras.Type.WELL_FED then observation.food = aura end
     end
 
     return observation
@@ -64,17 +62,16 @@ function Food.Evaluate(selection, observation, inputs, now)
         eating.auraInstanceID = nil
 
         if eating.duration and eating.duration > 0 and eating.remaining then
-            model.cooldown = { start = eating.expiry - eating.duration, duration = eating.duration }
+            model.cooldown = {
+                start = eating.expiry - eating.duration,
+                duration = eating.duration,
+            }
         end
     end
 
-    if food then
-        E.AddDeadline(model, food.expiry, inputs.instance, now)
-    end
+    if food then E.AddDeadline(model, food.expiry, inputs.instance, now) end
 
-    if eating then
-        E.AddDeadline(model, eating.expiry, inputs.instance, now)
-    end
+    if eating then E.AddDeadline(model, eating.expiry, inputs.instance, now) end
 
     return model
 end

@@ -8,10 +8,11 @@ RCC.db = RCC.db or {}
 --- one combined cauldron registry.
 --------------------------------------------------------------------------------
 
-RCC.CauldronKind = RCC.CauldronKind or {
-    FLASK  = "flask",
-    POTION = "potion",
-}
+RCC.CauldronKind = RCC.CauldronKind
+    or {
+        FLASK = "flask",
+        POTION = "potion",
+    }
 
 RCC.db.cauldronItemIDs = {}
 RCC.db.cauldronItemData = {}
@@ -28,9 +29,7 @@ local function addIndexedItems(itemIDs, orderedIDs, itemData, cauldron)
     for itemIndex = 1, #itemIDs do
         local itemID = itemIDs[itemIndex]
 
-        if orderedIDs then
-            orderedIDs[#orderedIDs + 1] = itemID
-        end
+        if orderedIDs then orderedIDs[#orderedIDs + 1] = itemID end
 
         itemData[itemID] = cauldron
     end

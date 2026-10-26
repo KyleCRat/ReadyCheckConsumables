@@ -32,7 +32,7 @@ local function scanAuraRoster(now)
         members = {},
     }
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+    F.ForEachActiveRosterMember(function(name, unit, _subgroup, class, online)
         if not online then return end
 
         local scan = AuraScan.ScanUnit(unit, now)
@@ -71,7 +71,7 @@ end
 local function reportOffline(toChat)
     local offline = {}
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+    F.ForEachActiveRosterMember(function(name, _unit, _subgroup, class, online)
         if not online then
             offline[#offline + 1] = Output.ColorName(F.shortName(name), class)
         end
@@ -89,10 +89,7 @@ local function reportFood(toChat, members)
     for memberIndex = 1, #members do
         local member = members[memberIndex]
         local hasFood = false
-        local colored = Output.ColorName(
-            F.shortName(member.name),
-            member.class
-        )
+        local colored = Output.ColorName(F.shortName(member.name), member.class)
 
         for auraIndex = 1, #member.auras do
             local aura = member.auras[auraIndex]
@@ -103,20 +100,15 @@ local function reportFood(toChat, members)
                 local remaining = aura.remaining
 
                 if Timing.IsExpiringSoon(remaining) then
-                    expiring[#expiring + 1] = format(
-                        "%s(%s)",
-                        colored,
-                        F.FormatDuration(remaining)
-                    )
+                    expiring[#expiring + 1] =
+                        format("%s(%s)", colored, F.FormatDuration(remaining))
                 end
 
                 break
             end
         end
 
-        if not hasFood then
-            missing[#missing + 1] = colored
-        end
+        if not hasFood then missing[#missing + 1] = colored end
     end
 
     local totalBad = #missing + #expiring
@@ -140,10 +132,7 @@ local function reportFlasks(toChat, members)
     for memberIndex = 1, #members do
         local member = members[memberIndex]
         local hasFlask = false
-        local colored = Output.ColorName(
-            F.shortName(member.name),
-            member.class
-        )
+        local colored = Output.ColorName(F.shortName(member.name), member.class)
 
         for auraIndex = 1, #member.auras do
             local aura = member.auras[auraIndex]
@@ -154,20 +143,15 @@ local function reportFlasks(toChat, members)
                 local remaining = aura.remaining
 
                 if Timing.IsExpiringSoon(remaining) then
-                    expiring[#expiring + 1] = format(
-                        "%s(%s)",
-                        colored,
-                        F.FormatDuration(remaining)
-                    )
+                    expiring[#expiring + 1] =
+                        format("%s(%s)", colored, F.FormatDuration(remaining))
                 end
 
                 break
             end
         end
 
-        if not hasFlask then
-            missing[#missing + 1] = colored
-        end
+        if not hasFlask then missing[#missing + 1] = colored end
     end
 
     local totalBad = #missing + #expiring
@@ -191,10 +175,7 @@ local function reportAugments(toChat, members)
     for memberIndex = 1, #members do
         local member = members[memberIndex]
         local hasAugment = false
-        local colored = Output.ColorName(
-            F.shortName(member.name),
-            member.class
-        )
+        local colored = Output.ColorName(F.shortName(member.name), member.class)
 
         for auraIndex = 1, #member.auras do
             local aura = member.auras[auraIndex]
@@ -207,20 +188,14 @@ local function reportAugments(toChat, members)
                 if isOutdatedAugment(augmentData) then
                     local xpacName = RCC.xpacShortNames[augmentData.xpac]
                         or tostring(augmentData.xpac)
-                    lowXpac[#lowXpac + 1] = format(
-                        "%s(%s)",
-                        colored,
-                        xpacName
-                    )
+                    lowXpac[#lowXpac + 1] = format("%s(%s)", colored, xpacName)
                 end
 
                 break
             end
         end
 
-        if not hasAugment then
-            missing[#missing + 1] = colored
-        end
+        if not hasAugment then missing[#missing + 1] = colored end
     end
 
     local totalBad = #missing + #lowXpac
@@ -272,9 +247,7 @@ local function reportBuffs(toChat, members)
         end
 
         for k = 1, buffsCount do
-            if not hasBuff[k] then
-                missingCount[k] = missingCount[k] + 1
-            end
+            if not hasBuff[k] then missingCount[k] = missingCount[k] + 1 end
         end
     end
 
@@ -284,11 +257,7 @@ local function reportBuffs(toChat, members)
         local info = buffInfos[k]
 
         if info and classPresent[k] and missingCount[k] > 0 then
-            parts[#parts + 1] = format(
-                "%s (%d)",
-                info.label,
-                missingCount[k]
-            )
+            parts[#parts + 1] = format("%s (%d)", info.label, missingCount[k])
         end
     end
 
@@ -306,20 +275,16 @@ local function reportRepairs(toChat)
     local reportData = getReportData()
     local durabilityData = reportData and reportData.durabilityData
 
-    if not durabilityData then
-        return
-    end
+    if not durabilityData then return end
 
     local repairs = {}
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+    F.ForEachActiveRosterMember(function(name, _unit, _subgroup, class, online)
         if not online then return end
 
         local pct = durabilityData[name]
 
-        if not F.IsSafeNumber(pct) then
-            return
-        end
+        if not F.IsSafeNumber(pct) then return end
 
         if pct < REPAIR_DURABILITY_THRESHOLD then
             repairs[#repairs + 1] = format(
@@ -331,36 +296,28 @@ local function reportRepairs(toChat)
     end)
 
     if #repairs > 0 then
-        Output.SendChunked(
-            format("Repair (%d): ", #repairs),
-            repairs,
-            toChat
-        )
+        Output.SendChunked(format("Repair (%d): ", #repairs), repairs, toChat)
     end
 end
 
 local function reportWeaponEnchants(toChat)
     local reportData = getReportData()
-    local tempWeaponEnchantData =
-        reportData and reportData.tempWeaponEnchantData
+    local tempWeaponEnchantData = reportData
+        and reportData.tempWeaponEnchantData
 
-    if not tempWeaponEnchantData then
-        return
-    end
+    if not tempWeaponEnchantData then return end
 
     local missing = {}
     local noWeapon = {}
     local expiring = {}
 
-    F.ForEachActiveRosterMember(function(name, unit, subgroup, class, online)
+    F.ForEachActiveRosterMember(function(name, _unit, _subgroup, class, online)
         if not online then return end
 
         local status = tempWeaponEnchantData[name]
         local remaining = status and status.time
 
-        if not F.IsSafeNumber(remaining) then
-            return
-        end
+        if not F.IsSafeNumber(remaining) then return end
 
         local colored = Output.ColorName(F.shortName(name), class)
 
@@ -369,19 +326,14 @@ local function reportWeaponEnchants(toChat)
         elseif remaining == Broadcast.TempWeaponEnchantStatus.NO_WEAPON then
             noWeapon[#noWeapon + 1] = format("%s(no weapon)", colored)
         elseif remaining > 0 and Timing.IsExpiringSoon(remaining) then
-            expiring[#expiring + 1] = format(
-                "%s(%s)",
-                colored,
-                F.FormatDuration(remaining)
-            )
+            expiring[#expiring + 1] =
+                format("%s(%s)", colored, F.FormatDuration(remaining))
         end
     end)
 
     local totalBad = #missing + #noWeapon + #expiring
 
-    if totalBad == 0 then
-        return
-    end
+    if totalBad == 0 then return end
 
     local entries = {}
     appendEntries(entries, missing)
@@ -452,9 +404,7 @@ end
 
 function Reports.HasEnabledTypes()
     for _, definition in ipairs(REPORT_TYPES) do
-        if RCC.GetSetting(definition.settingKey) then
-            return true
-        end
+        if RCC.GetSetting(definition.settingKey) then return true end
     end
 
     return false

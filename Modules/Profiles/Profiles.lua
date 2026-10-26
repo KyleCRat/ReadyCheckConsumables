@@ -30,9 +30,7 @@ local function scheduleSettingsSync()
 end
 
 function Profiles.GetEditBlockReason()
-    if InCombatLockdown() then
-        return "Profiles cannot be changed in combat"
-    end
+    if InCombatLockdown() then return "Profiles cannot be changed in combat" end
 
     if RCC.ConsumableActionBarPosition.IsMoving() then
         return "Close Edit Mode or Unlock Mode before changing profiles"
@@ -50,7 +48,10 @@ local function applyProfile()
     -- This is a settings refresh, not a new ready check. Each display retains
     -- ownership of its live session, timers, and visibility reasons.
     RCC.ReadyCheckMover.ApplySettings()
-    RCC.ConsumableStateController.Invalidate("preferences", { nextFrame = true })
+    RCC.ConsumableStateController.Invalidate(
+        "preferences",
+        { nextFrame = true }
+    )
     RCC.ConsumableFrameController.ApplyProfile()
     RCC.ConsumableActionBar.RequestApplySettings()
     RCC.raidFrame:ApplyProfile()
@@ -80,7 +81,8 @@ function Profiles.Initialize(defaults, characterDefaults)
         ReadyCheckConsumablesCharacterDB,
         storage.legacyConsumablePreferences
     )
-    local characterDB = LibStub("LibSimpleDB-2.0"):New(characterStorage, characterDefaults)
+    local characterDB =
+        LibStub("LibSimpleDB-2.0"):New(characterStorage, characterDefaults)
     local manager = LibStub("LibSimpleDBProfiles-1.0"):New(
         "ReadyCheckConsumables",
         storage.profiles,
@@ -99,7 +101,10 @@ function Profiles.Initialize(defaults, characterDefaults)
     RCC.settingsDB = manager:GetActiveDB()
     RCC.characterDB = characterDB
 
-    RCC.settingsDB:RegisterLifecycleCallback("OnDataChanged", onProfileDataChanged)
+    RCC.settingsDB:RegisterLifecycleCallback(
+        "OnDataChanged",
+        onProfileDataChanged
+    )
     RCC.settingsDB:RegisterLifecycleCallback("OnReset", onProfileDataChanged)
 
     -- Identity notification precedes an automatic spec-profile switch. Wait
@@ -110,7 +115,10 @@ function Profiles.Initialize(defaults, characterDefaults)
     manager:RegisterLifecycleCallback("OnProfileRenamed", scheduleSettingsSync)
     manager:RegisterLifecycleCallback("OnProfileDeleted", scheduleSettingsSync)
     manager:RegisterLifecycleCallback("OnProfileReset", scheduleSettingsSync)
-    manager:RegisterLifecycleCallback("OnCharacterInfoChanged", scheduleSettingsSync)
+    manager:RegisterLifecycleCallback(
+        "OnCharacterInfoChanged",
+        scheduleSettingsSync
+    )
 end
 
 local eventFrame = CreateFrame("Frame")

@@ -27,20 +27,20 @@ function Augment.Present(model)
     -- Item availability follows the prepared action during combat, while buff
     -- status still applies to all runes.
     buttonState.itemVisuals = {}
-    buttonState.missingItemVisual = { unavailable = { text = OUT_OF_SELECTED_ITEM } }
+    buttonState.missingItemVisual =
+        { unavailable = { text = OUT_OF_SELECTED_ITEM } }
 
     for _, candidate in ipairs(augmentCandidates) do
         buttonState.itemVisuals[candidate.itemID] = {}
     end
 
     if augmentItemID then
-        buttonState.countText = RCC.Consumables.Augment.GetCountText(augmentCandidate)
+        buttonState.countText =
+            RCC.Consumables.Augment.GetCountText(augmentCandidate)
         buttonState.tooltipItemID = augmentItemID
         ButtonState.SetItemQuality(buttonState, augmentCandidate)
 
-        if augmentItemIcon then
-            buttonState.icon = augmentItemIcon
-        end
+        if augmentItemIcon then buttonState.icon = augmentItemIcon end
     else
         buttonState.countText = "0"
     end
@@ -65,16 +65,14 @@ function Augment.Present(model)
         and augmentItemCount > 0
         and not isAugment
 
-    ButtonState.ApplyAuraScanAvailability(
-        buttonState,
-        model.available == true
-    )
+    ButtonState.ApplyAuraScanAvailability(buttonState, model.available == true)
 
     return buttonState
 end
 
 function Augment.Choices(selection)
-    local augmentCandidate, augmentCandidates, outOfCachedAugment = RCC.ConsumableSelection.Unpack(selection)
+    local augmentCandidate, augmentCandidates, outOfCachedAugment =
+        RCC.ConsumableSelection.Unpack(selection)
     local augmentItemID = augmentCandidate and augmentCandidate.itemID
 
     return ButtonState.CreateItemFlyoutChoices(

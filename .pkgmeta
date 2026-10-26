@@ -25,6 +25,8 @@ ignore:
     - AGENTS.md
     - Docs
     - Tests
+    - selene.toml
+    - wow.yml
     - Libs/LibChangelog-1.0/tests
     - Libs/LibChangelog-1.0/tools
     - Libs/LibChangelog-1.0/examples

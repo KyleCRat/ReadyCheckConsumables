@@ -47,15 +47,11 @@ function Effects.AddDeadline(model, expiry, instance, now)
     -- their own sweep. Also wake exactly at warning and expiration boundaries.
     local nextUpdate = now + (remaining % 60) + 0.01
 
-    if nextUpdate > expiry then
-        nextUpdate = expiry
-    end
+    if nextUpdate > expiry then nextUpdate = expiry end
 
     local warning = expiry - instance.warningSeconds
 
-    if warning > now then
-        nextUpdate = math.min(nextUpdate, warning)
-    end
+    if warning > now then nextUpdate = math.min(nextUpdate, warning) end
 
     model.nextUpdateAt = math.min(model.nextUpdateAt or nextUpdate, nextUpdate)
     model.recheckAt = math.min(model.recheckAt or expiry, expiry)
@@ -67,12 +63,10 @@ function Effects.Evaluate(selection, observation, instance, now)
         selection = selection,
         action = selection.action,
         effect = effect,
-        available = observation.available
+        available = observation.available,
     }
 
-    if effect then
-        Effects.AddDeadline(model, effect.expiry, instance, now)
-    end
+    if effect then Effects.AddDeadline(model, effect.expiry, instance, now) end
 
     return model
 end
@@ -124,7 +118,10 @@ function Effects.EvaluateMany(selection, observation, instance, now)
             Effects.AddDeadline(model, effect.expiry, instance, now)
 
             if effect.remaining then
-                model.remaining = math.min(model.remaining or effect.remaining, effect.remaining)
+                model.remaining = math.min(
+                    model.remaining or effect.remaining,
+                    effect.remaining
+                )
             end
         end
     end

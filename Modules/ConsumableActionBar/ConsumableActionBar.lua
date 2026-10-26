@@ -66,41 +66,30 @@ local pending = {
 local function getPositiveSetting(key, fallback, minimum)
     local value = tonumber(RCC.GetSetting(key)) or fallback
 
-    if value < minimum then
-        return minimum
-    end
+    if value < minimum then return minimum end
 
     return value
 end
 
 local function getIconsPerRow()
-    local value = tonumber(
-        RCC.GetSetting("consumablesActionBar_iconsPerRow")
-    ) or 10
+    local value = tonumber(RCC.GetSetting("consumablesActionBar_iconsPerRow"))
+        or 10
 
     return math.max(1, math.floor(value + 0.5))
 end
 
 local function getFlyoutDirection()
-    local direction = RCC.GetSetting(
-        "consumablesActionBar_flyoutDirection"
-    )
+    local direction = RCC.GetSetting("consumablesActionBar_flyoutDirection")
 
-    if VALID_FLYOUT_DIRECTIONS[direction] then
-        return direction
-    end
+    if VALID_FLYOUT_DIRECTIONS[direction] then return direction end
 
     return "UP"
 end
 
 local function getDurationTextPosition()
-    local position = RCC.GetSetting(
-        "consumablesActionBar_durationTextPosition"
-    )
+    local position = RCC.GetSetting("consumablesActionBar_durationTextPosition")
 
-    if VALID_DURATION_TEXT_POSITIONS[position] then
-        return position
-    end
+    if VALID_DURATION_TEXT_POSITIONS[position] then return position end
 
     return "TOP"
 end
@@ -143,15 +132,11 @@ function ActionBar.GetVisualOptions()
     return {
         -- The permanent bar uses hover feedback, not persistent reminders.
         showReminderGlow = false,
-        showStackCount = RCC.GetSetting(
-            "consumablesActionBar_showStackCount"
-        ) == true,
-        showDuration = RCC.GetSetting(
-            "consumablesActionBar_showDuration"
-        ) == true,
-        showStatus = RCC.GetSetting(
-            "consumablesActionBar_showStatus"
-        ) == true,
+        showStackCount = RCC.GetSetting("consumablesActionBar_showStackCount")
+            == true,
+        showDuration = RCC.GetSetting("consumablesActionBar_showDuration")
+            == true,
+        showStatus = RCC.GetSetting("consumablesActionBar_showStatus") == true,
         showProfessionQuality = RCC.GetSetting(
             "consumablesActionBar_showProfessionQuality"
         ) == true,
@@ -162,9 +147,7 @@ end
 -- definitions can opt out when they cannot apply. Use resolved applicability,
 -- not supplies or current buff status.
 local function shouldShowButton(definition)
-    if not frame.surface.categories[definition.key] then
-        return false
-    end
+    if not frame.surface.categories[definition.key] then return false end
 
     if definition.actionBarHideWhenInapplicable then
         local snapshot = frame.surface.latestSnapshot
@@ -181,7 +164,8 @@ function ActionBar.GetEnabledCount()
     local count = 0
 
     for i = 1, #definitions do
-        if RCC.GetSetting(definitions[i].actionBarSettingKey) == true
+        if
+            RCC.GetSetting(definitions[i].actionBarSettingKey) == true
             and Catalog.IsAvailableToPlayer(definitions[i])
         then
             count = count + 1
@@ -201,9 +185,7 @@ function ActionBar.ShouldShow()
     local definitions = Catalog.GetDefinitions()
 
     for i = 1, #definitions do
-        if shouldShowButton(definitions[i]) then
-            return true
-        end
+        if shouldShowButton(definitions[i]) then return true end
     end
 
     return false
@@ -228,9 +210,7 @@ function ActionBar.ApplyFrameStrata()
 
     local strata = RCC.GetSetting("consumablesActionBar_frameStrata")
 
-    if frame:GetFrameStrata() ~= strata then
-        frame:SetFrameStrata(strata)
-    end
+    if frame:GetFrameStrata() ~= strata then frame:SetFrameStrata(strata) end
 
     return true
 end
@@ -269,10 +249,7 @@ function ActionBar.ApplyLayout()
 
     Surface.HideFlyouts(frame.surface)
     Surface.ApplyGeometry(frame.surface, geometry)
-    Surface.ApplyVisualOptions(
-        frame.surface,
-        ActionBar.GetVisualOptions()
-    )
+    Surface.ApplyVisualOptions(frame.surface, ActionBar.GetVisualOptions())
 
     for i = 1, #definitions do
         local definition = definitions[i]
@@ -299,9 +276,7 @@ function ActionBar.ApplyLayout()
     end
 
     local columns = math.max(1, math.min(visibleCount, iconsPerRow))
-    local rows = visibleCount > 0
-        and math.ceil(visibleCount / iconsPerRow)
-        or 1
+    local rows = visibleCount > 0 and math.ceil(visibleCount / iconsPerRow) or 1
 
     frame:SetSize(
         View.GetWidth(columns, geometry.buttonWidth, geometry.gapX),
@@ -382,9 +357,7 @@ end
 function ActionBar.ApplyPending()
     if InCombatLockdown() then return false end
 
-    if pending.strata then
-        ActionBar.ApplyFrameStrata()
-    end
+    if pending.strata then ActionBar.ApplyFrameStrata() end
 
     if pending.layout then
         ActionBar.ApplyLayout()
@@ -394,9 +367,7 @@ function ActionBar.ApplyPending()
 
     RCC.ConsumableActionBarPosition.ApplyPending()
 
-    if pending.visibility then
-        ActionBar.ApplyVisibility()
-    end
+    if pending.visibility then ActionBar.ApplyVisibility() end
 
     Surface.ReconcileSecure(frame.surface)
 
@@ -414,7 +385,8 @@ StateController.RegisterConsumer("consumablesActionBar", {
         if not ActionBar.IsEnabled() then return categories end
 
         for _, definition in ipairs(Catalog.GetDefinitions()) do
-            if RCC.GetSetting(definition.actionBarSettingKey) == true
+            if
+                RCC.GetSetting(definition.actionBarSettingKey) == true
                 and Catalog.IsAvailableToPlayer(definition)
             then
                 categories[definition.key] = true
@@ -423,9 +395,11 @@ StateController.RegisterConsumer("consumablesActionBar", {
 
         return categories
     end,
+
     GetDisplayedItemIDs = function()
         return Surface.GetDisplayedItemIDs(frame.surface)
     end,
+
     ApplySnapshot = function(_, snapshot, categories)
         Surface.ApplySnapshot(frame.surface, snapshot, categories)
 
