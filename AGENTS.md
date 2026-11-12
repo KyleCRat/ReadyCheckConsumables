@@ -226,7 +226,8 @@ data.
     `pickupItemIDs`. A cauldron definition also needs its placement/use spell
     IDs, cauldron item ranks, pickup target, and pickup quantity.
     Preserve item family and fleeting-variant metadata: selection uses it to
-    limit overrides to the preferred family and prevent fleeting preferences.
+    limit overrides to the preferred family. Preferring a fleeting item saves
+    its family's regular rank-2 item; never persist the fleeting item ID itself.
   - Augment Runes: register both inventory item IDs and applied aura spell IDs,
     with matching expansion, priority, and unlimited metadata.
   - Vantus Runes: register the raid instance-to-item mapping and every

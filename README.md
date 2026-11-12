@@ -247,7 +247,9 @@ Your preference keeps the exact item and rank you chose. If it runs out, the
 button keeps showing that item with a zero count; macros can select an available
 alternative without changing your choice. Carried fleeting flasks and potions from
 the same family take priority over your regular choice, even if that rank is
-out of stock. Fleeting items cannot be saved as preferences.
+out of stock. Right-clicking a fleeting flask or potion saves the regular rank-2
+version from that family as your preference, even if you have none in your bags.
+Right-click it again to clear that preference.
 
 Unlimited augment runes, combat and healing potions, repair devices, and
 consumable-pausing items show cooldowns on their buttons and flyout choices.

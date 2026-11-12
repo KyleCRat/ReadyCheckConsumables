@@ -59,7 +59,10 @@ Edit the family definitions, not these generated lists.
 
 Family membership also limits fleeting overrides: a fleeting Resistance flask
 can replace a preferred regular Resistance flask, but not a flask with another
-effect. Registration marks fleeting items as ineligible saved preferences.
+effect. Registration marks fleeting IDs as ineligible for storage and maps
+their preference clicks to the regular rank-2 item in the same family through
+`RegisterFleetingPreferenceAliases`. Each registration must include the complete
+family, with its regular rank-2 item and normalized `family` fields.
 Healing potions use the same `family` and `variant` metadata in their ordered
 item records; concentrated and ordinary Silvermoon potions are separate families.
 
@@ -519,9 +522,12 @@ candidates, the selected item ID, and the Flask preference key. The helper
 returns button-state tables for the alternatives, excluding the primary item.
 
 `CreateItemAction` leaves out `preferenceKey` for items that cannot be preferred,
-such as fleeting consumables and the venue-only Guild potion. Both the primary
-and flyout therefore omit their right-click preference action and hint, while
-retaining left-click use wherever that surface allows it.
+such as the venue-only Guild potion. Both the primary and flyout therefore omit
+their right-click preference action and hint, while retaining left-click use
+wherever that surface allows it. Fleeting items with a registered regular rank-2
+counterpart allow right-clicking; the preference owner resolves that click to
+the regular item, and the tooltip names that saved target. Left-click use still
+acts on the carried fleeting item.
 
 The runtime keeps those choices until the selection changes, then attaches them
 to the primary state as `flyoutChoices`. A duration update does not rebuild
@@ -675,19 +681,22 @@ result.
 Right-clicking a primary button or flyout choice takes a shorter route:
 the binder passes its typed identity, preference key, and capacity to
 [ConsumablePreferences.Toggle](../Modules/Consumables/ConsumablePreferences.lua).
-An existing preference is removed; a new choice is appended, evicting the oldest
-preference if the branch is full. This calls
+The preference owner first resolves a fleeting item to its family's regular
+rank-2 identity, regardless of which fleeting rank was clicked or whether the
+regular item is carried. The same resolver powers eligibility and tooltip
+preference checks. An existing preference is removed; a new choice is appended,
+evicting the oldest preference if the branch is full. This calls
 `Invalidate("preferences", { nextFrame = true })` and schedules a macro
 update when the choice changes. The next selection uses the new preference, or
 the category's automatic overrides and fallbacks after clearing it; neither
 needs a new aura scan. `nextFrame` skips the normal delay when starting a new
 batch; if one is already scheduled, the change joins it.
 
-The preference owner also rejects attempts to save blocked items.
-`ReadPreferences` returns a detached snapshot, ignoring any fleeting choice
-saved by an older version rather
-than guessing a regular replacement. Choosing a regular item explicitly creates
-the new preference. Inventory changes, overrides, and macro refreshes only read it.
+The preference owner also rejects blocked items without a registered alias.
+`ReadPreferences` returns a detached snapshot, ignoring any raw fleeting choice
+saved by an older version without rewriting it. Only an explicit preference
+click resolves an alias for storage. Inventory changes, overrides, and macro
+refreshes only read the saved regular choice.
 
 The preference owner routes these reads and writes to character storage by default.
 The character-owned **Use profile-specific consumable preferences** checkbox

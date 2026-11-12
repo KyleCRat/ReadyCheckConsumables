@@ -103,11 +103,18 @@ local function addRightClickPreferenceHint(button, hasHint)
 
     if not preference then return end
 
-    local choice = preference.choice
+    local choice = Preferences.ResolveChoice(preference.choice)
+
+    if not choice then return end
+
     local targetText
 
     if choice.kind == "item" then
         targetText = getItemLink(choice.id)
+
+        if not targetText and choice.id ~= preference.choice.id then
+            targetText = "the regular rank-2 version"
+        end
     else
         targetText = getSpellDisplay(choice.id)
     end

@@ -88,10 +88,8 @@ function RCC.Data.AddFlaskItems(families)
 
             RCC.db.flaskItemIDs[#RCC.db.flaskItemIDs + 1] = itemID
             RCC.db.flaskItemData[itemID] = item
-
-            if item.variant == RCC.ConsumableVariant.FLEETING then
-                RCC.db.preferenceBlockedItemIDs[itemID] = true
-            end
         end
+
+        RCC.Data.RegisterFleetingPreferenceAliases(items)
     end
 end

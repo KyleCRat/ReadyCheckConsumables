@@ -6,9 +6,33 @@ RCC.ConsumableVariant = {
     FLEETING = "fleeting",
 }
 
--- Populated by item registration. Temporary/context-only items may be used,
--- but must never become a saved preference.
+-- Temporary/context-only item IDs never enter saved preferences. Fleeting
+-- choices instead resolve to the regular rank-2 item in their own family.
 RCC.db.preferenceBlockedItemIDs = {}
+RCC.db.preferenceItemAliases = {}
+
+RCC.Data = RCC.Data or {}
+local FLEETING_PREFERENCE_RANK = 2
+
+-- Register a complete set of families after their item.family fields are set.
+-- Item order and the rank of the clicked fleeting item do not change the target.
+function RCC.Data.RegisterFleetingPreferenceAliases(items)
+    local regularItemIDs = {}
+
+    for _, item in ipairs(items) do
+        if item.variant == nil and item.q == FLEETING_PREFERENCE_RANK then
+            regularItemIDs[item.family] = item.itemID
+        end
+    end
+
+    for _, item in ipairs(items) do
+        if item.variant == RCC.ConsumableVariant.FLEETING then
+            RCC.db.preferenceBlockedItemIDs[item.itemID] = true
+            RCC.db.preferenceItemAliases[item.itemID] =
+                regularItemIDs[item.family]
+        end
+    end
+end
 
 --------------------------------------------------------------------------------
 --- Expansion Version Constants

@@ -47,10 +47,8 @@ function RCC.Data.AddCombatPotionItems(families)
 
             RCC.db.combatPotionItemIDs[#RCC.db.combatPotionItemIDs + 1] = itemID
             RCC.db.combatPotionItemData[itemID] = item
-
-            if item.variant == RCC.ConsumableVariant.FLEETING then
-                RCC.db.preferenceBlockedItemIDs[itemID] = true
-            end
         end
+
+        RCC.Data.RegisterFleetingPreferenceAliases(items)
     end
 end

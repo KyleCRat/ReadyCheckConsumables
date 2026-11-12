@@ -43,12 +43,30 @@ local function getPreferenceDB()
         or RCC.characterDB
 end
 
-function Preferences.CanPrefer(choice)
+local function canStoreChoice(choice)
     return Choice.IsValid(choice)
         and (
             choice.kind ~= "item"
             or not RCC.db.preferenceBlockedItemIDs[choice.id]
         )
+end
+
+-- Clicks may name a fleeting item, while storage always names its regular R2.
+-- Resolve only explicit choices; inventory reads never replace saved choices.
+function Preferences.ResolveChoice(choice)
+    if not Choice.IsValid(choice) then return end
+
+    if choice.kind == "item" then
+        local itemID = RCC.db.preferenceItemAliases[choice.id]
+
+        if itemID then choice = Choice.Item(itemID) end
+    end
+
+    if canStoreChoice(choice) then return choice end
+end
+
+function Preferences.CanPrefer(choice)
+    return Preferences.ResolveChoice(choice) ~= nil
 end
 
 function Preferences.GetChoices(preferences, key, capacity)
@@ -71,7 +89,7 @@ function Preferences.Read(previous)
     for key, branches in pairs(preferences) do
         for _, choices in pairs(branches) do
             for index = #choices, 1, -1 do
-                if not Preferences.CanPrefer(choices[index]) then
+                if not canStoreChoice(choices[index]) then
                     table.remove(choices, index)
                 end
             end
@@ -86,6 +104,10 @@ function Preferences.Read(previous)
 end
 
 function Preferences.IsPreferred(key, capacity, choice)
+    choice = Preferences.ResolveChoice(choice)
+
+    if not choice then return false end
+
     local choices =
         getPreferenceDB():Get("consumablePreferences", key, capacity or 1)
 
@@ -95,7 +117,9 @@ end
 -- Each capacity is independent. Preference order is selection age: adding a
 -- choice to a full branch replaces its oldest choice, never another branch.
 function Preferences.Toggle(key, capacity, choice)
-    if not key or not Preferences.CanPrefer(choice) then return end
+    choice = Preferences.ResolveChoice(choice)
+
+    if not key or not choice then return end
 
     capacity = capacity or 1
     local db = getPreferenceDB()

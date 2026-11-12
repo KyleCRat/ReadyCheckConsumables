@@ -45,9 +45,7 @@ function RCC.Data.AddHealingPotionItems(items)
         RCC.db.healingPotionItemIDs[#RCC.db.healingPotionItemIDs + 1] =
             item.itemID
         RCC.db.healingPotionItemData[item.itemID] = item
-
-        if item.variant == RCC.ConsumableVariant.FLEETING then
-            RCC.db.preferenceBlockedItemIDs[item.itemID] = true
-        end
     end
+
+    RCC.Data.RegisterFleetingPreferenceAliases(items)
 end

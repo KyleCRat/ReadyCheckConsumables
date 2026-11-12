@@ -1,24 +1,10 @@
 # TODO
 
-## Profile Migration Release Gate
-
-- [x] Released LibSimpleDBProfiles 1.1.0 with the `initialProfile` API and
-  aligned RCC's submodule checkout and `.pkgmeta` tag. Implementation minor 2
-  takes precedence over older 1.0.0 embeds regardless of addon load order.
-- [ ] Confirm the profile migration in game with a backup of the pre-migration
-  SavedVariables: existing settings/positions survive in Global, preferences
-  seed each character once from the original shared choices (including a
-  later-login alt), and reload never restores a cleared preference. Confirm
-  the character-owned storage toggle defaults off, persists through profile
-  changes, and switches stores without copying. Profile copy/reset must leave
-  character preferences and the toggle untouched. Character and Specialization settings
-  must stay separate, both displays/macros must refresh, and both movement
-  providers must use the active profile's positions. Confirm no temporary
-  frames reopen or chat reports replay on a profile change.
-
 ## Fixes
 - Changing a setting during a test removes all test rows (not critical)
 - Raid buff action bar icon on characters with no raid buff spell should not show  ? icon, it should hide
+
+- Eating icon not showing in raid frame, may have gone secret for some reason?
 
 ## Features
 - Add invisibilty potions Potion of the Hushed Zephyr:191395 - need to find newer and older ones
