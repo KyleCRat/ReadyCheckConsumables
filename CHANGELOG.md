@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [12.1.5-30] - 2026-11-12
 
 ### Changed
 
@@ -32,12 +32,3 @@
 - Consumables Frame buttons now use only the four open-event choices, without
   a separate Enabled column. Previously disabled buttons remain unchecked, and
   update highlights offer the same event choices.
-
-## [12.1.5-28] - 2026-10-06
-
-- Updated for WoW 12.1.5.
-
-### Fixed
-
-- Raid Buff buttons now show a red X for confirmed missing buffs even when
-  another group member cannot be checked.

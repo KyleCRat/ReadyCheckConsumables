@@ -2,8 +2,8 @@
 local _, addon = ...
 
 addon.ReleaseNotes = {
-    version = "Unreleased",
-    unreleased = true,
+    version = "12.1.5-30",
+    date = "2026-11-12",
     notes = {
         { kind = "heading", text = "Changed" },
         { kind = "bullet", text = "The Consumables Action Bar now defaults to Medium frame strata, matching Blizzard's action bars. A Frame Strata setting lets you adjust its layering." },
